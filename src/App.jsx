@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from "react";
-import { supabase } from './supabase';
 
 // ─── FONTS ─────────────────────────────────────────────────────────────────────
 const loadFonts = () => {
@@ -226,15 +225,20 @@ function LoginScreen({ onLogin, onSignup, onJoin }) {
   const handleLogin = async () => {
     if (!email.trim() || !password.trim()) { setError('Please enter your email and password.'); return; }
     setLoading(true); setError('');
-// Real Supabase auth
-    const { data, error: authError } = await supabase.auth.signInWithPassword({
-      email: email.trim(),
-      password: password.trim(),
+    // Demo login — accepts any credentials
+    await new Promise(r => setTimeout(r, 600));
+    onLogin({
+      name: 'Matthew Burke', company: "Burke's Mechanical",
+      email: email.trim(), phone: '(512) 555-0192',
+      trades: ['Plumber', 'HVAC'], states: ['Texas', 'Louisiana'],
+      state: 'Texas, Louisiana', role: 'owner',
+      tagline: "Austin's Most Trusted Mechanical Contractor",
+      license: 'TX Lic. #M-12345', accentColor: '', defaultTerms: '',
+      companyCode: 'TV-BRK42X',
     });
-    if (authError) { setError(authError.message); setLoading(false); return; }
-  onLogin({ email: email.trim(), name: data.user.email, role: 'owner', company: 'My Company', trades: ['Plumber'], companyCode: 'TV-NEW01', state: 'Texas', license: '', tagline: '', accentColor: '', defaultTerms: '' });
     setLoading(false);
   };
+
   return (
     <AuthShell>
       <div style={{ fontSize: 22, fontWeight: 900, color: C.text, marginBottom: 4, fontFamily: "'Inter', sans-serif", textTransform: 'uppercase', letterSpacing: '0.04em' }}>Welcome back</div>
@@ -4803,11 +4807,11 @@ export default function Tradevoice() {
   // authScreen: null (app) | 'login' | 'signup' | 'join' | 'onboarding'
   const [authScreen, setAuthScreen] = useState('login');
 
-  // ── Shared invoices state (lifted so Quotes can push new invoices) ──────────
-  const [sharedInvoices, setSharedInvoices] = useState(SEED_INVOICES);
+  // Show auth screens when no user
+   const [sharedInvoices, setSharedInvoices] = useState(SEED_INVOICES);
   const [pendingInvoiceId, setPendingInvoiceId] = useState(null);
 
-  // Show auth screens when no user
+
   if (!user) {
     if (authScreen === 'login')    return <LoginScreen    onLogin={u => { setUser(u); setAuthScreen(null); }} onSignup={() => setAuthScreen('signup')} onJoin={() => setAuthScreen('join')} />;
     if (authScreen === 'signup')   return <SignupScreen   onComplete={data => { setUser({ ...data, state: data.states?.join(', '), role: 'owner', companyCode: 'TV-' + Math.random().toString(36).slice(2,8).toUpperCase() }); setAuthScreen(null); }} onBack={() => setAuthScreen('login')} />;
@@ -4815,6 +4819,8 @@ export default function Tradevoice() {
     if (authScreen === 'onboarding') return <Onboarding  onComplete={data => { setUser({ ...data, state: data.states?.join(', '), role: 'owner', companyCode: 'TV-' + Math.random().toString(36).slice(2,8).toUpperCase() }); setAuthScreen(null); }} />;
     return <LoginScreen onLogin={u => { setUser(u); setAuthScreen(null); }} onSignup={() => setAuthScreen('signup')} onJoin={() => setAuthScreen('join')} />;
   }
+
+  // ── Shared invoices state (lifted so Quotes can push new invoices) ──────────
 
   const handleConvertToInvoice = (quote, client) => {
     const today = new Date().toISOString().split('T')[0];
@@ -4856,7 +4862,6 @@ export default function Tradevoice() {
     clients:   <Clients      user={user} />,
     settings:  <Settings     user={user} logo={logo} onLogoChange={setLogo} showProfileModal={showProfileModal} setShowProfileModal={setShowProfileModal} payments={payments} setPayments={setPayments} taxRates={taxRates} setTaxRates={setTaxRates} teamMembers={teamMembers} setTeamMembers={setTeamMembers} />,
   }[section];
-
   // ── TABLET: top bar + scrollable body + bottom tab nav ─────────────────────
   if (isTablet) {
     return (
