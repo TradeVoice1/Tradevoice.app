@@ -1,0 +1,537 @@
+import React, { useState, useMemo } from "react";
+
+// ─── CONSTANTS ───────────────────────────────────────────────────────────────
+const COLORS = {
+  green: '#2d6a4f',
+  greenLight: '#f0f7f4',
+  greenBorder: '#a7d9be',
+  scheduled: '#3b82f6',
+  inProgress: '#f59e0b',
+  completed: '#10b981',
+  cancelled: '#ef4444',
+};
+
+const STATUS_COLORS = {
+  scheduled: { bg: '#eff6ff', text: '#1d4ed8', border: '#bfdbfe' },
+  'in-progress': { bg: '#fffbeb', text: '#b45309', border: '#fde68a' },
+  completed: { bg: '#f0fdf4', text: '#166534', border: '#bbf7d0' },
+  cancelled: { bg: '#fef2f2', text: '#991b1b', border: '#fecaca' },
+};
+
+const HOURS = Array.from({ length: 13 }, (_, i) => i + 7); // 7am - 7pm
+
+const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+// ─── SAMPLE DATA ─────────────────────────────────────────────────────────────
+const SAMPLE_TECHS = [
+  { id: 1, name: 'Matthew Burke', color: '#2d6a4f', initials: 'MB' },
+  { id: 2, name: 'Jake Rivera', color: '#3b82f6', initials: 'JR' },
+  { id: 3, name: 'Carlos Mendez', color: '#8b5cf6', initials: 'CM' },
+];
+
+const SAMPLE_JOBS = [
+  { id: 1, title: 'Faucet Repair', client: 'John Miller', address: '2847 Magnolia Dr, Houston TX', tech: 1, date: new Date(), startHour: 9, duration: 2, status: 'completed', trade: 'Plumber', invoiceId: 'INV-2025-0112', phone: '(713) 555-0100', notes: 'Replace kitchen faucet and check under sink for leaks.' },
+  { id: 2, title: 'AC Tune-Up', client: 'Sarah Johnson', address: '1205 Oak Lane, Houston TX', tech: 2, date: new Date(), startHour: 11, duration: 3, status: 'in-progress', trade: 'HVAC', invoiceId: 'INV-2025-0113', phone: '(713) 555-0200', notes: 'Annual maintenance. Check refrigerant levels.' },
+  { id: 3, title: 'Panel Upgrade', client: 'Robert Chen', address: '4521 Elm St, Houston TX', tech: 3, date: new Date(Date.now() + 86400000), startHour: 8, duration: 4, status: 'scheduled', trade: 'Electrician', invoiceId: 'INV-2025-0114', phone: '(713) 555-0300', notes: 'Upgrade from 100A to 200A panel.' },
+  { id: 4, title: 'Roof Inspection', client: 'Lisa Williams', address: '789 Pine Ave, Houston TX', tech: 1, date: new Date(Date.now() + 172800000), startHour: 10, duration: 2, status: 'scheduled', trade: 'Roofing', invoiceId: 'INV-2025-0115', phone: '(713) 555-0400', notes: 'Post-storm inspection. Check for missing shingles.' },
+  { id: 5, title: 'Water Heater Install', client: 'Mike Davis', address: '321 Birch Rd, Houston TX', tech: 2, date: new Date(Date.now() + 259200000), startHour: 13, duration: 3, status: 'scheduled', trade: 'Plumber', invoiceId: 'INV-2025-0116', phone: '(713) 555-0500', notes: 'Replace 40gal tank with new unit.' },
+];
+
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+const isSameDay = (a, b) =>
+  a.getFullYear() === b.getFullYear() &&
+  a.getMonth() === b.getMonth() &&
+  a.getDate() === b.getDate();
+
+const getWeekDays = (date) => {
+  const day = date.getDay();
+  const start = new Date(date);
+  start.setDate(date.getDate() - day);
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(start);
+    d.setDate(start.getDate() + i);
+    return d;
+  });
+};
+
+const formatTime = (hour) => {
+  if (hour === 12) return '12 PM';
+  if (hour > 12) return `${hour - 12} PM`;
+  return `${hour} AM`;
+};
+
+const formatDate = (date) =>
+  `${MONTHS[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
+
+// ─── JOB DETAIL MODAL ────────────────────────────────────────────────────────
+function JobDetailModal({ job, techs, onClose, onStatusChange }) {
+  const tech = techs.find(t => t.id === job.tech);
+  const sc = STATUS_COLORS[job.status] || STATUS_COLORS.scheduled;
+
+  const s = {
+    overlay: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 },
+    modal: { background: '#fff', borderRadius: 14, width: '100%', maxWidth: 480, overflow: 'hidden', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' },
+    header: { background: COLORS.green, padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' },
+    closeBtn: { background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', width: 28, height: 28, borderRadius: '50%', cursor: 'pointer', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' },
+    body: { padding: '20px 24px' },
+    row: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '10px 0', borderBottom: '1px solid #f5f5f5' },
+    label: { fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.1em', color: '#aaa', marginBottom: 3 },
+    value: { fontSize: 14, color: '#333', fontWeight: 500 },
+    badge: { display: 'inline-block', padding: '4px 10px', borderRadius: 20, fontSize: 12, fontWeight: 700, background: sc.bg, color: sc.text, border: `1px solid ${sc.border}` },
+    statusBtns: { display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 16 },
+    statusBtn: (active, color) => ({ padding: '8px 14px', borderRadius: 8, border: `1px solid ${color}`, background: active ? color : '#fff', color: active ? '#fff' : color, fontSize: 13, fontWeight: 600, cursor: 'pointer' }),
+    actionBtns: { display: 'flex', gap: 10, padding: '16px 24px', borderTop: '1px solid #f0f0f0' },
+    btn: { flex: 1, padding: '12px', borderRadius: 8, border: 'none', fontSize: 14, fontWeight: 600, cursor: 'pointer' },
+  };
+
+  return (
+    <div style={s.overlay} onClick={onClose}>
+      <div style={s.modal} onClick={e => e.stopPropagation()}>
+        <div style={s.header}>
+          <div>
+            <div style={{ fontSize: 11, color: 'rgba(255,255,255,.6)', textTransform: 'uppercase', letterSpacing: '.1em', marginBottom: 4 }}>{job.trade}</div>
+            <div style={{ fontSize: 20, fontWeight: 800, color: '#fff', marginBottom: 4 }}>{job.title}</div>
+            <div style={{ fontSize: 14, color: 'rgba(255,255,255,.8)' }}>{job.client}</div>
+          </div>
+          <button style={s.closeBtn} onClick={onClose}>×</button>
+        </div>
+        <div style={s.body}>
+          <div style={s.row}>
+            <div><div style={s.label}>Date & Time</div><div style={s.value}>{formatDate(job.date)} · {formatTime(job.startHour)} — {formatTime(job.startHour + job.duration)}</div></div>
+            <div style={s.badge}>{job.status.replace('-', ' ').replace(/\b\w/g, c => c.toUpperCase())}</div>
+          </div>
+          <div style={s.row}>
+            <div><div style={s.label}>Address</div><div style={s.value}>{job.address}</div></div>
+          </div>
+          <div style={s.row}>
+            <div><div style={s.label}>Assigned Tech</div><div style={s.value}>{tech?.name || 'Unassigned'}</div></div>
+            <div><div style={s.label}>Invoice</div><div style={{ ...s.value, color: COLORS.green }}>{job.invoiceId}</div></div>
+          </div>
+          <div style={s.row}>
+            <div><div style={s.label}>Client Phone</div><div style={s.value}>{job.phone}</div></div>
+          </div>
+          {job.notes && (
+            <div style={{ padding: '10px 0' }}>
+              <div style={s.label}>Notes</div>
+              <div style={{ fontSize: 14, color: '#555', lineHeight: 1.6, marginTop: 4 }}>{job.notes}</div>
+            </div>
+          )}
+          <div style={{ marginTop: 8 }}>
+            <div style={s.label}>Update Status</div>
+            <div style={s.statusBtns}>
+              {['scheduled', 'in-progress', 'completed', 'cancelled'].map(st => (
+                <button key={st} style={s.statusBtn(job.status === st, STATUS_COLORS[st].text)} onClick={() => onStatusChange(job.id, st)}>
+                  {st.replace('-', ' ').replace(/\b\w/g, c => c.toUpperCase())}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+        <div style={s.actionBtns}>
+          <button style={{ ...s.btn, background: COLORS.greenLight, color: COLORS.green }}>Edit Job</button>
+          <button style={{ ...s.btn, background: COLORS.green, color: '#fff' }}>View Invoice</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── ADD JOB MODAL ────────────────────────────────────────────────────────────
+function AddJobModal({ techs, onClose, onAdd, defaultDate }) {
+  const [form, setForm] = useState({
+    title: '', client: '', address: '', phone: '', notes: '',
+    tech: techs[0]?.id || 1, date: defaultDate || new Date(),
+    startHour: 9, duration: 2, trade: 'Plumber', status: 'scheduled',
+  });
+
+  const update = (k, v) => setForm(p => ({ ...p, [k]: v }));
+
+  const s = {
+    overlay: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 },
+    modal: { background: '#fff', borderRadius: 14, width: '100%', maxWidth: 480, maxHeight: '90vh', overflow: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' },
+    header: { background: COLORS.green, padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0 },
+    body: { padding: '20px 24px' },
+    label: { fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.1em', color: '#888', marginBottom: 6, display: 'block', marginTop: 14 },
+    input: { width: '100%', padding: '11px 14px', fontSize: 15, border: '1px solid #ddd', borderRadius: 8, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' },
+    select: { width: '100%', padding: '11px 14px', fontSize: 15, border: '1px solid #ddd', borderRadius: 8, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box', background: '#fff' },
+    row2: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 },
+    footer: { padding: '16px 24px', borderTop: '1px solid #f0f0f0', display: 'flex', gap: 10, position: 'sticky', bottom: 0, background: '#fff' },
+    btn: (primary) => ({ flex: 1, padding: '12px', borderRadius: 8, border: primary ? 'none' : '1px solid #ddd', background: primary ? COLORS.green : '#fff', color: primary ? '#fff' : '#666', fontSize: 14, fontWeight: 600, cursor: 'pointer' }),
+  };
+
+  const handleAdd = () => {
+    if (!form.title || !form.client) return;
+    onAdd({ ...form, id: Date.now() });
+    onClose();
+  };
+
+  return (
+    <div style={s.overlay} onClick={onClose}>
+      <div style={s.modal} onClick={e => e.stopPropagation()}>
+        <div style={s.header}>
+          <span style={{ fontSize: 17, fontWeight: 700, color: '#fff' }}>Schedule New Job</span>
+          <button style={{ background: 'rgba(255,255,255,.2)', border: 'none', color: '#fff', width: 28, height: 28, borderRadius: '50%', cursor: 'pointer', fontSize: 16 }} onClick={onClose}>×</button>
+        </div>
+        <div style={s.body}>
+          <label style={s.label}>Job Title</label>
+          <input style={s.input} placeholder="e.g. Faucet Repair" value={form.title} onChange={e => update('title', e.target.value)} />
+          <label style={s.label}>Client Name</label>
+          <input style={s.input} placeholder="John Miller" value={form.client} onChange={e => update('client', e.target.value)} />
+          <label style={s.label}>Address</label>
+          <input style={s.input} placeholder="2847 Magnolia Dr, Houston TX" value={form.address} onChange={e => update('address', e.target.value)} />
+          <label style={s.label}>Client Phone</label>
+          <input style={s.input} placeholder="(713) 555-0100" value={form.phone} onChange={e => update('phone', e.target.value)} />
+          <div style={s.row2}>
+            <div>
+              <label style={s.label}>Trade</label>
+              <select style={s.select} value={form.trade} onChange={e => update('trade', e.target.value)}>
+                {['Plumber','HVAC','Electrician','Roofing','Specialty'].map(t => <option key={t}>{t}</option>)}
+              </select>
+            </div>
+            <div>
+              <label style={s.label}>Assigned Tech</label>
+              <select style={s.select} value={form.tech} onChange={e => update('tech', parseInt(e.target.value))}>
+                {techs.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+              </select>
+            </div>
+          </div>
+          <div style={s.row2}>
+            <div>
+              <label style={s.label}>Start Time</label>
+              <select style={s.select} value={form.startHour} onChange={e => update('startHour', parseInt(e.target.value))}>
+                {HOURS.map(h => <option key={h} value={h}>{formatTime(h)}</option>)}
+              </select>
+            </div>
+            <div>
+              <label style={s.label}>Duration</label>
+              <select style={s.select} value={form.duration} onChange={e => update('duration', parseInt(e.target.value))}>
+                {[1,2,3,4,5,6,7,8].map(h => <option key={h} value={h}>{h} {h === 1 ? 'hour' : 'hours'}</option>)}
+              </select>
+            </div>
+          </div>
+          <label style={s.label}>Notes</label>
+          <textarea style={{ ...s.input, height: 80, resize: 'vertical' }} placeholder="Job notes..." value={form.notes} onChange={e => update('notes', e.target.value)} />
+        </div>
+        <div style={s.footer}>
+          <button style={s.btn(false)} onClick={onClose}>Cancel</button>
+          <button style={s.btn(true)} onClick={handleAdd}>Schedule Job</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── WEEK VIEW ────────────────────────────────────────────────────────────────
+function WeekView({ weekDays, jobs, techs, onJobClick, filterTech }) {
+  const filtered = filterTech ? jobs.filter(j => j.tech === filterTech) : jobs;
+
+  const s = {
+    wrap: { overflowX: 'auto' },
+    grid: { display: 'grid', gridTemplateColumns: '60px repeat(7, 1fr)', minWidth: 700 },
+    dayHeader: (isToday) => ({ padding: '10px 8px', textAlign: 'center', background: isToday ? COLORS.greenLight : '#fafafa', borderBottom: '1px solid #e8e8e8', borderRight: '1px solid #f0f0f0' }),
+    dayName: (isToday) => ({ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.1em', color: isToday ? COLORS.green : '#aaa' }),
+    dayNum: (isToday) => ({ fontSize: 22, fontWeight: 900, color: isToday ? COLORS.green : '#111', marginTop: 2 }),
+    timeCol: { fontSize: 11, color: '#bbb', textAlign: 'right', paddingRight: 8, paddingTop: 4, borderRight: '1px solid #e8e8e8' },
+    cell: { borderRight: '1px solid #f0f0f0', borderBottom: '1px solid #f8f8f8', minHeight: 56, position: 'relative' },
+    jobBlock: (color) => ({ position: 'absolute', left: 2, right: 2, background: color, borderRadius: 6, padding: '4px 6px', cursor: 'pointer', overflow: 'hidden', zIndex: 1 }),
+  };
+
+  const today = new Date();
+
+  const getJobsForDayHour = (day, hour) =>
+    filtered.filter(j => isSameDay(j.date, day) && j.startHour === hour);
+
+  const getTechColor = (techId) => {
+    const tech = techs.find(t => t.id === techId);
+    return tech?.color || COLORS.green;
+  };
+
+  return (
+    <div style={s.wrap}>
+      <div style={s.grid}>
+        {/* Header row */}
+        <div style={{ background: '#fafafa', borderBottom: '1px solid #e8e8e8', borderRight: '1px solid #e8e8e8' }} />
+        {weekDays.map((day, i) => {
+          const isToday = isSameDay(day, today);
+          return (
+            <div key={i} style={s.dayHeader(isToday)}>
+              <div style={s.dayName(isToday)}>{DAYS[day.getDay()]}</div>
+              <div style={s.dayNum(isToday)}>{day.getDate()}</div>
+            </div>
+          );
+        })}
+        {/* Time rows */}
+        {HOURS.map(hour => (
+          <>
+            <div key={`time-${hour}`} style={{ ...s.timeCol, height: 56, display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end', paddingRight: 8, paddingTop: 4, fontSize: 11, color: '#bbb', borderRight: '1px solid #e8e8e8', borderBottom: '1px solid #f8f8f8' }}>
+              {formatTime(hour)}
+            </div>
+            {weekDays.map((day, di) => {
+              const dayJobs = getJobsForDayHour(day, hour);
+              const isToday = isSameDay(day, today);
+              return (
+                <div key={`cell-${hour}-${di}`} style={{ ...s.cell, background: isToday ? '#fafff9' : '#fff', height: 56 }}>
+                  {dayJobs.map(job => (
+                    <div key={job.id} style={{ ...s.jobBlock(getTechColor(job.tech)), top: 2, height: job.duration * 56 - 4, opacity: job.status === 'cancelled' ? 0.4 : 1 }} onClick={() => onJobClick(job)}>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{job.title}</div>
+                      <div style={{ fontSize: 10, color: 'rgba(255,255,255,.8)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{job.client}</div>
+                    </div>
+                  ))}
+                </div>
+              );
+            })}
+          </>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── DAY VIEW ─────────────────────────────────────────────────────────────────
+function DayView({ date, jobs, techs, onJobClick, filterTech }) {
+  const filtered = (filterTech ? jobs.filter(j => j.tech === filterTech) : jobs)
+    .filter(j => isSameDay(j.date, date));
+
+  const getTechColor = (techId) => techs.find(t => t.id === techId)?.color || COLORS.green;
+  const getTech = (techId) => techs.find(t => t.id === techId);
+
+  const s = {
+    wrap: { display: 'grid', gridTemplateColumns: '60px 1fr' },
+    timeCol: { borderRight: '1px solid #e8e8e8', paddingRight: 8, paddingTop: 4, fontSize: 11, color: '#bbb', textAlign: 'right', height: 72, display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end', borderBottom: '1px solid #f5f5f5' },
+    cell: { position: 'relative', height: 72, borderBottom: '1px solid #f5f5f5' },
+    jobBlock: (color) => ({ position: 'absolute', left: 8, right: 8, background: color, borderRadius: 8, padding: '8px 12px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', zIndex: 1 }),
+  };
+
+  return (
+    <div style={s.wrap}>
+      {HOURS.map(hour => {
+        const hourJobs = filtered.filter(j => j.startHour === hour);
+        return (
+          <>
+            <div key={`t-${hour}`} style={s.timeCol}>{formatTime(hour)}</div>
+            <div key={`c-${hour}`} style={s.cell}>
+              {hourJobs.map(job => {
+                const tech = getTech(job.tech);
+                return (
+                  <div key={job.id} style={{ ...s.jobBlock(getTechColor(job.tech)), top: 4, height: job.duration * 72 - 8, opacity: job.status === 'cancelled' ? 0.4 : 1 }} onClick={() => onJobClick(job)}>
+                    <div>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: '#fff', marginBottom: 2 }}>{job.title}</div>
+                      <div style={{ fontSize: 12, color: 'rgba(255,255,255,.85)' }}>{job.client} · {job.address.split(',')[0]}</div>
+                      <div style={{ fontSize: 11, color: 'rgba(255,255,255,.7)', marginTop: 2 }}>{formatTime(job.startHour)} — {formatTime(job.startHour + job.duration)}</div>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
+                      <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'rgba(255,255,255,.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#fff' }}>{tech?.initials}</div>
+                      <div style={{ fontSize: 10, color: 'rgba(255,255,255,.7)', background: 'rgba(255,255,255,.15)', padding: '2px 6px', borderRadius: 4 }}>{job.trade}</div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─── MONTH VIEW ───────────────────────────────────────────────────────────────
+function MonthView({ date, jobs, techs, onJobClick, filterTech, onDayClick }) {
+  const filtered = filterTech ? jobs.filter(j => j.tech === filterTech) : jobs;
+  const today = new Date();
+
+  const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
+  const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+  const startPad = firstDay.getDay();
+  const totalCells = Math.ceil((startPad + lastDay.getDate()) / 7) * 7;
+
+  const getTechColor = (techId) => techs.find(t => t.id === techId)?.color || COLORS.green;
+
+  const s = {
+    grid: { display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)' },
+    dayHeader: { padding: '8px 4px', textAlign: 'center', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.1em', color: '#aaa', borderBottom: '1px solid #e8e8e8' },
+    cell: (isCurrentMonth, isToday) => ({ minHeight: 90, padding: '6px', border: '1px solid #f0f0f0', background: isToday ? COLORS.greenLight : isCurrentMonth ? '#fff' : '#fafafa', cursor: 'pointer' }),
+    dayNum: (isToday) => ({ fontSize: 13, fontWeight: isToday ? 800 : 500, color: isToday ? COLORS.green : '#333', marginBottom: 4, width: 24, height: 24, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: isToday ? 'rgba(45,106,79,.15)' : 'transparent' }),
+    jobDot: (color) => ({ fontSize: 11, color: '#fff', background: color, borderRadius: 4, padding: '2px 5px', marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', cursor: 'pointer' }),
+  };
+
+  return (
+    <div style={s.grid}>
+      {DAYS.map(d => <div key={d} style={s.dayHeader}>{d}</div>)}
+      {Array.from({ length: totalCells }, (_, i) => {
+        const dayNum = i - startPad + 1;
+        const cellDate = new Date(date.getFullYear(), date.getMonth(), dayNum);
+        const isCurrentMonth = dayNum >= 1 && dayNum <= lastDay.getDate();
+        const isToday = isSameDay(cellDate, today);
+        const dayJobs = filtered.filter(j => isSameDay(j.date, cellDate));
+        return (
+          <div key={i} style={s.cell(isCurrentMonth, isToday)} onClick={() => isCurrentMonth && onDayClick(cellDate)}>
+            <div style={s.dayNum(isToday)}>{isCurrentMonth ? dayNum : ''}</div>
+            {dayJobs.slice(0, 3).map(job => (
+              <div key={job.id} style={s.jobDot(getTechColor(job.tech))} onClick={e => { e.stopPropagation(); onJobClick(job); }}>
+                {job.title}
+              </div>
+            ))}
+            {dayJobs.length > 3 && <div style={{ fontSize: 11, color: '#aaa', marginTop: 2 }}>+{dayJobs.length - 3} more</div>}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─── MAIN SCHEDULE SCREEN ─────────────────────────────────────────────────────
+export default function ScheduleScreen() {
+  const [view, setView] = useState('week'); // month | week | day
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [jobs, setJobs] = useState(SAMPLE_JOBS);
+  const [selectedJob, setSelectedJob] = useState(null);
+  const [showAddJob, setShowAddJob] = useState(false);
+  const [filterTech, setFilterTech] = useState(null);
+  const [addJobDate, setAddJobDate] = useState(null);
+
+  const weekDays = getWeekDays(currentDate);
+
+  const navigate = (dir) => {
+    const d = new Date(currentDate);
+    if (view === 'month') d.setMonth(d.getMonth() + dir);
+    else if (view === 'week') d.setDate(d.getDate() + dir * 7);
+    else d.setDate(d.getDate() + dir);
+    setCurrentDate(d);
+  };
+
+  const handleStatusChange = (id, status) => {
+    setJobs(prev => prev.map(j => j.id === id ? { ...j, status } : j));
+    setSelectedJob(prev => prev ? { ...prev, status } : null);
+  };
+
+  const handleAddJob = (job) => {
+    setJobs(prev => [...prev, { ...job, date: addJobDate || currentDate }]);
+  };
+
+  const handleDayClick = (date) => {
+    setCurrentDate(date);
+    setView('day');
+  };
+
+  const todayJobs = jobs.filter(j => isSameDay(j.date, new Date()));
+  const upcomingJobs = jobs.filter(j => j.date > new Date() && j.status !== 'cancelled').slice(0, 5);
+
+  const headerTitle = () => {
+    if (view === 'month') return `${MONTHS[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
+    if (view === 'week') return `${MONTHS[weekDays[0].getMonth()]} ${weekDays[0].getDate()} — ${MONTHS[weekDays[6].getMonth()]} ${weekDays[6].getDate()}, ${weekDays[6].getFullYear()}`;
+    return formatDate(currentDate);
+  };
+
+  const s = {
+    wrap: { minHeight: '100vh', background: '#f7f7f5', fontFamily: "'Inter', sans-serif" },
+    header: { background: '#fff', borderBottom: '1px solid #e8e8e8', padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 },
+    title: { fontSize: 20, fontWeight: 800, color: '#111' },
+    addBtn: { padding: '10px 18px', background: COLORS.green, color: '#fff', border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 700, cursor: 'pointer' },
+    toolbar: { background: '#fff', borderBottom: '1px solid #e8e8e8', padding: '10px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 },
+    navBtn: { background: 'none', border: '1px solid #e0e0e0', borderRadius: 8, padding: '6px 12px', cursor: 'pointer', fontSize: 16, color: '#666' },
+    dateLabel: { fontSize: 15, fontWeight: 700, color: '#111', minWidth: 200, textAlign: 'center' },
+    viewBtns: { display: 'flex', gap: 4 },
+    viewBtn: (active) => ({ padding: '6px 14px', borderRadius: 8, border: 'none', background: active ? COLORS.green : '#f0f0f0', color: active ? '#fff' : '#666', fontSize: 13, fontWeight: active ? 700 : 400, cursor: 'pointer' }),
+    body: { display: 'grid', gridTemplateColumns: '1fr 280px', gap: 0, height: 'calc(100vh - 120px)' },
+    calendar: { background: '#fff', overflow: 'auto', borderRight: '1px solid #e8e8e8' },
+    sidebar: { background: '#fff', overflowY: 'auto', padding: '20px 16px' },
+    sideSection: { marginBottom: 24 },
+    sideTitle: { fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.12em', color: '#aaa', marginBottom: 12 },
+    techBtn: (active, color) => ({ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', borderRadius: 8, border: `1px solid ${active ? color : '#e8e8e8'}`, background: active ? `${color}15` : '#fff', cursor: 'pointer', marginBottom: 6, width: '100%' }),
+    techDot: (color) => ({ width: 10, height: 10, borderRadius: '50%', background: color, flexShrink: 0 }),
+    techName: { fontSize: 13, fontWeight: 500, color: '#333' },
+    upcomingJob: { padding: '10px 12px', borderRadius: 8, border: '1px solid #f0f0f0', marginBottom: 8, cursor: 'pointer' },
+    upcomingTitle: { fontSize: 13, fontWeight: 700, color: '#111', marginBottom: 2 },
+    upcomingMeta: { fontSize: 12, color: '#888' },
+  };
+
+  return (
+    <div style={s.wrap}>
+      {/* Header */}
+      <div style={s.header}>
+        <div style={s.title}>Schedule</div>
+        <button style={s.addBtn} onClick={() => { setAddJobDate(currentDate); setShowAddJob(true); }}>+ Schedule Job</button>
+      </div>
+
+      {/* Toolbar */}
+      <div style={s.toolbar}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <button style={s.navBtn} onClick={() => navigate(-1)}>‹</button>
+          <button style={{ ...s.navBtn, fontSize: 13 }} onClick={() => setCurrentDate(new Date())}>Today</button>
+          <button style={s.navBtn} onClick={() => navigate(1)}>›</button>
+          <span style={s.dateLabel}>{headerTitle()}</span>
+        </div>
+        <div style={s.viewBtns}>
+          {['month', 'week', 'day'].map(v => (
+            <button key={v} style={s.viewBtn(view === v)} onClick={() => setView(v)}>
+              {v.charAt(0).toUpperCase() + v.slice(1)}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Body */}
+      <div style={s.body}>
+        <div style={s.calendar}>
+          {view === 'month' && <MonthView date={currentDate} jobs={jobs} techs={SAMPLE_TECHS} onJobClick={setSelectedJob} filterTech={filterTech} onDayClick={handleDayClick} />}
+          {view === 'week' && <WeekView weekDays={weekDays} jobs={jobs} techs={SAMPLE_TECHS} onJobClick={setSelectedJob} filterTech={filterTech} />}
+          {view === 'day' && <DayView date={currentDate} jobs={jobs} techs={SAMPLE_TECHS} onJobClick={setSelectedJob} filterTech={filterTech} />}
+        </div>
+
+        {/* Sidebar */}
+        <div style={s.sidebar}>
+          {/* Tech Filter */}
+          <div style={s.sideSection}>
+            <div style={s.sideTitle}>Filter by Tech</div>
+            <button style={s.techBtn(!filterTech, COLORS.green)} onClick={() => setFilterTech(null)}>
+              <div style={s.techDot('#aaa')} />
+              <span style={s.techName}>All Technicians</span>
+            </button>
+            {SAMPLE_TECHS.map(tech => (
+              <button key={tech.id} style={s.techBtn(filterTech === tech.id, tech.color)} onClick={() => setFilterTech(filterTech === tech.id ? null : tech.id)}>
+                <div style={s.techDot(tech.color)} />
+                <span style={s.techName}>{tech.name}</span>
+              </button>
+            ))}
+          </div>
+
+          {/* Today's Jobs */}
+          <div style={s.sideSection}>
+            <div style={s.sideTitle}>Today — {todayJobs.length} jobs</div>
+            {todayJobs.length === 0 && <div style={{ fontSize: 13, color: '#aaa' }}>No jobs today</div>}
+            {todayJobs.map(job => {
+              const sc = STATUS_COLORS[job.status] || STATUS_COLORS.scheduled;
+              return (
+                <div key={job.id} style={s.upcomingJob} onClick={() => setSelectedJob(job)}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div style={s.upcomingTitle}>{job.title}</div>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: sc.text, background: sc.bg, padding: '2px 6px', borderRadius: 4 }}>
+                      {job.status.replace('-', ' ')}
+                    </span>
+                  </div>
+                  <div style={s.upcomingMeta}>{job.client} · {formatTime(job.startHour)}</div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Upcoming */}
+          <div style={s.sideSection}>
+            <div style={s.sideTitle}>Upcoming</div>
+            {upcomingJobs.map(job => (
+              <div key={job.id} style={s.upcomingJob} onClick={() => setSelectedJob(job)}>
+                <div style={s.upcomingTitle}>{job.title}</div>
+                <div style={s.upcomingMeta}>{job.client} · {formatDate(job.date)}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Modals */}
+      {selectedJob && <JobDetailModal job={selectedJob} techs={SAMPLE_TECHS} onClose={() => setSelectedJob(null)} onStatusChange={handleStatusChange} />}
+      {showAddJob && <AddJobModal techs={SAMPLE_TECHS} onClose={() => setShowAddJob(false)} onAdd={handleAddJob} defaultDate={addJobDate} />}
+    </div>
+  );
+}
