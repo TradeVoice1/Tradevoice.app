@@ -53,7 +53,7 @@ const formatDate = (date) =>
   `${MONTHS[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
 
 // ─── JOB DETAIL MODAL ────────────────────────────────────────────────────────
-function JobDetailModal({ job, techs, onClose, onStatusChange, onCreateInvoice }) {
+function JobDetailModal({ job, techs, onClose, onStatusChange, onCreateInvoice, isTech = false }) {
   const tech = techs.find(t => t.id === job.techUserId);
   const sc = STATUS_COLORS[job.status] || STATUS_COLORS.scheduled;
 
@@ -117,20 +117,27 @@ function JobDetailModal({ job, techs, onClose, onStatusChange, onCreateInvoice }
           </div>
         </div>
         <div style={s.actionBtns}>
-          <button style={{ ...s.btn, background: COLORS.greenLight, color: COLORS.green }}>Edit Job</button>
-          {/* Create-Invoice CTA enabled once the job is marked completed and not already invoiced */}
-          <button
-            disabled={job.status !== 'completed' || !!job.invoiceId}
-            onClick={() => onCreateInvoice && onCreateInvoice(job)}
-            style={{
-              ...s.btn,
-              background: job.status === 'completed' && !job.invoiceId ? COLORS.green : '#e5e7eb',
-              color: job.status === 'completed' && !job.invoiceId ? '#fff' : '#9ca3af',
-              cursor: job.status === 'completed' && !job.invoiceId ? 'pointer' : 'not-allowed',
-            }}
-          >
-            {job.invoiceId ? 'Invoice Created ✓' : 'Create Invoice'}
-          </button>
+          {/* Owner-only: edit + create-invoice. Techs only see Done. */}
+          {!isTech && (
+            <>
+              <button style={{ ...s.btn, background: COLORS.greenLight, color: COLORS.green }}>Edit Job</button>
+              <button
+                disabled={job.status !== 'completed' || !!job.invoiceId}
+                onClick={() => onCreateInvoice && onCreateInvoice(job)}
+                style={{
+                  ...s.btn,
+                  background: job.status === 'completed' && !job.invoiceId ? COLORS.green : '#e5e7eb',
+                  color: job.status === 'completed' && !job.invoiceId ? '#fff' : '#9ca3af',
+                  cursor: job.status === 'completed' && !job.invoiceId ? 'pointer' : 'not-allowed',
+                }}
+              >
+                {job.invoiceId ? 'Invoice Created ✓' : 'Create Invoice'}
+              </button>
+            </>
+          )}
+          {isTech && (
+            <button style={{ ...s.btn, background: COLORS.green, color: '#fff' }} onClick={onClose}>Done</button>
+          )}
         </div>
       </div>
     </div>
@@ -437,13 +444,26 @@ function MonthView({ date, jobs, techs, onJobClick, filterTech, onDayClick }) {
 
 // ─── MAIN SCHEDULE SCREEN ─────────────────────────────────────────────────────
 export default function ScheduleScreen({ user, team = [], onCreateInvoice }) {
+  // When the signed-in user's role is 'tech', this screen becomes their personal
+  // "My Schedule" — filtered to only jobs assigned to them, with no add/reassign UI.
+  // Owners see everything across the company and can create + reassign.
+  const isTech = user?.role === 'tech';
+
   const [view, setView] = useState('week'); // month | week | day
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [jobs, setJobs] = useState([]);
+  const [allJobs, setAllJobs] = useState([]);
   const [selectedJob, setSelectedJob] = useState(null);
   const [showAddJob, setShowAddJob] = useState(false);
   const [filterTech, setFilterTech] = useState(null);
   const [addJobDate, setAddJobDate] = useState(null);
+
+  // Auto-filter to the tech's own jobs when they're a tech. The owner sees everything.
+  const jobs = useMemo(() => (
+    isTech ? allJobs.filter(j => j.techUserId === user?.id) : allJobs
+  ), [allJobs, isTech, user?.id]);
+
+  // Wrapper so existing setJobs() call sites still work (operate on the master list).
+  const setJobs = (updater) => setAllJobs(prev => typeof updater === 'function' ? updater(prev) : updater);
 
   // Load jobs from Supabase on mount.
   useEffect(() => {
@@ -538,10 +558,19 @@ export default function ScheduleScreen({ user, team = [], onCreateInvoice }) {
 
   return (
     <div style={s.wrap}>
-      {/* Header */}
+      {/* Header — owner sees the company schedule + Add Job; tech sees their own. */}
       <div style={s.header}>
-        <div style={s.title}>Schedule</div>
-        <button style={s.addBtn} onClick={() => { setAddJobDate(currentDate); setShowAddJob(true); }}>+ Schedule Job</button>
+        <div>
+          <div style={s.title}>{isTech ? 'My Schedule' : 'Schedule'}</div>
+          {isTech && (
+            <div style={{ fontSize: 13, color: '#666', marginTop: 2 }}>
+              Jobs assigned to you · {jobs.length} this {view === 'day' ? 'day' : view}
+            </div>
+          )}
+        </div>
+        {!isTech && (
+          <button style={s.addBtn} onClick={() => { setAddJobDate(currentDate); setShowAddJob(true); }}>+ Schedule Job</button>
+        )}
       </div>
 
       {/* Toolbar */}
@@ -571,20 +600,27 @@ export default function ScheduleScreen({ user, team = [], onCreateInvoice }) {
 
         {/* Sidebar */}
         <div style={s.sidebar}>
-          {/* Tech Filter */}
-          <div style={s.sideSection}>
-            <div style={s.sideTitle}>Filter by Tech</div>
-            <button style={s.techBtn(!filterTech, COLORS.green)} onClick={() => setFilterTech(null)}>
-              <div style={s.techDot('#aaa')} />
-              <span style={s.techName}>All Technicians</span>
-            </button>
-            {techs.map(tech => (
-              <button key={tech.id} style={s.techBtn(filterTech === tech.id, tech.color)} onClick={() => setFilterTech(filterTech === tech.id ? null : tech.id)}>
-                <div style={s.techDot(tech.color)} />
-                <span style={s.techName}>{tech.name}</span>
+          {/* Tech Filter — owner-only. Tech accounts only see their own jobs anyway. */}
+          {!isTech && techs.length > 0 && (
+            <div style={s.sideSection}>
+              <div style={s.sideTitle}>Filter by Tech</div>
+              <button style={s.techBtn(!filterTech, COLORS.green)} onClick={() => setFilterTech(null)}>
+                <div style={s.techDot('#aaa')} />
+                <span style={s.techName}>All Technicians</span>
+                <span style={{ marginLeft: 'auto', fontSize: 12, color: '#888', fontWeight: 700 }}>{allJobs.length}</span>
               </button>
-            ))}
-          </div>
+              {techs.map(tech => {
+                const count = allJobs.filter(j => j.techUserId === tech.id).length;
+                return (
+                  <button key={tech.id} style={s.techBtn(filterTech === tech.id, tech.color)} onClick={() => setFilterTech(filterTech === tech.id ? null : tech.id)}>
+                    <div style={s.techDot(tech.color)} />
+                    <span style={s.techName}>{tech.name}</span>
+                    <span style={{ marginLeft: 'auto', fontSize: 12, color: '#888', fontWeight: 700 }}>{count}</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
 
           {/* Today's Jobs */}
           <div style={s.sideSection}>
@@ -624,6 +660,7 @@ export default function ScheduleScreen({ user, team = [], onCreateInvoice }) {
         <JobDetailModal
           job={selectedJob}
           techs={techs}
+          isTech={isTech}
           onClose={() => setSelectedJob(null)}
           onStatusChange={handleStatusChange}
           onCreateInvoice={async (job) => {
