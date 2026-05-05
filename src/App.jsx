@@ -3,6 +3,7 @@ import { useState, useRef, useEffect, lazy, Suspense } from "react";
 // visits them. The auth bundle stays small so first paint is fast.
 const ForgotPasswordScreen = lazy(() => import("./ForgotPassword").then(m => ({ default: m.ForgotPasswordScreen })));
 const ScheduleScreen       = lazy(() => import("./ScheduleScreen"));
+const PlansScreen          = lazy(() => import("./PlansScreen"));
 const MarketingScreen      = lazy(() => import("./MarketingScreen"));
 const PrivacyPolicyScreen  = lazy(() => import("./LegalScreens").then(m => ({ default: m.PrivacyPolicyScreen })));
 const TermsScreen          = lazy(() => import("./LegalScreens").then(m => ({ default: m.TermsScreen })));
@@ -12,6 +13,7 @@ import { listInvoices, upsertInvoice as apiUpsertInvoice, deleteInvoice as apiDe
 import { listQuotes,   upsertQuote   as apiUpsertQuote,   deleteQuote   as apiDeleteQuote   } from "./data/quotes";
 import { listJobs,     upsertJob     as apiUpsertJob,     deleteJob     as apiDeleteJob     } from "./data/jobs";
 import { listTeam,     upsertTeamMember as apiUpsertTeam, deleteTeamMember as apiDeleteTeam } from "./data/team";
+import { listPlans,    upsertPlan       as apiUpsertPlan, deletePlan       as apiDeletePlan, dueWithinDays } from "./data/plans";
 import { uploadLogo, deleteLogo } from "./data/storage";
 import { invoicesToQbCsv, downloadCsv } from "./lib/qbExport";
 
@@ -939,9 +941,16 @@ function Onboarding({ onComplete }) {
 // ══════════════════════════════════════════════════════════════════════════════
 // DASHBOARD
 // ══════════════════════════════════════════════════════════════════════════════
-function Dashboard({ user, nav, invoices = [] }) {
+function Dashboard({ user, nav, invoices = [], plans = [], onScheduleFromPlan }) {
   const { isTablet } = useBreakpoint();
   const firstName = user.name?.split(' ')[0] || 'Contractor';
+
+  // Maintenance plans coming due in the next 14 days (active only).
+  // Sorted soonest-first so the most urgent ones surface at the top of the widget.
+  const plansDueSoon = dueWithinDays(plans, 14)
+    .slice()
+    .sort((a, b) => (a.nextDueAt || '').localeCompare(b.nextDueAt || ''))
+    .slice(0, 5);
 
   // Compute live stats from real invoices
   const now = new Date();
@@ -1067,6 +1076,67 @@ function Dashboard({ user, nav, invoices = [] }) {
           )}
         </div>
       </div>
+
+      {/* Maintenance plans due soon — surfaces recurring work that's about to come up.
+          Hidden entirely if the user has no plans yet, so it doesn't add noise to fresh accounts. */}
+      {plans.length > 0 && (
+        <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 4, padding: '16px 18px', marginTop: 14 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14, gap: 10 }}>
+            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, fontWeight: 800, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+              Maintenance Plans — Due Soon
+            </div>
+            <button onClick={() => nav('plans')} style={{
+              background: 'none', border: 'none', color: C.orange,
+              fontSize: 13, fontWeight: 700, cursor: 'pointer', padding: 0,
+            }}>View all →</button>
+          </div>
+          {plansDueSoon.length === 0 ? (
+            <div style={{ padding: '14px 0', color: C.dim, fontSize: 14, textAlign: 'center' }}>
+              All plans on track — nothing due in the next two weeks.
+            </div>
+          ) : plansDueSoon.map((p, i) => {
+            const todayIso = new Date().toISOString().split('T')[0];
+            const daysOut  = p.nextDueAt
+              ? Math.round((new Date(p.nextDueAt + 'T12:00:00') - new Date(todayIso + 'T12:00:00')) / 86400000)
+              : null;
+            const overdue  = daysOut !== null && daysOut < 0;
+            const pillBg   = overdue ? C.errorBold : daysOut === 0 ? C.warn : C.warnLo;
+            const pillFg   = overdue || daysOut === 0 ? '#fff' : C.warn;
+            const pillTxt  = overdue
+              ? `${Math.abs(daysOut)}d overdue`
+              : daysOut === 0
+                ? 'Due today'
+                : `Due in ${daysOut}d`;
+            return (
+              <div key={p.id} style={{
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                padding: '12px 10px', margin: '0 -10px',
+                borderBottom: i < plansDueSoon.length - 1 ? `1px solid ${C.border}` : 'none',
+                gap: 12, borderRadius: 8,
+              }}>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: C.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', letterSpacing: '-0.01em' }}>
+                    {p.title}
+                  </div>
+                  <div style={{ fontSize: 13, color: C.muted, marginTop: 3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: 500 }}>
+                    {p.clientName || 'Unknown client'} · {p.trade}
+                  </div>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6, flexShrink: 0 }}>
+                  <span style={{
+                    fontSize: 11, fontWeight: 800, letterSpacing: '0.06em', textTransform: 'uppercase',
+                    padding: '3px 9px', borderRadius: 4, background: pillBg, color: pillFg,
+                  }}>{pillTxt}</span>
+                  <button onClick={() => onScheduleFromPlan?.(p)} style={{
+                    padding: '6px 12px', fontSize: 12, fontWeight: 700,
+                    background: C.orange, color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer',
+                  }}>Schedule</button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
@@ -5023,6 +5093,7 @@ const NAV = [
   { id: 'invoice',   label: 'Invoice'   },
   { id: 'quotes',    label: 'Quotes'    },
   { id: 'schedule',  label: 'Schedule'  },
+  { id: 'plans',     label: 'Plans'     },
   { id: 'clients',   label: 'Clients'   },
   { id: 'marketing', label: 'Marketing' },
 ];
@@ -5093,6 +5164,11 @@ export default function Tradevoice() {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [sharedInvoices, setSharedInvoices] = useState([]);
   const [pendingInvoiceId, setPendingInvoiceId] = useState(null);
+  const [plans, setPlans] = useState([]);
+  // When the user clicks "Schedule Job" on a plan, we stash a prefilled job draft here
+  // and switch to the Schedule screen. ScheduleScreen reads it on mount, opens AddJobModal
+  // with the values pre-populated, then clears it via clearPendingJobDraft.
+  const [pendingJobDraft, setPendingJobDraft] = useState(null);
 
   // Hydrate live data from Supabase whenever a user logs in.
   useEffect(() => {
@@ -5100,13 +5176,15 @@ export default function Tradevoice() {
     let cancelled = false;
     (async () => {
       try {
-        const [invs, tm] = await Promise.all([
+        const [invs, tm, pl] = await Promise.all([
           listInvoices().catch(e => { console.error('listInvoices', e); return []; }),
           listTeam().catch(e => { console.error('listTeam', e); return []; }),
+          listPlans().catch(e => { console.error('listPlans', e); return []; }),
         ]);
         if (cancelled) return;
         setSharedInvoices(invs);
         setTeamMembers(tm);
+        setPlans(pl);
       } catch (e) {
         console.error('hydration failed', e);
       }
@@ -5188,6 +5266,50 @@ export default function Tradevoice() {
       console.error('removeTeamMember', e);
     }
     setTeamMembers(prev => prev.filter(m => m.id !== id));
+  };
+
+  // ── Plans persistence ──────────────────────────────────────────────────────
+  const persistPlan = async (plan) => {
+    const saved = await apiUpsertPlan(user.id, plan);
+    setPlans(prev => {
+      const exists = prev.find(p => p.id === saved.id || (plan.id && p.id === plan.id));
+      return exists
+        ? prev.map(p => (p.id === saved.id || p.id === plan.id) ? saved : p)
+        : [saved, ...prev];
+    });
+    return saved;
+  };
+
+  const removePlan = async (id) => {
+    try {
+      if (typeof id === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
+        await apiDeletePlan(id);
+      }
+    } catch (e) {
+      console.error('removePlan', e);
+    }
+    setPlans(prev => prev.filter(p => p.id !== id));
+  };
+
+  // Prefill an Add-Job draft from the plan's defaults and route to Schedule.
+  // ScheduleScreen reads `pendingJobDraft` on mount, opens its AddJobModal,
+  // and calls `clearPendingJobDraft` once the user saves or cancels.
+  const handleScheduleFromPlan = (plan) => {
+    setPendingJobDraft({
+      title:        plan.title || '',
+      clientId:     plan.clientId   ?? null,
+      clientName:   plan.clientName ?? '',
+      trade:        plan.trade      ?? '',
+      duration:     plan.defaultDuration ?? 2,
+      techUserId:   plan.defaultTechUserId ?? null,
+      notes:        plan.notes      ?? '',
+      planId:       plan.id,
+      // Default to the next-due date if it's in the future, else today.
+      date:         (plan.nextDueAt && plan.nextDueAt >= new Date().toISOString().split('T')[0])
+                      ? plan.nextDueAt
+                      : new Date().toISOString().split('T')[0],
+    });
+    setSection('schedule');
   };
 
   // ── Auth state ────────────────────────────────────────────────────────────
@@ -5326,11 +5448,12 @@ export default function Tradevoice() {
   };
 
   const content = {
-    dashboard: <Dashboard    user={user} nav={setSection} invoices={sharedInvoices} />,
+    dashboard: <Dashboard    user={user} nav={setSection} invoices={sharedInvoices} plans={plans} onScheduleFromPlan={handleScheduleFromPlan} />,
     invoice:   <VoiceInvoice user={user} logo={logo} payments={payments} taxRates={taxRates} sharedInvoices={sharedInvoices} setSharedInvoices={setSharedInvoices} persistInvoice={persistInvoice} pendingInvoiceId={pendingInvoiceId} clearPendingInvoice={() => setPendingInvoiceId(null)} />,
     billing:   <Billing      user={user} payments={payments} />,
     quotes:    <Quotes       user={user} logo={logo} taxRates={taxRates} onConvertToInvoice={handleConvertToInvoice} />,
-    schedule:  <ScheduleScreen user={user} team={teamMembers} onCreateInvoice={handleJobToInvoice} />,
+    schedule:  <ScheduleScreen user={user} team={teamMembers} onCreateInvoice={handleJobToInvoice} plans={plans} setPlans={setPlans} pendingJobDraft={pendingJobDraft} clearPendingJobDraft={() => setPendingJobDraft(null)} />,
+    plans:     <PlansScreen  user={user} team={teamMembers} plans={plans} persistPlan={persistPlan} removePlan={removePlan} onScheduleFromPlan={handleScheduleFromPlan} />,
     clients:   <Clients      user={user} nav={setSection} />,
     marketing: <MarketingScreen />,
     settings:  <Settings     user={user} setUser={setUser} logo={logo} onLogoChange={setLogo} showProfileModal={showProfileModal} setShowProfileModal={setShowProfileModal} payments={payments} setPayments={setPaymentsPersist} taxRates={taxRates} setTaxRates={setTaxRatesPersist} teamMembers={teamMembers} setTeamMembers={setTeamMembers} persistTeamMember={persistTeamMember} removeTeamMember={removeTeamMember} />,

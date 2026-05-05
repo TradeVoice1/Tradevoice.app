@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { listJobs, upsertJob, deleteJob } from "./data/jobs";
+import { markPlanServiced } from "./data/plans";
 
 // ─── CONSTANTS ───────────────────────────────────────────────────────────────
 const COLORS = {
@@ -145,11 +146,30 @@ function JobDetailModal({ job, techs, onClose, onStatusChange, onCreateInvoice, 
 }
 
 // ─── ADD JOB MODAL ────────────────────────────────────────────────────────────
-function AddJobModal({ techs, jobs = [], onClose, onAdd, defaultDate }) {
-  const [form, setForm] = useState({
-    title: '', client: '', address: '', phone: '', notes: '',
-    techUserId: techs[0]?.id || null, date: defaultDate || new Date(),
-    startHour: 9, duration: 2, trade: 'Plumber', status: 'scheduled',
+function AddJobModal({ techs, jobs = [], onClose, onAdd, defaultDate, prefill = null }) {
+  // `prefill` lets the parent seed the form (e.g. when scheduling from a recurring plan).
+  // The plan's defaults — title, client name, trade, default tech, default duration, planId, target date —
+  // flow straight into the initial form state. The user can still override anything before saving.
+  const [form, setForm] = useState(() => {
+    const base = {
+      title: '', client: '', address: '', phone: '', notes: '',
+      techUserId: techs[0]?.id || null, date: defaultDate || new Date(),
+      startHour: 9, duration: 2, trade: 'Plumber', status: 'scheduled',
+      planId: null, clientId: null,
+    };
+    if (!prefill) return base;
+    return {
+      ...base,
+      title:      prefill.title       ?? base.title,
+      client:     prefill.clientName  ?? base.client,
+      clientId:   prefill.clientId    ?? base.clientId,
+      trade:      prefill.trade       || base.trade,
+      duration:   prefill.duration    ?? base.duration,
+      techUserId: prefill.techUserId  ?? base.techUserId,
+      notes:      prefill.notes       ?? base.notes,
+      planId:     prefill.planId      ?? base.planId,
+      date:       prefill.date ? new Date(prefill.date + 'T12:00:00') : base.date,
+    };
   });
 
   const update = (k, v) => setForm(p => ({ ...p, [k]: v }));
@@ -443,7 +463,14 @@ function MonthView({ date, jobs, techs, onJobClick, filterTech, onDayClick }) {
 }
 
 // ─── MAIN SCHEDULE SCREEN ─────────────────────────────────────────────────────
-export default function ScheduleScreen({ user, team = [], onCreateInvoice }) {
+export default function ScheduleScreen({
+  user, team = [], onCreateInvoice,
+  // Plans wiring — App owns the master plans list. We need it here to:
+  //  1. Refresh `plan.last_serviced_at` / `plan.next_due_at` whenever a plan-linked job completes.
+  //  2. Receive a prefilled job draft (`pendingJobDraft`) from the Plans → "Schedule Job" button
+  //     and auto-open the AddJobModal with those values.
+  plans = [], setPlans, pendingJobDraft, clearPendingJobDraft,
+}) {
   // When the signed-in user's role is 'tech', this screen becomes their personal
   // "My Schedule" — filtered to only jobs assigned to them, with no add/reassign UI.
   // Owners see everything across the company and can create + reassign.
@@ -479,6 +506,20 @@ export default function ScheduleScreen({ user, team = [], onCreateInvoice }) {
     return () => { cancelled = true; };
   }, []);
 
+  // When the user clicks "Schedule Job" on a plan, App.jsx routes us here and stashes a
+  // prefilled draft. Opening the modal here means the Add-Job flow takes over with the
+  // plan's defaults already populated.
+  useEffect(() => {
+    if (pendingJobDraft) {
+      // Position the calendar on the target date so the new job lands in view immediately.
+      if (pendingJobDraft.date) {
+        const d = new Date(pendingJobDraft.date + 'T12:00:00');
+        if (!isNaN(d.getTime())) setCurrentDate(d);
+      }
+      setShowAddJob(true);
+    }
+  }, [pendingJobDraft]);
+
   const weekDays = getWeekDays(currentDate);
 
   // Build a tech list from the owner's team (passed in from App.jsx). Fall back to a single
@@ -503,6 +544,20 @@ export default function ScheduleScreen({ user, team = [], onCreateInvoice }) {
     if (!target) return;
     try {
       await upsertJob(user.id, { ...target, status });
+
+      // If this job came from a recurring maintenance plan and just hit 'completed',
+      // bump the plan's last_serviced_at to today and roll next_due_at forward by
+      // the plan's frequency. The Plans screen and Dashboard widget pick up the change
+      // automatically via the shared `plans` state.
+      if (status === 'completed' && target.planId && setPlans) {
+        try {
+          const todayIso = new Date().toISOString().split('T')[0];
+          const updated  = await markPlanServiced(target.planId, todayIso);
+          setPlans(prev => prev.map(p => p.id === updated.id ? updated : p));
+        } catch (planErr) {
+          console.error('markPlanServiced failed', planErr);
+        }
+      }
     } catch (e) {
       console.error('status change failed', e);
     }
@@ -683,7 +738,20 @@ export default function ScheduleScreen({ user, team = [], onCreateInvoice }) {
           }}
         />
       )}
-      {showAddJob && <AddJobModal techs={techs} jobs={jobs} onClose={() => setShowAddJob(false)} onAdd={handleAddJob} defaultDate={addJobDate} />}
+      {showAddJob && (
+        <AddJobModal
+          techs={techs}
+          jobs={jobs}
+          prefill={pendingJobDraft}
+          onClose={() => {
+            setShowAddJob(false);
+            // Clear the prefill so re-opening the Add Job modal manually starts blank.
+            if (pendingJobDraft && clearPendingJobDraft) clearPendingJobDraft();
+          }}
+          onAdd={handleAddJob}
+          defaultDate={addJobDate}
+        />
+      )}
     </div>
   );
 }
