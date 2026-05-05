@@ -3591,17 +3591,16 @@ function QuotesHub({ quotes, clients, onSelect, onNew, onNewClient }) {
     return (
       <button onClick={() => { setSelectedClient(id); if (isTablet) setShowFolders(false); }} style={{
         width: '100%', display: 'flex', alignItems: 'center', gap: 10,
-        padding: '11px 14px', background: active ? C.orangeLo : 'transparent',
-        border: 'none', borderLeft: `3px solid ${active ? C.orange : 'transparent'}`,
+        padding: '8px 12px', background: active ? C.orangeLo : 'transparent',
+        border: 'none', borderLeft: `2px solid ${active ? C.orange : 'transparent'}`,
         cursor: 'pointer', textAlign: 'left', WebkitTapHighlightColor: 'transparent',
-        borderBottom: `1px solid ${C.border}`,
+        fontFamily: "'Inter', sans-serif",
       }}>
-        <span style={{ fontSize: 18, fontFamily: "'Inter', sans-serif", fontWeight: 700, color: C.dim, letterSpacing: '0.04em' }}>Folder</span>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 18, fontWeight: 600, color: active ? C.orange : C.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{name}</div>
-          {company && <div style={{ fontSize: 15, color: C.muted, marginTop: 1 }}>{company}</div>}
+          <div style={{ fontSize: 13, fontWeight: 600, color: active ? C.orange : C.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{name}</div>
+          {company && <div style={{ fontSize: 11, color: C.muted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginTop: 1 }}>{company}</div>}
         </div>
-        <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 17, fontWeight: 800, color: active ? C.orange : C.dim, background: active ? C.orangeMd : C.raised, padding: '2px 7px', borderRadius: 2, flexShrink: 0 }}>{count}</span>
+        <span style={{ fontSize: 11, fontWeight: 700, color: active ? C.orange : C.dim, flexShrink: 0 }}>{count}</span>
       </button>
     );
   };
@@ -3624,10 +3623,10 @@ function QuotesHub({ quotes, clients, onSelect, onNew, onNewClient }) {
 
         {/* Folders sidebar */}
         {(!isTablet || showFolders) && (
-          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 4, overflow: 'hidden' }}>
-            <div style={{ padding: '12px 14px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: 15, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', color: C.muted, fontFamily: "'Inter', sans-serif" }}>Client Folders</span>
-              <button onClick={onNewClient} style={{ ...s.btn, background: 'transparent', border: 'none', color: C.orange, fontSize: 18, lineHeight: 1, padding: '2px 4px', minHeight: 28 }} title="New client">Add</button>
+          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 4, overflow: 'hidden', paddingBottom: 6 }}>
+            <div style={{ padding: '10px 12px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+              <span style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', color: C.muted, fontFamily: "'Inter', sans-serif" }}>Client Folders</span>
+              <button onClick={onNewClient} style={{ background: 'transparent', border: 'none', color: C.orange, fontSize: 20, lineHeight: 1, padding: '0 4px', cursor: 'pointer', fontFamily: "'Inter', sans-serif", fontWeight: 400 }} title="New client" aria-label="New client">+</button>
             </div>
             <Folder id="all" name="All Quotes" count={quotes.length} />
             {clients.map(c => <Folder key={c.id} id={c.id} name={c.name} company={c.company} count={clientQuoteCounts[c.id] || 0} />)}
