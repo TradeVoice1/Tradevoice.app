@@ -51,8 +51,10 @@ const C = {
   accentLo:  '#fff4ed',     // very pale orange wash
   accentMd:  '#fed7aa',     // medium orange
   text:      '#0f172a',
-  muted:     '#64748b',
-  dim:       '#94a3b8',
+  // Bumped both grays darker — slate-500 (#64748b) doesn't survive sun glare on iPads.
+  // muted is now slate-600 (~7:1 contrast on white), dim is slate-500.
+  muted:     '#475569',
+  dim:       '#64748b',
   success:   '#15803d',     // filled paid green — slightly punchier
   successLo: '#dcfce7',
   // Critical / overdue — bolder red. Two levels for filled vs subtle treatments.
@@ -104,8 +106,8 @@ const s = {
 
 // ── Shared UI primitives (used by both app and quotes sections) ──
 const Btn = ({ children, onClick, disabled, style = {}, variant = 'primary', size = 'md', full }) => {
-  const pad  = size === 'sm' ? '7px 13px' : size === 'lg' ? '12px 24px' : '10px 18px';
-  const fz   = size === 'sm' ? 13 : size === 'lg' ? 15 : 14;
+  const pad  = size === 'sm' ? '8px 14px' : size === 'lg' ? '14px 26px' : '11px 20px';
+  const fz   = size === 'sm' ? 13 : size === 'lg' ? 17 : 15;
   const base = variant === 'primary'
     ? { background: C.orange, color: '#ffffff', border: 'none', boxShadow: '0 1px 2px rgba(45, 106, 79, 0.2)' }
     : variant === 'ghost'
@@ -115,7 +117,7 @@ const Btn = ({ children, onClick, disabled, style = {}, variant = 'primary', siz
     <button
       onClick={onClick}
       disabled={disabled}
-      style={{ ...s.btn, ...base, padding: pad, fontSize: fz, minHeight: 40, opacity: disabled ? 0.4 : 1, cursor: disabled ? 'not-allowed' : 'pointer', width: full ? '100%' : undefined, ...style }}
+      style={{ ...s.btn, ...base, padding: pad, fontSize: fz, fontWeight: 600, minHeight: 44, opacity: disabled ? 0.4 : 1, cursor: disabled ? 'not-allowed' : 'pointer', width: full ? '100%' : undefined, ...style }}
       onMouseEnter={e => { if (!disabled && variant === 'primary') e.currentTarget.style.boxShadow = '0 2px 8px rgba(45, 106, 79, 0.35)'; }}
       onMouseLeave={e => { if (!disabled && variant === 'primary') e.currentTarget.style.boxShadow = '0 1px 2px rgba(45, 106, 79, 0.2)'; }}
     >
@@ -151,9 +153,9 @@ const Badge = ({ status }) => {
   const { label, bg, color, filled } = map[status] || map.draft;
   return (
     <span style={{
-      fontSize: 10, fontWeight: filled ? 800 : 700,
+      fontSize: 12, fontWeight: filled ? 800 : 700,
       letterSpacing: '0.08em', textTransform: 'uppercase',
-      padding: '3px 9px', borderRadius: 4,
+      padding: '4px 11px', borderRadius: 5,
       background: bg, color,
       fontFamily: "'Inter', sans-serif",
       whiteSpace: 'nowrap', lineHeight: 1.6, display: 'inline-block',
@@ -166,19 +168,19 @@ const Badge = ({ status }) => {
 };
 
 const PrimaryBtn = ({ children, onClick, disabled, style = {}, size = 'md', full }) => {
-  const pad = size === 'sm' ? '8px 16px' : size === 'lg' ? '13px 26px' : '10px 20px';
-  const fz  = size === 'sm' ? 12 : size === 'lg' ? 15 : 14;
+  const pad = size === 'sm' ? '9px 18px' : size === 'lg' ? '14px 28px' : '12px 22px';
+  const fz  = size === 'sm' ? 13 : size === 'lg' ? 17 : 15;
   return (
     <button
       onClick={onClick}
       disabled={disabled}
       style={{
-        ...s.btn, padding: pad, fontSize: fz,
+        ...s.btn, padding: pad, fontSize: fz, fontWeight: 700,
         background: C.orange, color: '#ffffff',
         boxShadow: '0 1px 2px rgba(45, 106, 79, 0.2)',
         opacity: disabled ? 0.4 : 1,
         cursor: disabled ? 'not-allowed' : 'pointer',
-        width: full ? '100%' : undefined, minHeight: 40, ...style,
+        width: full ? '100%' : undefined, minHeight: 46, ...style,
       }}
       onMouseEnter={e => { if (!disabled) e.currentTarget.style.boxShadow = '0 2px 8px rgba(45, 106, 79, 0.35)'; }}
       onMouseLeave={e => { if (!disabled) e.currentTarget.style.boxShadow = '0 1px 2px rgba(45, 106, 79, 0.2)'; }}
@@ -189,14 +191,14 @@ const PrimaryBtn = ({ children, onClick, disabled, style = {}, size = 'md', full
 };
 
 const GhostBtn = ({ children, onClick, style = {}, size = 'md', full }) => {
-  const pad = size === 'sm' ? '8px 14px' : '10px 18px';
-  const fz  = size === 'sm' ? 12 : 14;
+  const pad = size === 'sm' ? '8px 14px' : '11px 20px';
+  const fz  = size === 'sm' ? 13 : 15;
   return (
     <button onClick={onClick} style={{
-      ...s.btn, padding: pad, fontSize: fz,
-      background: 'transparent', color: C.muted,
+      ...s.btn, padding: pad, fontSize: fz, fontWeight: 600,
+      background: 'transparent', color: C.text,
       border: `1px solid ${C.border}`,
-      width: full ? '100%' : undefined, minHeight: 40, ...style,
+      width: full ? '100%' : undefined, minHeight: 44, ...style,
     }}>{children}</button>
   );
 };
@@ -248,12 +250,12 @@ const Logo = ({ size = 24 }) => (
 );
 
 const SectionHead = ({ icon, title, sub }) => (
-  <div style={{ marginBottom: 20, paddingBottom: 14, borderBottom: `1px solid ${C.border}` }}>
-    <div style={{ display: 'flex', alignItems: 'center', gap: icon ? 8 : 0 }}>
-      {icon && <span style={{ fontSize: 18 }}>{icon}</span>}
-      <h1 style={{ margin: 0, fontFamily: "'Inter', sans-serif", fontSize: 22, fontWeight: 700, color: C.text, letterSpacing: '-0.02em' }}>{title}</h1>
+  <div style={{ marginBottom: 22, paddingBottom: 16, borderBottom: `1px solid ${C.border}` }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: icon ? 10 : 0 }}>
+      {icon && <span style={{ fontSize: 22 }}>{icon}</span>}
+      <h1 style={{ margin: 0, fontFamily: "'Inter', sans-serif", fontSize: 28, fontWeight: 700, color: C.text, letterSpacing: '-0.025em' }}>{title}</h1>
     </div>
-    {sub && <p style={{ margin: '4px 0 0', fontSize: 13, color: C.muted, lineHeight: 1.5, fontVariantNumeric: 'tabular-nums' }}>{sub}</p>}
+    {sub && <p style={{ margin: '6px 0 0', fontSize: 15, color: C.muted, lineHeight: 1.5, fontVariantNumeric: 'tabular-nums', fontWeight: 500 }}>{sub}</p>}
   </div>
 );
 
@@ -274,9 +276,10 @@ const StatCard = ({ icon, label, value, color = C.orange }) => (
   >
     {/* Bold accent stripe — 4px gradient with a fade-out tail on the right. */}
     <div style={{ height: 4, background: `linear-gradient(90deg, ${color} 0%, ${color} 60%, ${color}88 100%)` }} />
-    <div style={{ padding: '16px 18px 18px', textAlign: 'center' }}>
-      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.muted, marginBottom: 8 }}>{label}</div>
-      <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 36, fontWeight: 800, color, lineHeight: 1, fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.03em' }}>{value}</div>
+    <div style={{ padding: '18px 20px 20px', textAlign: 'center' }}>
+      {/* Larger label and bolder weight for sun-readable text outdoors on iPad. */}
+      <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.muted, marginBottom: 10 }}>{label}</div>
+      <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 42, fontWeight: 800, color, lineHeight: 1, fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.03em' }}>{value}</div>
     </div>
   </div>
 );
@@ -885,7 +888,7 @@ function Dashboard({ user, nav, invoices = [] }) {
       <div style={{ display: 'grid', gridTemplateColumns: isTablet ? '1fr' : '1fr 290px', gap: 14 }}>
 
         <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 4, padding: '16px 18px' }}>
-          <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, fontWeight: 800, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>Recent Invoices</div>
+          <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, fontWeight: 800, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 14 }}>Recent Invoices</div>
           {recent.length === 0 ? (
             <div style={{ padding: '20px 0', textAlign: 'center', color: C.dim, fontSize: 13, lineHeight: 1.6 }}>
               No invoices yet.{' '}
@@ -910,11 +913,11 @@ function Dashboard({ user, nav, invoices = [] }) {
               onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
               >
                 <div style={{ minWidth: 0 }}>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: C.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{inv.clientName || '—'}</div>
-                  <div style={{ fontSize: 12, color: C.muted, marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{inv.title} — {inv.createdAt}</div>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: C.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', letterSpacing: '-0.01em' }}>{inv.clientName || '—'}</div>
+                  <div style={{ fontSize: 14, color: C.muted, marginTop: 3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: 500 }}>{inv.title} — {inv.createdAt}</div>
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
-                  <div style={{ fontSize: 16, fontWeight: 700, fontFamily: "'Inter', sans-serif", color: C.text, fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.01em' }}>{fmtMoney(calc.total)}</div>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6, flexShrink: 0 }}>
+                  <div style={{ fontSize: 19, fontWeight: 800, fontFamily: "'Inter', sans-serif", color: C.text, fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.02em' }}>{fmtMoney(calc.total)}</div>
                   <InvBadge status={inv.status} />
                 </div>
               </div>
@@ -923,7 +926,7 @@ function Dashboard({ user, nav, invoices = [] }) {
         </div>
 
         <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 4, padding: '16px 18px' }}>
-          <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, fontWeight: 800, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 14 }}>Quick Actions</div>
+          <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, fontWeight: 800, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 14 }}>Quick Actions</div>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             {[
               { label: 'New Invoice', sec: 'invoice' },
@@ -1150,9 +1153,9 @@ function InvBadge({ status }) {
   const meta = INV_STATUS[status] || INV_STATUS.draft;
   const { label, bg, color, filled } = meta;
   return <span style={{
-    fontSize: 10, fontWeight: filled ? 800 : 700,
+    fontSize: 12, fontWeight: filled ? 800 : 700,
     letterSpacing: '0.08em', textTransform: 'uppercase',
-    padding: '3px 9px', borderRadius: 4,
+    padding: '4px 11px', borderRadius: 5,
     background: bg, color,
     fontFamily: "'Inter', sans-serif",
     whiteSpace: 'nowrap', display: 'inline-block',
@@ -1345,8 +1348,8 @@ function InvoiceHub({ invoices, onSelect, onNew }) {
       {/* Header */}
       <div style={{ marginBottom:20, paddingBottom:18, borderBottom:`1px solid ${C.border}`, display:'flex', alignItems:'center', justifyContent:'space-between', flexWrap:'wrap', gap:12 }}>
         <div>
-          <h1 style={{ margin:0, fontFamily:"'Inter', sans-serif", fontSize:24, fontWeight:700, color:C.text, letterSpacing:'-0.02em' }}>Invoices</h1>
-          <p style={{ margin:'4px 0 0', fontSize:17, color:C.muted }}>{invoices.length} total</p>
+          <h1 style={{ margin:0, fontFamily:"'Inter', sans-serif", fontSize:28, fontWeight:700, color:C.text, letterSpacing:'-0.025em' }}>Invoices</h1>
+          <p style={{ margin:'6px 0 0', fontSize:15, color:C.muted, fontWeight:500 }}>{invoices.length} total</p>
         </div>
         <Btn variant="primary" onClick={onNew} style={{ fontSize:21, padding:'12px 22px', minHeight:52 }}>New Invoice</Btn>
       </div>
@@ -1372,10 +1375,10 @@ function InvoiceHub({ invoices, onSelect, onNew }) {
           onMouseLeave={e => { e.currentTarget.style.boxShadow = C.shadow1; e.currentTarget.style.transform = 'translateY(0)'; }}
           >
             <div style={{ height: 4, background: `linear-gradient(90deg, ${c.color} 0%, ${c.color} 60%, ${c.color}88 100%)` }} />
-            <div style={{ padding: '14px 16px 16px', textAlign: 'center' }}>
-              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.muted, marginBottom: 3 }}>{c.label}</div>
-              <div style={{ fontSize: 11, color: C.dim, marginBottom: 8 }}>{c.sub}</div>
-              <div style={{ fontFamily:"'Inter', sans-serif", fontSize: 30, fontWeight: 800, color: c.color, lineHeight: 1, fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.03em' }}>{c.val}</div>
+            <div style={{ padding: '16px 18px 18px', textAlign: 'center' }}>
+              <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.muted, marginBottom: 4 }}>{c.label}</div>
+              <div style={{ fontSize: 13, color: C.dim, marginBottom: 10, fontWeight: 500 }}>{c.sub}</div>
+              <div style={{ fontFamily:"'Inter', sans-serif", fontSize: 36, fontWeight: 800, color: c.color, lineHeight: 1, fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.03em' }}>{c.val}</div>
             </div>
           </div>
         ))}
@@ -3723,8 +3726,8 @@ function QuotesHub({ quotes, clients, onSelect, onNew, onNewClient }) {
       {/* Page header */}
       <div style={{ marginBottom: 20, paddingBottom: 18, borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <h1 style={{ margin: 0, fontFamily: "'Inter', sans-serif", fontSize: 24, fontWeight: 700, color: C.text, letterSpacing: '-0.02em' }}>Quotes</h1>
-          <p style={{ margin: '4px 0 0', fontSize: 18, color: C.muted }}>{quotes.length} total — {quotes.filter(q => q.status === 'sent').length} awaiting response</p>
+          <h1 style={{ margin: 0, fontFamily: "'Inter', sans-serif", fontSize: 28, fontWeight: 700, color: C.text, letterSpacing: '-0.025em' }}>Quotes</h1>
+          <p style={{ margin: '6px 0 0', fontSize: 15, color: C.muted, fontWeight: 500 }}>{quotes.length} total — {quotes.filter(q => q.status === 'sent').length} awaiting response</p>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           {isTablet && <Btn variant="flat" size="sm" onClick={() => setShowFolders(!showFolders)} style={{ fontSize: 21, padding: '12px 22px', minHeight: 52 }}>Clients</Btn>}
