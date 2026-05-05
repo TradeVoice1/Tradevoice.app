@@ -4742,11 +4742,16 @@ function Settings({ user, setUser, logo, onLogoChange, showProfileModal, setShow
               </div>
             </div>
             <button onClick={() => toggleConnect('stripe')} style={{
-              ...s.btn, padding: '10px 20px', fontSize: 16, minHeight: 44, flexShrink: 0,
+              ...s.btn,
+              padding: '12px 22px', fontSize: 15, fontWeight: 700, minHeight: 46, flexShrink: 0,
               background: payments?.stripe?.connected ? '#fef2f2' : C.orange,
-              border: `1.5px solid ${payments?.stripe?.connected ? C.error + '44' : C.orange}`,
-              color: payments?.stripe?.connected ? C.error : C.muted,
-            }}>
+              border: payments?.stripe?.connected ? `1.5px solid ${C.error}44` : 'none',
+              color: payments?.stripe?.connected ? C.error : '#ffffff',
+              boxShadow: payments?.stripe?.connected ? 'none' : '0 1px 2px rgba(45, 106, 79, 0.25)',
+            }}
+            onMouseEnter={e => { if (!payments?.stripe?.connected) e.currentTarget.style.boxShadow = '0 4px 12px rgba(45, 106, 79, 0.4)'; }}
+            onMouseLeave={e => { if (!payments?.stripe?.connected) e.currentTarget.style.boxShadow = '0 1px 2px rgba(45, 106, 79, 0.25)'; }}
+            >
               {payments?.stripe?.connected ? 'Disconnect' : 'Connect Stripe'}
             </button>
           </div>
