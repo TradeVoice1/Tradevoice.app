@@ -7,21 +7,59 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Inter feature flags: contextual alternates + stylistic set 1 (sharper "a", "g") */
+  font-feature-settings: 'cv11', 'ss01';
 }
 
-* {
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
 html, body {
   margin: 0;
   padding: 0;
   width: 100%;
   min-height: 100vh;
-  background: #f0f4f2;
+  /* Subtle radial vignette: a hint of brand tint at top, fading to flat. */
+  background:
+    radial-gradient(circle at 50% -120px, rgba(45, 106, 79, 0.045), transparent 600px),
+    #f3f6f4;
+  background-attachment: fixed;
+  scroll-behavior: smooth;
 }
 
 #root {
   width: 100%;
   min-height: 100vh;
+}
+
+/* Tabular numerics on every number-y element so $1,234.56 columns line up. */
+[data-tnum],
+.tabular-nums,
+input[type='number'],
+table {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum';
+}
+
+/* Slightly nicer focus ring on inputs (works alongside inline styles via outline). */
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: #2d6a4f;
+  box-shadow: 0 0 0 3px rgba(45, 106, 79, 0.15);
+}
+
+/* Hide the spinner buttons on number inputs — they look out of place in modern UIs. */
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type='number'] {
+  -moz-appearance: textfield;
+}
+
+/* Disable native button styling so all our inline-styled buttons look correct in Safari/iOS. */
+button {
+  font-family: inherit;
+  -webkit-tap-highlight-color: transparent;
 }

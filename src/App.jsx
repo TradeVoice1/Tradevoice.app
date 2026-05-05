@@ -32,55 +32,81 @@ function useBreakpoint() {
 }
 
 // ─── TOKENS ────────────────────────────────────────────────────────────────────
+// Color system: keep brand greens, soften borders, add elevation tones for layered depth.
 const C = {
-  bg:       '#f0f4f2',
-  surface:  '#ffffff',
-  raised:   '#f4f8f6',
-  border:   '#d6e4de',
-  border2:  '#b8d4c8',
-  orange:   '#2d6a4f',
-  orangeLo: '#effaf4',
-  orangeMd: '#b7dfca',
-  text:     '#111827',
-  muted:    '#6b7280',
-  dim:      '#9ca3af',
-  success:  '#1a7c42',
-  error:    '#dc2626',
-  warn:     '#d97706',
+  bg:        '#f3f6f4',     // page background — slightly cooler than before
+  surface:   '#ffffff',
+  surface2:  '#fbfdfc',     // elevated cards: a hair off-white for depth
+  raised:    '#f4f8f6',     // input fills, raised inset surfaces
+  border:    '#e6ede9',     // hairline borders — softened from #d6e4de
+  border2:   '#cfdfd6',     // medium border (focus rings, dividers)
+  orange:    '#2d6a4f',     // brand green (kept under "orange" key for compat)
+  orangeLo:  '#eef7f2',
+  orangeMd:  '#b7dfca',
+  text:      '#0f172a',     // slightly cooler than #111827 — feels more techy
+  muted:     '#64748b',     // cooler muted (was #6b7280)
+  dim:       '#94a3b8',     // cooler dim (was #9ca3af)
+  success:   '#1a7c42',
+  error:     '#dc2626',
+  warn:      '#d97706',
+  // Elevation shadows — layered, brand-tinted, very soft.
+  shadow1:   '0 1px 2px rgba(15, 23, 42, 0.04), 0 0 0 1px rgba(15, 23, 42, 0.03)',
+  shadow2:   '0 1px 2px rgba(15, 23, 42, 0.05), 0 8px 24px rgba(15, 23, 42, 0.06)',
+  glow:      '0 0 0 3px rgba(45, 106, 79, 0.15)',  // focus ring around inputs
 };
 
 const s = {
   btn: {
+    // Sentence-case-friendly default. Individual buttons can still override
+    // with letterSpacing/textTransform when a specific component needs it.
     fontFamily: "'Inter', sans-serif",
-    fontWeight: 700, letterSpacing: '0.06em',
-    textTransform: 'uppercase', border: 'none',
-    cursor: 'pointer', borderRadius: 3, transition: 'opacity 0.15s',
+    fontWeight: 600,
+    letterSpacing: '-0.005em',
+    border: 'none',
+    cursor: 'pointer',
+    borderRadius: 8,
+    transition: 'background 0.15s, box-shadow 0.15s, transform 0.05s',
     WebkitTapHighlightColor: 'transparent',
   },
   input: {
-    background: C.surface, border: `1.5px solid ${C.border2}`,
-    color: C.text, borderRadius: 3, outline: 'none',
+    background: C.surface,
+    border: `1px solid ${C.border}`,
+    color: C.text, borderRadius: 8, outline: 'none',
     fontFamily: "'Inter', sans-serif", fontSize: 16,
-    transition: 'border-color 0.15s', WebkitAppearance: 'none',
+    transition: 'border-color 0.15s, box-shadow 0.15s',
+    WebkitAppearance: 'none',
   },
   label: {
     display: 'block', marginBottom: 6, fontSize: 11, fontWeight: 700,
-    letterSpacing: '0.1em', textTransform: 'uppercase',
+    letterSpacing: '0.08em', textTransform: 'uppercase',
     color: C.muted, fontFamily: "'Inter', sans-serif",
+  },
+  // Reusable card surface — soft elevation + hairline border + smooth corners.
+  card: {
+    background: C.surface,
+    border: `1px solid ${C.border}`,
+    borderRadius: 12,
+    boxShadow: C.shadow1,
   },
 };
 
 // ── Shared UI primitives (used by both app and quotes sections) ──
 const Btn = ({ children, onClick, disabled, style = {}, variant = 'primary', size = 'md', full }) => {
   const pad  = size === 'sm' ? '7px 13px' : size === 'lg' ? '12px 24px' : '10px 18px';
-  const fz   = size === 'sm' ? 12 : size === 'lg' ? 15 : 13;
+  const fz   = size === 'sm' ? 13 : size === 'lg' ? 15 : 14;
   const base = variant === 'primary'
-    ? { background: C.orange, color: '#ffffff', border: 'none' }
+    ? { background: C.orange, color: '#ffffff', border: 'none', boxShadow: '0 1px 2px rgba(45, 106, 79, 0.2)' }
     : variant === 'ghost'
-    ? { background: 'transparent', color: C.muted, border: `1.5px solid ${C.border2}` }
-    : { background: C.raised, color: C.text, border: `1.5px solid ${C.border2}` };
+    ? { background: 'transparent', color: C.muted, border: `1px solid ${C.border}` }
+    : { background: C.surface, color: C.text, border: `1px solid ${C.border}`, boxShadow: C.shadow1 };
   return (
-    <button onClick={onClick} disabled={disabled} style={{ ...s.btn, ...base, padding: pad, fontSize: fz, minHeight: 44, opacity: disabled ? 0.4 : 1, cursor: disabled ? 'not-allowed' : 'pointer', width: full ? '100%' : undefined, ...style }}>
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      style={{ ...s.btn, ...base, padding: pad, fontSize: fz, minHeight: 40, opacity: disabled ? 0.4 : 1, cursor: disabled ? 'not-allowed' : 'pointer', width: full ? '100%' : undefined, ...style }}
+      onMouseEnter={e => { if (!disabled && variant === 'primary') e.currentTarget.style.boxShadow = '0 2px 8px rgba(45, 106, 79, 0.35)'; }}
+      onMouseLeave={e => { if (!disabled && variant === 'primary') e.currentTarget.style.boxShadow = '0 1px 2px rgba(45, 106, 79, 0.2)'; }}
+    >
       {children}
     </button>
   );
@@ -110,7 +136,7 @@ const Badge = ({ status }) => {
   };
   const { label, bg, color } = map[status] || map.draft;
   return (
-    <span style={{ fontSize: 11, fontWeight: 900, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '3px 8px', borderRadius: 2, background: bg, color, fontFamily: "'Inter', sans-serif", whiteSpace: 'nowrap', lineHeight: 1.6, display: 'inline-block' }}>
+    <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '3px 8px', borderRadius: 4, background: bg, color, fontFamily: "'Inter', sans-serif", whiteSpace: 'nowrap', lineHeight: 1.6, display: 'inline-block', border: `1px solid ${color}1a` }}>
       {label}
     </span>
   );
@@ -118,27 +144,36 @@ const Badge = ({ status }) => {
 
 const PrimaryBtn = ({ children, onClick, disabled, style = {}, size = 'md', full }) => {
   const pad = size === 'sm' ? '8px 16px' : size === 'lg' ? '13px 26px' : '10px 20px';
-  const fz  = size === 'sm' ? 11 : size === 'lg' ? 15 : 13;
+  const fz  = size === 'sm' ? 12 : size === 'lg' ? 15 : 14;
   return (
-    <button onClick={onClick} disabled={disabled} style={{
-      ...s.btn, padding: pad, fontSize: fz,
-      background: C.orange, color: '#ffffff',
-      opacity: disabled ? 0.4 : 1,
-      cursor: disabled ? 'not-allowed' : 'pointer',
-      width: full ? '100%' : undefined, minHeight: 44, ...style,
-    }}>{children}</button>
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      style={{
+        ...s.btn, padding: pad, fontSize: fz,
+        background: C.orange, color: '#ffffff',
+        boxShadow: '0 1px 2px rgba(45, 106, 79, 0.2)',
+        opacity: disabled ? 0.4 : 1,
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        width: full ? '100%' : undefined, minHeight: 40, ...style,
+      }}
+      onMouseEnter={e => { if (!disabled) e.currentTarget.style.boxShadow = '0 2px 8px rgba(45, 106, 79, 0.35)'; }}
+      onMouseLeave={e => { if (!disabled) e.currentTarget.style.boxShadow = '0 1px 2px rgba(45, 106, 79, 0.2)'; }}
+    >
+      {children}
+    </button>
   );
 };
 
 const GhostBtn = ({ children, onClick, style = {}, size = 'md', full }) => {
   const pad = size === 'sm' ? '8px 14px' : '10px 18px';
-  const fz  = size === 'sm' ? 11 : 13;
+  const fz  = size === 'sm' ? 12 : 14;
   return (
     <button onClick={onClick} style={{
       ...s.btn, padding: pad, fontSize: fz,
       background: 'transparent', color: C.muted,
-      border: `1.5px solid ${C.border2}`,
-      width: full ? '100%' : undefined, minHeight: 44, ...style,
+      border: `1px solid ${C.border}`,
+      width: full ? '100%' : undefined, minHeight: 40, ...style,
     }}>{children}</button>
   );
 };
@@ -193,19 +228,26 @@ const SectionHead = ({ icon, title, sub }) => (
   <div style={{ marginBottom: 20, paddingBottom: 14, borderBottom: `1px solid ${C.border}` }}>
     <div style={{ display: 'flex', alignItems: 'center', gap: icon ? 8 : 0 }}>
       {icon && <span style={{ fontSize: 18 }}>{icon}</span>}
-      <h1 style={{ margin: 0, fontFamily: "'Inter', sans-serif", fontSize: 22, fontWeight: 900, color: C.text, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{title}</h1>
+      <h1 style={{ margin: 0, fontFamily: "'Inter', sans-serif", fontSize: 22, fontWeight: 700, color: C.text, letterSpacing: '-0.02em' }}>{title}</h1>
     </div>
-    {sub && <p style={{ margin: '4px 0 0', fontSize: 13, color: C.muted, lineHeight: 1.5 }}>{sub}</p>}
+    {sub && <p style={{ margin: '4px 0 0', fontSize: 13, color: C.muted, lineHeight: 1.5, fontVariantNumeric: 'tabular-nums' }}>{sub}</p>}
   </div>
 );
 
 const StatCard = ({ icon, label, value, color = C.orange }) => (
-  <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, overflow: 'hidden' }}>
-    <div style={{ background: color, padding: '7px 14px', textAlign: 'center' }}>
-      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.9)' }}>{label}</div>
-    </div>
-    <div style={{ padding: '12px 14px', textAlign: 'center' }}>
-      <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 24, fontWeight: 900, color, lineHeight: 1 }}>{value}</div>
+  <div style={{
+    background: C.surface,
+    border: `1px solid ${C.border}`,
+    borderRadius: 12,
+    overflow: 'hidden',
+    boxShadow: C.shadow1,
+    transition: 'box-shadow 0.15s, transform 0.15s',
+  }}>
+    {/* Top bar: 3px accent stripe instead of a full color block — quieter, more modern. */}
+    <div style={{ height: 3, background: `linear-gradient(90deg, ${color}, ${color}cc)` }} />
+    <div style={{ padding: '14px 16px 16px', textAlign: 'center' }}>
+      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: C.muted, marginBottom: 6 }}>{label}</div>
+      <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 28, fontWeight: 700, color, lineHeight: 1, fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.02em' }}>{value}</div>
     </div>
   </div>
 );
@@ -1055,7 +1097,7 @@ const SEED_INVOICES = [];
 // ── Status Badge ───────────────────────────────────────────────────────────────
 function InvBadge({ status }) {
   const { label, bg, color } = INV_STATUS[status] || INV_STATUS.draft;
-  return <span style={{ fontSize:11, fontWeight:900, letterSpacing:'0.08em', textTransform:'uppercase', padding:'3px 8px', borderRadius:2, background:bg, color, fontFamily:"'Inter', sans-serif", whiteSpace:'nowrap', display:'inline-block' }}>{label}</span>;
+  return <span style={{ fontSize:10, fontWeight:700, letterSpacing:'0.06em', textTransform:'uppercase', padding:'3px 8px', borderRadius:4, background:bg, color, fontFamily:"'Inter', sans-serif", whiteSpace:'nowrap', display:'inline-block', border: `1px solid ${color}1a` }}>{label}</span>;
 }
 
 
@@ -5082,7 +5124,9 @@ export default function Tradevoice() {
   const TopBar = (
     <div style={{
       position: 'sticky', top: 0, zIndex: 100,
-      height: TOP_H, background: C.surface, borderBottom: `2px solid ${C.orange}`,
+      height: TOP_H, background: C.surface,
+      borderBottom: `1px solid ${C.border}`,
+      boxShadow: '0 1px 0 rgba(15, 23, 42, 0.02), 0 4px 16px rgba(15, 23, 42, 0.03)',
       display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 18px',
     }}>
       {/* Logo — centered via flex justifyContent on parent */}
