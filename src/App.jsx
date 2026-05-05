@@ -149,8 +149,12 @@ const Label = ({ children }) => <label style={s.label}>{children}</label>;
 // - Auto-selects on focus so typing replaces the value
 function NumberInput({ value, onChange, width = 76, prefix = '', placeholder = '0', style: extraStyle = {}, fontSize, textAlign = 'right' }) {
   const [text, setText] = useState(() => (value === 0 || value == null ? '' : String(value)));
+  // Tracks whether the user has typed anything since focusing the field. The first
+  // digit/dot keystroke after focus replaces the whole field — guarantees "click +
+  // type = replace" without depending on the browser's flaky select() behavior.
+  const [freshFocus, setFreshFocus] = useState(false);
 
-  // If parent value changes externally (new row, reset, etc.), pull it into local state.
+  // Sync local state when the parent value changes externally (new row, etc.).
   useEffect(() => {
     const incoming = value === 0 || value == null ? '' : String(value);
     if (parseFloat(text || '0') !== value && incoming !== text) setText(incoming);
@@ -159,22 +163,41 @@ function NumberInput({ value, onChange, width = 76, prefix = '', placeholder = '
 
   const handleChange = (e) => {
     const v = e.target.value;
-    // Allow only digits and a single decimal point during typing.
     if (v === '' || /^\d*\.?\d*$/.test(v)) setText(v);
   };
 
+  // Belt-and-suspenders behaviour for "type to replace":
+  //   1. onFocus fires select() (deferred so browser cursor-positioning doesn't undo it)
+  //   2. If select() failed silently, this handler still replaces the entire field on
+  //      the first digit/dot keystroke after focus.
+  const handleKeyDown = (e) => {
+    if (!freshFocus) return;
+    if (/^[0-9.]$/.test(e.key)) {
+      e.preventDefault();
+      setText(e.key === '.' ? '0.' : e.key); // start with "0." if user types a leading dot
+      setFreshFocus(false);
+      // Move cursor to end on next tick
+      const el = e.currentTarget;
+      setTimeout(() => { try { el?.setSelectionRange(el.value.length, el.value.length); } catch (_) {} }, 0);
+    } else {
+      // Backspace, arrow, tab, etc. — exit fresh-focus mode but allow default behaviour
+      setFreshFocus(false);
+    }
+  };
+
   const commit = () => {
+    setFreshFocus(false);
     const num = text === '' || text === '.' ? 0 : parseFloat(text);
     if (num !== value) onChange(num);
-    // Normalize the display (e.g. "05" → "5", "5." → "5", "" stays empty)
     setText(num === 0 ? '' : String(num));
   };
 
-  // Auto-select on focus, deferred past the click event so the browser's
-  // cursor-positioning doesn't immediately wipe the selection.
-  const selectAll = (e) => {
+  const handleFocus = (e) => {
+    setFreshFocus(true);
+    // Try to visually highlight the contents so the user sees what's about to be replaced.
+    // Deferred past the click's cursor placement.
     const el = e.currentTarget;
-    setTimeout(() => { try { el?.select(); } catch (_) { /* ignore if unmounted */ } }, 0);
+    setTimeout(() => { try { el?.select(); } catch (_) {} }, 0);
   };
 
   return (
@@ -186,8 +209,8 @@ function NumberInput({ value, onChange, width = 76, prefix = '', placeholder = '
         value={text}
         onChange={handleChange}
         onBlur={commit}
-        onFocus={selectAll}
-        onClick={selectAll}
+        onFocus={handleFocus}
+        onKeyDown={handleKeyDown}
         placeholder={placeholder}
         style={{
           ...s.input,
