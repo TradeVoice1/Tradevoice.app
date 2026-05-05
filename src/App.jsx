@@ -1351,21 +1351,31 @@ function InvoiceHub({ invoices, onSelect, onNew }) {
         <Btn variant="primary" onClick={onNew} style={{ fontSize:21, padding:'12px 22px', minHeight:52 }}>New Invoice</Btn>
       </div>
 
-      {/* Money In summary — 4 cards like QB */}
-      <div style={{ display:'grid', gridTemplateColumns:isTablet?'1fr 1fr':'repeat(4,1fr)', gap:10, marginBottom:16 }}>
+      {/* Money In summary — same bold treatment as Dashboard StatCard:
+          gradient wash + 4px accent stripe + hover lift. No more blue. */}
+      <div style={{ display:'grid', gridTemplateColumns:isTablet?'1fr 1fr':'repeat(4,1fr)', gap:12, marginBottom:18 }}>
         {[
-          { label:'Open',    val:fmtMoney(open),    color:'#1d4ed8', sub:'Sent & viewed'    },
-          { label:'Overdue', val:fmtMoney(overdue), color:C.error,   sub:'Past due date'    },
-          { label:'Partial', val:fmtMoney(partial), color:C.warn,    sub:'Balance remaining'},
-          { label:'Paid',    val:fmtMoney(paidMo),  color:C.success, sub:'Collected'        },
+          { label:'Open',    val:fmtMoney(open),    color:C.accent,    sub:'Sent & viewed'    },  // orange (was blue)
+          { label:'Overdue', val:fmtMoney(overdue), color:C.errorBold, sub:'Past due date'    },  // bold red
+          { label:'Partial', val:fmtMoney(partial), color:C.warn,      sub:'Balance remaining'},  // gold
+          { label:'Paid',    val:fmtMoney(paidMo),  color:C.success,   sub:'Collected'        },  // green
         ].map(c => (
-          <div key={c.label} style={{ background:C.surface, border:`1px solid ${C.border}`, borderRadius:8, overflow:'hidden' }}>
-            <div style={{ background:c.color, padding:'7px 14px', textAlign:'center' }}>
-              <div style={{ fontSize:13, fontWeight:700, letterSpacing:'0.1em', textTransform:'uppercase', color:'rgba(255,255,255,0.9)' }}>{c.label}</div>
-              <div style={{ fontSize:11, color:'rgba(255,255,255,0.7)', marginTop:1 }}>{c.sub}</div>
-            </div>
-            <div style={{ padding:'12px 14px', textAlign:'center' }}>
-              <div style={{ fontFamily:"'Inter', sans-serif", fontSize:24, fontWeight:900, color:c.color, lineHeight:1 }}>{c.val}</div>
+          <div key={c.label} style={{
+            background: `linear-gradient(135deg, ${C.surface} 0%, ${C.surface} 55%, ${c.color}0d 100%)`,
+            border: `1px solid ${C.border}`,
+            borderRadius: 14,
+            overflow: 'hidden',
+            boxShadow: C.shadow1,
+            transition: 'box-shadow 0.2s, transform 0.2s',
+          }}
+          onMouseEnter={e => { e.currentTarget.style.boxShadow = C.shadow2; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+          onMouseLeave={e => { e.currentTarget.style.boxShadow = C.shadow1; e.currentTarget.style.transform = 'translateY(0)'; }}
+          >
+            <div style={{ height: 4, background: `linear-gradient(90deg, ${c.color} 0%, ${c.color} 60%, ${c.color}88 100%)` }} />
+            <div style={{ padding: '14px 16px 16px', textAlign: 'center' }}>
+              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.muted, marginBottom: 3 }}>{c.label}</div>
+              <div style={{ fontSize: 11, color: C.dim, marginBottom: 8 }}>{c.sub}</div>
+              <div style={{ fontFamily:"'Inter', sans-serif", fontSize: 30, fontWeight: 800, color: c.color, lineHeight: 1, fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.03em' }}>{c.val}</div>
             </div>
           </div>
         ))}
