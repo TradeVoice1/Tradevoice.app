@@ -31,7 +31,9 @@ const dbToInvoice = (r) => ({
 // `id` here — the upsert helper sets it explicitly only when updating.
 const invoiceToDb = (inv) => ({
   number:          inv.number,
-  client_id:       inv.clientId      ?? null,
+  // client_id is a uuid foreign key — Postgres rejects empty string, so coerce
+  // any falsy value (empty string, undefined, null) to null.
+  client_id:       inv.clientId || null,
   client_name:     inv.clientName    ?? null,
   client_email:    inv.clientEmail   ?? null,
   client_phone:    inv.clientPhone   ?? null,

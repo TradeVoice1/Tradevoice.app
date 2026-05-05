@@ -14,7 +14,7 @@ const dbToTimeOff = (r) => ({
 });
 
 const toDb = (t) => ({
-  tech_user_id: t.techUserId ?? null,
+  tech_user_id: t.techUserId || null,
   tech_name:    t.techName   ?? null,
   start_date:   t.startDate,
   end_date:     t.endDate,

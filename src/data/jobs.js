@@ -21,10 +21,11 @@ const dbToJob = (r) => ({
 });
 
 const jobToDb = (j) => ({
-  client_id:     j.clientId   ?? null,
-  invoice_id:    j.invoiceId  ?? null,
-  tech_user_id:  j.techUserId ?? null,
-  plan_id:       j.planId     ?? null,
+  // UUID FKs — coerce empty string to null so Postgres doesn't reject the insert.
+  client_id:     j.clientId   || null,
+  invoice_id:    j.invoiceId  || null,
+  tech_user_id:  j.techUserId || null,
+  plan_id:       j.planId     || null,
   title:         j.title      ?? null,
   address:       j.address    ?? null,
   phone:         j.phone      ?? null,

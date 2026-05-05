@@ -20,13 +20,13 @@ const dbToPlan = (r) => ({
 });
 
 const planToDb = (p) => ({
-  client_id:             p.clientId          ?? null,
+  client_id:             p.clientId          || null,
   client_name:           p.clientName        ?? null,
   title:                 p.title             ?? null,
   trade:                 p.trade             ?? null,
   frequency_months:      p.frequencyMonths   ?? 12,
   default_duration:      p.defaultDuration   ?? 2,
-  default_tech_user_id:  p.defaultTechUserId ?? null,
+  default_tech_user_id:  p.defaultTechUserId || null,
   notes:                 p.notes             ?? null,
   active:                p.active !== false,
   started_at:            p.startedAt         || null,

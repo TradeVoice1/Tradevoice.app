@@ -26,7 +26,11 @@ const dbToQuote = (r) => ({
 
 const quoteToDb = (q) => ({
   number:           q.number,
-  client_id:        q.clientId       ?? null,
+  // client_id is a uuid foreign key — Postgres rejects empty string, so coerce
+  // any falsy value (empty string, undefined, null) to null. This was the bug
+  // that made "Save + Preview" silently fail on a brand-new quote before a
+  // client was picked.
+  client_id:        q.clientId || null,
   title:            q.title          ?? null,
   trade:            q.trade          ?? null,
   status:           q.status         ?? 'draft',

@@ -1693,17 +1693,44 @@ function InvoiceEditor({ initial, user, onSave, onCancel }) {
 
   const calc = calcInvoice({ labor, materials, equipment, markup, tax:taxRate }, user?.state);
 
-  const handleSave = (asDraft) => {
+  const [saving, setSaving] = useState(false);
+  const handleSave = async (asDraft) => {
+    if (saving) return;
+
+    // Force any focused input to blur so its onBlur fires and commits any
+    // typed value into state — otherwise saves right after typing in a
+    // rate/hours/qty field would persist the OLD value.
+    if (document.activeElement && typeof document.activeElement.blur === 'function') {
+      document.activeElement.blur();
+    }
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    if (!title.trim()) {
+      alert('Please give the invoice a title before saving.');
+      return;
+    }
+
     const activity = initial?.activity || [{ date: createdAt, type:'created', note:'Invoice created' }];
-    onSave({
+    const inv = {
       ...(initial||{}), id: initial?.id || uid2(),
-      number, title, clientName, clientEmail, clientPhone, clientAddress:clientAddr,
-      trade, createdAt, terms, dueAt, notes, markup, tax:taxRate,
+      number, title: title.trim(),
+      clientName, clientEmail, clientPhone, clientAddress: clientAddr,
+      trade, createdAt, terms, dueAt, notes, markup, tax: taxRate,
       labor, materials, equipment,
       payments: initial?.payments || [],
       activity,
       status: asDraft ? 'draft' : (initial?.status || 'draft'),
-    });
+    };
+
+    setSaving(true);
+    try {
+      await onSave(inv);
+    } catch (e) {
+      console.error('invoice save failed', e);
+      alert(e?.message || 'Could not save invoice.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const TABS = [
@@ -1743,8 +1770,8 @@ function InvoiceEditor({ initial, user, onSave, onCancel }) {
           </span>
         </div>
         <div style={{ display:'flex', gap:8 }}>
-          <Btn variant="ghost"   size="sm" onClick={()=>handleSave(true)}  style={{ fontSize:21, padding:'12px 24px', minHeight:52 }}>Save Draft</Btn>
-          <Btn variant="primary" size="sm" onClick={()=>handleSave(false)} style={{ fontSize:21, padding:'12px 24px', minHeight:52 }}>Save + Preview</Btn>
+          <Btn variant="ghost"   size="sm" onClick={()=>handleSave(true)}  disabled={saving} style={{ fontSize:21, padding:'12px 24px', minHeight:52, opacity: saving ? 0.6 : 1 }}>{saving ? 'Saving…' : 'Save Draft'}</Btn>
+          <Btn variant="primary" size="sm" onClick={()=>handleSave(false)} disabled={saving} style={{ fontSize:21, padding:'12px 24px', minHeight:52, opacity: saving ? 0.6 : 1 }}>{saving ? 'Saving…' : 'Save + Preview'}</Btn>
         </div>
       </div>
 
@@ -3738,11 +3765,32 @@ function QuoteEditor({ initial, clients, user, onSave, onCancel }) {
 
   // ── AI scope writer ──
   // ── Save ──
-  const handleSave = (asDraft) => {
+  const [saving, setSaving] = useState(false);
+  const handleSave = async (asDraft) => {
+    if (saving) return;   // guard against double-click while a save is in flight
+
+    // Force any focused number/text input to blur first, so its onBlur fires
+    // and commits the typed value into state. Without this, a save right
+    // after typing in a rate/hours field would persist the OLD value.
+    if (document.activeElement && typeof document.activeElement.blur === 'function') {
+      document.activeElement.blur();
+    }
+    // Yield one tick so React flushes the blur-triggered state updates
+    // before we read labor/mats/equip into the save payload.
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    // Minimum-viable validation. The title is what shows up in lists, so it's
+    // the one field we actually need. Everything else is optional / has defaults.
+    if (!title.trim()) {
+      alert('Please give the quote a title before saving.');
+      return;
+    }
+
     const q = {
       id: initial?.id || uid(),
       number: initial?.number || nextQuoteNum(),
-      clientId, title,
+      clientId: clientId || null,   // empty-string guard for the FK
+      title: title.trim(),
       trade,
       status: asDraft ? 'draft' : (initial?.status || 'draft'),
       scope,
@@ -3754,7 +3802,19 @@ function QuoteEditor({ initial, clients, user, onSave, onCancel }) {
       revisionOf: initial?.revisionOf || null,
       revisionNumber: initial?.revisionNumber || 1,
     };
-    onSave(q);
+
+    setSaving(true);
+    try {
+      // onSave is async and may throw — let the parent's try/catch alert; we
+      // just clean up our own UI state here.
+      await onSave(q);
+    } catch (e) {
+      // Defensive: if the parent didn't already alert, show an error.
+      console.error('quote save failed', e);
+      alert(e?.message || 'Could not save quote.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   // ── Shared table helpers ──
@@ -3806,8 +3866,8 @@ function QuoteEditor({ initial, clients, user, onSave, onCancel }) {
           </span>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
-          <Btn variant="ghost"   size="sm" onClick={() => handleSave(true)}  style={{ fontSize: 21, padding: '12px 24px', minHeight: 52 }}>Save Draft</Btn>
-          <Btn variant="primary" size="sm" onClick={() => handleSave(false)} style={{ fontSize: 21, padding: '12px 24px', minHeight: 52 }}>Save + Preview</Btn>
+          <Btn variant="ghost"   size="sm" onClick={() => handleSave(true)}  disabled={saving} style={{ fontSize: 21, padding: '12px 24px', minHeight: 52, opacity: saving ? 0.6 : 1 }}>{saving ? 'Saving…' : 'Save Draft'}</Btn>
+          <Btn variant="primary" size="sm" onClick={() => handleSave(false)} disabled={saving} style={{ fontSize: 21, padding: '12px 24px', minHeight: 52, opacity: saving ? 0.6 : 1 }}>{saving ? 'Saving…' : 'Save + Preview'}</Btn>
         </div>
       </div>
 
@@ -4150,8 +4210,8 @@ function QuoteEditor({ initial, clients, user, onSave, onCancel }) {
           </div>
 
           <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <Btn variant="primary" full onClick={() => handleSave(false)}>Save + Preview</Btn>
-            <Btn variant="ghost"   full onClick={() => handleSave(true)}>Save as Draft</Btn>
+            <Btn variant="primary" full onClick={() => handleSave(false)} disabled={saving} style={{ opacity: saving ? 0.6 : 1 }}>{saving ? 'Saving…' : 'Save + Preview'}</Btn>
+            <Btn variant="ghost"   full onClick={() => handleSave(true)}  disabled={saving} style={{ opacity: saving ? 0.6 : 1 }}>{saving ? 'Saving…' : 'Save as Draft'}</Btn>
           </div>
         </div>
       </div>
