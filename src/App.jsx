@@ -1976,7 +1976,7 @@ function InvoiceEditor({ initial, user, onSave, onCancel }) {
 }
 
 // ── Invoice Document ───────────────────────────────────────────────────────────
-function InvoiceDocument({ invoice, user, logo, payments, onEdit, onBack, onRecordPayment, onVoid, onSendReminder }) {
+function InvoiceDocument({ invoice, user, logo, payments, onEdit, onBack, onRecordPayment, onVoid, onDelete, onUnInvoice, onSendReminder }) {
   const { isTablet } = useBreakpoint();
   const calc = calcInvoice(invoice, user?.state);
   const tradeConf = getTradeConfig(invoice.trade, user?.trades);
@@ -2037,6 +2037,18 @@ function InvoiceDocument({ invoice, user, logo, payments, onEdit, onBack, onReco
           )}
           {!isVoid && !isPaid && (
             <Btn variant="ghost" size="sm" onClick={onVoid} style={{ fontSize:18, padding:'10px 18px', minHeight:48, color:C.error, borderColor:C.error+'44' }}>Void</Btn>
+          )}
+          {/* Un-invoice: only for invoices created from a quote (notes contain "Converted from"). */}
+          {!isPaid && onUnInvoice && /Converted from/.test(invoice.notes || '') && (
+            <Btn variant="ghost" size="sm" onClick={onUnInvoice} style={{ fontSize:18, padding:'10px 18px', minHeight:48, color:C.warn, borderColor:C.warn+'44' }} title="Delete this invoice and restore the source quote">
+              Un-invoice
+            </Btn>
+          )}
+          {/* Hard delete — destructive, separate from Void. Hidden once paid (don't lose payment history). */}
+          {!isPaid && onDelete && (
+            <Btn variant="ghost" size="sm" onClick={onDelete} style={{ fontSize:18, padding:'10px 18px', minHeight:48, color:C.errorBold, borderColor:C.errorBold+'66', fontWeight: 800 }}>
+              Delete
+            </Btn>
           )}
         </div>
       </div>
@@ -2367,7 +2379,7 @@ function InvoiceDocument({ invoice, user, logo, payments, onEdit, onBack, onReco
 }
 
 // ── Invoice Shell ──────────────────────────────────────────────────────────────
-function VoiceInvoice({ user, logo, payments, sharedInvoices, setSharedInvoices, persistInvoice, pendingInvoiceId, clearPendingInvoice }) {
+function VoiceInvoice({ user, logo, payments, sharedInvoices, setSharedInvoices, persistInvoice, removeInvoice, handleUnInvoice, pendingInvoiceId, clearPendingInvoice }) {
   const invoices    = sharedInvoices || [];
   const [view,            setView]         = useState('hub');
   const [activeInvoice,   setActiveInv]    = useState(null);
@@ -2408,6 +2420,48 @@ function VoiceInvoice({ user, logo, payments, sharedInvoices, setSharedInvoices,
     }
   };
 
+  // Hard delete — used both for true deletes and as the last step of un-invoice.
+  // Voiding is usually safer, but the owner sometimes legitimately wants the row
+  // gone (testing artifact, accidental creation, etc.). Triple-check via prompt.
+  const deleteInvoiceFlow = async (id) => {
+    const target = invoices.find(x => x.id === id);
+    if (!target) return;
+    const ok = window.confirm(
+      `Permanently delete invoice ${target.number}?\n\n` +
+      `This cannot be undone. If you just want to cancel the invoice and keep a record, choose "Void" instead.`
+    );
+    if (!ok) return;
+    try {
+      await removeInvoice(id);
+      setView('hub');
+    } catch (e) {
+      alert(e?.message || 'Could not delete invoice.');
+    }
+  };
+
+  // Un-invoice — undo a Quote → Invoice conversion. Deletes the invoice and
+  // restores the source quote's status from 'invoiced' back to 'accepted'.
+  const unInvoiceFlow = async (id) => {
+    const target = invoices.find(x => x.id === id);
+    if (!target) return;
+    const ok = window.confirm(
+      `Un-invoice ${target.number}?\n\n` +
+      `The invoice will be deleted and the source quote (if any) will be restored to "Accepted" so you can re-issue or revise it.`
+    );
+    if (!ok) return;
+    try {
+      const result = await handleUnInvoice(target);
+      setView('hub');
+      if (result?.quoteRestored) {
+        alert(`Invoice deleted. Quote ${result.quoteNumber} is back to "Accepted".`);
+      } else {
+        alert('Invoice deleted. (No source quote was found to restore.)');
+      }
+    } catch (e) {
+      alert(e?.message || 'Could not un-invoice.');
+    }
+  };
+
   const active = invoices.find(i=>i.id===activeInvoice);
 
   return (
@@ -2437,6 +2491,8 @@ function VoiceInvoice({ user, logo, payments, sharedInvoices, setSharedInvoices,
           onEdit={()=>{ setEditingInv(active); setView('editor'); }}
           onRecordPayment={()=>setPaymentModal(true)}
           onVoid={()=>voidInvoice(active.id)}
+          onDelete={()=>deleteInvoiceFlow(active.id)}
+          onUnInvoice={()=>unInvoiceFlow(active.id)}
           onSendReminder={()=>{
             const note = `Overdue reminder sent to ${active.clientEmail}`;
             saveInvoice({ ...active, activity:[...(active.activity||[]), { date:today(), type:'reminder', note }] });
@@ -2681,7 +2737,7 @@ const fmt = n => '$' + Number(n || 0).toLocaleString('en-US', { minimumFractionD
 // ══════════════════════════════════════════════════════════════════════════════
 // QUOTE DOCUMENT (read-only, print-ready, trade-aware)
 // ══════════════════════════════════════════════════════════════════════════════
-function QuoteDocument({ quote, client, user, logo, onRevise, onBack, onConvertToInvoice }) {
+function QuoteDocument({ quote, client, user, logo, onRevise, onBack, onConvertToInvoice, onDelete }) {
   const { isTablet } = useBreakpoint();
   const calc      = calcQuote(quote, user?.state);
   const locked    = quote.status === 'accepted' || quote.status === 'invoiced';
@@ -2758,6 +2814,13 @@ function QuoteDocument({ quote, client, user, logo, onRevise, onBack, onConvertT
             <Btn variant="flat"    size="sm" style={{ flex: isTablet ? 1 : undefined }} onClick={onRevise}>Edit</Btn>
             <Btn variant="primary" size="sm" style={{ flex: isTablet ? 1 : undefined }} onClick={() => alert('Sending quote…')}>Send Quote</Btn>
           </>}
+          {/* Hard delete — kept off invoiced quotes so the user has to un-invoice first
+              (otherwise the orphaned invoice's "Converted from" reference would dangle). */}
+          {onDelete && quote.status !== 'invoiced' && (
+            <Btn variant="ghost" size="sm" style={{ flex: isTablet ? 1 : undefined, color: C.errorBold, borderColor: C.errorBold + '66', fontWeight: 800 }} onClick={onDelete}>
+              Delete
+            </Btn>
+          )}
         </div>
       </div>
 
@@ -4524,6 +4587,27 @@ function Quotes({ user, logo, taxRates, onConvertToInvoice }) {
     if (onConvertToInvoice) onConvertToInvoice(q, client);
   };
 
+  // Hard-delete a quote. If the quote has been converted to an invoice, the
+  // invoice keeps existing — those are separate documents at this point.
+  const deleteQuoteFlow = async (q) => {
+    const ok = window.confirm(
+      `Permanently delete quote ${q.number}?\n\n` +
+      `This cannot be undone. Any invoice that was created from this quote will NOT be deleted.`
+    );
+    if (!ok) return;
+    try {
+      // Skip API call for client-only rows (never saved).
+      if (typeof q.id === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(q.id)) {
+        await apiDeleteQuote(q.id);
+      }
+      setQuotes(prev => prev.filter(x => x.id !== q.id));
+      setActiveQ(null);
+      setView('hub');
+    } catch (e) {
+      alert(e?.message || 'Could not delete quote.');
+    }
+  };
+
   const addClient = async (c) => {
     try {
       const created = await apiAddClient(user.id, c);
@@ -4560,6 +4644,7 @@ function Quotes({ user, logo, taxRates, onConvertToInvoice }) {
           onBack={() => setView('hub')}
           onRevise={() => startRevision(active)}
           onConvertToInvoice={() => convertToInvoice(active)}
+          onDelete={() => deleteQuoteFlow(active)}
         />
       )}
       {showNewClient && <NewClientModal onSave={addClient} onClose={() => setNewClient(false)} />}
@@ -5642,6 +5727,53 @@ export default function Tradevoice() {
     return saved;
   };
 
+  // Hard-delete an invoice. Drops the row from Supabase and local state.
+  // Skips the API call for client-only rows (no real DB uuid) so we can
+  // also use this to discard never-saved drafts.
+  const removeInvoice = async (id) => {
+    try {
+      if (typeof id === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
+        await apiDeleteInvoice(id);
+      }
+    } catch (e) {
+      console.error('removeInvoice', e);
+      throw e;
+    }
+    setSharedInvoices(prev => prev.filter(i => i.id !== id));
+  };
+
+  // "Un-invoice" — undoes a Quote → Invoice conversion.
+  //   1. Deletes the invoice row.
+  //   2. Looks up the source quote (by parsing "Converted from <quote.number>"
+  //      out of the invoice notes) and reverts its status from 'invoiced' back
+  //      to 'accepted' so the user can re-do the conversion or revise the quote.
+  // Returns { quoteRestored: bool, quoteNumber: string|null } so the caller
+  // can show a meaningful confirmation toast.
+  const handleUnInvoice = async (invoice) => {
+    let restored = null;
+
+    // Try to find the source quote from the invoice's notes ("Converted from Q-2026-0001").
+    const m = (invoice.notes || '').match(/Converted from (\S+)/);
+    const sourceQuoteNumber = m ? m[1] : null;
+
+    if (sourceQuoteNumber) {
+      try {
+        const allQuotes = await listQuotes();
+        const sourceQuote = allQuotes.find(q => q.number === sourceQuoteNumber);
+        if (sourceQuote && sourceQuote.status === 'invoiced') {
+          await apiUpsertQuote(user.id, { ...sourceQuote, status: 'accepted' });
+          restored = sourceQuote.number;
+        }
+      } catch (e) {
+        // Don't block the un-invoice on a quote-revert failure — log and continue.
+        console.error('un-invoice: revert quote failed', e);
+      }
+    }
+
+    await removeInvoice(invoice.id);
+    return { quoteRestored: !!restored, quoteNumber: restored };
+  };
+
   // Debounced persistence for the JSONB settings columns (payments + tax_rates on profiles).
   // Without debouncing we'd fire a Supabase update on every keystroke as the user types a Venmo handle, etc.
   const settingsTimer = useRef(null);
@@ -5898,7 +6030,7 @@ export default function Tradevoice() {
 
   const content = {
     dashboard: <Dashboard    user={user} nav={setSection} invoices={sharedInvoices} plans={plans} onScheduleFromPlan={handleScheduleFromPlan} />,
-    invoice:   <VoiceInvoice user={user} logo={logo} payments={payments} taxRates={taxRates} sharedInvoices={sharedInvoices} setSharedInvoices={setSharedInvoices} persistInvoice={persistInvoice} pendingInvoiceId={pendingInvoiceId} clearPendingInvoice={() => setPendingInvoiceId(null)} />,
+    invoice:   <VoiceInvoice user={user} logo={logo} payments={payments} taxRates={taxRates} sharedInvoices={sharedInvoices} setSharedInvoices={setSharedInvoices} persistInvoice={persistInvoice} removeInvoice={removeInvoice} handleUnInvoice={handleUnInvoice} pendingInvoiceId={pendingInvoiceId} clearPendingInvoice={() => setPendingInvoiceId(null)} />,
     billing:   <Billing      user={user} payments={payments} />,
     quotes:    <Quotes       user={user} logo={logo} taxRates={taxRates} onConvertToInvoice={handleConvertToInvoice} />,
     schedule:  <ScheduleScreen user={user} team={teamMembers} onCreateInvoice={handleJobToInvoice} plans={plans} setPlans={setPlans} pendingJobDraft={pendingJobDraft} clearPendingJobDraft={() => setPendingJobDraft(null)} timeOff={timeOff} />,
