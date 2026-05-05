@@ -1,4 +1,10 @@
 import { useState, useRef, useEffect } from "react";
+import { ForgotPasswordScreen } from "./ForgotPassword";
+import ScheduleScreen from "./ScheduleScreen";
+import MarketingScreen from "./MarketingScreen";
+import { PrivacyPolicyScreen, TermsScreen } from "./LegalScreens";
+import { signIn, signUp, signOut, getProfile, upsertProfile, getSessionUser, onAuthChange } from "./data/auth";
+import { listClients, addClient as apiAddClient, updateClient as apiUpdateClient, deleteClient as apiDeleteClient } from "./data/clients";
 
 // ─── FONTS ─────────────────────────────────────────────────────────────────────
 const loadFonts = () => {
@@ -50,11 +56,11 @@ const s = {
   input: {
     background: C.surface, border: `1.5px solid ${C.border2}`,
     color: C.text, borderRadius: 3, outline: 'none',
-    fontFamily: "'Inter', sans-serif", fontSize: 19,
+    fontFamily: "'Inter', sans-serif", fontSize: 16,
     transition: 'border-color 0.15s', WebkitAppearance: 'none',
   },
   label: {
-    display: 'block', marginBottom: 6, fontSize: 15, fontWeight: 700,
+    display: 'block', marginBottom: 6, fontSize: 11, fontWeight: 700,
     letterSpacing: '0.1em', textTransform: 'uppercase',
     color: C.muted, fontFamily: "'Inter', sans-serif",
   },
@@ -62,8 +68,8 @@ const s = {
 
 // ── Shared UI primitives (used by both app and quotes sections) ──
 const Btn = ({ children, onClick, disabled, style = {}, variant = 'primary', size = 'md', full }) => {
-  const pad  = size === 'sm' ? '8px 14px' : size === 'lg' ? '14px 28px' : '11px 20px';
-  const fz   = size === 'sm' ? 14 : size === 'lg' ? 18 : 16;
+  const pad  = size === 'sm' ? '7px 13px' : size === 'lg' ? '12px 24px' : '10px 18px';
+  const fz   = size === 'sm' ? 12 : size === 'lg' ? 15 : 13;
   const base = variant === 'primary'
     ? { background: C.orange, color: '#ffffff', border: 'none' }
     : variant === 'ghost'
@@ -100,15 +106,15 @@ const Badge = ({ status }) => {
   };
   const { label, bg, color } = map[status] || map.draft;
   return (
-    <span style={{ fontSize: 15, fontWeight: 900, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 2, background: bg, color, fontFamily: "'Inter', sans-serif", whiteSpace: 'nowrap', lineHeight: 1.6, display: 'inline-block' }}>
+    <span style={{ fontSize: 11, fontWeight: 900, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '3px 8px', borderRadius: 2, background: bg, color, fontFamily: "'Inter', sans-serif", whiteSpace: 'nowrap', lineHeight: 1.6, display: 'inline-block' }}>
       {label}
     </span>
   );
 };
 
 const PrimaryBtn = ({ children, onClick, disabled, style = {}, size = 'md', full }) => {
-  const pad = size === 'sm' ? '10px 18px' : size === 'lg' ? '15px 30px' : '12px 24px';
-  const fz  = size === 'sm' ? 12 : size === 'lg' ? 16 : 14;
+  const pad = size === 'sm' ? '8px 16px' : size === 'lg' ? '13px 26px' : '10px 20px';
+  const fz  = size === 'sm' ? 11 : size === 'lg' ? 15 : 13;
   return (
     <button onClick={onClick} disabled={disabled} style={{
       ...s.btn, padding: pad, fontSize: fz,
@@ -121,8 +127,8 @@ const PrimaryBtn = ({ children, onClick, disabled, style = {}, size = 'md', full
 };
 
 const GhostBtn = ({ children, onClick, style = {}, size = 'md', full }) => {
-  const pad = size === 'sm' ? '9px 16px' : '11px 22px';
-  const fz  = size === 'sm' ? 12 : 14;
+  const pad = size === 'sm' ? '8px 14px' : '10px 18px';
+  const fz  = size === 'sm' ? 11 : 13;
   return (
     <button onClick={onClick} style={{
       ...s.btn, padding: pad, fontSize: fz,
@@ -180,22 +186,22 @@ const Logo = ({ size = 24 }) => (
 );
 
 const SectionHead = ({ icon, title, sub }) => (
-  <div style={{ marginBottom: 24, paddingBottom: 18, borderBottom: `1px solid ${C.border}` }}>
-    <div style={{ display: 'flex', alignItems: 'center', gap: icon ? 10 : 0 }}>
-      {icon && <span style={{ fontSize: 25 }}>{icon}</span>}
-      <h1 style={{ margin: 0, fontFamily: "'Inter', sans-serif", fontSize: 29, fontWeight: 900, color: C.text, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{title}</h1>
+  <div style={{ marginBottom: 20, paddingBottom: 14, borderBottom: `1px solid ${C.border}` }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: icon ? 8 : 0 }}>
+      {icon && <span style={{ fontSize: 18 }}>{icon}</span>}
+      <h1 style={{ margin: 0, fontFamily: "'Inter', sans-serif", fontSize: 22, fontWeight: 900, color: C.text, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{title}</h1>
     </div>
-    {sub && <p style={{ margin: '6px 0 0', fontSize: 18, color: C.muted, lineHeight: 1.5 }}>{sub}</p>}
+    {sub && <p style={{ margin: '4px 0 0', fontSize: 13, color: C.muted, lineHeight: 1.5 }}>{sub}</p>}
   </div>
 );
 
 const StatCard = ({ icon, label, value, color = C.orange }) => (
   <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, overflow: 'hidden' }}>
-    <div style={{ background: color, padding: '8px 16px', textAlign: 'center' }}>
-      <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.9)' }}>{label}</div>
+    <div style={{ background: color, padding: '7px 14px', textAlign: 'center' }}>
+      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.9)' }}>{label}</div>
     </div>
-    <div style={{ padding: '14px 16px', textAlign: 'center' }}>
-      <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 34, fontWeight: 900, color, lineHeight: 1 }}>{value}</div>
+    <div style={{ padding: '12px 14px', textAlign: 'center' }}>
+      <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 24, fontWeight: 900, color, lineHeight: 1 }}>{value}</div>
     </div>
   </div>
 );
@@ -216,7 +222,7 @@ function AuthShell({ children }) {
 }
 
 // ── LOGIN ─────────────────────────────────────────────────────────────────────
-function LoginScreen({ onLogin, onSignup, onJoin }) {
+function LoginScreen({ onLogin, onSignup, onJoin, onForgot }) {
   const [email,    setEmail]    = useState('');
   const [password, setPassword] = useState('');
   const [error,    setError]    = useState('');
@@ -225,72 +231,67 @@ function LoginScreen({ onLogin, onSignup, onJoin }) {
   const handleLogin = async () => {
     if (!email.trim() || !password.trim()) { setError('Please enter your email and password.'); return; }
     setLoading(true); setError('');
-    // Demo login — accepts any credentials
-    await new Promise(r => setTimeout(r, 600));
-    onLogin({
-      name: 'Matthew Burke', company: "Burke's Mechanical",
-      email: email.trim(), phone: '(512) 555-0192',
-      trades: ['Plumber', 'HVAC'], states: ['Texas', 'Louisiana'],
-      state: 'Texas, Louisiana', role: 'owner',
-      tagline: "Austin's Most Trusted Mechanical Contractor",
-      license: 'TX Lic. #M-12345', accentColor: '', defaultTerms: '',
-      companyCode: 'TV-BRK42X',
-    });
-    setLoading(false);
+    try {
+      const authUser = await signIn(email.trim(), password);
+      const profile  = await getProfile(authUser.id);
+      onLogin(profile ?? { id: authUser.id, email: authUser.email, role: 'owner', trades: [], states: [] });
+    } catch (e) {
+      setError(e?.message || 'Could not sign in. Check your email and password.');
+      setLoading(false);
+    }
   };
 
   return (
     <AuthShell>
-      <div style={{ fontSize: 22, fontWeight: 900, color: C.text, marginBottom: 4, fontFamily: "'Inter', sans-serif", textTransform: 'uppercase', letterSpacing: '0.04em' }}>Welcome back</div>
-      <div style={{ fontSize: 15, color: C.muted, marginBottom: 24 }}>Sign in to your Tradevoice account</div>
+      <div style={{ fontSize: 18, fontWeight: 900, color: C.text, marginBottom: 4, fontFamily: "'Inter', sans-serif", textTransform: 'uppercase', letterSpacing: '0.04em' }}>Welcome back</div>
+      <div style={{ fontSize: 13, color: C.muted, marginBottom: 22 }}>Sign in to your Tradevoice account</div>
 
-      {error && <div style={{ background: '#fef2f2', border: `1px solid ${C.error}33`, borderRadius: 6, padding: '10px 14px', fontSize: 14, color: C.error, marginBottom: 16 }}>{error}</div>}
+      {error && <div style={{ background: '#fef2f2', border: `1px solid ${C.error}33`, borderRadius: 6, padding: '9px 12px', fontSize: 13, color: C.error, marginBottom: 14 }}>{error}</div>}
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 20 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 18 }}>
         <div>
           <label style={s.label}>Email address</label>
           <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="matt@company.com"
-            style={{ ...s.input, width: '100%', padding: '13px 14px', boxSizing: 'border-box', fontSize: 16 }}
+            style={{ ...s.input, width: '100%', padding: '11px 13px', boxSizing: 'border-box' }}
             onKeyDown={e => e.key === 'Enter' && handleLogin()} />
         </div>
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
             <label style={{ ...s.label, margin: 0 }}>Password</label>
-            <a href="#" style={{ fontSize: 13, color: C.orange, textDecoration: 'none', fontWeight: 600 }}>Forgot password?</a>
+            <button type="button" onClick={onForgot} style={{ background: 'none', border: 'none', padding: 0, fontSize: 12, color: C.orange, textDecoration: 'none', fontWeight: 600, cursor: 'pointer', fontFamily: "'Inter', sans-serif" }}>Forgot password?</button>
           </div>
           <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••"
-            style={{ ...s.input, width: '100%', padding: '13px 14px', boxSizing: 'border-box', fontSize: 16 }}
+            style={{ ...s.input, width: '100%', padding: '11px 13px', boxSizing: 'border-box' }}
             onKeyDown={e => e.key === 'Enter' && handleLogin()} />
         </div>
       </div>
 
       <button onClick={handleLogin} disabled={loading} style={{
         ...s.btn, width: '100%', background: loading ? C.muted : C.orange, color: '#fff',
-        padding: '15px', fontSize: 16, letterSpacing: '0.06em', borderRadius: 50,
-        border: 'none', marginBottom: 16, opacity: loading ? 0.7 : 1,
+        padding: '12px', fontSize: 14, letterSpacing: '0.06em', borderRadius: 50,
+        border: 'none', marginBottom: 14, opacity: loading ? 0.7 : 1,
       }}>{loading ? 'Signing in…' : 'Sign In'}</button>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
         <div style={{ flex: 1, height: 1, background: C.border }} />
-        <span style={{ fontSize: 13, color: C.dim }}>or</span>
+        <span style={{ fontSize: 11, color: C.dim }}>or</span>
         <div style={{ flex: 1, height: 1, background: C.border }} />
       </div>
 
       {/* Google sign in */}
-      <button style={{ ...s.btn, width: '100%', background: C.surface, border: `1.5px solid ${C.border2}`, color: C.text, padding: '13px', fontSize: 15, borderRadius: 50, marginBottom: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
-        <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/></svg>
+      <button style={{ ...s.btn, width: '100%', background: C.surface, border: `1.5px solid ${C.border2}`, color: C.text, padding: '11px', fontSize: 13, borderRadius: 50, marginBottom: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+        <svg width="16" height="16" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/></svg>
         Continue with Google
       </button>
 
-      <div style={{ textAlign: 'center', fontSize: 14, color: C.muted, marginBottom: 10 }}>
+      <div style={{ textAlign: 'center', fontSize: 12, color: C.muted, marginBottom: 8 }}>
         New to Tradevoice?{' '}
-        <a href="https://thetradevoice.com/signup" target="_blank" rel="noopener noreferrer"
-          style={{ color: C.orange, fontWeight: 700, textDecoration: 'none' }}>
-          Create account at thetradevoice.com →
-        </a>
+        <button onClick={onSignup} style={{ background: 'none', border: 'none', padding: 0, color: C.orange, fontWeight: 700, cursor: 'pointer', fontSize: 12, fontFamily: "'Inter', sans-serif" }}>
+          Create an account →
+        </button>
       </div>
-      <div style={{ textAlign: 'center', fontSize: 14, color: C.muted }}>
-        Got a company code? <button onClick={onJoin} style={{ background: 'none', border: 'none', color: C.orange, fontWeight: 700, cursor: 'pointer', fontSize: 14, padding: 0 }}>Join a company</button>
+      <div style={{ textAlign: 'center', fontSize: 12, color: C.muted }}>
+        Got a company code? <button onClick={onJoin} style={{ background: 'none', border: 'none', color: C.orange, fontWeight: 700, cursor: 'pointer', fontSize: 12, padding: 0 }}>Join a company</button>
       </div>
     </AuthShell>
   );
@@ -308,6 +309,7 @@ function SignupScreen({ onComplete, onBack }) {
   const [trades, setTrades]   = useState([]);
   const [states, setStates]   = useState(['Texas']);
   const [plan, setPlan]       = useState('pro');
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   const PLANS_SU = [
     { id: 'solo', name: 'Solo', price: '$49.99', trades: '1 trade', desc: 'Just you — one trade, full power' },
@@ -320,11 +322,11 @@ function SignupScreen({ onComplete, onBack }) {
   const canNext = [
     () => name.trim() && email.trim() && password.length >= 6,
     () => company.trim() && trades.length > 0,
-    () => plan !== '',
+    () => plan !== '' && acceptedTerms,
   ];
 
   const finish = () => {
-    onComplete({ name, email, company, phone, trades, states, plan });
+    onComplete({ name, email, password, company, phone, trades, states, plan, acceptedTermsAt: new Date().toISOString() });
   };
 
   return (
@@ -388,6 +390,22 @@ function SignupScreen({ onComplete, onBack }) {
           <div style={{ fontSize: 13, color: C.muted, textAlign: 'center', marginTop: 8 }}>
             Need team members? Add techs for <strong style={{ color: C.orange }}>$19.99/mo each</strong> after sign-up in Settings → Team. 28-day free trial on all plans.
           </div>
+
+          {/* Terms + Privacy clickwrap — required */}
+          <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '12px 14px', marginTop: 14, background: acceptedTerms ? C.orangeLo : C.raised, border: `1.5px solid ${acceptedTerms ? C.orange : C.border2}`, borderRadius: 8, cursor: 'pointer', WebkitTapHighlightColor: 'transparent' }}>
+            <input
+              type="checkbox"
+              checked={acceptedTerms}
+              onChange={e => setAcceptedTerms(e.target.checked)}
+              style={{ marginTop: 2, width: 16, height: 16, accentColor: C.orange, cursor: 'pointer', flexShrink: 0 }}
+            />
+            <span style={{ fontSize: 13, color: C.text, lineHeight: 1.5 }}>
+              I agree to the{' '}
+              <a href="https://thetradevoice.com/terms" target="_blank" rel="noopener noreferrer" style={{ color: C.orange, fontWeight: 700, textDecoration: 'underline' }} onClick={e => e.stopPropagation()}>Terms of Service</a>
+              {' '}and{' '}
+              <a href="https://thetradevoice.com/privacy" target="_blank" rel="noopener noreferrer" style={{ color: C.orange, fontWeight: 700, textDecoration: 'underline' }} onClick={e => e.stopPropagation()}>Privacy Policy</a>.
+            </span>
+          </label>
         </div>
       )}
 
@@ -753,66 +771,88 @@ function Onboarding({ onComplete }) {
 // ══════════════════════════════════════════════════════════════════════════════
 // DASHBOARD
 // ══════════════════════════════════════════════════════════════════════════════
-function Dashboard({ user, nav }) {
+function Dashboard({ user, nav, invoices = [] }) {
   const { isTablet } = useBreakpoint();
   const firstName = user.name?.split(' ')[0] || 'Contractor';
-  const invoices = [
-    { client: 'M. Johnson',   job: 'Kitchen sink repair',     amt: '$485',   status: 'Paid',    date: 'Mar 18' },
-    { client: 'R. Torres',    job: 'Panel upgrade + GFCI',    amt: '$1,200', status: 'Pending', date: 'Mar 17' },
-    { client: 'City Rentals', job: 'HVAC annual maintenance',  amt: '$3,240', status: 'Overdue', date: 'Mar 10' },
-    { client: 'K. Adams',     job: 'Garbage disposal install', amt: '$220',   status: 'Paid',    date: 'Mar 8'  },
-  ];
-  const statusColor = { Paid: C.success, Pending: C.warn, Overdue: C.error };
+
+  // Compute live stats from real invoices
+  const now = new Date();
+  const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const monthInvoices = invoices.filter(i => (i.createdAt || '').startsWith(thisMonth));
+  const outstanding   = invoices
+    .filter(i => i.status !== 'paid' && i.status !== 'draft' && i.status !== 'void')
+    .reduce((sum, i) => sum + calcInvoice(i, user?.state).balance, 0);
+  const paidInvoices  = invoices.filter(i => i.status === 'paid');
+  const avgInvoice    = invoices.length
+    ? invoices.reduce((sum, i) => sum + calcInvoice(i, user?.state).total, 0) / invoices.length
+    : 0;
+
+  const recent = [...invoices]
+    .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''))
+    .slice(0, 4);
+
+  const subtitleParts = [user.company, user.trades?.join(' — '), user.states?.join(', ') || user.state].filter(Boolean);
 
   return (
     <div>
       <SectionHead icon="" title={`Hey, ${firstName}`}
-        sub={[user.company, user.trades?.join(' — '), user.states?.join(', ') || user.state].filter(Boolean).join('  —  ')} />
+        sub={subtitleParts.length ? subtitleParts.join('  —  ') : 'Welcome to Tradevoice'} />
 
       {/* Stats — 2×2 on tablet, 4 across on laptop */}
       <div style={{ display: 'grid', gridTemplateColumns: isTablet ? '1fr 1fr' : 'repeat(4,1fr)', gap: 10, marginBottom: 20 }}>
-        <StatCard icon="" label="Invoices This Month" value="12" />
-        <StatCard icon="" label="Outstanding"         value="$3,240.00" color={C.error} />
-        <StatCard icon="" label="Jobs Completed"      value="47"        color={C.success} />
-        <StatCard icon="" label="Avg. Invoice"        value="$387.00"   color={C.warn} />
+        <StatCard icon="" label="Invoices This Month" value={String(monthInvoices.length)} />
+        <StatCard icon="" label="Outstanding"         value={fmtMoney(outstanding)} color={outstanding > 0 ? C.error : C.muted} />
+        <StatCard icon="" label="Jobs Completed"      value={String(paidInvoices.length)} color={C.success} />
+        <StatCard icon="" label="Avg. Invoice"        value={fmtMoney(avgInvoice)} color={C.warn} />
       </div>
 
       {/* Body — stacks fully on tablet */}
       <div style={{ display: 'grid', gridTemplateColumns: isTablet ? '1fr' : '1fr 290px', gap: 14 }}>
 
-        <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 4, padding: '18px 20px' }}>
-          <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 16, fontWeight: 800, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 14 }}>Recent Invoices</div>
-          {invoices.map((inv, i) => (
-            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '13px 0', borderBottom: i < invoices.length - 1 ? `1px solid ${C.border}` : 'none', gap: 12 }}>
-              <div style={{ minWidth: 0 }}>
-                <div style={{ fontSize: 19, fontWeight: 600, color: C.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{inv.client}</div>
-                <div style={{ fontSize: 17, color: C.muted, marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{inv.job} — {inv.date}</div>
-              </div>
-              <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                <div style={{ fontSize: 20, fontWeight: 700, fontFamily: "'Inter', sans-serif", color: C.text }}>{inv.amt}</div>
-                <div style={{ fontSize: 15, fontWeight: 800, letterSpacing: '0.08em', color: statusColor[inv.status], textTransform: 'uppercase', marginTop: 2 }}>{inv.status}</div>
-              </div>
+        <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 4, padding: '16px 18px' }}>
+          <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, fontWeight: 800, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>Recent Invoices</div>
+          {recent.length === 0 ? (
+            <div style={{ padding: '20px 0', textAlign: 'center', color: C.dim, fontSize: 13, lineHeight: 1.6 }}>
+              No invoices yet.{' '}
+              <button onClick={() => nav('invoice')} style={{ background: 'none', border: 'none', color: C.orange, cursor: 'pointer', fontSize: 13, fontWeight: 700, padding: 0 }}>
+                Create your first invoice →
+              </button>
             </div>
-          ))}
+          ) : recent.map((inv, i) => {
+            const calc = calcInvoice(inv, user?.state);
+            const meta = INV_STATUS[inv.status] || INV_STATUS.draft;
+            return (
+              <div key={inv.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: i < recent.length - 1 ? `1px solid ${C.border}` : 'none', gap: 12 }}>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: C.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{inv.clientName || '—'}</div>
+                  <div style={{ fontSize: 12, color: C.muted, marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{inv.title} — {inv.createdAt}</div>
+                </div>
+                <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                  <div style={{ fontSize: 15, fontWeight: 700, fontFamily: "'Inter', sans-serif", color: C.text }}>{fmtMoney(calc.total)}</div>
+                  <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.08em', color: meta.color, textTransform: 'uppercase', marginTop: 2 }}>{meta.label}</div>
+                </div>
+              </div>
+            );
+          })}
         </div>
 
-        <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 4, padding: '18px 20px' }}>
-          <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 16, fontWeight: 800, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 16 }}>Quick Actions</div>
-          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+        <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 4, padding: '16px 18px' }}>
+          <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, fontWeight: 800, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 14 }}>Quick Actions</div>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             {[
               { label: 'New Invoice', sec: 'invoice' },
               { label: 'New Quote',   sec: 'quotes'  },
             ].map(a => (
               <button key={a.label} onClick={() => nav(a.sec)} style={{
-                flex: 1, minWidth: 120,
-                padding: '14px 24px',
+                flex: 1, minWidth: 110,
+                padding: '11px 20px',
                 background: C.orangeLo,
                 border: `2px solid ${C.orange}`,
                 borderRadius: 50,
                 color: C.orange,
                 cursor: 'pointer',
                 fontFamily: "'Inter', sans-serif",
-                fontSize: 18,
+                fontSize: 13,
                 fontWeight: 800,
                 letterSpacing: '0.04em',
                 textTransform: 'uppercase',
@@ -829,12 +869,12 @@ function Dashboard({ user, nav }) {
             ))}
           </div>
           {!isTablet && (
-            <div style={{ marginTop: 18, padding: '14px', background: C.orangeLo, border: `1px solid ${C.orangeMd}`, borderRadius: 3 }}>
-              <div style={{ fontSize: 15, color: C.orange, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 3 }}>Your Plan</div>
-              <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 27, fontWeight: 900, color: C.orange }}>
-                ${getPrice(user.trades?.length || 1)}<span style={{ fontSize: 17, fontWeight: 400, color: C.muted }}>/mo</span>
+            <div style={{ marginTop: 16, padding: '12px', background: C.orangeLo, border: `1px solid ${C.orangeMd}`, borderRadius: 3 }}>
+              <div style={{ fontSize: 11, color: C.orange, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 3 }}>Your Plan</div>
+              <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 22, fontWeight: 900, color: C.orange }}>
+                ${getPrice(user.trades?.length || 1)}<span style={{ fontSize: 13, fontWeight: 400, color: C.muted }}>/mo</span>
               </div>
-              <div style={{ fontSize: 16, color: C.muted, marginTop: 3 }}>{user.trades?.join(', ')}</div>
+              <div style={{ fontSize: 12, color: C.muted, marginTop: 3 }}>{user.trades?.join(', ')}</div>
             </div>
           )}
         </div>
@@ -1006,76 +1046,12 @@ const agingBucket = (inv) => {
   return '90+';
 };
 
-// Seed invoices — realistic, covering multiple statuses
-const SEED_INVOICES = [
-  {
-    id:'inv1', number:'INV-2026-0001',
-    clientName:'Sandra Johnson', clientEmail:'sjohnson@email.com', clientPhone:'(512) 555-0191', clientAddress:'142 Elm Street, Austin TX 78701',
-    title:'Kitchen Shut-Off Valve Replacement', trade:'Plumber', status:'paid',
-    terms:'Net 30', createdAt:'2026-02-18', dueAt:'2026-03-20', paidAt:'2026-03-08',
-    labor:    [{ id:1, desc:'Replace shut-off valves under kitchen sink', hrs:1.5, rate:125 }],
-    materials:[{ id:1, desc:'1/2" Ball Valve (x2)', qty:2, unit:'ea', cost:38.50 }, { id:2, desc:'Braided SS Supply Line 12"', qty:2, unit:'ea', cost:14 }],
-    equipment:[], markup:15, tax:8.5, notes:'Customer supplied new faucet.',
-    payments:[{ id:'p1', date:'2026-03-08', amount:339.56, method:'Card', ref:'ch_3Px9' }],
-    activity:[
-      { date:'2026-02-18', type:'created',  note:'Invoice created' },
-      { date:'2026-02-19', type:'sent',     note:'Emailed to sjohnson@email.com' },
-      { date:'2026-02-21', type:'viewed',   note:'Client viewed invoice' },
-      { date:'2026-03-08', type:'payment',  note:'Payment received — $339.56 via Card' },
-    ],
-  },
-  {
-    id:'inv2', number:'INV-2026-0002',
-    clientName:'City Rental Group', clientEmail:'mgmt@cityrentals.com', clientPhone:'(512) 555-0344', clientAddress:'800 Commerce Dr, Austin TX 78704',
-    title:'HVAC Annual Maintenance — Unit 4B', trade:'HVAC', status:'overdue',
-    terms:'Net 30', createdAt:'2026-02-10', dueAt:'2026-03-12', paidAt:null,
-    labor:    [{ id:1, desc:'Full HVAC inspection and tune-up', hrs:2, rate:95 }],
-    materials:[{ id:1, desc:'MERV-8 Filter 20x20x1', qty:2, unit:'ea', cost:12 }, { id:2, desc:'R-410A Refrigerant', qty:1, unit:'lb', cost:22 }],
-    equipment:[{ id:1, desc:'Refrigerant Recovery Machine', qty:1, unit:'day', rate:75 }],
-    markup:15, tax:8.5, notes:'Unit running low on refrigerant. Recommend full service next quarter.',
-    payments:[], 
-    activity:[
-      { date:'2026-02-10', type:'created',  note:'Invoice created' },
-      { date:'2026-02-11', type:'sent',     note:'Emailed to mgmt@cityrentals.com' },
-      { date:'2026-02-14', type:'viewed',   note:'Client viewed invoice' },
-      { date:'2026-03-13', type:'reminder', note:'Overdue reminder sent' },
-    ],
-  },
-  {
-    id:'inv3', number:'INV-2026-0003',
-    clientName:'Ray Torres', clientEmail:'ray@torreselectric.com', clientPhone:'(512) 555-0822', clientAddress:'55 West 4th Ave, Austin TX 78701',
-    title:'200A Panel Upgrade', trade:'Plumber', status:'partial',
-    terms:'Net 45', createdAt:'2026-02-20', dueAt:'2026-04-06', paidAt:null,
-    labor:    [{ id:1, desc:'Panel swap 100A to 200A', hrs:6, rate:125 }],
-    materials:[{ id:1, desc:'200A Main Breaker Panel', qty:1, unit:'ea', cost:285 }, { id:2, desc:'Wire, conduit & misc', qty:1, unit:'lot', cost:120 }],
-    equipment:[], markup:15, tax:8.5, notes:'50% deposit paid upfront.',
-    payments:[{ id:'p2', date:'2026-02-20', amount:500, method:'Check', ref:'CHK-1042' }],
-    activity:[
-      { date:'2026-02-20', type:'created',  note:'Invoice created' },
-      { date:'2026-02-20', type:'payment',  note:'Deposit received — $500.00 via Check #1042' },
-      { date:'2026-02-21', type:'sent',     note:'Emailed to ray@torreselectric.com' },
-    ],
-  },
-  {
-    id:'inv4', number:'INV-2026-0004',
-    clientName:'K. Adams', clientEmail:'kadams@gmail.com', clientPhone:'(512) 555-0199', clientAddress:'901 Red River St, Austin TX 78701',
-    title:'Garbage Disposal Installation', trade:'Plumber', status:'sent',
-    terms:'Due on Receipt', createdAt:'2026-03-22', dueAt:'2026-03-22', paidAt:null,
-    labor:    [{ id:1, desc:'Install new garbage disposal', hrs:1, rate:125 }],
-    materials:[{ id:1, desc:'Garbage Disposal 3/4 HP', qty:1, unit:'ea', cost:145 }],
-    equipment:[], markup:15, tax:8.5, notes:'',
-    payments:[],
-    activity:[
-      { date:'2026-03-22', type:'created', note:'Invoice created' },
-      { date:'2026-03-22', type:'sent',    note:'Emailed to kadams@gmail.com' },
-    ],
-  },
-];
+const SEED_INVOICES = [];
 
 // ── Status Badge ───────────────────────────────────────────────────────────────
 function InvBadge({ status }) {
   const { label, bg, color } = INV_STATUS[status] || INV_STATUS.draft;
-  return <span style={{ fontSize:14, fontWeight:900, letterSpacing:'0.08em', textTransform:'uppercase', padding:'4px 10px', borderRadius:2, background:bg, color, fontFamily:"'Inter', sans-serif", whiteSpace:'nowrap', display:'inline-block' }}>{label}</span>;
+  return <span style={{ fontSize:11, fontWeight:900, letterSpacing:'0.08em', textTransform:'uppercase', padding:'3px 8px', borderRadius:2, background:bg, color, fontFamily:"'Inter', sans-serif", whiteSpace:'nowrap', display:'inline-block' }}>{label}</span>;
 }
 
 
@@ -2238,82 +2214,9 @@ function Estimator() {
 // ══════════════════════════════════════════════════════════════════════════════
 // QUOTES DATA & COMPONENTS
 // ══════════════════════════════════════════════════════════════════════════════
-const SEED_CLIENTS = [
-  { id: 'c1', name: 'Sandra Johnson',    company: '',                    email: 'sjohnson@email.com',     phone: '(512) 555-0191' },
-  { id: 'c2', name: 'City Rental Group', company: 'City Rental Group',   email: 'mgmt@cityrentals.com',   phone: '(512) 555-0344' },
-  { id: 'c3', name: 'Ray Torres',        company: 'Torres Electric LLC',  email: 'ray@torreselectric.com', phone: '(512) 555-0822' },
-];
+const SEED_CLIENTS = [];
 
-const SEED_QUOTES = [
-  {
-    id: 'q1', number: 'QT-2026-0001', clientId: 'c1',
-    title: 'Kitchen Plumbing Repair & Valve Replacement',
-    trade: 'Plumber',
-    status: 'accepted',
-    scope: 'Replace two 1/2" shut-off valves on kitchen supply lines. Includes pressure testing and inspection of visible supply lines under sink. Install new braided stainless supply hoses. Service call and cleanup included.',
-    fieldNotes: 'Both valves corroded, slow drip under sink. Customer wants done ASAP.',
-    labor: [
-      { id: 1, desc: 'Shut-off valve replacement',      hrs: 1.5, rate: 125 },
-      { id: 2, desc: 'Pressure test & final inspection', hrs: 0.5, rate: 125 },
-    ],
-    materials: [
-      { id: 1, desc: '1/2" ball valve quarter-turn',    qty: 2, unit: 'ea',  cost: 38.50 },
-      { id: 2, desc: 'Braided stainless supply line',   qty: 2, unit: 'ea',  cost: 14.00 },
-      { id: 3, desc: 'Thread sealant & fittings',       qty: 1, unit: 'lot', cost: 8.00  },
-    ],
-    equipment: [],
-    markup: 15, tax: 8.5,
-    terms: 'Quote valid for 30 days. 50% deposit required to schedule. Balance due upon completion.',
-    createdAt: '2026-03-10', sentAt: '2026-03-10', expiresAt: '2026-04-10',
-    revisionOf: null, revisionNumber: 1,
-  },
-  {
-    id: 'q2', number: 'QT-2026-0002', clientId: 'c2',
-    title: 'HVAC Annual Maintenance — 4 Units',
-    trade: 'HVAC',
-    status: 'sent',
-    scope: 'Full preventive maintenance on 4 rooftop HVAC units. Includes coil cleaning, filter replacement (MERV-8), refrigerant check, electrical inspection, thermostat calibration, and written service report for each unit.',
-    fieldNotes: '4 RTUs on roof, units 2 and 3 showing high static pressure. Recommend coil cleaning on all.',
-    labor: [
-      { id: 1, desc: 'PM service — per unit (×4)',      hrs: 8,  rate: 95 },
-      { id: 2, desc: 'Refrigerant check & log',          hrs: 2,  rate: 95 },
-    ],
-    materials: [
-      { id: 1, desc: 'MERV-8 filter 20×20×2 (×4)',      qty: 4,  unit: 'ea',  cost: 22.00 },
-      { id: 2, desc: 'Coil cleaner, foaming (×4)',        qty: 4,  unit: 'ea',  cost: 18.00 },
-      { id: 3, desc: 'Misc consumables',                  qty: 1,  unit: 'lot', cost: 45.00 },
-    ],
-    equipment: [
-      { id: 1, desc: 'Refrigerant recovery machine', qty: 1, unit: 'day', rate: 75 },
-    ],
-    markup: 15, tax: 8.5,
-    terms: 'Quote valid for 30 days. Net 30 invoicing available for commercial accounts.',
-    createdAt: '2026-03-15', sentAt: '2026-03-16', expiresAt: '2026-04-16',
-    revisionOf: null, revisionNumber: 1,
-  },
-  {
-    id: 'q3', number: 'QT-2026-0003', clientId: 'c3',
-    title: '200A Panel Upgrade + GFCI Installation',
-    trade: 'Electrician',
-    status: 'draft',
-    scope: '',
-    fieldNotes: 'Existing 100A panel, customer wants upgrade to 200A service. Add 4 GFCI outlets in garage and kitchen. May need meter base upgrade — need to confirm with utility.',
-    labor: [
-      { id: 1, desc: 'Panel swap 100A → 200A',          hrs: 6,  rate: 115 },
-      { id: 2, desc: 'GFCI outlet install (×4)',         hrs: 2,  rate: 115 },
-    ],
-    materials: [
-      { id: 1, desc: '200A main breaker panel',          qty: 1,  unit: 'ea',  cost: 285 },
-      { id: 2, desc: 'GFCI outlet 20A (×4)',             qty: 4,  unit: 'ea',  cost: 18  },
-      { id: 3, desc: 'Wire, conduit & misc',             qty: 1,  unit: 'lot', cost: 120 },
-    ],
-    equipment: [],
-    markup: 15, tax: 8.5,
-    terms: 'Quote valid for 30 days. Utility coordination may affect timeline.',
-    createdAt: '2026-03-20', sentAt: null, expiresAt: '2026-04-20',
-    revisionOf: null, revisionNumber: 1,
-  },
-];
+const SEED_QUOTES = [];
 
 let quoteCounter = 4;
 const nextQuoteNum = () => {
@@ -4144,13 +4047,32 @@ function Billing({ user, payments }) {
 // ══════════════════════════════════════════════════════════════════════════════
 function Clients({ user }) {
   const { isTablet } = useBreakpoint();
-  const [clients,    setClients]    = useState(SEED_CLIENTS);
+  const [clients,    setClients]    = useState([]);
+  const [loading,    setLoading]    = useState(true);
+  const [loadError,  setLoadError]  = useState('');
   const [invoices]                  = useState(SEED_INVOICES);
   const [quotes]                    = useState(SEED_QUOTES);
   const [selected,   setSelected]   = useState(null);
   const [search,     setSearch]     = useState('');
   const [showAdd,    setShowAdd]    = useState(false);
   const [newClient,  setNewClient]  = useState({ name: '', company: '', email: '', phone: '' });
+  const [saving,     setSaving]     = useState(false);
+
+  // Load clients from Supabase on mount.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const rows = await listClients();
+        if (!cancelled) setClients(rows);
+      } catch (e) {
+        if (!cancelled) setLoadError(e?.message || 'Could not load clients.');
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   const filtered = clients.filter(c =>
     `${c.name} ${c.company} ${c.email} ${c.phone}`.toLowerCase().includes(search.toLowerCase())
@@ -4163,11 +4085,19 @@ function Clients({ user }) {
     .filter(i => ['sent','viewed','partial','overdue'].includes(i.status))
     .reduce((s, i) => s + (calcInvoice(i, user?.state).balance || 0), 0);
 
-  const addClient = () => {
-    if (!newClient.name.trim()) return;
-    setClients(prev => [...prev, { ...newClient, id: `c${Date.now()}` }]);
-    setNewClient({ name: '', company: '', email: '', phone: '' });
-    setShowAdd(false);
+  const addClient = async () => {
+    if (!newClient.name.trim() || saving) return;
+    setSaving(true);
+    try {
+      const created = await apiAddClient(user.id, newClient);
+      setClients(prev => [...prev, created].sort((a, b) => a.name.localeCompare(b.name)));
+      setNewClient({ name: '', company: '', email: '', phone: '' });
+      setShowAdd(false);
+    } catch (e) {
+      alert(e?.message || 'Could not save client.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   // ── Client detail view ────────────────────────────────────────────────────
@@ -4282,15 +4212,19 @@ function Clients({ user }) {
             ))}
           </div>
           <div style={{ display: 'flex', gap: 10 }}>
-            <button onClick={addClient} disabled={!newClient.name.trim()} style={{ ...s.btn, background: C.orange, color: '#fff', padding: '11px 24px', fontSize: 14, borderRadius: 50, border: 'none', opacity: newClient.name.trim() ? 1 : 0.4 }}>Save Client</button>
+            <button onClick={addClient} disabled={!newClient.name.trim() || saving} style={{ ...s.btn, background: C.orange, color: '#fff', padding: '11px 24px', fontSize: 14, borderRadius: 50, border: 'none', opacity: (newClient.name.trim() && !saving) ? 1 : 0.4 }}>{saving ? 'Saving…' : 'Save Client'}</button>
             <button onClick={() => setShowAdd(false)} style={{ ...s.btn, background: 'transparent', border: `1px solid ${C.border2}`, color: C.muted, padding: '11px 20px', fontSize: 14, borderRadius: 50 }}>Cancel</button>
           </div>
         </div>
       )}
 
-      {/* Client list */}
-      {filtered.length === 0
-        ? <div style={{ color: C.dim, fontSize: 16, padding: '30px 0', textAlign: 'center' }}>No clients found</div>
+      {/* Loading / error / empty / list */}
+      {loading
+        ? <div style={{ color: C.dim, fontSize: 16, padding: '30px 0', textAlign: 'center' }}>Loading clients…</div>
+        : loadError
+        ? <div style={{ color: C.error, fontSize: 14, padding: '20px', background: '#fef2f2', border: `1px solid ${C.error}33`, borderRadius: 6, textAlign: 'center' }}>{loadError}</div>
+        : filtered.length === 0
+        ? <div style={{ color: C.dim, fontSize: 16, padding: '30px 0', textAlign: 'center' }}>{clients.length === 0 ? 'No clients yet — tap "+ Add Client" to create one.' : 'No clients match your search.'}</div>
         : filtered.map(c => {
             const inv = clientInvoices(c);
             const quo = clientQuotes(c);
@@ -4755,7 +4689,9 @@ const NAV = [
   { id: 'dashboard', label: 'Dashboard' },
   { id: 'invoice',   label: 'Invoice'   },
   { id: 'quotes',    label: 'Quotes'    },
+  { id: 'schedule',  label: 'Schedule'  },
   { id: 'clients',   label: 'Clients'   },
+  { id: 'marketing', label: 'Marketing' },
 ];
 const BOTTOM_H = 68;
 
@@ -4763,23 +4699,50 @@ export default function Tradevoice() {
   useEffect(() => { loadFonts(); }, []);
   const { isTablet } = useBreakpoint();
 
-  const DEMO_USER = {
-    name: 'Matthew Burke',
-    company: "Burke's Mechanical",
-    email: 'matt@burkesmechanical.com',
-    phone: '(512) 555-0192',
-    trades: ['Plumber', 'HVAC'],
-    specialtyTypes: [],
-    workType: 'Both',
-    states: ['Texas', 'Louisiana'],
-    state: 'Texas, Louisiana',
-    tagline: "Austin's Most Trusted Mechanical Contractor",
-    license: 'TX Lic. #M-12345',
-    accentColor: '',
-    defaultTerms: 'Quote valid for 30 days. 50% deposit required to schedule. Balance due upon completion. All work performed per local building code.',
-  };
+  const [user,           setUser]           = useState(null);
+  const [authChecking,   setAuthChecking]   = useState(true); // true on first load until we know if there's a session
 
-  const [user,    setUser]    = useState(null);
+  // Restore session on first mount + listen for auth changes (signs in/out from another tab, token refresh)
+  useEffect(() => {
+    let cancelled = false;
+    // Hard cap on how long we'll wait for the auth bootstrap before giving up and showing the login screen.
+    // If supabase-js gets stuck refreshing a stale token, this prevents an infinite "Loading…".
+    const safetyTimeout = setTimeout(() => {
+      if (!cancelled) {
+        console.warn('auth bootstrap timed out after 5s, falling back to login');
+        setAuthChecking(false);
+      }
+    }, 5000);
+
+    (async () => {
+      try {
+        const sessionUser = await getSessionUser();
+        if (cancelled) return;
+        if (sessionUser) {
+          const profile = await getProfile(sessionUser.id);
+          if (!cancelled) setUser(profile ?? { id: sessionUser.id, email: sessionUser.email, role: 'owner', trades: [], states: [] });
+        }
+      } catch (e) {
+        // Network or RLS error during boot — log and continue showing login screen
+        console.error('session restore failed', e);
+      } finally {
+        clearTimeout(safetyTimeout);
+        if (!cancelled) setAuthChecking(false);
+      }
+    })();
+
+    const unsubscribe = onAuthChange(async (sessionUser) => {
+      if (!sessionUser) { setUser(null); return; }
+      try {
+        const profile = await getProfile(sessionUser.id);
+        setUser(profile ?? { id: sessionUser.id, email: sessionUser.email, role: 'owner', trades: [], states: [] });
+      } catch (e) {
+        console.error('profile fetch failed', e);
+      }
+    });
+
+    return () => { cancelled = true; unsubscribe(); };
+  }, []);
   const [section, setSection] = useState('dashboard');
   const [logo,    setLogo]    = useState(null);
   const [showProfileModal, setShowProfileModal] = useState(false);
@@ -4792,35 +4755,62 @@ export default function Tradevoice() {
     check:   { handle: '' },
     cash:    { enabled: false },
   });
-  const [taxRates, setTaxRates] = useState({});
-  const [teamMembers, setTeamMembers] = useState([
-    { id: 't1', name: 'Carlos Reyes',  email: 'carlos@burkesmechanical.com', role: 'tech', trades: ['Plumber'], status: 'active',
-      perms: { createQuotes: true, createInvoices: true, viewAllJobs: true, recordPayments: true, viewClients: true, viewDashboard: true }},
-    { id: 't2', name: 'Jason Hill',    email: 'jason@burkesmechanical.com',  role: 'tech', trades: ['HVAC'],    status: 'active',
-      perms: { createQuotes: true, createInvoices: true, viewAllJobs: false, recordPayments: false, viewClients: true, viewDashboard: false }},
-    { id: 't3', name: 'Mike Torres',   email: 'mike@burkesmechanical.com',   role: 'tech', trades: ['Plumber'], status: 'pending',
-      perms: { createQuotes: false, createInvoices: true, viewAllJobs: false, recordPayments: true, viewClients: false, viewDashboard: false }},
-  ]);  // contractor overrides keyed by state name
+  const [taxRates, setTaxRates] = useState({}); // contractor overrides keyed by state name
+  const [teamMembers, setTeamMembers] = useState([]);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [sharedInvoices, setSharedInvoices] = useState(SEED_INVOICES);
+  const [pendingInvoiceId, setPendingInvoiceId] = useState(null);
 
   // ── Auth state ────────────────────────────────────────────────────────────
   // authScreen: null (app) | 'login' | 'signup' | 'join' | 'onboarding'
   const [authScreen, setAuthScreen] = useState('login');
 
-  // Show auth screens when no user
-   const [sharedInvoices, setSharedInvoices] = useState(SEED_INVOICES);
-  const [pendingInvoiceId, setPendingInvoiceId] = useState(null);
+  const handleSignupComplete = async (data) => {
+    try {
+      const { user: authUser, session } = await signUp(data.email, data.password);
+      // If email confirmation is required, session is null — the user has to verify before signing in.
+      if (!session) {
+        alert('Account created. Check your email to confirm, then sign in.');
+        setAuthScreen('login');
+        return;
+      }
+      // Auth row created; trigger inserted a blank profiles row. Now fill it in.
+      const profile = await upsertProfile(authUser.id, {
+        name:            data.name,
+        company:         data.company,
+        phone:           data.phone,
+        trades:          data.trades,
+        states:          data.states,
+        plan:            data.plan,
+        role:            'owner',
+        companyCode:     'TV-' + Math.random().toString(36).slice(2, 8).toUpperCase(),
+        acceptedTermsAt: data.acceptedTermsAt ?? new Date().toISOString(),
+      });
+      setUser(profile);
+      setAuthScreen(null);
+    } catch (e) {
+      alert(e?.message || 'Could not create your account. Try again.');
+    }
+  };
 
-
-  if (!user) {
-    if (authScreen === 'login')    return <LoginScreen    onLogin={u => { setUser(u); setAuthScreen(null); }} onSignup={() => setAuthScreen('signup')} onJoin={() => setAuthScreen('join')} />;
-    if (authScreen === 'signup')   return <SignupScreen   onComplete={data => { setUser({ ...data, state: data.states?.join(', '), role: 'owner', companyCode: 'TV-' + Math.random().toString(36).slice(2,8).toUpperCase() }); setAuthScreen(null); }} onBack={() => setAuthScreen('login')} />;
-    if (authScreen === 'join')     return <JoinScreen     onJoin={data => { setUser({ ...data, role: 'tech' }); setAuthScreen(null); }} onBack={() => setAuthScreen('login')} />;
-    if (authScreen === 'onboarding') return <Onboarding  onComplete={data => { setUser({ ...data, state: data.states?.join(', '), role: 'owner', companyCode: 'TV-' + Math.random().toString(36).slice(2,8).toUpperCase() }); setAuthScreen(null); }} />;
-    return <LoginScreen onLogin={u => { setUser(u); setAuthScreen(null); }} onSignup={() => setAuthScreen('signup')} onJoin={() => setAuthScreen('join')} />;
+  // First-load auth check — show a small loader while we ask Supabase if there's a session.
+  if (authChecking) {
+    return (
+      <div style={{ minHeight: '100vh', background: C.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Inter', sans-serif" }}>
+        <div style={{ fontSize: 13, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 700 }}>Loading…</div>
+      </div>
+    );
   }
 
-  // ── Shared invoices state (lifted so Quotes can push new invoices) ──────────
+  // Show auth screens when no user
+  if (!user) {
+    if (authScreen === 'login')    return <LoginScreen    onLogin={u => { setUser(u); setAuthScreen(null); }} onSignup={() => setAuthScreen('signup')} onJoin={() => setAuthScreen('join')} onForgot={() => setAuthScreen('forgot')} />;
+    if (authScreen === 'signup')   return <SignupScreen onComplete={handleSignupComplete} onBack={() => setAuthScreen('login')} />;
+    if (authScreen === 'join')     return <JoinScreen     onJoin={data => { setUser({ ...data, role: 'tech' }); setAuthScreen(null); }} onBack={() => setAuthScreen('login')} />;
+    if (authScreen === 'forgot')   return <ForgotPasswordScreen onBack={() => setAuthScreen('login')} />;
+    if (authScreen === 'onboarding') return <Onboarding  onComplete={data => { setUser({ ...data, state: data.states?.join(', '), role: 'owner', companyCode: 'TV-' + Math.random().toString(36).slice(2,8).toUpperCase() }); setAuthScreen(null); }} />;
+    return <LoginScreen onLogin={u => { setUser(u); setAuthScreen(null); }} onSignup={() => setAuthScreen('signup')} onJoin={() => setAuthScreen('join')} onForgot={() => setAuthScreen('forgot')} />;
+  }
 
   const handleConvertToInvoice = (quote, client) => {
     const today = new Date().toISOString().split('T')[0];
@@ -4855,68 +4845,89 @@ export default function Tradevoice() {
   };
 
   const content = {
-    dashboard: <Dashboard    user={user} nav={setSection} />,
+    dashboard: <Dashboard    user={user} nav={setSection} invoices={sharedInvoices} />,
     invoice:   <VoiceInvoice user={user} logo={logo} payments={payments} taxRates={taxRates} sharedInvoices={sharedInvoices} setSharedInvoices={setSharedInvoices} pendingInvoiceId={pendingInvoiceId} clearPendingInvoice={() => setPendingInvoiceId(null)} />,
     billing:   <Billing      user={user} payments={payments} />,
     quotes:    <Quotes       user={user} logo={logo} taxRates={taxRates} onConvertToInvoice={handleConvertToInvoice} />,
+    schedule:  <ScheduleScreen />,
     clients:   <Clients      user={user} />,
+    marketing: <MarketingScreen />,
     settings:  <Settings     user={user} logo={logo} onLogoChange={setLogo} showProfileModal={showProfileModal} setShowProfileModal={setShowProfileModal} payments={payments} setPayments={setPayments} taxRates={taxRates} setTaxRates={setTaxRates} teamMembers={teamMembers} setTeamMembers={setTeamMembers} />,
+    privacy:   <PrivacyPolicyScreen onBack={() => setSection('settings')} />,
+    terms:     <TermsScreen onBack={() => setSection('settings')} />,
   }[section];
+
+  // ── Shared top bar: logo absolutely centered, settings menu top-right ──────
+  const initials = user.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || '?';
+  const TOP_H = 108;
+
+  const TopBar = (
+    <div style={{
+      position: 'sticky', top: 0, zIndex: 100,
+      height: TOP_H, background: C.surface, borderBottom: `2px solid ${C.orange}`,
+      display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 18px',
+    }}>
+      {/* Logo — centered via flex justifyContent on parent */}
+      <div onClick={() => setSection('dashboard')} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+        <Logo size={isTablet ? 40 : 44} />
+      </div>
+
+      {/* Settings/profile button — pinned to top right */}
+      <div style={{ position: 'absolute', top: 0, right: 14, height: TOP_H, display: 'flex', alignItems: 'center' }}>
+        <button onClick={() => setShowProfileMenu(m => !m)} aria-label="Open settings menu" style={{
+          width: 42, height: 42, borderRadius: '50%',
+          background: showProfileMenu ? C.orangeLo : C.orange,
+          border: showProfileMenu ? `2px solid ${C.orange}` : 'none',
+          cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          WebkitTapHighlightColor: 'transparent', transition: 'all 0.15s',
+        }}>
+          <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, fontWeight: 900, color: showProfileMenu ? C.orange : '#fff', letterSpacing: '0.04em' }}>
+            {initials}
+          </span>
+        </button>
+
+        {showProfileMenu && (
+          <div style={{
+            position: 'absolute', top: TOP_H - 4, right: 0, width: 220,
+            background: C.surface, border: `1px solid ${C.border}`,
+            borderRadius: 8, boxShadow: '0 8px 32px #00000022', zIndex: 999, overflow: 'hidden',
+          }}>
+            <div style={{ padding: '12px 14px', borderBottom: `1px solid ${C.border}`, background: C.raised }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: C.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user.name || 'Account'}</div>
+              {user.email && <div style={{ fontSize: 11, color: C.muted, marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user.email}</div>}
+              {user.trades?.length > 0 && <div style={{ fontSize: 11, color: C.dim, marginTop: 2 }}>{user.trades.join(' · ')}</div>}
+            </div>
+            {[
+              { label: 'Settings',     action: () => { setSection('settings'); setShowProfileMenu(false); } },
+              { label: 'Edit Profile', action: () => { setSection('settings'); setShowProfileModal(true); setShowProfileMenu(false); } },
+              { label: 'Sign Out',     action: async () => { setShowProfileMenu(false); try { await signOut(); } catch (e) { console.error('signOut failed', e); } setUser(null); setAuthScreen('login'); }, danger: true },
+            ].map((item, i, arr) => (
+              <button key={item.label} onClick={item.action} style={{
+                width: '100%', padding: '11px 14px', background: 'transparent', border: 'none',
+                borderBottom: i < arr.length - 1 ? `1px solid ${C.border}` : 'none',
+                textAlign: 'left', cursor: 'pointer',
+                fontSize: 13, fontWeight: 600, color: item.danger ? C.error : C.text,
+                fontFamily: "'Inter', sans-serif",
+                WebkitTapHighlightColor: 'transparent',
+              }}>{item.label}</button>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  // Outside-click overlay for the settings menu
+  const MenuOverlay = showProfileMenu && (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 90 }} onClick={() => setShowProfileMenu(false)} />
+  );
+
   // ── TABLET: top bar + scrollable body + bottom tab nav ─────────────────────
   if (isTablet) {
     return (
       <div style={{ minHeight: '100vh', background: C.bg, fontFamily: "'Inter', sans-serif", display: 'flex', flexDirection: 'column' }}>
-        {/* Top bar */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 18px', background: C.surface, borderBottom: `2px solid ${C.orange}`, position: 'sticky', top: 0, zIndex: 100 }}>
-          <Logo size={42} />
-
-          {/* Profile icon */}
-          <div style={{ position: 'relative' }}>
-            <button onClick={() => setShowProfileMenu(m => !m)} style={{
-              width: 42, height: 42, borderRadius: '50%',
-              background: C.orange, border: 'none', cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              WebkitTapHighlightColor: 'transparent', flexShrink: 0,
-            }}>
-              <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 16, fontWeight: 900, color: '#fff', letterSpacing: '0.04em' }}>
-                {user.name?.split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase()}
-              </span>
-            </button>
-
-            {/* Dropdown menu */}
-            {showProfileMenu && (
-              <div style={{
-                position: 'absolute', top: 50, right: 0, width: 220,
-                background: C.surface, border: `1px solid ${C.border}`,
-                borderRadius: 8, boxShadow: '0 8px 32px #00000022', zIndex: 999, overflow: 'hidden',
-              }} onClick={() => setShowProfileMenu(false)}>
-                {/* User info header */}
-                <div style={{ padding: '14px 16px', borderBottom: `1px solid ${C.border}`, background: C.raised }}>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: C.text }}>{user.name}</div>
-                  <div style={{ fontSize: 13, color: C.muted, marginTop: 2 }}>{user.email}</div>
-                  <div style={{ fontSize: 12, color: C.dim, marginTop: 2 }}>{user.trades?.join(' · ')}</div>
-                </div>
-                {/* Menu items */}
-                {[
-                  { label: 'Settings', action: () => setSection('settings') },
-                  { label: 'Edit Profile', action: () => { setSection('settings'); setShowProfileModal(true); } },
-                  { label: 'Sign Out', action: () => { setUser(null); setAuthScreen('login'); }, danger: true },
-                ].map(item => (
-                  <button key={item.label} onClick={item.action} style={{
-                    width: '100%', padding: '13px 16px', background: 'transparent', border: 'none',
-                    borderBottom: `1px solid ${C.border}`, textAlign: 'left', cursor: 'pointer',
-                    fontSize: 15, fontWeight: 600, color: item.danger ? C.error : C.text,
-                    fontFamily: "'Inter', sans-serif",
-                    WebkitTapHighlightColor: 'transparent',
-                  }}>{item.label}</button>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Tap outside to close menu */}
-        {showProfileMenu && <div style={{ position: 'fixed', inset: 0, zIndex: 99 }} onClick={() => setShowProfileMenu(false)} />}
+        {TopBar}
+        {MenuOverlay}
 
         {/* Content */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '22px 16px', paddingBottom: BOTTOM_H + 20 }}>
@@ -4955,98 +4966,49 @@ export default function Tradevoice() {
     );
   }
 
-  // ── LAPTOP: sidebar + content ───────────────────────────────────────────────
+  // ── LAPTOP: top bar + sidebar (nav only) + content ─────────────────────────
   return (
-    <div style={{ minHeight: '100vh', background: C.bg, fontFamily: "'Inter', sans-serif", display: 'flex' }}>
-      <div style={{ width: 210, background: C.surface, borderRight: `1px solid ${C.border}`, display: 'flex', flexDirection: 'column', position: 'sticky', top: 0, height: '100vh', flexShrink: 0 }}>
-        <div style={{ padding: '22px 18px 20px', borderBottom: `1px solid ${C.border}` }}>
-          <Logo size={42} />
-        </div>
-        <nav style={{ flex: 1, padding: '14px 12px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6 }}>
-          {NAV.map(item => {
-            const active = section === item.id;
-            return (
-              <button key={item.id} onClick={() => setSection(item.id)} style={{
-                width: '100%',
-                padding: '13px 18px',
-                borderRadius: 50,
-                background: active ? C.orange : 'transparent',
-                border: `2px solid ${active ? C.orange : C.border2}`,
-                color: active ? '#fff' : C.muted,
-                cursor: 'pointer',
-                fontFamily: "'Inter', sans-serif",
-                fontSize: 14,
-                fontWeight: 800,
-                letterSpacing: '0.06em',
-                textTransform: 'uppercase',
-                textAlign: 'center',
-                transition: 'all 0.15s',
-                WebkitTapHighlightColor: 'transparent',
-              }}
-              onMouseEnter={e => { if (!active) { e.currentTarget.style.background = C.orangeLo; e.currentTarget.style.borderColor = C.orange; e.currentTarget.style.color = C.orange; }}}
-              onMouseLeave={e => { if (!active) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = C.border2; e.currentTarget.style.color = C.muted; }}}
-              >
-                {item.label}
-              </button>
-            );
-          })}
-        </nav>
-        <div style={{ padding: '12px 18px', borderTop: `1px solid ${C.border}`, position: 'relative' }}>
-          <button onClick={() => setShowProfileMenu(m => !m)} style={{
-            width: '100%', display: 'flex', alignItems: 'center', gap: 10,
-            background: showProfileMenu ? C.orangeLo : C.raised,
-            border: `1px solid ${showProfileMenu ? C.orange : C.border}`,
-            borderRadius: 8, padding: '10px 12px', cursor: 'pointer',
-            WebkitTapHighlightColor: 'transparent', transition: 'all 0.15s',
-          }}>
-            {/* Avatar circle */}
-            <div style={{
-              width: 36, height: 36, borderRadius: '50%', background: C.orange,
-              display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-            }}>
-              <span style={{ fontSize: 14, fontWeight: 900, color: '#fff', fontFamily: "'Inter', sans-serif" }}>
-                {user.name?.split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase()}
-              </span>
-            </div>
-            <div style={{ flex: 1, textAlign: 'left', overflow: 'hidden' }}>
-              <div style={{ fontSize: 14, fontWeight: 700, color: C.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user.name}</div>
-              <div style={{ fontSize: 12, color: C.muted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user.trades?.join(' · ')}</div>
-            </div>
-            <span style={{ fontSize: 12, color: C.dim }}>▲</span>
-          </button>
+    <div style={{ minHeight: '100vh', background: C.bg, fontFamily: "'Inter', sans-serif", display: 'flex', flexDirection: 'column' }}>
+      {TopBar}
+      {MenuOverlay}
 
-          {/* Dropdown — opens upward */}
-          {showProfileMenu && (
-            <>
-              <div style={{ position: 'fixed', inset: 0, zIndex: 99 }} onClick={() => setShowProfileMenu(false)} />
-              <div style={{
-                position: 'absolute', bottom: 70, left: 12, right: 12,
-                background: C.surface, border: `1px solid ${C.border}`,
-                borderRadius: 8, boxShadow: '0 -8px 32px #00000022', zIndex: 999, overflow: 'hidden',
-              }}>
-                <div style={{ padding: '12px 14px', borderBottom: `1px solid ${C.border}`, background: C.raised }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: C.text }}>{user.name}</div>
-                  <div style={{ fontSize: 12, color: C.muted, marginTop: 2 }}>{user.email}</div>
-                </div>
-                {[
-                  { label: '⚙  Settings', action: () => { setSection('settings'); setShowProfileMenu(false); } },
-                  { label: '✏  Edit Profile', action: () => { setSection('settings'); setShowProfileModal(true); setShowProfileMenu(false); } },
-                  { label: '↩  Sign Out', action: () => { setUser(null); setShowProfileMenu(false); setAuthScreen('login'); }, danger: true },
-                ].map(item => (
-                  <button key={item.label} onClick={item.action} style={{
-                    width: '100%', padding: '11px 14px', background: 'transparent', border: 'none',
-                    borderBottom: `1px solid ${C.border}`, textAlign: 'left', cursor: 'pointer',
-                    fontSize: 14, fontWeight: 600, color: item.danger ? C.error : C.text,
-                    fontFamily: "'Inter', sans-serif", WebkitTapHighlightColor: 'transparent',
-                  }}>{item.label}</button>
-                ))}
-              </div>
-            </>
-          )}
+      <div style={{ flex: 1, display: 'flex', minHeight: 0 }}>
+        {/* Sidebar — nav only (logo and profile now live in the top bar) */}
+        <div style={{ width: 210, background: C.surface, borderRight: `1px solid ${C.border}`, display: 'flex', flexDirection: 'column', position: 'sticky', top: TOP_H, height: `calc(100vh - ${TOP_H}px)`, flexShrink: 0 }}>
+          <nav style={{ flex: 1, padding: '20px 12px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {NAV.map(item => {
+              const active = section === item.id;
+              return (
+                <button key={item.id} onClick={() => setSection(item.id)} style={{
+                  width: '100%',
+                  padding: '13px 18px',
+                  borderRadius: 50,
+                  background: active ? C.orange : 'transparent',
+                  border: `2px solid ${active ? C.orange : C.border2}`,
+                  color: active ? '#fff' : C.muted,
+                  cursor: 'pointer',
+                  fontFamily: "'Inter', sans-serif",
+                  fontSize: 14,
+                  fontWeight: 800,
+                  letterSpacing: '0.06em',
+                  textTransform: 'uppercase',
+                  textAlign: 'center',
+                  transition: 'all 0.15s',
+                  WebkitTapHighlightColor: 'transparent',
+                }}
+                onMouseEnter={e => { if (!active) { e.currentTarget.style.background = C.orangeLo; e.currentTarget.style.borderColor = C.orange; e.currentTarget.style.color = C.orange; }}}
+                onMouseLeave={e => { if (!active) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = C.border2; e.currentTarget.style.color = C.muted; }}}
+                >
+                  {item.label}
+                </button>
+              );
+            })}
+          </nav>
         </div>
-      </div>
-      <div style={{ flex: 1, padding: '36px 40px', overflowY: 'auto', minWidth: 0 }}>
-        {content}
+
+        <div style={{ flex: 1, padding: '36px 40px', overflowY: 'auto', minWidth: 0 }}>
+          {content}
+        </div>
       </div>
     </div>
   );

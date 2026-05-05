@@ -8,26 +8,14 @@ const C = {
 };
 
 // ─── SAMPLE DATA ─────────────────────────────────────────────────────────────
-const SAMPLE_CLIENTS = [
-  { id: 1, name: 'John Miller', email: 'john.miller@email.com', phone: '(713) 555-0100', lastJob: 'Apr 7, 2025', trade: 'Plumber', totalSpent: 358.78, reviewed: false },
-  { id: 2, name: 'Sarah Johnson', email: 'sarah.j@email.com', phone: '(713) 555-0200', lastJob: 'Apr 8, 2025', trade: 'HVAC', totalSpent: 245.00, reviewed: true },
-  { id: 3, name: 'Robert Chen', email: 'r.chen@email.com', phone: '(713) 555-0300', lastJob: 'Apr 9, 2025', trade: 'Electrician', totalSpent: 892.50, reviewed: false },
-  { id: 4, name: 'Lisa Williams', email: 'lwilliams@email.com', phone: '(713) 555-0400', lastJob: 'Mar 15, 2025', trade: 'Roofing', totalSpent: 4200.00, reviewed: true },
-  { id: 5, name: 'Mike Davis', email: 'mike.d@email.com', phone: '(713) 555-0500', lastJob: 'Feb 20, 2025', trade: 'Plumber', totalSpent: 575.00, reviewed: false },
-  { id: 6, name: 'Jennifer Kim', email: 'jkim@email.com', phone: '(713) 555-0600', lastJob: 'Jan 10, 2025', trade: 'HVAC', totalSpent: 1200.00, reviewed: false },
-];
-
-const SAMPLE_CAMPAIGNS = [
-  { id: 1, name: 'Spring AC Tune-Up Special', status: 'sent', sent: 45, opened: 28, clicked: 12, date: 'Apr 1, 2025', trade: 'HVAC' },
-  { id: 2, name: 'Annual Plumbing Checkup', status: 'draft', sent: 0, opened: 0, clicked: 0, date: 'Apr 10, 2025', trade: 'Plumber' },
-  { id: 3, name: 'Storm Damage Roof Inspection', status: 'sent', sent: 38, opened: 22, clicked: 9, date: 'Mar 20, 2025', trade: 'Roofing' },
-];
-
+const SAMPLE_CLIENTS = [];
+const SAMPLE_CAMPAIGNS = [];
+// Default automation library — these are templates the user enables/disables, not fake activity.
 const SAMPLE_AUTOMATIONS = [
-  { id: 1, name: 'Review Request', trigger: 'Job marked complete', delay: '1 day after', status: 'active', sent: 23, converted: 8 },
-  { id: 2, name: 'Quote Follow-up', trigger: 'Quote sent, not accepted', delay: '3 days after', status: 'active', sent: 15, converted: 4 },
-  { id: 3, name: 'Annual Maintenance Reminder', trigger: '1 year after last job', delay: '12 months after', status: 'active', sent: 12, converted: 6 },
-  { id: 4, name: 'Thank You + Referral Ask', trigger: 'Invoice paid', delay: '2 days after', status: 'paused', sent: 31, converted: 3 },
+  { id: 1, name: 'Review Request', trigger: 'Job marked complete', delay: '1 day after', status: 'paused', sent: 0, converted: 0 },
+  { id: 2, name: 'Quote Follow-up', trigger: 'Quote sent, not accepted', delay: '3 days after', status: 'paused', sent: 0, converted: 0 },
+  { id: 3, name: 'Annual Maintenance Reminder', trigger: '1 year after last job', delay: '12 months after', status: 'paused', sent: 0, converted: 0 },
+  { id: 4, name: 'Thank You + Referral Ask', trigger: 'Invoice paid', delay: '2 days after', status: 'paused', sent: 0, converted: 0 },
 ];
 
 // ─── REVIEW REQUEST MODAL ─────────────────────────────────────────────────────

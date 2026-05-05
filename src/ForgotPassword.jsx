@@ -1,9 +1,8 @@
 import React, { useState } from "react";
+import { supabase } from "./supabase";
 
 // ─── FORGOT PASSWORD SCREEN ─────────────────────────────────────────────────
-// Drop this component into App.jsx
-// Usage: add 'forgot' as an authScreen state option
-// In LoginScreen, wire the "Forgot password?" link to setAuthScreen('forgot')
+// Wired into App.jsx — uses authScreen === 'forgot' branch in main Tradevoice.
 
 export function ForgotPasswordScreen({ onBack }) {
   const [email, setEmail] = React.useState('');

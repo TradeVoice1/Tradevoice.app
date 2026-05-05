@@ -24,19 +24,8 @@ const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
 // ─── SAMPLE DATA ─────────────────────────────────────────────────────────────
-const SAMPLE_TECHS = [
-  { id: 1, name: 'Matthew Burke', color: '#2d6a4f', initials: 'MB' },
-  { id: 2, name: 'Jake Rivera', color: '#3b82f6', initials: 'JR' },
-  { id: 3, name: 'Carlos Mendez', color: '#8b5cf6', initials: 'CM' },
-];
-
-const SAMPLE_JOBS = [
-  { id: 1, title: 'Faucet Repair', client: 'John Miller', address: '2847 Magnolia Dr, Houston TX', tech: 1, date: new Date(), startHour: 9, duration: 2, status: 'completed', trade: 'Plumber', invoiceId: 'INV-2025-0112', phone: '(713) 555-0100', notes: 'Replace kitchen faucet and check under sink for leaks.' },
-  { id: 2, title: 'AC Tune-Up', client: 'Sarah Johnson', address: '1205 Oak Lane, Houston TX', tech: 2, date: new Date(), startHour: 11, duration: 3, status: 'in-progress', trade: 'HVAC', invoiceId: 'INV-2025-0113', phone: '(713) 555-0200', notes: 'Annual maintenance. Check refrigerant levels.' },
-  { id: 3, title: 'Panel Upgrade', client: 'Robert Chen', address: '4521 Elm St, Houston TX', tech: 3, date: new Date(Date.now() + 86400000), startHour: 8, duration: 4, status: 'scheduled', trade: 'Electrician', invoiceId: 'INV-2025-0114', phone: '(713) 555-0300', notes: 'Upgrade from 100A to 200A panel.' },
-  { id: 4, title: 'Roof Inspection', client: 'Lisa Williams', address: '789 Pine Ave, Houston TX', tech: 1, date: new Date(Date.now() + 172800000), startHour: 10, duration: 2, status: 'scheduled', trade: 'Roofing', invoiceId: 'INV-2025-0115', phone: '(713) 555-0400', notes: 'Post-storm inspection. Check for missing shingles.' },
-  { id: 5, title: 'Water Heater Install', client: 'Mike Davis', address: '321 Birch Rd, Houston TX', tech: 2, date: new Date(Date.now() + 259200000), startHour: 13, duration: 3, status: 'scheduled', trade: 'Plumber', invoiceId: 'INV-2025-0116', phone: '(713) 555-0500', notes: 'Replace 40gal tank with new unit.' },
-];
+const SAMPLE_TECHS = [];
+const SAMPLE_JOBS = [];
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
 const isSameDay = (a, b) =>
