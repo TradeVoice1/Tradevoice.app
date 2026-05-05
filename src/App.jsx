@@ -170,6 +170,13 @@ function NumberInput({ value, onChange, width = 76, prefix = '', placeholder = '
     setText(num === 0 ? '' : String(num));
   };
 
+  // Auto-select on focus, deferred past the click event so the browser's
+  // cursor-positioning doesn't immediately wipe the selection.
+  const selectAll = (e) => {
+    const el = e.currentTarget;
+    setTimeout(() => { try { el?.select(); } catch (_) { /* ignore if unmounted */ } }, 0);
+  };
+
   return (
     <div style={{ position: 'relative', width, display: 'inline-flex', alignItems: 'center' }}>
       {prefix && <span style={{ position: 'absolute', left: 8, fontSize: 14, fontWeight: 700, color: C.muted, pointerEvents: 'none', zIndex: 1 }}>{prefix}</span>}
@@ -179,7 +186,8 @@ function NumberInput({ value, onChange, width = 76, prefix = '', placeholder = '
         value={text}
         onChange={handleChange}
         onBlur={commit}
-        onFocus={e => e.target.select()}
+        onFocus={selectAll}
+        onClick={selectAll}
         placeholder={placeholder}
         style={{
           ...s.input,
