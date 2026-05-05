@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import { listJobs, upsertJob, deleteJob } from "./data/jobs";
 import { markPlanServiced } from "./data/plans";
+import { isTechOffOn, timeOffInRange } from "./data/timeOff";
 
 // ─── DRAG-RESCHEDULE HOOK ────────────────────────────────────────────────────
 // Pointer-events-based drag so it works on both mouse and touch (iPad).
@@ -219,7 +220,7 @@ function JobDetailModal({ job, techs, onClose, onStatusChange, onCreateInvoice, 
 }
 
 // ─── ADD JOB MODAL ────────────────────────────────────────────────────────────
-function AddJobModal({ techs, jobs = [], onClose, onAdd, defaultDate, prefill = null }) {
+function AddJobModal({ techs, jobs = [], onClose, onAdd, defaultDate, prefill = null, timeOff = [] }) {
   // `prefill` lets the parent seed the form (e.g. when scheduling from a recurring plan).
   // The plan's defaults — title, client name, trade, default tech, default duration, planId, target date —
   // flow straight into the initial form state. The user can still override anything before saving.
@@ -347,8 +348,30 @@ function AddJobModal({ techs, jobs = [], onClose, onAdd, defaultDate, prefill = 
               <label style={s.label}>Assigned Tech</label>
               <select style={s.select} value={form.techUserId || ''} onChange={e => { update('techUserId', e.target.value || null); setTechDirty(true); }}>
                 <option value="">Unassigned</option>
-                {techs.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                {techs.map(t => {
+                  // Compute the iso day for the currently-selected job date so we can
+                  // grey out techs that are off. Owner can still pick them (browsers
+                  // ignore disabled in some cases) but the visual cue is what matters.
+                  const dayIso = (form.date instanceof Date ? form.date : new Date(form.date))
+                    .toISOString().split('T')[0];
+                  const off = isTechOffOn(timeOff, t.id, dayIso);
+                  return (
+                    <option key={t.id} value={t.id} disabled={off}>
+                      {t.name}{off ? ' — off this day' : ''}
+                    </option>
+                  );
+                })}
               </select>
+              {/* Inline warning if the currently-selected tech is off on the selected date. */}
+              {form.techUserId && (() => {
+                const dayIso = (form.date instanceof Date ? form.date : new Date(form.date))
+                  .toISOString().split('T')[0];
+                return isTechOffOn(timeOff, form.techUserId, dayIso);
+              })() && (
+                <div style={{ fontSize: 12, color: '#b91c1c', marginTop: 4, fontWeight: 600 }}>
+                  This tech is off on the selected date.
+                </div>
+              )}
             </div>
           </div>
           <div style={s.row2}>
@@ -612,6 +635,11 @@ export default function ScheduleScreen({
   //  2. Receive a prefilled job draft (`pendingJobDraft`) from the Plans → "Schedule Job" button
   //     and auto-open the AddJobModal with those values.
   plans = [], setPlans, pendingJobDraft, clearPendingJobDraft,
+  // Time-off wiring — list of all time-off entries. Used to:
+  //  1. Disable off techs in the AddJobModal dropdown for the chosen date.
+  //  2. Warn the owner before drag-rescheduling a job onto an off-day.
+  //  3. Show "Off MM/DD–MM/DD" tags under each tech in the filter sidebar.
+  timeOff = [],
 }) {
   // When the signed-in user's role is 'tech', this screen becomes their personal
   // "My Schedule" — filtered to only jobs assigned to them, with no add/reassign UI.
@@ -725,6 +753,15 @@ export default function ScheduleScreen({
     if (sameDay && job.startHour === hour) return;
     if (!user?.id) return;
 
+    // If the assigned tech is off on the new date, give the owner a chance to
+    // back out before we save the move. They can still confirm if they're
+    // intentionally moving past the constraint.
+    if (job.techUserId && isTechOffOn(timeOff, job.techUserId, dayIso)) {
+      const techName = team.find(t => (t.userId || t.id) === job.techUserId)?.name || 'this tech';
+      const ok = window.confirm(`${techName} is off on ${dayIso}. Move the job anyway?`);
+      if (!ok) return;
+    }
+
     const newDate = new Date(dayIso + 'T12:00:00');
     const optimistic = { ...job, date: newDate, startHour: hour };
     const original   = job;
@@ -832,10 +869,27 @@ export default function ScheduleScreen({
               </button>
               {techs.map(tech => {
                 const count = allJobs.filter(j => j.techUserId === tech.id).length;
+                // Surface any time-off entries that overlap the visible week so the
+                // owner sees who's out at a glance without leaving the schedule.
+                const weekStartIso = isoLocalDate(weekDays[0]);
+                const weekEndIso   = isoLocalDate(weekDays[6]);
+                const offThisWeek  = timeOffInRange(timeOff, tech.id, weekStartIso, weekEndIso);
+                const fmtMd = (iso) => {
+                  if (!iso) return '';
+                  const d = new Date(iso + 'T12:00:00');
+                  return `${d.getMonth() + 1}/${d.getDate()}`;
+                };
                 return (
                   <button key={tech.id} style={s.techBtn(filterTech === tech.id, tech.color)} onClick={() => setFilterTech(filterTech === tech.id ? null : tech.id)}>
                     <div style={s.techDot(tech.color)} />
-                    <span style={s.techName}>{tech.name}</span>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', flex: 1, minWidth: 0 }}>
+                      <span style={s.techName}>{tech.name}</span>
+                      {offThisWeek.length > 0 && (
+                        <span style={{ fontSize: 11, color: '#b91c1c', fontWeight: 700, marginTop: 1 }}>
+                          Off {offThisWeek.map(t => `${fmtMd(t.startDate)}–${fmtMd(t.endDate)}`).join(', ')}
+                        </span>
+                      )}
+                    </div>
                     <span style={{ marginLeft: 'auto', fontSize: 12, color: '#888', fontWeight: 700 }}>{count}</span>
                   </button>
                 );
@@ -909,6 +963,7 @@ export default function ScheduleScreen({
           techs={techs}
           jobs={jobs}
           prefill={pendingJobDraft}
+          timeOff={timeOff}
           onClose={() => {
             setShowAddJob(false);
             // Clear the prefill so re-opening the Add Job modal manually starts blank.

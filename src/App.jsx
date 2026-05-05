@@ -14,6 +14,7 @@ import { listQuotes,   upsertQuote   as apiUpsertQuote,   deleteQuote   as apiDe
 import { listJobs,     upsertJob     as apiUpsertJob,     deleteJob     as apiDeleteJob     } from "./data/jobs";
 import { listTeam,     upsertTeamMember as apiUpsertTeam, deleteTeamMember as apiDeleteTeam } from "./data/team";
 import { listPlans,    upsertPlan       as apiUpsertPlan, deletePlan       as apiDeletePlan, dueWithinDays } from "./data/plans";
+import { listTimeOff,  upsertTimeOff    as apiUpsertTimeOff, deleteTimeOff as apiDeleteTimeOff } from "./data/timeOff";
 import { uploadLogo, deleteLogo } from "./data/storage";
 import { invoicesToQbCsv, downloadCsv } from "./lib/qbExport";
 
@@ -4700,9 +4701,157 @@ function TeamMemberRow({ member, onUpdate, onRemove }) {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
+// TIME OFF — block out periods when a tech is unavailable. Surfaces in the
+// Schedule's Add-Job dropdown (disabled tech) and drag-reschedule (warn).
+// ══════════════════════════════════════════════════════════════════════════════
+function TimeOffPanel({ team = [], timeOff = [], onAdd, onRemove }) {
+  const [techId,    setTechId]    = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate,   setEndDate]   = useState('');
+  const [reason,    setReason]    = useState('');
+  const [saving,    setSaving]    = useState(false);
+
+  // Sort: upcoming first, then in-progress, then past — so the most actionable
+  // entries are at the top of the list.
+  const todayIso = new Date().toISOString().split('T')[0];
+  const sorted = [...timeOff].sort((a, b) => {
+    const aPast = a.endDate < todayIso;
+    const bPast = b.endDate < todayIso;
+    if (aPast !== bPast) return aPast ? 1 : -1;
+    return a.startDate.localeCompare(b.startDate);
+  });
+
+  const fmt = (iso) => {
+    if (!iso) return '—';
+    const d = new Date(iso + 'T12:00:00');
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+
+  const canAdd = techId && startDate && endDate && startDate <= endDate;
+
+  const submit = async () => {
+    if (!canAdd || saving) return;
+    const tech = team.find(t => (t.userId || t.id) === techId);
+    setSaving(true);
+    try {
+      await onAdd?.({
+        techUserId: techId,
+        techName:   tech?.name || '',
+        startDate,
+        endDate,
+        reason:     reason.trim() || null,
+      });
+      setStartDate(''); setEndDate(''); setReason('');
+    } catch (e) {
+      alert(e?.message || 'Could not save time off.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div style={{ marginBottom: 28 }}>
+      <div style={{ fontSize: 15, fontWeight: 800, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12, fontFamily: "'Inter', sans-serif" }}>
+        Time Off
+      </div>
+
+      {/* Add-form card */}
+      <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: '16px 20px', marginBottom: 14 }}>
+        <div style={{ fontSize: 13, color: C.muted, marginBottom: 12, lineHeight: 1.5 }}>
+          Block out vacation, sick days, or training. Off techs won't show in the Add Job dropdown for those dates and you'll get a warning if you try to drag a job onto their off-days.
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 10, marginBottom: 10 }}>
+          <div>
+            <label style={s.label}>Tech</label>
+            <select value={techId} onChange={e => setTechId(e.target.value)}
+              style={{ ...s.input, padding: '10px 12px', fontSize: 15, width: '100%' }}>
+              <option value="">— Select tech —</option>
+              {team.map(t => (
+                <option key={t.id} value={t.userId || t.id}>{t.name || 'Unnamed'}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label style={s.label}>Start Date</label>
+            <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)}
+              style={{ ...s.input, padding: '10px 12px', fontSize: 15, width: '100%' }} />
+          </div>
+          <div>
+            <label style={s.label}>End Date</label>
+            <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)}
+              style={{ ...s.input, padding: '10px 12px', fontSize: 15, width: '100%' }} />
+          </div>
+        </div>
+        <label style={s.label}>Reason (optional)</label>
+        <input type="text" placeholder="Vacation, sick day, training…" value={reason} onChange={e => setReason(e.target.value)}
+          style={{ ...s.input, padding: '10px 12px', fontSize: 15, width: '100%', marginBottom: 12 }} />
+        <button onClick={submit} disabled={!canAdd || saving} style={{
+          ...s.btn,
+          background: canAdd ? C.orange : C.border, color: '#fff',
+          padding: '10px 20px', fontSize: 14, borderRadius: 8,
+          opacity: !canAdd || saving ? 0.55 : 1,
+          cursor: !canAdd || saving ? 'not-allowed' : 'pointer',
+        }}>
+          {saving ? 'Saving…' : 'Add Time Off'}
+        </button>
+      </div>
+
+      {/* List of existing entries */}
+      {sorted.length === 0 ? (
+        <div style={{ padding: '14px 18px', background: C.surface, border: `1px dashed ${C.border}`, borderRadius: 8, fontSize: 13, color: C.muted, textAlign: 'center' }}>
+          No time-off entries yet.
+        </div>
+      ) : (
+        <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, overflow: 'hidden' }}>
+          {sorted.map((t, i) => {
+            const isPast = t.endDate < todayIso;
+            const isLive = t.startDate <= todayIso && t.endDate >= todayIso;
+            return (
+              <div key={t.id} style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                gap: 12, padding: '12px 16px',
+                borderBottom: i < sorted.length - 1 ? `1px solid ${C.border}` : 'none',
+                opacity: isPast ? 0.55 : 1, flexWrap: 'wrap',
+              }}>
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 3, flexWrap: 'wrap' }}>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: C.text }}>{t.techName || 'Unknown tech'}</div>
+                    {isLive && (
+                      <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase',
+                        padding: '2px 7px', borderRadius: 4, background: C.errorBold, color: '#fff' }}>Off now</span>
+                    )}
+                    {isPast && (
+                      <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase',
+                        padding: '2px 7px', borderRadius: 4, background: C.border, color: C.muted }}>Past</span>
+                    )}
+                  </div>
+                  <div style={{ fontSize: 13, color: C.muted }}>
+                    {fmt(t.startDate)} → {fmt(t.endDate)}
+                    {t.reason ? ` · ${t.reason}` : ''}
+                  </div>
+                </div>
+                <button onClick={async () => {
+                  if (window.confirm(`Remove time off for ${t.techName} ${fmt(t.startDate)} → ${fmt(t.endDate)}?`)) {
+                    await onRemove?.(t.id);
+                  }
+                }} style={{
+                  ...s.btn,
+                  background: 'transparent', border: `1px solid ${C.border2}`, color: C.error,
+                  padding: '6px 12px', fontSize: 13, borderRadius: 6, flexShrink: 0,
+                }}>Remove</button>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
 // SETTINGS
 // ══════════════════════════════════════════════════════════════════════════════
-function Settings({ user, setUser, logo, onLogoChange, showProfileModal, setShowProfileModal, payments, setPayments, taxRates, setTaxRates, teamMembers, setTeamMembers, persistTeamMember, removeTeamMember }) {
+function Settings({ user, setUser, logo, onLogoChange, showProfileModal, setShowProfileModal, payments, setPayments, taxRates, setTaxRates, teamMembers, setTeamMembers, persistTeamMember, removeTeamMember, timeOff = [], persistTimeOff, removeTimeOff }) {
   const { isTablet } = useBreakpoint();
   const tradeCount   = user.trades?.length || 1;
   const currentPrice = getPrice(tradeCount);
@@ -5036,6 +5185,18 @@ function Settings({ user, setUser, logo, onLogoChange, showProfileModal, setShow
         </div>
       )}
 
+      {/* ── Time Off (owner only) ───────────────────────────────────────────
+          Owner picks a tech + date range; the schedule disables that tech
+          in Add Job and warns when dragging onto an off-day. */}
+      {user?.role === 'owner' && (
+        <TimeOffPanel
+          team={teamMembers}
+          timeOff={timeOff}
+          onAdd={persistTimeOff}
+          onRemove={removeTimeOff}
+        />
+      )}
+
       <div style={{ marginBottom: 28 }}>
         <div style={{ fontSize: 15, fontWeight: 800, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12, fontFamily: "'Inter', sans-serif" }}>Subscription</div>
         <div style={{ background: '#f0fdf4', border: `1px solid ${C.success}33`, borderRadius: 4, padding: '20px 22px', marginBottom: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
@@ -5165,6 +5326,7 @@ export default function Tradevoice() {
   const [sharedInvoices, setSharedInvoices] = useState([]);
   const [pendingInvoiceId, setPendingInvoiceId] = useState(null);
   const [plans, setPlans] = useState([]);
+  const [timeOff, setTimeOff] = useState([]);
   // When the user clicks "Schedule Job" on a plan, we stash a prefilled job draft here
   // and switch to the Schedule screen. ScheduleScreen reads it on mount, opens AddJobModal
   // with the values pre-populated, then clears it via clearPendingJobDraft.
@@ -5176,15 +5338,17 @@ export default function Tradevoice() {
     let cancelled = false;
     (async () => {
       try {
-        const [invs, tm, pl] = await Promise.all([
+        const [invs, tm, pl, to] = await Promise.all([
           listInvoices().catch(e => { console.error('listInvoices', e); return []; }),
           listTeam().catch(e => { console.error('listTeam', e); return []; }),
           listPlans().catch(e => { console.error('listPlans', e); return []; }),
+          listTimeOff().catch(e => { console.error('listTimeOff', e); return []; }),
         ]);
         if (cancelled) return;
         setSharedInvoices(invs);
         setTeamMembers(tm);
         setPlans(pl);
+        setTimeOff(to);
       } catch (e) {
         console.error('hydration failed', e);
       }
@@ -5289,6 +5453,29 @@ export default function Tradevoice() {
       console.error('removePlan', e);
     }
     setPlans(prev => prev.filter(p => p.id !== id));
+  };
+
+  // ── Time-off persistence ──────────────────────────────────────────────────
+  const persistTimeOff = async (entry) => {
+    const saved = await apiUpsertTimeOff(user.id, entry);
+    setTimeOff(prev => {
+      const exists = prev.find(t => t.id === saved.id || (entry.id && t.id === entry.id));
+      return exists
+        ? prev.map(t => (t.id === saved.id || t.id === entry.id) ? saved : t)
+        : [...prev, saved];
+    });
+    return saved;
+  };
+
+  const removeTimeOff = async (id) => {
+    try {
+      if (typeof id === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
+        await apiDeleteTimeOff(id);
+      }
+    } catch (e) {
+      console.error('removeTimeOff', e);
+    }
+    setTimeOff(prev => prev.filter(t => t.id !== id));
   };
 
   // Prefill an Add-Job draft from the plan's defaults and route to Schedule.
@@ -5452,11 +5639,11 @@ export default function Tradevoice() {
     invoice:   <VoiceInvoice user={user} logo={logo} payments={payments} taxRates={taxRates} sharedInvoices={sharedInvoices} setSharedInvoices={setSharedInvoices} persistInvoice={persistInvoice} pendingInvoiceId={pendingInvoiceId} clearPendingInvoice={() => setPendingInvoiceId(null)} />,
     billing:   <Billing      user={user} payments={payments} />,
     quotes:    <Quotes       user={user} logo={logo} taxRates={taxRates} onConvertToInvoice={handleConvertToInvoice} />,
-    schedule:  <ScheduleScreen user={user} team={teamMembers} onCreateInvoice={handleJobToInvoice} plans={plans} setPlans={setPlans} pendingJobDraft={pendingJobDraft} clearPendingJobDraft={() => setPendingJobDraft(null)} />,
+    schedule:  <ScheduleScreen user={user} team={teamMembers} onCreateInvoice={handleJobToInvoice} plans={plans} setPlans={setPlans} pendingJobDraft={pendingJobDraft} clearPendingJobDraft={() => setPendingJobDraft(null)} timeOff={timeOff} />,
     plans:     <PlansScreen  user={user} team={teamMembers} plans={plans} persistPlan={persistPlan} removePlan={removePlan} onScheduleFromPlan={handleScheduleFromPlan} />,
     clients:   <Clients      user={user} nav={setSection} />,
     marketing: <MarketingScreen />,
-    settings:  <Settings     user={user} setUser={setUser} logo={logo} onLogoChange={setLogo} showProfileModal={showProfileModal} setShowProfileModal={setShowProfileModal} payments={payments} setPayments={setPaymentsPersist} taxRates={taxRates} setTaxRates={setTaxRatesPersist} teamMembers={teamMembers} setTeamMembers={setTeamMembers} persistTeamMember={persistTeamMember} removeTeamMember={removeTeamMember} />,
+    settings:  <Settings     user={user} setUser={setUser} logo={logo} onLogoChange={setLogo} showProfileModal={showProfileModal} setShowProfileModal={setShowProfileModal} payments={payments} setPayments={setPaymentsPersist} taxRates={taxRates} setTaxRates={setTaxRatesPersist} teamMembers={teamMembers} setTeamMembers={setTeamMembers} persistTeamMember={persistTeamMember} removeTeamMember={removeTeamMember} timeOff={timeOff} persistTimeOff={persistTimeOff} removeTimeOff={removeTimeOff} />,
     privacy:   <PrivacyPolicyScreen onBack={() => setSection('settings')} />,
     terms:     <TermsScreen onBack={() => setSection('settings')} />,
   }[section];
