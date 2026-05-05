@@ -1,8 +1,11 @@
-import { useState, useRef, useEffect } from "react";
-import { ForgotPasswordScreen } from "./ForgotPassword";
-import ScheduleScreen from "./ScheduleScreen";
-import MarketingScreen from "./MarketingScreen";
-import { PrivacyPolicyScreen, TermsScreen } from "./LegalScreens";
+import { useState, useRef, useEffect, lazy, Suspense } from "react";
+// Heavy screens are code-split — they load on demand the first time the user
+// visits them. The auth bundle stays small so first paint is fast.
+const ForgotPasswordScreen = lazy(() => import("./ForgotPassword").then(m => ({ default: m.ForgotPasswordScreen })));
+const ScheduleScreen       = lazy(() => import("./ScheduleScreen"));
+const MarketingScreen      = lazy(() => import("./MarketingScreen"));
+const PrivacyPolicyScreen  = lazy(() => import("./LegalScreens").then(m => ({ default: m.PrivacyPolicyScreen })));
+const TermsScreen          = lazy(() => import("./LegalScreens").then(m => ({ default: m.TermsScreen })));
 import { signIn, signUp, signOut, getProfile, upsertProfile, getSessionUser, onAuthChange } from "./data/auth";
 import { listClients, addClient as apiAddClient, updateClient as apiUpdateClient, deleteClient as apiDeleteClient } from "./data/clients";
 import { listInvoices, upsertInvoice as apiUpsertInvoice, deleteInvoice as apiDeleteInvoice } from "./data/invoices";
@@ -289,7 +292,7 @@ function LoginScreen({ onLogin, onSignup, onJoin, onForgot }) {
 
   return (
     <AuthShell>
-      <div style={{ fontSize: 18, fontWeight: 900, color: C.text, marginBottom: 4, fontFamily: "'Inter', sans-serif", textTransform: 'uppercase', letterSpacing: '0.04em' }}>Welcome back</div>
+      <div style={{ fontSize: 22, fontWeight: 700, color: C.text, marginBottom: 4, fontFamily: "'Inter', sans-serif", letterSpacing: '-0.02em' }}>Welcome back</div>
       <div style={{ fontSize: 13, color: C.muted, marginBottom: 22 }}>Sign in to your Tradevoice account</div>
 
       {error && <div style={{ background: '#fef2f2', border: `1px solid ${C.error}33`, borderRadius: 6, padding: '9px 12px', fontSize: 13, color: C.error, marginBottom: 14 }}>{error}</div>}
@@ -389,7 +392,7 @@ function SignupScreen({ onComplete, onBack }) {
         ))}
       </div>
 
-      <div style={{ fontSize: 20, fontWeight: 900, color: C.text, marginBottom: 4, fontFamily: "'Inter', sans-serif", textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+      <div style={{ fontSize: 22, fontWeight: 700, color: C.text, marginBottom: 4, fontFamily: "'Inter', sans-serif", letterSpacing: '-0.02em' }}>
         {step === 0 ? 'Create your account' : step === 1 ? 'Your company' : 'Choose your plan'}
       </div>
       <div style={{ fontSize: 14, color: C.muted, marginBottom: 22 }}>
@@ -495,7 +498,7 @@ function JoinScreen({ onJoin, onBack }) {
 
   return (
     <AuthShell>
-      <div style={{ fontSize: 20, fontWeight: 900, color: C.text, marginBottom: 4, fontFamily: "'Inter', sans-serif", textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+      <div style={{ fontSize: 22, fontWeight: 700, color: C.text, marginBottom: 4, fontFamily: "'Inter', sans-serif", letterSpacing: '-0.02em' }}>
         {step === 0 ? 'Join your company' : 'Create your profile'}
       </div>
       <div style={{ fontSize: 14, color: C.muted, marginBottom: 22 }}>
@@ -624,7 +627,7 @@ function Onboarding({ onComplete }) {
       <div style={{ width: '100%', maxWidth: 480, background: C.surface, border: `1px solid ${C.border2}`, borderRadius: 4, padding: isTablet ? '28px 20px' : '36px 32px' }}>
 
         {step === 0 && <>
-          <h2 style={{ margin: '0 0 6px', fontFamily: "'Inter', sans-serif", fontSize: 27, fontWeight: 900, color: C.text, textTransform: 'uppercase' }}>Select Trade(s)</h2>
+          <h2 style={{ margin: '0 0 6px', fontFamily: "'Inter', sans-serif", fontSize: 24, fontWeight: 700, color: C.text, letterSpacing: '-0.02em' }}>Select Trade(s)</h2>
           <p style={{ margin: '0 0 20px', fontSize: 18, color: C.muted }}>Select every trade your business offers. Pricing adjusts automatically.</p>
 
           {/* Licensed trades — top 4 */}
@@ -697,7 +700,7 @@ function Onboarding({ onComplete }) {
         </>}
 
         {step === 1 && <>
-          <h2 style={{ margin: '0 0 6px', fontFamily: "'Inter', sans-serif", fontSize: 27, fontWeight: 900, color: C.text, textTransform: 'uppercase' }}>Type of Work</h2>
+          <h2 style={{ margin: '0 0 6px', fontFamily: "'Inter', sans-serif", fontSize: 24, fontWeight: 700, color: C.text, letterSpacing: '-0.02em' }}>Type of Work</h2>
           <p style={{ margin: '0 0 20px', fontSize: 18, color: C.muted }}>What kind of jobs do you run?</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {WORK_TYPES.map(w => {
@@ -712,7 +715,7 @@ function Onboarding({ onComplete }) {
         </>}
 
         {step === 2 && <>
-          <h2 style={{ margin: '0 0 6px', fontFamily: "'Inter', sans-serif", fontSize: 27, fontWeight: 900, color: C.text, textTransform: 'uppercase' }}>
+          <h2 style={{ margin: '0 0 6px', fontFamily: "'Inter', sans-serif", fontSize: 24, fontWeight: 700, color: C.text, letterSpacing: '-0.02em' }}>
             {multiState ? 'Select Your States' : 'Your State'}
           </h2>
           <p style={{ margin: '0 0 16px', fontSize: 18, color: C.muted }}>
@@ -793,7 +796,7 @@ function Onboarding({ onComplete }) {
         </>}
 
         {step === 3 && <>
-          <h2 style={{ margin: '0 0 6px', fontFamily: "'Inter', sans-serif", fontSize: 27, fontWeight: 900, color: C.text, textTransform: 'uppercase' }}>Your Profile</h2>
+          <h2 style={{ margin: '0 0 6px', fontFamily: "'Inter', sans-serif", fontSize: 24, fontWeight: 700, color: C.text, letterSpacing: '-0.02em' }}>Your Profile</h2>
           <p style={{ margin: '0 0 20px', fontSize: 18, color: C.muted }}>This appears on your invoices and proposals.</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             {inputField('name',    'Your Name',    'John Burke',                'text',  true)}
@@ -892,23 +895,23 @@ function Dashboard({ user, nav, invoices = [] }) {
               <button key={a.label} onClick={() => nav(a.sec)} style={{
                 flex: 1, minWidth: 110,
                 padding: '11px 20px',
-                background: C.orangeLo,
-                border: `2px solid ${C.orange}`,
-                borderRadius: 50,
-                color: C.orange,
+                background: C.orange,
+                border: 'none',
+                borderRadius: 8,
+                color: '#fff',
                 cursor: 'pointer',
                 fontFamily: "'Inter', sans-serif",
-                fontSize: 13,
-                fontWeight: 800,
-                letterSpacing: '0.04em',
-                textTransform: 'uppercase',
+                fontSize: 14,
+                fontWeight: 600,
+                letterSpacing: '-0.005em',
                 whiteSpace: 'nowrap',
                 textAlign: 'center',
-                transition: 'background 0.15s, color 0.15s',
+                transition: 'box-shadow 0.15s',
                 WebkitTapHighlightColor: 'transparent',
+                boxShadow: '0 1px 2px rgba(45, 106, 79, 0.2)',
               }}
-              onMouseEnter={e => { e.currentTarget.style.background = C.orange; e.currentTarget.style.color = '#fff'; }}
-              onMouseLeave={e => { e.currentTarget.style.background = C.orangeLo; e.currentTarget.style.color = C.orange; }}
+              onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 2px 8px rgba(45, 106, 79, 0.35)'; }}
+              onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 1px 2px rgba(45, 106, 79, 0.2)'; }}
               >
                 {a.label}
               </button>
@@ -1284,7 +1287,7 @@ function InvoiceHub({ invoices, onSelect, onNew }) {
       {/* Header */}
       <div style={{ marginBottom:20, paddingBottom:18, borderBottom:`1px solid ${C.border}`, display:'flex', alignItems:'center', justifyContent:'space-between', flexWrap:'wrap', gap:12 }}>
         <div>
-          <h1 style={{ margin:0, fontFamily:"'Inter', sans-serif", fontSize:29, fontWeight:900, color:C.text, textTransform:'uppercase', letterSpacing:'0.04em' }}>Invoices</h1>
+          <h1 style={{ margin:0, fontFamily:"'Inter', sans-serif", fontSize:24, fontWeight:700, color:C.text, letterSpacing:'-0.02em' }}>Invoices</h1>
           <p style={{ margin:'4px 0 0', fontSize:17, color:C.muted }}>{invoices.length} total</p>
         </div>
         <Btn variant="primary" onClick={onNew} style={{ fontSize:21, padding:'12px 22px', minHeight:52 }}>New Invoice</Btn>
@@ -1482,7 +1485,7 @@ function InvoiceEditor({ initial, user, onSave, onCancel }) {
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20, flexWrap:'wrap', gap:12 }}>
         <div style={{ display:'flex', alignItems:'center', gap:10 }}>
           <Btn variant="ghost" size="sm" onClick={onCancel} style={{ fontSize:21, padding:'12px 24px', minHeight:52 }}>Cancel</Btn>
-          <span style={{ fontFamily:"'Inter', sans-serif", fontSize:21, fontWeight:900, color:C.text, textTransform:'uppercase', letterSpacing:'0.05em' }}>
+          <span style={{ fontFamily:"'Inter', sans-serif", fontSize:18, fontWeight:700, color:C.text, letterSpacing:'-0.02em' }}>
             {initial ? `Edit ${initial.number}` : 'New Invoice'}
           </span>
         </div>
@@ -3305,7 +3308,7 @@ function QuoteEditor({ initial, clients, user, onSave, onCancel }) {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <Btn variant="ghost" size="sm" onClick={onCancel} style={{ fontSize: 21, padding: '12px 24px', minHeight: 52 }}>Cancel</Btn>
-          <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 21, fontWeight: 900, color: C.text, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 18, fontWeight: 700, color: C.text, letterSpacing: '-0.02em' }}>
             {isRevision ? `Revising ${initial.number}` : 'New Quote'}
           </span>
         </div>
@@ -3652,7 +3655,7 @@ function QuotesHub({ quotes, clients, onSelect, onNew, onNewClient }) {
       {/* Page header */}
       <div style={{ marginBottom: 20, paddingBottom: 18, borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <h1 style={{ margin: 0, fontFamily: "'Inter', sans-serif", fontSize: 29, fontWeight: 900, color: C.text, textTransform: 'uppercase', letterSpacing: '0.04em' }}>📄 Quotes</h1>
+          <h1 style={{ margin: 0, fontFamily: "'Inter', sans-serif", fontSize: 24, fontWeight: 700, color: C.text, letterSpacing: '-0.02em' }}>Quotes</h1>
           <p style={{ margin: '4px 0 0', fontSize: 18, color: C.muted }}>{quotes.length} total — {quotes.filter(q => q.status === 'sent').length} awaiting response</p>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
@@ -5052,7 +5055,7 @@ export default function Tradevoice() {
     if (authScreen === 'login')    return <LoginScreen    onLogin={u => { setUser(u); setAuthScreen(null); }} onSignup={() => setAuthScreen('signup')} onJoin={() => setAuthScreen('join')} onForgot={() => setAuthScreen('forgot')} />;
     if (authScreen === 'signup')   return <SignupScreen onComplete={handleSignupComplete} onBack={() => setAuthScreen('login')} />;
     if (authScreen === 'join')     return <JoinScreen     onJoin={data => { setUser({ ...data, role: 'tech' }); setAuthScreen(null); }} onBack={() => setAuthScreen('login')} />;
-    if (authScreen === 'forgot')   return <ForgotPasswordScreen onBack={() => setAuthScreen('login')} />;
+    if (authScreen === 'forgot')   return <Suspense fallback={<div style={{ minHeight: '100vh', background: C.bg }} />}><ForgotPasswordScreen onBack={() => setAuthScreen('login')} /></Suspense>;
     if (authScreen === 'onboarding') return <Onboarding  onComplete={data => { setUser({ ...data, state: data.states?.join(', '), role: 'owner', companyCode: 'TV-' + Math.random().toString(36).slice(2,8).toUpperCase() }); setAuthScreen(null); }} />;
     return <LoginScreen onLogin={u => { setUser(u); setAuthScreen(null); }} onSignup={() => setAuthScreen('signup')} onJoin={() => setAuthScreen('join')} onForgot={() => setAuthScreen('forgot')} />;
   }
@@ -5208,7 +5211,7 @@ export default function Tradevoice() {
 
         {/* Content */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '22px 16px', paddingBottom: BOTTOM_H + 20 }}>
-          {content}
+          <Suspense fallback={<div style={{ padding: 24, color: C.dim, fontSize: 13 }}>Loading…</div>}>{content}</Suspense>
         </div>
 
         {/* Bottom nav — oval pill buttons */}
@@ -5218,21 +5221,21 @@ export default function Tradevoice() {
             return (
               <button key={item.id} onClick={() => setSection(item.id)} style={{
                 flex: 1,
-                padding: '10px 8px',
-                borderRadius: 50,
+                padding: '9px 8px',
+                borderRadius: 10,
                 background: active ? C.orange : 'transparent',
-                border: `2px solid ${active ? C.orange : C.border2}`,
+                border: 'none',
                 color: active ? '#fff' : C.muted,
                 cursor: 'pointer',
                 fontFamily: "'Inter', sans-serif",
-                fontSize: 12,
-                fontWeight: 800,
-                letterSpacing: '0.04em',
-                textTransform: 'uppercase',
+                fontSize: 13,
+                fontWeight: active ? 600 : 500,
+                letterSpacing: '-0.005em',
                 whiteSpace: 'nowrap',
                 textAlign: 'center',
-                transition: 'all 0.15s',
+                transition: 'background 0.15s, color 0.15s',
                 WebkitTapHighlightColor: 'transparent',
+                boxShadow: active ? '0 1px 2px rgba(45, 106, 79, 0.2)' : 'none',
               }}>
                 {item.label}
               </button>
@@ -5258,23 +5261,23 @@ export default function Tradevoice() {
               return (
                 <button key={item.id} onClick={() => setSection(item.id)} style={{
                   width: '100%',
-                  padding: '13px 18px',
-                  borderRadius: 50,
+                  padding: '10px 14px',
+                  borderRadius: 8,
                   background: active ? C.orange : 'transparent',
-                  border: `2px solid ${active ? C.orange : C.border2}`,
+                  border: 'none',
                   color: active ? '#fff' : C.muted,
                   cursor: 'pointer',
                   fontFamily: "'Inter', sans-serif",
                   fontSize: 14,
-                  fontWeight: 800,
-                  letterSpacing: '0.06em',
-                  textTransform: 'uppercase',
-                  textAlign: 'center',
-                  transition: 'all 0.15s',
+                  fontWeight: active ? 600 : 500,
+                  letterSpacing: '-0.005em',
+                  textAlign: 'left',
+                  transition: 'background 0.15s, color 0.15s',
                   WebkitTapHighlightColor: 'transparent',
+                  boxShadow: active ? '0 1px 2px rgba(45, 106, 79, 0.2)' : 'none',
                 }}
-                onMouseEnter={e => { if (!active) { e.currentTarget.style.background = C.orangeLo; e.currentTarget.style.borderColor = C.orange; e.currentTarget.style.color = C.orange; }}}
-                onMouseLeave={e => { if (!active) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = C.border2; e.currentTarget.style.color = C.muted; }}}
+                onMouseEnter={e => { if (!active) { e.currentTarget.style.background = C.orangeLo; e.currentTarget.style.color = C.orange; }}}
+                onMouseLeave={e => { if (!active) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = C.muted; }}}
                 >
                   {item.label}
                 </button>
@@ -5284,7 +5287,7 @@ export default function Tradevoice() {
         </div>
 
         <div style={{ flex: 1, padding: '36px 40px', overflowY: 'auto', minWidth: 0 }}>
-          {content}
+          <Suspense fallback={<div style={{ padding: 24, color: C.dim, fontSize: 13 }}>Loading…</div>}>{content}</Suspense>
         </div>
       </div>
     </div>
