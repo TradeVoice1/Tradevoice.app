@@ -12,6 +12,7 @@ import { listInvoices, upsertInvoice as apiUpsertInvoice, deleteInvoice as apiDe
 import { listQuotes,   upsertQuote   as apiUpsertQuote,   deleteQuote   as apiDeleteQuote   } from "./data/quotes";
 import { listJobs,     upsertJob     as apiUpsertJob,     deleteJob     as apiDeleteJob     } from "./data/jobs";
 import { listTeam,     upsertTeamMember as apiUpsertTeam, deleteTeamMember as apiDeleteTeam } from "./data/team";
+import { uploadLogo, deleteLogo } from "./data/storage";
 import { invoicesToQbCsv, downloadCsv } from "./lib/qbExport";
 
 // ─── FONTS ─────────────────────────────────────────────────────────────────────
@@ -3932,7 +3933,11 @@ function ProfileModal({ profile, onSave, onClose }) {
   const [email,        setEmail]       = useState(profile.email        || '');
   const [phone,        setPhone]       = useState(profile.phone        || '');
   const [state,        setState]       = useState(profile.state        || '');
-  const [logo,         setLogo]        = useState(profile.logo         || null);
+  // Logo URL — points at Supabase Storage. Falls back to whatever the parent passed in
+  // (so existing data-URL logos still display until the user uploads a real one).
+  const [logo,         setLogo]        = useState(profile.logo || profile.logoUrl || null);
+  const [uploading,    setUploading]   = useState(false);
+  const [uploadError,  setUploadError] = useState('');
   const [tagline,      setTagline]     = useState(profile.tagline      || '');
   const [license,      setLicense]     = useState(profile.license      || '');
   const [accentColor,  setAccentColor] = useState(profile.accentColor  || '');
@@ -3955,12 +3960,31 @@ function ProfileModal({ profile, onSave, onClose }) {
     'custom'
   );
 
-  const handleFile = (e) => {
+  const handleFile = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = ev => setLogo(ev.target.result);
-    reader.readAsDataURL(file);
+    setUploadError('');
+    setUploading(true);
+    try {
+      const previousLogo = logo;
+      const url = await uploadLogo(profile.id, file);
+      setLogo(url);
+      // Best-effort cleanup of the previous logo file. Fire-and-forget — if it fails
+      // it just leaves an orphaned object in storage, not a user-visible problem.
+      if (previousLogo && previousLogo.includes('/company-logos/')) deleteLogo(previousLogo);
+    } catch (err) {
+      setUploadError(err?.message || 'Could not upload logo.');
+    } finally {
+      setUploading(false);
+      // Reset the input so picking the same file twice still fires onChange.
+      if (fileRef.current) fileRef.current.value = '';
+    }
+  };
+
+  const handleRemoveLogo = () => {
+    const previous = logo;
+    setLogo(null);
+    if (previous && previous.includes('/company-logos/')) deleteLogo(previous);
   };
 
   const handleSave = () => {
@@ -3994,7 +4018,7 @@ function ProfileModal({ profile, onSave, onClose }) {
             {logo ? (
               <div style={{ position: 'relative', display: 'inline-block' }}>
                 <img src={logo} alt="Logo" style={{ maxHeight: 72, maxWidth: 180, objectFit: 'contain', display: 'block', background: '#f8f8f8', padding: 8, borderRadius: 3, border: '1px solid #ddd' }} />
-                <button onClick={() => setLogo(null)} style={{ position: 'absolute', top: -8, right: -8, background: C.error, border: 'none', borderRadius: '50%', width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#fff', fontSize: 15, fontWeight: 700 }}>×</button>
+                <button onClick={handleRemoveLogo} style={{ position: 'absolute', top: -8, right: -8, background: C.error, border: 'none', borderRadius: '50%', width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#fff', fontSize: 15, fontWeight: 700 }}>×</button>
               </div>
             ) : (
               <div style={{ width: 110, height: 68, border: `2px dashed ${C.border2}`, borderRadius: 4, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, background: C.raised }}>
@@ -4003,10 +4027,11 @@ function ProfileModal({ profile, onSave, onClose }) {
               </div>
             )}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <button onClick={() => fileRef.current?.click()} style={{ ...s.btn, background: C.raised, border: `1.5px solid ${C.border2}`, color: C.text, padding: '10px 18px', fontSize: 15, minHeight: 44 }}>
-                {logo ? 'Change Logo' : 'Upload Logo'}
+              <button onClick={() => fileRef.current?.click()} disabled={uploading} style={{ ...s.btn, background: C.raised, border: `1.5px solid ${C.border2}`, color: C.text, padding: '10px 18px', fontSize: 15, minHeight: 44, opacity: uploading ? 0.5 : 1, cursor: uploading ? 'wait' : 'pointer' }}>
+                {uploading ? 'Uploading…' : (logo ? 'Change Logo' : 'Upload Logo')}
               </button>
-              <span style={{ fontSize: 13, color: C.dim }}>PNG, JPG, SVG — max 2MB</span>
+              <span style={{ fontSize: 13, color: C.dim }}>PNG, JPG, SVG — max 2 MB</span>
+              {uploadError && <span style={{ fontSize: 13, color: C.error, fontWeight: 600 }}>{uploadError}</span>}
             </div>
           </div>
           <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFile} />
@@ -4682,7 +4707,7 @@ function Settings({ user, setUser, logo, onLogoChange, showProfileModal, setShow
         <ProfileModal
           profile={{ ...user, logo }}
           onSave={async (p) => {
-            // Logo is currently held in local state (no Storage upload yet); everything else persists.
+            // Mirror the logo URL into local state immediately so the UI updates without waiting for Supabase.
             onLogoChange(p.logo);
             try {
               const saved = await upsertProfile(user.id, {
@@ -4695,6 +4720,7 @@ function Settings({ user, setUser, logo, onLogoChange, showProfileModal, setShow
                 license:      p.license,
                 accentColor:  p.accentColor,
                 defaultTerms: p.defaultTerms,
+                logoUrl:      p.logo,             // persist the Storage URL on the profile row
               });
               if (setUser) setUser(prev => ({ ...prev, ...saved }));
             } catch (e) {
@@ -5088,7 +5114,7 @@ export default function Tradevoice() {
     return () => { cancelled = true; };
   }, [user?.id]);
 
-  // Sync settings (payments + taxRates) from the loaded profile into local state.
+  // Sync settings (payments + taxRates + logo) from the loaded profile into local state.
   useEffect(() => {
     if (!user) return;
     if (user.payments && Object.keys(user.payments).length > 0) {
@@ -5097,6 +5123,7 @@ export default function Tradevoice() {
     if (user.taxRates && Object.keys(user.taxRates).length > 0) {
       setTaxRates(user.taxRates);
     }
+    if (user.logoUrl) setLogo(user.logoUrl);
   }, [user?.id]);
 
   // Persist an invoice to Supabase and merge the saved row back into local state.
