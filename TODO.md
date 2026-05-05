@@ -129,6 +129,55 @@ From the original feature list in our planning conversation:
 
 ---
 
+## 5b. Scheduling roadmap (post-launch)
+
+Brainstormed in chat — all feasible on the current stack. Grouped by effort.
+
+### Tier 1 — Quick wins (~1-2 hrs each)
+
+- **Last-tech memory.** When picking a client in Add Job modal, show "Carlos last
+  serviced this client on Mar 12" and pre-select that tech.
+- **Default duration by job type.** Average past durations for similar titles
+  and prefill the duration field.
+- **Job → Invoice in one click.** "Mark job completed" auto-creates a draft
+  invoice with the client + line items prefilled (mirrors Quote → Invoice).
+- **Tech filter on calendar.** "Only show Carlos's jobs" toggle.
+- **Status colour-coding finished.** Overdue jobs in red, in-progress in amber,
+  completed faded out.
+
+### Tier 2 — Medium (~3-5 hrs each)
+
+- **Recurring jobs / maintenance plans.** New `plans` table. Plan auto-creates
+  jobs on schedule (annual HVAC tune-up, quarterly fire-system inspection). 🔁
+  icon on calendar entries. Last-serviced + next-due tracking.
+- **Maintenance-due dashboard widget.** "3 clients due for service this week" —
+  click to bulk-create the jobs.
+- **Tech time-off / availability.** Block out a tech for vacation/sick. Calendar
+  greys them out; Add Job hides them for those days.
+- **Drag-and-drop reschedule.** Drag a job between days / techs in week view.
+- **Skill-based tech filtering.** Driven by existing `team_members.trades` —
+  HVAC techs only see HVAC jobs by default.
+- **Job photos.** Tech attaches before/after photos via Supabase Storage.
+  Photos appear on the resulting invoice.
+
+### Tier 3 — Bigger features (full session each + third-party costs)
+
+- **Subscription billing for maintenance plans.** Stripe recurring charges.
+  $X/mo or $Y/yr covers N visits per year. Requires Stripe Connect (#1 above)
+  to be live first.
+- **Route optimization.** Sort a tech's daily jobs by drive time. Needs
+  Google Maps Directions API or Mapbox (~$0.005 per route after free tier).
+- **Client portal.** Customers log in to see upcoming maintenance, past
+  invoices, request service. New "client" role on `profiles` + a separate
+  client-facing route. ~6-8 hrs.
+- **SMS / email job reminders.** Twilio (~$0.0075/text) or SendGrid for email.
+  "Tech is on the way 30 min" texts; 24-hour reminders.
+- **GPS check-in at job site.** Tech taps "I'm here" → records location +
+  timestamp. Acts as proof of service. Originally punted in the roadmap doc;
+  worth re-evaluating once everything else is shipped.
+
+---
+
 ## 6. Pre-existing lint warnings
 
 `eslint src/App.jsx` reports ~50 errors that pre-date our session, all of the
