@@ -4908,26 +4908,32 @@ function Billing({ user, payments }) {
 // ══════════════════════════════════════════════════════════════════════════════
 // CLIENTS
 // ══════════════════════════════════════════════════════════════════════════════
-function Clients({ user, nav }) {
+function Clients({ user, nav, invoices = [] }) {
   const { isTablet } = useBreakpoint();
   const [clients,    setClients]    = useState([]);
   const [loading,    setLoading]    = useState(true);
   const [loadError,  setLoadError]  = useState('');
-  const [invoices]                  = useState(SEED_INVOICES);
-  const [quotes]                    = useState(SEED_QUOTES);
+  // Quotes are loaded on demand here — they're not in App.jsx's shared state
+  // (they live inside the Quotes component). Hydrate once on mount so per-
+  // client quote counts are real instead of always 0.
+  const [quotes,     setQuotes]     = useState([]);
   const [selected,   setSelected]   = useState(null);
   const [search,     setSearch]     = useState('');
   const [showAdd,    setShowAdd]    = useState(false);
   const [newClient,  setNewClient]  = useState({ name: '', company: '', email: '', phone: '' });
   const [saving,     setSaving]     = useState(false);
 
-  // Load clients from Supabase on mount.
+  // Load clients + quotes from Supabase on mount. Invoices come in via prop
+  // (sharedInvoices in App.jsx) so they reflect live state across sections.
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const rows = await listClients();
-        if (!cancelled) setClients(rows);
+        const [cs, qs] = await Promise.all([
+          listClients(),
+          listQuotes().catch(e => { console.error('clients: listQuotes', e); return []; }),
+        ]);
+        if (!cancelled) { setClients(cs); setQuotes(qs); }
       } catch (e) {
         if (!cancelled) setLoadError(e?.message || 'Could not load clients.');
       } finally {
@@ -5810,9 +5816,15 @@ export default function Tradevoice() {
     })();
 
     const unsubscribe = onAuthChange(async (sessionUser) => {
+      // Guard against the StrictMode double-mount race + the case where the
+      // component unmounts between an auth event firing and the await resolving.
+      // Without this, you can hit "setState on an unmounted component" warnings
+      // (and worse, race two profile fetches into the same setUser).
+      if (cancelled) return;
       if (!sessionUser) { setUser(null); return; }
       try {
         const profile = await getProfile(sessionUser.id, sessionUser.email);
+        if (cancelled) return;
         setUser(profile ?? { id: sessionUser.id, email: sessionUser.email, role: 'owner', trades: [], states: [] });
       } catch (e) {
         console.error('profile fetch failed', e);
@@ -5910,30 +5922,40 @@ export default function Tradevoice() {
 
   // "Un-invoice" — undoes a Quote → Invoice conversion.
   //   1. Deletes the invoice row.
-  //   2. Looks up the source quote (by parsing "Converted from <quote.number>"
-  //      out of the invoice notes) and reverts its status from 'invoiced' back
-  //      to 'accepted' so the user can re-do the conversion or revise the quote.
+  //   2. Reverts the source quote's status from 'invoiced' back to 'accepted'.
+  //
+  // Source-quote lookup priority:
+  //   (a) invoice.sourceQuoteId (durable FK, set on every new conversion since
+  //       migration 0009)
+  //   (b) regex parse of "Converted from <quote.number>" in invoice.notes
+  //       (legacy fallback for invoices created before the FK existed; only
+  //       triggers if the user hasn't edited the notes)
   // Returns { quoteRestored: bool, quoteNumber: string|null } so the caller
   // can show a meaningful confirmation toast.
   const handleUnInvoice = async (invoice) => {
     let restored = null;
 
-    // Try to find the source quote from the invoice's notes ("Converted from Q-2026-0001").
-    const m = (invoice.notes || '').match(/Converted from (\S+)/);
-    const sourceQuoteNumber = m ? m[1] : null;
+    try {
+      let sourceQuote = null;
+      const allQuotes = await listQuotes();
 
-    if (sourceQuoteNumber) {
-      try {
-        const allQuotes = await listQuotes();
-        const sourceQuote = allQuotes.find(q => q.number === sourceQuoteNumber);
-        if (sourceQuote && sourceQuote.status === 'invoiced') {
-          await apiUpsertQuote(user.id, { ...sourceQuote, status: 'accepted' });
-          restored = sourceQuote.number;
-        }
-      } catch (e) {
-        // Don't block the un-invoice on a quote-revert failure — log and continue.
-        console.error('un-invoice: revert quote failed', e);
+      if (invoice.sourceQuoteId) {
+        sourceQuote = allQuotes.find(q => q.id === invoice.sourceQuoteId);
       }
+      if (!sourceQuote) {
+        // Legacy fallback — parse the notes. Only used for invoices created
+        // before sourceQuoteId existed.
+        const m = (invoice.notes || '').match(/Converted from (\S+)/);
+        if (m) sourceQuote = allQuotes.find(q => q.number === m[1]);
+      }
+
+      if (sourceQuote && sourceQuote.status === 'invoiced') {
+        await apiUpsertQuote(user.id, { ...sourceQuote, status: 'accepted' });
+        restored = sourceQuote.number;
+      }
+    } catch (e) {
+      // Don't block the un-invoice on a quote-revert failure — log and continue.
+      console.error('un-invoice: revert quote failed', e);
     }
 
     await removeInvoice(invoice.id);
@@ -5943,6 +5965,9 @@ export default function Tradevoice() {
   // Debounced persistence for the JSONB settings columns (payments + tax_rates on profiles).
   // Without debouncing we'd fire a Supabase update on every keystroke as the user types a Venmo handle, etc.
   const settingsTimer = useRef(null);
+  // Clear any pending settings save on unmount so a delayed upsertProfile
+  // doesn't fire against a stale user.id (or after the user signed out).
+  useEffect(() => () => { if (settingsTimer.current) clearTimeout(settingsTimer.current); }, []);
   const queueSettingsSave = (patch) => {
     if (!user?.id) return;
     if (settingsTimer.current) clearTimeout(settingsTimer.current);
@@ -6112,6 +6137,11 @@ export default function Tradevoice() {
 
   const handleConvertToInvoice = async (quote, client) => {
     const today = new Date().toISOString().split('T')[0];
+    // M4: when converting a non-bundle quote, strip any leftover `_trade`
+    // tags from line items so they don't carry dead metadata into the
+    // invoice (the InvoiceDocument only groups when invoice.trade === 'bundle').
+    const stripIfNotBundle = (rows) =>
+      quote.trade === 'bundle' ? (rows || []) : (rows || []).map(({ _trade, ...rest }) => rest);
     const draft = {
       number: nextInvNum(),
       clientId:      client?.id     || null,
@@ -6121,14 +6151,17 @@ export default function Tradevoice() {
       clientAddress: client?.address || quote.clientAddress || '',
       title:    quote.title,
       trade:    quote.trade,
+      // H1: durable link back to the source quote so un-invoice can revert
+      // status without parsing free-text notes.
+      sourceQuoteId: quote.id || null,
       status:   'draft',
       terms:    quote.terms || 'Net 30',
       createdAt: today,
       dueAt:    '',
       paidAt:   null,
-      labor:     quote.labor     || [],
-      materials: quote.materials || [],
-      equipment: quote.equipment || [],
+      labor:     stripIfNotBundle(quote.labor),
+      materials: stripIfNotBundle(quote.materials),
+      equipment: stripIfNotBundle(quote.equipment),
       markup:    quote.markup,
       tax:       quote.tax,
       notes:     `Converted from ${quote.number}`,
@@ -6156,14 +6189,16 @@ export default function Tradevoice() {
     const conf = (typeof TRADE_CONFIG !== 'undefined' && TRADE_CONFIG[trade]) || { defaultLaborRate: 100 };
     // Carry the assigned tech from the job over so the invoice records who
     // actually performed the work. Fall back to the owner if no tech was
-    // assigned (typically a one-person shop).
-    const techMember = (teamMembers || []).find(t => (t.userId || t.id) === job.techUserId);
+    // assigned (typically a one-person shop). Match strictly on userId — the
+    // pending-invite case where userId is null shouldn't accidentally match
+    // job.techUserId via the team_members.id fallback.
+    const techMember = (teamMembers || []).find(t => t.userId && t.userId === job.techUserId);
     const techName   = techMember?.name || (job.techUserId === user?.id ? user?.name : '') || '';
     const draft = {
       number: nextInvNum(),
-      clientName:    job.client   || '',
-      clientPhone:   job.phone    || '',
-      clientAddress: job.address  || '',
+      clientName:    job.clientName || '',
+      clientPhone:   job.phone      || '',
+      clientAddress: job.address    || '',
       clientEmail:   '',
       title:         job.title    || 'Service Visit',
       trade,
@@ -6213,7 +6248,7 @@ export default function Tradevoice() {
     quotes:    <Quotes       user={user} logo={logo} taxRates={taxRates} onConvertToInvoice={handleConvertToInvoice} />,
     schedule:  <ScheduleScreen user={user} team={teamMembers} onCreateInvoice={handleJobToInvoice} plans={plans} setPlans={setPlans} pendingJobDraft={pendingJobDraft} clearPendingJobDraft={() => setPendingJobDraft(null)} timeOff={timeOff} />,
     plans:     <PlansScreen  user={user} team={teamMembers} plans={plans} persistPlan={persistPlan} removePlan={removePlan} onScheduleFromPlan={handleScheduleFromPlan} />,
-    clients:   <Clients      user={user} nav={setSection} />,
+    clients:   <Clients      user={user} nav={setSection} invoices={sharedInvoices} />,
     marketing: <MarketingScreen />,
     settings:  <Settings     user={user} setUser={setUser} logo={logo} onLogoChange={setLogo} showProfileModal={showProfileModal} setShowProfileModal={setShowProfileModal} payments={payments} setPayments={setPaymentsPersist} taxRates={taxRates} setTaxRates={setTaxRatesPersist} teamMembers={teamMembers} setTeamMembers={setTeamMembers} persistTeamMember={persistTeamMember} removeTeamMember={removeTeamMember} timeOff={timeOff} persistTimeOff={persistTimeOff} removeTimeOff={removeTimeOff} />,
     privacy:   <PrivacyPolicyScreen onBack={() => setSection('settings')} />,

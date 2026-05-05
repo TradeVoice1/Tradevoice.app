@@ -14,7 +14,9 @@ const dbToMember = (r) => ({
 });
 
 const memberToDb = (m) => ({
-  user_id: m.userId ?? null,
+  // user_id is a uuid FK to auth.users — coerce empty string to null so a
+  // pending invite (where userId is '') doesn't fail Postgres uuid validation.
+  user_id: m.userId || null,
   name:    m.name   ?? null,
   email:   m.email  ?? null,
   role:    m.role   ?? 'tech',

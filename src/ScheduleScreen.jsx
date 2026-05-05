@@ -4,6 +4,7 @@ import { markPlanServiced } from "./data/plans";
 import { isTechOffOn, timeOffInRange } from "./data/timeOff";
 import { uploadJobPhoto, deleteJobPhoto } from "./data/jobPhotos";
 import { compressImage } from "./lib/imageCompress";
+import { useEscapeClose } from "./lib/useEscapeClose";
 
 // ─── DRAG-RESCHEDULE HOOK ────────────────────────────────────────────────────
 // Pointer-events-based drag so it works on both mouse and touch (iPad).
@@ -22,8 +23,29 @@ function useDragReschedule({ onDrop }) {
   // so onJobClick (which opens the detail modal) doesn't fire on drop.
   const justDragged  = useRef(false);
 
+  // Belt-and-suspenders cleanup: if the user alt-tabs away or switches
+  // browser tabs mid-drag, pointerup may never fire and startRef would
+  // stay populated forever (so the next pointerdown would behave weird).
+  // Reset on window blur + visibilitychange to keep state sane.
+  useEffect(() => {
+    const reset = () => {
+      if (startRef.current || drag) {
+        startRef.current = null;
+        setDrag(null);
+      }
+    };
+    window.addEventListener('blur', reset);
+    document.addEventListener('visibilitychange', reset);
+    return () => {
+      window.removeEventListener('blur', reset);
+      document.removeEventListener('visibilitychange', reset);
+    };
+  }, [drag]);
+
   const beginPress = (job, e) => {
     if (e.button === 2) return;
+    // If a previous drag never cleaned up (defensive — shouldn't happen with
+    // the blur/visibility cleanup above), don't let the new press inherit it.
     startRef.current = {
       job,
       startX: e.clientX,
@@ -245,6 +267,7 @@ function PhotoTile({ photo, onView, onCycleLabel, onSetCaption, onDelete }) {
 
 // ─── JOB DETAIL MODAL ────────────────────────────────────────────────────────
 function JobDetailModal({ job, techs, onClose, onStatusChange, onCreateInvoice, onPhotosChange, userId, isTech = false }) {
+  useEscapeClose(onClose);
   const tech = techs.find(t => t.id === job.techUserId);
   const sc = STATUS_COLORS[job.status] || STATUS_COLORS.scheduled;
   const [uploading, setUploading]   = useState(false);
@@ -333,7 +356,7 @@ function JobDetailModal({ job, techs, onClose, onStatusChange, onCreateInvoice, 
           <div>
             <div style={{ fontSize: 11, color: 'rgba(255,255,255,.6)', textTransform: 'uppercase', letterSpacing: '.1em', marginBottom: 4 }}>{job.trade}</div>
             <div style={{ fontSize: 20, fontWeight: 800, color: '#fff', marginBottom: 4 }}>{job.title}</div>
-            <div style={{ fontSize: 14, color: 'rgba(255,255,255,.8)' }}>{job.client}</div>
+            <div style={{ fontSize: 14, color: 'rgba(255,255,255,.8)' }}>{job.clientName}</div>
           </div>
           <button style={s.closeBtn} onClick={onClose}>×</button>
         </div>
@@ -468,12 +491,13 @@ function JobDetailModal({ job, techs, onClose, onStatusChange, onCreateInvoice, 
 
 // ─── ADD JOB MODAL ────────────────────────────────────────────────────────────
 function AddJobModal({ techs, jobs = [], onClose, onAdd, defaultDate, prefill = null, timeOff = [] }) {
+  useEscapeClose(onClose);
   // `prefill` lets the parent seed the form (e.g. when scheduling from a recurring plan).
   // The plan's defaults — title, client name, trade, default tech, default duration, planId, target date —
   // flow straight into the initial form state. The user can still override anything before saving.
   const [form, setForm] = useState(() => {
     const base = {
-      title: '', client: '', address: '', phone: '', notes: '',
+      title: '', clientName: '', address: '', phone: '', notes: '',
       techUserId: techs[0]?.id || null, date: defaultDate || new Date(),
       startHour: 9, duration: 2, trade: 'Plumber', status: 'scheduled',
       planId: null, clientId: null,
@@ -482,7 +506,7 @@ function AddJobModal({ techs, jobs = [], onClose, onAdd, defaultDate, prefill = 
     return {
       ...base,
       title:      prefill.title       ?? base.title,
-      client:     prefill.clientName  ?? base.client,
+      clientName: prefill.clientName  ?? base.clientName,
       clientId:   prefill.clientId    ?? base.clientId,
       trade:      prefill.trade       || base.trade,
       duration:   prefill.duration    ?? base.duration,
@@ -500,12 +524,12 @@ function AddJobModal({ techs, jobs = [], onClose, onAdd, defaultDate, prefill = 
   // and pre-suggest the tech who serviced them last + its trade.
   // When the user fills in the job title, suggest the average duration of similar jobs.
   const lastJobForClient = useMemo(() => {
-    if (!form.client.trim()) return null;
-    const needle = form.client.trim().toLowerCase();
+    if (!form.clientName.trim()) return null;
+    const needle = form.clientName.trim().toLowerCase();
     return jobs
-      .filter(j => (j.client || '').toLowerCase() === needle && j.techUserId)
+      .filter(j => (j.clientName || '').toLowerCase() === needle && j.techUserId)
       .sort((a, b) => new Date(b.date) - new Date(a.date))[0] || null;
-  }, [form.client, jobs]);
+  }, [form.clientName, jobs]);
 
   const avgDurationForTitle = useMemo(() => {
     if (!form.title.trim()) return null;
@@ -517,24 +541,27 @@ function AddJobModal({ techs, jobs = [], onClose, onAdd, defaultDate, prefill = 
   }, [form.title, jobs]);
 
   // Auto-apply suggestions only if the user hasn't manually overridden the field.
-  const [techDirty,     setTechDirty]     = useState(false);
-  const [durationDirty, setDurationDirty] = useState(false);
-  const [tradeDirty,    setTradeDirty]    = useState(false);
+  // Use refs (synchronous, no re-render lag) so the user-touched flag is reliable
+  // across the dirty-vs-suggestion race; previously the effect could fire before
+  // setTechDirty(true) had committed and stomp the user's chosen tech.
+  const techDirty     = useRef(false);
+  const durationDirty = useRef(false);
+  const tradeDirty    = useRef(false);
 
   useEffect(() => {
-    if (lastJobForClient && !techDirty) {
+    if (lastJobForClient && !techDirty.current) {
       setForm(p => ({ ...p, techUserId: lastJobForClient.techUserId }));
     }
-    if (lastJobForClient && !tradeDirty && lastJobForClient.trade) {
+    if (lastJobForClient && !tradeDirty.current && lastJobForClient.trade) {
       setForm(p => ({ ...p, trade: lastJobForClient.trade }));
     }
-  }, [lastJobForClient, techDirty, tradeDirty]);
+  }, [lastJobForClient]);
 
   useEffect(() => {
-    if (avgDurationForTitle && !durationDirty) {
+    if (avgDurationForTitle && !durationDirty.current) {
       setForm(p => ({ ...p, duration: avgDurationForTitle }));
     }
-  }, [avgDurationForTitle, durationDirty]);
+  }, [avgDurationForTitle]);
 
   const lastTechName = lastJobForClient ? techs.find(t => t.id === lastJobForClient.techUserId)?.name : null;
   const lastJobDate  = lastJobForClient ? new Date(lastJobForClient.date).toLocaleDateString() : null;
@@ -553,7 +580,7 @@ function AddJobModal({ techs, jobs = [], onClose, onAdd, defaultDate, prefill = 
   };
 
   const handleAdd = () => {
-    if (!form.title || !form.client) return;
+    if (!form.title || !form.clientName) return;
     onAdd({ ...form, id: Date.now() });
     onClose();
   };
@@ -568,14 +595,14 @@ function AddJobModal({ techs, jobs = [], onClose, onAdd, defaultDate, prefill = 
         <div style={s.body}>
           <label style={s.label}>Job Title</label>
           <input style={s.input} placeholder="e.g. Faucet Repair" value={form.title} onChange={e => update('title', e.target.value)} />
-          {avgDurationForTitle && !durationDirty && (
+          {avgDurationForTitle && !durationDirty.current && (
             <div style={{ fontSize: 12, color: COLORS.green, marginTop: 4 }}>
               Auto-set duration to {avgDurationForTitle} hr (avg of similar jobs)
             </div>
           )}
           <label style={s.label}>Client Name</label>
-          <input style={s.input} placeholder="John Miller" value={form.client} onChange={e => update('client', e.target.value)} />
-          {lastTechName && !techDirty && (
+          <input style={s.input} placeholder="John Miller" value={form.clientName} onChange={e => update('clientName', e.target.value)} />
+          {lastTechName && !techDirty.current && (
             <div style={{ fontSize: 12, color: COLORS.green, marginTop: 4 }}>
               Last serviced by {lastTechName} on {lastJobDate} — auto-assigned
             </div>
@@ -587,13 +614,13 @@ function AddJobModal({ techs, jobs = [], onClose, onAdd, defaultDate, prefill = 
           <div style={s.row2}>
             <div>
               <label style={s.label}>Trade</label>
-              <select style={s.select} value={form.trade} onChange={e => { update('trade', e.target.value); setTradeDirty(true); }}>
+              <select style={s.select} value={form.trade} onChange={e => { update('trade', e.target.value); tradeDirty.current = true; }}>
                 {['Plumber','HVAC','Electrician','Roofing','Specialty'].map(t => <option key={t}>{t}</option>)}
               </select>
             </div>
             <div>
               <label style={s.label}>Assigned Tech</label>
-              <select style={s.select} value={form.techUserId || ''} onChange={e => { update('techUserId', e.target.value || null); setTechDirty(true); }}>
+              <select style={s.select} value={form.techUserId || ''} onChange={e => { update('techUserId', e.target.value || null); techDirty.current = true; }}>
                 <option value="">Unassigned</option>
                 {techs.map(t => {
                   // Compute the iso day for the currently-selected job date so we can
@@ -630,7 +657,7 @@ function AddJobModal({ techs, jobs = [], onClose, onAdd, defaultDate, prefill = 
             </div>
             <div>
               <label style={s.label}>Duration</label>
-              <select style={s.select} value={form.duration} onChange={e => { update('duration', parseFloat(e.target.value)); setDurationDirty(true); }}>
+              <select style={s.select} value={form.duration} onChange={e => { update('duration', parseFloat(e.target.value)); durationDirty.current = true; }}>
                 {[1,2,3,4,5,6,7,8].map(h => <option key={h} value={h}>{h} {h === 1 ? 'hour' : 'hours'}</option>)}
               </select>
             </div>
@@ -750,7 +777,7 @@ function WeekView({ weekDays, jobs, techs, onJobClick, filterTech, onReschedule,
                         onClick={wrapClick(() => onJobClick(job))}
                       >
                         <div style={{ fontSize: 11, fontWeight: 800, color: titleColor, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{job.title}</div>
-                        <div style={{ fontSize: 10, fontWeight: 600, color: subtleColor, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{job.client}</div>
+                        <div style={{ fontSize: 10, fontWeight: 600, color: subtleColor, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{job.clientName}</div>
                       </div>
                     );
                   })}
@@ -826,7 +853,7 @@ function DayView({ date, jobs, techs, onJobClick, filterTech }) {
                   <div key={job.id} style={{ ...s.jobBlock(getTechColor(job.techUserId)), top: 4, height: job.duration * 72 - 8, opacity: job.status === 'cancelled' ? 0.35 : job.status === 'completed' ? 0.6 : 1, ...(isOverdue ? { background: '#fef2f2', borderLeft: '3px solid #dc2626' } : {}) }} onClick={() => onJobClick(job)}>
                     <div>
                       <div style={{ fontSize: 14, fontWeight: 800, color: titleColor, marginBottom: 2 }}>{job.title}</div>
-                      <div style={{ fontSize: 12, fontWeight: 600, color: subtleColor }}>{job.client} · {job.address.split(',')[0]}</div>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: subtleColor }}>{job.clientName} · {job.address.split(',')[0]}</div>
                       <div style={{ fontSize: 11, fontWeight: 600, color: dimColor, marginTop: 2 }}>{formatTime(job.startHour)} — {formatTime(job.startHour + job.duration)}</div>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
@@ -1063,8 +1090,16 @@ export default function ScheduleScreen({
     setView('day');
   };
 
-  const todayJobs = jobs.filter(j => isSameDay(j.date, new Date()));
-  const upcomingJobs = jobs.filter(j => j.date > new Date() && j.status !== 'cancelled').slice(0, 5);
+  // Memoize so child sidebars don't re-render on every parent state change
+  // (e.g. drag-ghost position updates fire 60+ times/sec during a drag).
+  const todayJobs = useMemo(
+    () => jobs.filter(j => isSameDay(j.date, new Date())),
+    [jobs]
+  );
+  const upcomingJobs = useMemo(
+    () => jobs.filter(j => j.date > new Date() && j.status !== 'cancelled').slice(0, 5),
+    [jobs]
+  );
 
   const headerTitle = () => {
     if (view === 'month') return `${MONTHS[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
@@ -1192,7 +1227,7 @@ export default function ScheduleScreen({
                       {job.status.replace('-', ' ')}
                     </span>
                   </div>
-                  <div style={s.upcomingMeta}>{job.client} · {formatTime(job.startHour)}</div>
+                  <div style={s.upcomingMeta}>{job.clientName} · {formatTime(job.startHour)}</div>
                 </div>
               );
             })}
@@ -1204,7 +1239,7 @@ export default function ScheduleScreen({
             {upcomingJobs.map(job => (
               <div key={job.id} style={s.upcomingJob} onClick={() => setSelectedJob(job)}>
                 <div style={s.upcomingTitle}>{job.title}</div>
-                <div style={s.upcomingMeta}>{job.client} · {formatDate(job.date)}</div>
+                <div style={s.upcomingMeta}>{job.clientName} · {formatDate(job.date)}</div>
               </div>
             ))}
           </div>

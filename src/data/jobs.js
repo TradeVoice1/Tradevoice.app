@@ -5,6 +5,10 @@ import { supabase } from "../supabase";
 const dbToJob = (r) => ({
   id:         r.id,
   clientId:   r.client_id     ?? null,
+  // Denormalized snapshot of the client name — used for calendar tooltips and
+  // Job→Invoice conversion. Was missing from the DB schema before migration
+  // 0009; old rows return '' (and the UI falls back to clientId lookup if any).
+  clientName: r.client_name   ?? '',
   invoiceId:  r.invoice_id    ?? null,
   techUserId: r.tech_user_id  ?? null,
   planId:     r.plan_id       ?? null,
@@ -23,6 +27,7 @@ const dbToJob = (r) => ({
 const jobToDb = (j) => ({
   // UUID FKs — coerce empty string to null so Postgres doesn't reject the insert.
   client_id:     j.clientId   || null,
+  client_name:   j.clientName ?? null,
   invoice_id:    j.invoiceId  || null,
   tech_user_id:  j.techUserId || null,
   plan_id:       j.planId     || null,

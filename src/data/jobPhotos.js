@@ -14,7 +14,17 @@ export async function uploadJobPhoto(userId, jobId, file) {
   if (!jobId)  throw new Error('No job to attach this photo to.');
   if (!file)   throw new Error('No file selected.');
   if (!VALID_TYPES.includes(file.type)) throw new Error('Photo must be a PNG, JPG, WebP, or HEIC.');
-  if (file.size > MAX_BYTES) throw new Error('Photo must be smaller than 8 MB.');
+  if (file.size > MAX_BYTES) {
+    // HEIC files can't be downscaled by our canvas-based compressor (most
+    // non-Safari browsers can't decode them), so a too-big HEIC bypasses
+    // compression and lands here. Tell the user how to recover instead of
+    // showing a generic size error.
+    const isHeic = file.type === 'image/heic' || file.type === 'image/heif';
+    if (isHeic) {
+      throw new Error('This HEIC photo is too large to upload. Open it in your phone\'s Photos app, share it as JPEG, then re-upload — or change your camera setting to "Most Compatible".');
+    }
+    throw new Error('Photo must be smaller than 8 MB.');
+  }
 
   // Unique filename per upload so cache + ordering work cleanly.
   const ext  = (file.name.split('.').pop() || 'jpg').toLowerCase();

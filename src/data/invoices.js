@@ -29,6 +29,11 @@ const dbToInvoice = (r) => ({
   // the invoice still shows the right name if the tech is later removed.
   techUserId:     r.tech_user_id   ?? null,
   techName:       r.tech_name      ?? '',
+  // Source-quote link — set when the invoice was created via Quote→Invoice
+  // conversion. Used by the un-invoice flow to revert the quote's status.
+  // Replaces the old "parse it from notes" approach which broke if the user
+  // edited the notes.
+  sourceQuoteId:  r.source_quote_id ?? null,
 });
 
 // Translate the front-end invoice shape into the DB column names. We do NOT include
@@ -59,6 +64,7 @@ const invoiceToDb = (inv) => ({
   activity:        inv.activity      ?? [],
   tech_user_id:    inv.techUserId    || null,
   tech_name:       inv.techName      ?? null,
+  source_quote_id: inv.sourceQuoteId || null,
 });
 
 export async function listInvoices() {

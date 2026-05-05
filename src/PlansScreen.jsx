@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { listClients } from "./data/clients";
+import { useEscapeClose } from "./lib/useEscapeClose";
 
 // Small palette aligned with the rest of the app (avoid importing C from App.jsx
 // to keep this component independently lazy-loadable).
@@ -52,6 +53,7 @@ const frequencyLabel = (months) => {
 // PLAN CREATE / EDIT MODAL
 // ────────────────────────────────────────────────────────────────────────────
 function PlanModal({ initial, clients, team, trades, onClose, onSave }) {
+  useEscapeClose(onClose);
   const [title,            setTitle]      = useState(initial?.title           || '');
   const [clientId,         setClientId]   = useState(initial?.clientId        || '');
   const [clientName,       setClientName] = useState(initial?.clientName      || '');
