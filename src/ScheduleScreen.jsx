@@ -603,6 +603,13 @@ function WeekView({ weekDays, jobs, techs, onJobClick, filterTech, onReschedule,
                     const isBeingDragged = drag && drag.job.id === job.id;
                     // Techs don't get drag handles — view-only schedule for them.
                     const draggable = !isTech;
+                    // Overdue treatment: scheduled jobs whose date is in the past get a
+                    // light-red wash with a red left bar. Without overriding the text
+                    // colors here, the white-on-color labels become invisible against
+                    // the pink. We swap to dark-red text so it stays readable.
+                    const isOverdue = job.status === 'scheduled' && new Date(job.date) < new Date(new Date().toDateString());
+                    const titleColor  = isOverdue ? '#991b1b' : '#fff';
+                    const subtleColor = isOverdue ? '#b91c1c' : 'rgba(255,255,255,.8)';
                     return (
                       <div
                         key={job.id}
@@ -612,13 +619,13 @@ function WeekView({ weekDays, jobs, techs, onJobClick, filterTech, onReschedule,
                           top: 2,
                           height: job.duration * 56 - 4,
                           opacity: isBeingDragged ? 0.25 : (job.status === 'cancelled' ? 0.35 : job.status === 'completed' ? 0.6 : 1),
-                          ...(job.status === 'scheduled' && new Date(job.date) < new Date(new Date().toDateString()) ? { background: '#fef2f2', borderLeft: '3px solid #dc2626' } : {}),
+                          ...(isOverdue ? { background: '#fef2f2', borderLeft: '3px solid #dc2626' } : {}),
                           ...(draggable ? dragProps(job).style : {}),
                         }}
                         onClick={wrapClick(() => onJobClick(job))}
                       >
-                        <div style={{ fontSize: 11, fontWeight: 700, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{job.title}</div>
-                        <div style={{ fontSize: 10, color: 'rgba(255,255,255,.8)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{job.client}</div>
+                        <div style={{ fontSize: 11, fontWeight: 800, color: titleColor, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{job.title}</div>
+                        <div style={{ fontSize: 10, fontWeight: 600, color: subtleColor, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{job.client}</div>
                       </div>
                     );
                   })}
@@ -682,16 +689,24 @@ function DayView({ date, jobs, techs, onJobClick, filterTech }) {
             <div key={`c-${hour}`} style={s.cell}>
               {hourJobs.map(job => {
                 const tech = getTech(job.techUserId);
+                // See WeekView: when the overdue treatment kicks in we swap text
+                // colors to dark red so the labels survive on the pink wash.
+                const isOverdue = job.status === 'scheduled' && new Date(job.date) < new Date(new Date().toDateString());
+                const titleColor  = isOverdue ? '#991b1b' : '#fff';
+                const subtleColor = isOverdue ? '#b91c1c' : 'rgba(255,255,255,.85)';
+                const dimColor    = isOverdue ? '#b91c1c' : 'rgba(255,255,255,.7)';
+                const chipBg      = isOverdue ? 'rgba(185, 28, 28, 0.12)' : 'rgba(255,255,255,.15)';
+                const initialsBg  = isOverdue ? 'rgba(185, 28, 28, 0.15)' : 'rgba(255,255,255,.25)';
                 return (
-                  <div key={job.id} style={{ ...s.jobBlock(getTechColor(job.techUserId)), top: 4, height: job.duration * 72 - 8, opacity: job.status === 'cancelled' ? 0.35 : job.status === 'completed' ? 0.6 : 1, ...(job.status === 'scheduled' && new Date(job.date) < new Date(new Date().toDateString()) ? { background: '#fef2f2', borderLeft: '3px solid #dc2626' } : {}) }} onClick={() => onJobClick(job)}>
+                  <div key={job.id} style={{ ...s.jobBlock(getTechColor(job.techUserId)), top: 4, height: job.duration * 72 - 8, opacity: job.status === 'cancelled' ? 0.35 : job.status === 'completed' ? 0.6 : 1, ...(isOverdue ? { background: '#fef2f2', borderLeft: '3px solid #dc2626' } : {}) }} onClick={() => onJobClick(job)}>
                     <div>
-                      <div style={{ fontSize: 14, fontWeight: 700, color: '#fff', marginBottom: 2 }}>{job.title}</div>
-                      <div style={{ fontSize: 12, color: 'rgba(255,255,255,.85)' }}>{job.client} · {job.address.split(',')[0]}</div>
-                      <div style={{ fontSize: 11, color: 'rgba(255,255,255,.7)', marginTop: 2 }}>{formatTime(job.startHour)} — {formatTime(job.startHour + job.duration)}</div>
+                      <div style={{ fontSize: 14, fontWeight: 800, color: titleColor, marginBottom: 2 }}>{job.title}</div>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: subtleColor }}>{job.client} · {job.address.split(',')[0]}</div>
+                      <div style={{ fontSize: 11, fontWeight: 600, color: dimColor, marginTop: 2 }}>{formatTime(job.startHour)} — {formatTime(job.startHour + job.duration)}</div>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
-                      <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'rgba(255,255,255,.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#fff' }}>{tech?.initials}</div>
-                      <div style={{ fontSize: 10, color: 'rgba(255,255,255,.7)', background: 'rgba(255,255,255,.15)', padding: '2px 6px', borderRadius: 4 }}>{job.trade}</div>
+                      <div style={{ width: 28, height: 28, borderRadius: '50%', background: initialsBg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: titleColor }}>{tech?.initials}</div>
+                      <div style={{ fontSize: 10, fontWeight: 700, color: dimColor, background: chipBg, padding: '2px 6px', borderRadius: 4 }}>{job.trade}</div>
                     </div>
                   </div>
                 );
