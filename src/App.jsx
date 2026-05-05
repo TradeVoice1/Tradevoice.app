@@ -152,65 +152,64 @@ const Label = ({ children }) => <label style={s.label}>{children}</label>;
 // - inputMode="decimal" so iPad/Android show the decimal numeric keypad
 // - Holds string state internally during typing; commits a number to parent on blur
 // - Auto-selects on focus so typing replaces the value
+// NumberInput — uncontrolled DOM input with a ref. The DOM owns the value
+// while the user is typing; React only syncs FROM the DOM on blur, and only
+// pushes TO the DOM when the parent value changes from outside (e.g. trade
+// change auto-bumping the rate) AND the input isn't currently focused.
+//
+// Why uncontrolled? Controlled inputs go through React's render cycle on
+// every keystroke. That introduced two bugs we kept failing to nail down:
+//   1. Fast typing raced ahead of re-renders — the DOM held the old value
+//      while React hadn't flushed yet, so the second keystroke appended to
+//      the wrong base.
+//   2. Any state-sync logic ("replace on first keystroke") would either
+//      eat keys or clobber the user mid-edit.
+// Uncontrolled sidesteps both: typing into the DOM is instant, and React
+// is only involved at focus boundaries.
 function NumberInput({ value, onChange, width = 76, prefix = '', placeholder = '0', style: extraStyle = {}, fontSize, textAlign = 'right' }) {
-  const [text, setText] = useState(() => (value === 0 || value == null ? '' : String(value)));
-  // Use a ref instead of state for "is this the first keystroke after focus?"
-  // Refs update synchronously, so back-to-back keystrokes can't race ahead of
-  // React's re-render and see a stale freshFocus value (which was the bug —
-  // typing "50" fast would land as "0" because React hadn't flushed yet).
-  const freshRef = useRef(false);
   const inputRef = useRef(null);
 
-  // Sync local state when the parent value changes externally (e.g. trade
-  // change auto-bumping the rate, or a new row mounting). Skip the overwrite
-  // if the user is mid-edit so we don't stomp their typing.
+  const formatForDisplay = (v) => (v === 0 || v == null ? '' : String(v));
+
+  // Push parent value into the DOM when it changes externally — but not
+  // while the user is actively typing in this field (would clobber them).
   useEffect(() => {
-    const incoming = value === 0 || value == null ? '' : String(value);
-    if (parseFloat(text || '0') !== value && incoming !== text) setText(incoming);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const el = inputRef.current;
+    if (!el) return;
+    if (document.activeElement === el) return;
+    const incoming = formatForDisplay(value);
+    if (el.value !== incoming) el.value = incoming;
   }, [value]);
 
-  const handleChange = (e) => {
-    const v = e.target.value;
-    if (v === '' || /^\d*\.?\d*$/.test(v)) setText(v);
-  };
-
-  // First keystroke after focus replaces the entire field — guarantees
-  // "click + type = replace what's there" regardless of where the cursor
-  // landed when the user clicked.
-  const handleKeyDown = (e) => {
-    if (!freshRef.current) return;
-    if (/^[0-9.]$/.test(e.key)) {
-      e.preventDefault();
-      const next = e.key === '.' ? '0.' : e.key;
-      // CRITICAL: write the DOM value synchronously, not just the React state.
-      // If the user types fast, the next keystroke fires BEFORE React re-renders,
-      // and the browser appends it to whatever's currently in input.value. If
-      // that's still the old value ("1"), typing "5" → "0" results in "10"
-      // instead of "50". Setting el.value here keeps the DOM in sync with the
-      // state we just queued.
-      const el = e.currentTarget;
-      el.value = next;
-      setText(next);
-      freshRef.current = false;
-      try { el.setSelectionRange(next.length, next.length); } catch (_) {}
-    } else {
-      // Backspace, arrow, tab, etc. — exit fresh-focus mode and let default behavior run.
-      freshRef.current = false;
+  const handleInput = (e) => {
+    // Strip anything that isn't a digit or a single dot. Done in-place on the
+    // DOM value so the cursor doesn't jump around.
+    const v = e.currentTarget.value;
+    const cleaned = v.replace(/[^\d.]/g, '');
+    // Collapse multiple dots — keep only the first one.
+    const firstDot = cleaned.indexOf('.');
+    const final = firstDot === -1
+      ? cleaned
+      : cleaned.slice(0, firstDot + 1) + cleaned.slice(firstDot + 1).replace(/\./g, '');
+    if (final !== v) {
+      // Preserve cursor position relative to the cleaned string.
+      const pos = e.currentTarget.selectionStart;
+      e.currentTarget.value = final;
+      try { e.currentTarget.setSelectionRange(pos, pos); } catch (_) {}
     }
   };
 
-  const commit = () => {
-    freshRef.current = false;
+  const handleBlur = (e) => {
+    const text = e.currentTarget.value;
     const num = text === '' || text === '.' ? 0 : (parseFloat(text) || 0);
+    e.currentTarget.value = formatForDisplay(num);
     if (num !== value) onChange(num);
-    setText(num === 0 ? '' : String(num));
   };
 
   const handleFocus = (e) => {
-    freshRef.current = true;
-    // Visually highlight the contents so the user sees what's about to be replaced.
-    // Deferred past the click's cursor placement, otherwise the click resets the selection.
+    // Select all on focus so the user can type to replace. Deferred past
+    // the click's own cursor placement, which would otherwise stomp the
+    // selection. Works on both desktop and iPad Safari.
     const el = e.currentTarget;
     setTimeout(() => { try { el?.select(); } catch (_) {} }, 0);
   };
@@ -222,11 +221,10 @@ function NumberInput({ value, onChange, width = 76, prefix = '', placeholder = '
         ref={inputRef}
         type="text"
         inputMode="decimal"
-        value={text}
-        onChange={handleChange}
-        onBlur={commit}
+        defaultValue={formatForDisplay(value)}
+        onInput={handleInput}
+        onBlur={handleBlur}
         onFocus={handleFocus}
-        onKeyDown={handleKeyDown}
         placeholder={placeholder}
         style={{
           ...s.input,
