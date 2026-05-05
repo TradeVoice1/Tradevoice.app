@@ -139,6 +139,63 @@ const Input = ({ value, onChange, placeholder, type = 'text', style = {}, rows }
 
 const Label = ({ children }) => <label style={s.label}>{children}</label>;
 
+// ── NumberInput ─────────────────────────────────────────────────────────────
+// A keyboard-friendly numeric field. Replaces type="number" inputs which fight
+// the user (eaten decimal points, cursor jumps, value reset on partial input).
+//
+// - type="text" so any character can be displayed mid-typing (e.g. "0." or "5.5")
+// - inputMode="decimal" so iPad/Android show the decimal numeric keypad
+// - Holds string state internally during typing; commits a number to parent on blur
+// - Auto-selects on focus so typing replaces the value
+function NumberInput({ value, onChange, width = 76, prefix = '', placeholder = '0', style: extraStyle = {}, fontSize, textAlign = 'right' }) {
+  const [text, setText] = useState(() => (value === 0 || value == null ? '' : String(value)));
+
+  // If parent value changes externally (new row, reset, etc.), pull it into local state.
+  useEffect(() => {
+    const incoming = value === 0 || value == null ? '' : String(value);
+    if (parseFloat(text || '0') !== value && incoming !== text) setText(incoming);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
+
+  const handleChange = (e) => {
+    const v = e.target.value;
+    // Allow only digits and a single decimal point during typing.
+    if (v === '' || /^\d*\.?\d*$/.test(v)) setText(v);
+  };
+
+  const commit = () => {
+    const num = text === '' || text === '.' ? 0 : parseFloat(text);
+    if (num !== value) onChange(num);
+    // Normalize the display (e.g. "05" → "5", "5." → "5", "" stays empty)
+    setText(num === 0 ? '' : String(num));
+  };
+
+  return (
+    <div style={{ position: 'relative', width, display: 'inline-flex', alignItems: 'center' }}>
+      {prefix && <span style={{ position: 'absolute', left: 8, fontSize: 14, fontWeight: 700, color: C.muted, pointerEvents: 'none', zIndex: 1 }}>{prefix}</span>}
+      <input
+        type="text"
+        inputMode="decimal"
+        value={text}
+        onChange={handleChange}
+        onBlur={commit}
+        onFocus={e => e.target.select()}
+        placeholder={placeholder}
+        style={{
+          ...s.input,
+          width: '100%',
+          padding: prefix ? '9px 8px 9px 18px' : '9px 8px',
+          textAlign,
+          boxSizing: 'border-box',
+          minHeight: 44,
+          ...(fontSize ? { fontSize } : {}),
+          ...extraStyle,
+        }}
+      />
+    </div>
+  );
+}
+
 const Badge = ({ status }) => {
   // Quote status palette aligned with INV_STATUS: green-filled for accepted/invoiced,
   // orange for sent, gold for revised, FILLED red for declined. No blue, no purple.
@@ -1223,7 +1280,7 @@ function AgingReport({ invoices, onFilter }) {
 // ── Record Payment Modal ───────────────────────────────────────────────────────
 function RecordPaymentModal({ invoice, onSave, onClose }) {
   const calc = calcInvoice(invoice);
-  const [amount,  setAmount]  = useState(calc.balance.toFixed(2));
+  const [amount,  setAmount]  = useState(Number(calc.balance.toFixed(2)));
   const [date,    setDate]    = useState(today());
   const [method,  setMethod]  = useState('Card');
   const [ref,     setRef]     = useState('');
@@ -1263,8 +1320,8 @@ function RecordPaymentModal({ invoice, onSave, onClose }) {
         <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
           <div>
             <label style={s.label}>Payment Amount</label>
-            <input type="number" value={amount} onChange={e=>setAmount(e.target.value)} min={0} step={0.01}
-              style={{ ...s.input, width:'100%', padding:'12px 14px', boxSizing:'border-box', fontSize:20, minHeight:52, fontWeight:700 }} />
+            <NumberInput value={amount} onChange={setAmount} width="100%" prefix="$"
+              fontSize={20} style={{ minHeight: 52, fontWeight: 700, padding: '12px 14px 12px 26px' }} />
           </div>
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
             <div>
@@ -1521,18 +1578,8 @@ function InvoiceEditor({ initial, user, onSave, onCancel }) {
     { id:'notes',     label:'Notes',     short:'Notes'  },
   ];
 
-  const NI = (val,onChange,w=76) => (
-    <input
-      type="number"
-      value={val === 0 || val === undefined || val === null ? '' : val}
-      onChange={e => onChange(e.target.value === '' ? 0 : +e.target.value)}
-      onFocus={e => e.target.select()}
-      min={0}
-      step="0.01"
-      inputMode="decimal"
-      placeholder="0"
-      style={{ ...s.input, width:w, padding:'9px 8px', textAlign:'right', boxSizing:'border-box', minHeight:44 }}
-    />
+  const NI = (val, onChange, w = 76) => (
+    <NumberInput value={val} onChange={onChange} width={w} />
   );
   const TI = (val,onChange) => (
     <input type="text" value={val} onChange={e=>onChange(e.target.value)}
@@ -1731,16 +1778,16 @@ function InvoiceEditor({ initial, user, onSave, onCancel }) {
                   <div>
                     <label style={s.label}>Markup %</label>
                     <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-                      <input type="number" value={markup} onChange={e=>setMarkup(+e.target.value)} min={0} max={100}
-                        style={{ ...s.input, width:120, padding:'12px 14px', fontSize:22, fontWeight:700, color:C.text, minHeight:52 }} />
+                      <NumberInput value={markup} onChange={setMarkup} width={120} fontSize={22}
+                        style={{ minHeight: 52, fontWeight: 700, padding: '12px 14px' }} />
                       <span style={{ fontFamily:"'Inter', sans-serif", fontSize:20, fontWeight:800, color:C.muted }}>%</span>
                     </div>
                   </div>
                   <div>
                     <label style={s.label}>Tax Rate %</label>
                     <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-                      <input type="number" value={taxRate} onChange={e=>setTaxRate(+e.target.value)} min={0} max={30} step={0.1}
-                        style={{ ...s.input, width:120, padding:'12px 14px', fontSize:22, fontWeight:700, color:C.text, minHeight:52 }} />
+                      <NumberInput value={taxRate} onChange={setTaxRate} width={120} fontSize={22}
+                        style={{ minHeight: 52, fontWeight: 700, padding: '12px 14px' }} />
                       <span style={{ fontFamily:"'Inter', sans-serif", fontSize:20, fontWeight:800, color:C.muted }}>%</span>
                     </div>
                   </div>
@@ -2213,10 +2260,10 @@ function Estimator() {
           <div key={label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
             <span style={{ fontSize: 18, color: C.muted }}>{label}</span>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <div style={{ display: 'flex', alignItems: 'center', background: C.surface, border: `1.5px solid ${C.border2}`, borderRadius: 3, overflow: 'hidden' }}>
-                <input type="number" value={val} onChange={e => setter(+e.target.value)} min={0} max={100}
-                  style={{ ...s.input, width: 62, padding: '7px 8px', textAlign: 'right', background: 'transparent', border: 'none', fontSize: 18, fontWeight: 700, color: C.text }} />
-                <span style={{ fontSize: 16, color: C.dim, paddingRight: 8 }}>%</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <NumberInput value={val} onChange={setter} width={70} fontSize={18}
+                  style={{ minHeight: 40, fontWeight: 700 }} />
+                <span style={{ fontSize: 16, color: C.dim }}>%</span>
               </div>
               <span style={{ fontSize: 17, color: C.dim, width: 58, textAlign: 'right', fontFamily: "'Inter', sans-serif" }}>{fmt(amt)}</span>
             </div>
@@ -3137,8 +3184,7 @@ function QuickAddPanel({ library, onInsert, onSaveNew, onDelete, type }) {
             {isMat && <>
               <div>
                 <label style={{ ...s.label, marginBottom: 4 }}>Qty</label>
-                <input type="number" value={newQty} onChange={e => setNewQty(+e.target.value)} min={0} inputMode="decimal"
-                  style={{ ...s.input, width: '100%', padding: '9px 6px', textAlign: 'right', boxSizing: 'border-box', minHeight: 44 }} />
+                <NumberInput value={newQty} onChange={setNewQty} width="100%" />
               </div>
               <div>
                 <label style={{ ...s.label, marginBottom: 4 }}>Unit</label>
@@ -3149,15 +3195,13 @@ function QuickAddPanel({ library, onInsert, onSaveNew, onDelete, type }) {
               </div>
               <div>
                 <label style={{ ...s.label, marginBottom: 4 }}>Cost ea.</label>
-                <input type="number" value={newCost} onChange={e => setNewCost(+e.target.value)} min={0} inputMode="decimal"
-                  style={{ ...s.input, width: '100%', padding: '9px 6px', textAlign: 'right', boxSizing: 'border-box', minHeight: 44 }} />
+                <NumberInput value={newCost} onChange={setNewCost} width="100%" prefix="$" />
               </div>
             </>}
             {!isMat && <>
               <div>
                 <label style={{ ...s.label, marginBottom: 4 }}>Qty</label>
-                <input type="number" value={newDays} onChange={e => setNewDays(+e.target.value)} min={0} inputMode="decimal"
-                  style={{ ...s.input, width: '100%', padding: '9px 6px', textAlign: 'right', boxSizing: 'border-box', minHeight: 44 }} />
+                <NumberInput value={newDays} onChange={setNewDays} width="100%" />
               </div>
               <div>
                 <label style={{ ...s.label, marginBottom: 4 }}>Unit</label>
@@ -3168,8 +3212,7 @@ function QuickAddPanel({ library, onInsert, onSaveNew, onDelete, type }) {
               </div>
               <div>
                 <label style={{ ...s.label, marginBottom: 4 }}>Rate</label>
-                <input type="number" value={newRate} onChange={e => setNewRate(+e.target.value)} min={0} inputMode="decimal"
-                  style={{ ...s.input, width: '100%', padding: '9px 6px', textAlign: 'right', boxSizing: 'border-box', minHeight: 44 }} />
+                <NumberInput value={newRate} onChange={setNewRate} width="100%" prefix="$" />
               </div>
             </>}
           </div>
@@ -3330,23 +3373,10 @@ function QuoteEditor({ initial, clients, user, onSave, onCancel }) {
     <td style={{ padding: '6px 7px', textAlign: 'right', fontSize: 18, fontWeight: 700, color: val > 0 ? C.text : C.dim, fontFamily: "'Inter', sans-serif" }}>{fmt(val)}</td>
   );
   // Accounting-style number cell — formats as $1,234.00 at rest, plain number on focus
-  // Always-numeric input. Empty when 0, decimal keypad on iPad, auto-select on focus.
-  // We dropped the formatted-on-blur display because the type-switch caused focus quirks.
+  // Delegate to the shared NumberInput so editor inputs get the same iPad-friendly,
+  // decimal-safe behavior as the rest of the app.
   const NI = (val, onChange, w = 90, prefix = '') => (
-    <div style={{ position: 'relative', width: w, display: 'inline-flex', alignItems: 'center' }}>
-      {prefix && <span style={{ position: 'absolute', left: 7, fontSize: 14, fontWeight: 700, color: C.muted, pointerEvents: 'none', zIndex: 1 }}>{prefix}</span>}
-      <input
-        type="number"
-        value={val === 0 || val === undefined || val === null ? '' : val}
-        onChange={e => onChange(e.target.value === '' ? 0 : +e.target.value)}
-        onFocus={e => e.target.select()}
-        min={0}
-        step="0.01"
-        inputMode="decimal"
-        placeholder="0"
-        style={{ ...s.input, width: '100%', padding: prefix ? '8px 7px 8px 16px' : '8px 7px', textAlign: 'right', boxSizing: 'border-box', minHeight: 44, fontFamily: "'Inter', sans-serif", fontWeight: 700, fontSize: 15, color: C.text, background: C.raised }}
-      />
-    </div>
+    <NumberInput value={val} onChange={onChange} width={w} prefix={prefix} fontSize={15} style={{ fontWeight: 700, background: C.raised }} />
   );
   const TI = (val, onChange) => (
     <input type="text" value={val} onChange={e => onChange(e.target.value)}
@@ -3637,11 +3667,9 @@ function QuoteEditor({ initial, clients, user, onSave, onCancel }) {
                   <span style={{ fontSize: 12, color: C.dim, marginLeft: 5 }}>mat + equip only</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', background: C.raised, border: `1.5px solid ${C.border2}`, borderRadius: 3, overflow: 'hidden' }}>
-                    <input type="number" value={markup} onChange={e => setMarkup(+e.target.value)} min={0} max={100}
-                      style={{ ...s.input, width: 58, padding: '6px 7px', textAlign: 'right', background: 'transparent', border: 'none', fontSize: 18, fontWeight: 700, color: C.text }} />
-                    <span style={{ fontSize: 16, color: C.dim, paddingRight: 7 }}>%</span>
-                  </div>
+                  <NumberInput value={markup} onChange={setMarkup} width={64} fontSize={18}
+                    style={{ minHeight: 38, fontWeight: 700 }} />
+                  <span style={{ fontSize: 16, color: C.dim }}>%</span>
                   <span style={{ fontSize: 16, color: C.dim, width: 52, textAlign: 'right', fontFamily: "'Inter', sans-serif" }}>{fmt(calc.mkAmt)}</span>
                 </div>
               </div>
@@ -3655,11 +3683,9 @@ function QuoteEditor({ initial, clients, user, onSave, onCancel }) {
                   }
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', background: C.raised, border: `1.5px solid ${C.border2}`, borderRadius: 3, overflow: 'hidden' }}>
-                    <input type="number" value={tax} onChange={e => setTax(+e.target.value)} min={0} max={100}
-                      style={{ ...s.input, width: 58, padding: '6px 7px', textAlign: 'right', background: 'transparent', border: 'none', fontSize: 18, fontWeight: 700, color: C.text }} />
-                    <span style={{ fontSize: 16, color: C.dim, paddingRight: 7 }}>%</span>
-                  </div>
+                  <NumberInput value={tax} onChange={setTax} width={64} fontSize={18}
+                    style={{ minHeight: 38, fontWeight: 700 }} />
+                  <span style={{ fontSize: 16, color: C.dim }}>%</span>
                   <span style={{ fontSize: 16, color: C.dim, width: 52, textAlign: 'right', fontFamily: "'Inter', sans-serif" }}>{fmt(calc.txAmt)}</span>
                 </div>
               </div>
@@ -4774,9 +4800,8 @@ function Settings({ user, setUser, logo, onLogoChange, showProfileModal, setShow
                 <div>
                   <label style={{ ...s.label, marginBottom: 6 }}>Materials &amp; Equipment Tax % <span style={{ color: C.dim, fontWeight: 400 }}>default: {def.matTax}%</span></label>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <input type="number" value={matVal} min={0} max={20} step={0.125}
-                      onChange={e => stateKey && updateTaxRate(stateKey, 'matTax', e.target.value)}
-                      style={{ ...s.input, width: 90, padding: '10px 12px', fontSize: 18, fontWeight: 700, minHeight: 48 }} />
+                    <NumberInput value={matVal} onChange={v => stateKey && updateTaxRate(stateKey, 'matTax', v)}
+                      width={90} fontSize={18} style={{ minHeight: 48, fontWeight: 700, padding: '10px 12px' }} />
                     <span style={{ fontSize: 18, color: C.muted, fontWeight: 700 }}>%</span>
                     {def.matTax === 0 && <span style={{ fontSize: 13, color: C.success, fontWeight: 600 }}>No sales tax</span>}
                   </div>
@@ -4784,9 +4809,8 @@ function Settings({ user, setUser, logo, onLogoChange, showProfileModal, setShow
                 <div>
                   <label style={{ ...s.label, marginBottom: 6 }}>Labor Tax % <span style={{ color: C.dim, fontWeight: 400 }}>default: {def.laborTax}%</span></label>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <input type="number" value={laborVal} min={0} max={20} step={0.125}
-                      onChange={e => stateKey && updateTaxRate(stateKey, 'laborTax', e.target.value)}
-                      style={{ ...s.input, width: 90, padding: '10px 12px', fontSize: 18, fontWeight: 700, minHeight: 48, borderColor: def.laborTax > 0 ? C.warn + '88' : undefined }} />
+                    <NumberInput value={laborVal} onChange={v => stateKey && updateTaxRate(stateKey, 'laborTax', v)}
+                      width={90} fontSize={18} style={{ minHeight: 48, fontWeight: 700, padding: '10px 12px', borderColor: def.laborTax > 0 ? C.warn + '88' : undefined }} />
                     <span style={{ fontSize: 18, color: C.muted, fontWeight: 700 }}>%</span>
                     {def.laborTax === 0 && <span style={{ fontSize: 13, color: C.success, fontWeight: 600 }}>Labor not taxed</span>}
                     {def.laborTax > 0  && <span style={{ fontSize: 13, color: C.warn,    fontWeight: 600 }}>Taxable state</span>}
