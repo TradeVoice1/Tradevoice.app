@@ -12,6 +12,7 @@ import { listInvoices, upsertInvoice as apiUpsertInvoice, deleteInvoice as apiDe
 import { listQuotes,   upsertQuote   as apiUpsertQuote,   deleteQuote   as apiDeleteQuote   } from "./data/quotes";
 import { listJobs,     upsertJob     as apiUpsertJob,     deleteJob     as apiDeleteJob     } from "./data/jobs";
 import { listTeam,     upsertTeamMember as apiUpsertTeam, deleteTeamMember as apiDeleteTeam } from "./data/team";
+import { invoicesToQbCsv, downloadCsv } from "./lib/qbExport";
 
 // ─── FONTS ─────────────────────────────────────────────────────────────────────
 const loadFonts = () => {
@@ -1439,7 +1440,29 @@ function InvoiceHub({ invoices, onSelect, onNew }) {
           <h1 style={{ margin:0, fontFamily:"'Inter', sans-serif", fontSize:28, fontWeight:700, color:C.text, letterSpacing:'-0.025em' }}>Invoices</h1>
           <p style={{ margin:'6px 0 0', fontSize:15, color:C.muted, fontWeight:500 }}>{invoices.length} total</p>
         </div>
-        <Btn variant="primary" onClick={onNew} style={{ fontSize:21, padding:'12px 22px', minHeight:52 }}>New Invoice</Btn>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          <Btn
+            variant="ghost"
+            onClick={() => {
+              // Export only what's currently visible after filters/search/aging.
+              // Drafts excluded by default since they're not real money yet.
+              const exportable = visible.filter(i => i.status !== 'draft');
+              if (exportable.length === 0) {
+                alert('Nothing to export. Drafts are skipped — finalize at least one invoice first.');
+                return;
+              }
+              const csv = invoicesToQbCsv(exportable);
+              const stamp = new Date().toISOString().split('T')[0];
+              downloadCsv(`tradevoice-invoices-${stamp}.csv`, csv);
+            }}
+            disabled={visible.filter(i => i.status !== 'draft').length === 0}
+            title="Download a QuickBooks-compatible CSV of the currently visible invoices (drafts excluded). Import in QB Online via Settings → Import Data → Invoices."
+            style={{ fontSize:18, padding:'12px 20px', minHeight:52 }}
+          >
+            Export to QuickBooks
+          </Btn>
+          <Btn variant="primary" onClick={onNew} style={{ fontSize:21, padding:'12px 22px', minHeight:52 }}>New Invoice</Btn>
+        </div>
       </div>
 
       {/* Money In summary — same bold treatment as Dashboard StatCard:
