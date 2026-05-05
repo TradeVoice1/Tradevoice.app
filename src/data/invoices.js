@@ -25,6 +25,10 @@ const dbToInvoice = (r) => ({
   notes:          r.notes          ?? '',
   payments:       r.payments       ?? [],
   activity:       r.activity       ?? [],
+  // Tech attribution — who performed the work. techName is a snapshot so
+  // the invoice still shows the right name if the tech is later removed.
+  techUserId:     r.tech_user_id   ?? null,
+  techName:       r.tech_name      ?? '',
 });
 
 // Translate the front-end invoice shape into the DB column names. We do NOT include
@@ -53,6 +57,8 @@ const invoiceToDb = (inv) => ({
   notes:           inv.notes         ?? null,
   payments:        inv.payments      ?? [],
   activity:        inv.activity      ?? [],
+  tech_user_id:    inv.techUserId    || null,
+  tech_name:       inv.techName      ?? null,
 });
 
 export async function listInvoices() {

@@ -1609,6 +1609,7 @@ function InvoiceHub({ invoices, onSelect, onNew }) {
               <TH label="Status"   />
               <TH label="Invoice #"    col="number"    />
               <TH label="Client"       col="clientName"/>
+              <TH label="Tech"         col="techName"  />
               <TH label="Title"        col="title"     />
               <TH label="Date"         col="createdAt" />
               <TH label="Due"          col="dueAt"     right />
@@ -1619,7 +1620,7 @@ function InvoiceHub({ invoices, onSelect, onNew }) {
           </thead>
           <tbody>
             {visible.length === 0 && (
-              <tr><td colSpan={9} style={{ padding:'32px 20px', textAlign:'center', fontSize:18, color:C.dim }}>No invoices match this filter.</td></tr>
+              <tr><td colSpan={10} style={{ padding:'32px 20px', textAlign:'center', fontSize:18, color:C.dim }}>No invoices match this filter.</td></tr>
             )}
             {visible.map((inv, i) => {
               const calc = calcInvoice(inv);
@@ -1632,6 +1633,7 @@ function InvoiceHub({ invoices, onSelect, onNew }) {
                   <td style={{ padding:'12px 14px', whiteSpace:'nowrap' }}><InvBadge status={inv.status} /></td>
                   <td style={{ padding:'12px 14px', fontFamily:"'Inter', sans-serif", fontSize:16, fontWeight:800, color:C.orange, letterSpacing:'0.06em', whiteSpace:'nowrap' }}>{inv.number}</td>
                   <td style={{ padding:'12px 14px', fontSize:16, color:C.text, whiteSpace:'nowrap' }}>{inv.clientName}</td>
+                  <td style={{ padding:'12px 14px', fontSize:15, color:inv.techName?C.text:C.dim, fontStyle:inv.techName?'normal':'italic', whiteSpace:'nowrap' }}>{inv.techName || '—'}</td>
                   <td style={{ padding:'12px 14px', fontSize:16, color:C.muted, maxWidth:220, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{inv.title}</td>
                   <td style={{ padding:'12px 14px', fontSize:15, color:C.muted, whiteSpace:'nowrap' }}>{inv.createdAt}</td>
                   <td style={{ padding:'12px 14px', textAlign:'right', fontSize:15, color:isOverdue?C.error:C.muted, fontWeight:isOverdue?700:400, whiteSpace:'nowrap' }}>{inv.dueAt}</td>
@@ -1657,7 +1659,7 @@ function InvoiceHub({ invoices, onSelect, onNew }) {
 }
 
 // ── Invoice Editor ─────────────────────────────────────────────────────────────
-function InvoiceEditor({ initial, user, onSave, onCancel }) {
+function InvoiceEditor({ initial, user, teamMembers = [], onSave, onCancel }) {
   const { isTablet } = useBreakpoint();
   const tradeConf = getTradeConfig(user?.trades?.[0], user?.trades);
   const uid2 = () => Math.random().toString(36).slice(2,9);
@@ -1669,6 +1671,10 @@ function InvoiceEditor({ initial, user, onSave, onCancel }) {
   const [clientPhone,setClientPhone]=useState(initial?.clientPhone||'');
   const [clientAddr, setClientAddr]=useState(initial?.clientAddress||'');
   const [trade,     setTrade]     = useState(initial?.trade     || user?.trades?.[0] || 'Plumber');
+  // Tech attribution — who actually performed the work. Default to whoever
+  // the invoice was originally tagged for, falling back to the owner so a
+  // one-person shop doesn't leave it blank.
+  const [techUserId, setTechUserId] = useState(initial?.techUserId || (initial ? null : user?.id) || null);
   const [createdAt] = useState(initial?.createdAt || today());
   const [terms,     setTerms]     = useState(initial?.terms || 'Net 30');
   const [dueAt,     setDueAt]     = useState(initial?.dueAt || addDays(today(), 30));
@@ -1711,11 +1717,17 @@ function InvoiceEditor({ initial, user, onSave, onCancel }) {
     }
 
     const activity = initial?.activity || [{ date: createdAt, type:'created', note:'Invoice created' }];
+    // Resolve tech name from the picked id — owner, team member, or null.
+    const techMember = teamMembers.find(t => (t.userId || t.id) === techUserId);
+    const techName   = techUserId === user?.id
+      ? (user?.name || '')
+      : (techMember?.name || '');
     const inv = {
       ...(initial||{}), id: initial?.id || uid2(),
       number, title: title.trim(),
       clientName, clientEmail, clientPhone, clientAddress: clientAddr,
-      trade, createdAt, terms, dueAt, notes, markup, tax: taxRate,
+      trade, techUserId, techName,
+      createdAt, terms, dueAt, notes, markup, tax: taxRate,
       labor, materials, equipment,
       payments: initial?.payments || [],
       activity,
@@ -1822,20 +1834,34 @@ function InvoiceEditor({ initial, user, onSave, onCancel }) {
               style={{ ...s.input, width:'100%', padding:'11px 12px', boxSizing:'border-box', fontSize:18, minHeight:48 }} />
           </div>
         </div>
-        {/* Trade selector — single-trade users skip this (their trade is implicit).
-            Multi-trade users see each individual trade plus a Multi-Trade option
-            so cross-discipline jobs can be billed on one invoice with per-trade
-            grouping and subtotals on the printed doc. */}
-        {user?.trades?.length > 1 && (
-          <div style={{ marginTop:14, maxWidth:280 }}>
+        {/* Tech attribution + Trade selector row.
+            Tech is who actually performed the work — surfaces on the printed
+            invoice as "Service performed by …" and rolls up into per-tech
+            revenue reports. Defaults to the owner so a one-person shop just
+            sees their own name. Solo + multi-trade users both see this. */}
+        <div style={{ marginTop: 14, display: 'grid', gridTemplateColumns: isTablet ? '1fr' : 'minmax(220px, 280px) minmax(220px, 280px)', gap: 12 }}>
+          <div>
+            <label style={s.label}>Service Performed By</label>
+            <select value={techUserId || ''} onChange={e => setTechUserId(e.target.value || null)}
+              style={{ ...s.input, width: '100%', padding: '11px 12px', minHeight: 48, cursor: 'pointer', boxSizing: 'border-box', fontSize: 16, fontWeight: 600 }}>
+              <option value="">— Unassigned —</option>
+              <option value={user?.id}>{user?.name || 'You (owner)'}{!teamMembers.length ? '' : ' (owner)'}</option>
+              {teamMembers.map(t => (
+                <option key={t.id} value={t.userId || t.id}>{t.name || 'Tech'}</option>
+              ))}
+            </select>
+          </div>
+          {user?.trades?.length > 1 && (
+          <div>
             <label style={s.label}>Invoice Type</label>
             <select value={trade} onChange={e=>setTrade(e.target.value)}
-              style={{ ...s.input, width:'100%', padding:'11px 12px', minHeight:48, cursor:'pointer', borderColor:tradeColor+'88' }}>
+              style={{ ...s.input, width:'100%', padding:'11px 12px', minHeight:48, cursor:'pointer', boxSizing: 'border-box', borderColor:tradeColor+'88', fontSize: 16, fontWeight: 600 }}>
               {user.trades.map(t => <option key={t} value={t}>{t==='Specialty'?'Specialty Trades':`${t} Only`}</option>)}
               <option value="bundle">Multi-Trade Job ({user.trades.length} trades)</option>
             </select>
           </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Line items + summary side by side */}
@@ -2144,6 +2170,15 @@ function InvoiceDocument({ invoice, user, logo, payments, onEdit, onBack, onReco
           <div>
             <div style={{ fontSize:16, fontWeight:900, textTransform:'uppercase', letterSpacing:'0.12em', color:'#bbb', marginBottom:6, fontFamily:"'Inter', sans-serif" }}>Job</div>
             <div style={{ fontSize:20, fontWeight:700, color:'#111', lineHeight:1.4 }}>{invoice.title}</div>
+            {/* Tech attribution — who performed the work. Only render if set,
+                so old invoices created before this column existed don't get
+                an awkward "by —" empty line. */}
+            {invoice.techName && (
+              <div style={{ marginTop: 8, fontSize: 15, color: '#666', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#bbb' }}>Performed by</span>
+                <span style={{ fontWeight: 700, color: '#222' }}>{invoice.techName}</span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -2406,7 +2441,7 @@ function InvoiceDocument({ invoice, user, logo, payments, onEdit, onBack, onReco
 }
 
 // ── Invoice Shell ──────────────────────────────────────────────────────────────
-function VoiceInvoice({ user, logo, payments, sharedInvoices, setSharedInvoices, persistInvoice, removeInvoice, handleUnInvoice, pendingInvoiceId, clearPendingInvoice }) {
+function VoiceInvoice({ user, logo, payments, teamMembers = [], sharedInvoices, setSharedInvoices, persistInvoice, removeInvoice, handleUnInvoice, pendingInvoiceId, clearPendingInvoice }) {
   const invoices    = sharedInvoices || [];
   const [view,            setView]         = useState('hub');
   const [activeInvoice,   setActiveInv]    = useState(null);
@@ -2504,6 +2539,7 @@ function VoiceInvoice({ user, logo, payments, sharedInvoices, setSharedInvoices,
         <InvoiceEditor
           initial={editingInvoice}
           user={user}
+          teamMembers={teamMembers}
           onSave={saveInvoice}
           onCancel={()=>setView(activeInvoice?'document':'hub')}
         />
@@ -6118,6 +6154,11 @@ export default function Tradevoice() {
     const trade = job.trade || (user?.trades?.[0] || 'Specialty');
     // Pull the default labor rate from TRADE_CONFIG (defined elsewhere in this file).
     const conf = (typeof TRADE_CONFIG !== 'undefined' && TRADE_CONFIG[trade]) || { defaultLaborRate: 100 };
+    // Carry the assigned tech from the job over so the invoice records who
+    // actually performed the work. Fall back to the owner if no tech was
+    // assigned (typically a one-person shop).
+    const techMember = (teamMembers || []).find(t => (t.userId || t.id) === job.techUserId);
+    const techName   = techMember?.name || (job.techUserId === user?.id ? user?.name : '') || '';
     const draft = {
       number: nextInvNum(),
       clientName:    job.client   || '',
@@ -6126,6 +6167,8 @@ export default function Tradevoice() {
       clientEmail:   '',
       title:         job.title    || 'Service Visit',
       trade,
+      techUserId:    job.techUserId || null,
+      techName,
       status:        'draft',
       terms:         'Net 30',
       createdAt:     today,
@@ -6145,7 +6188,12 @@ export default function Tradevoice() {
       tax:    8.5,
       notes:  job.notes ? `From scheduled job: ${job.notes}` : '',
       payments: [],
-      activity: [{ date: today, type: 'created', note: 'Invoice created from completed job' }],
+      activity: [{
+        date: today, type: 'created',
+        note: techName
+          ? `Invoice created from completed job — work performed by ${techName}`
+          : 'Invoice created from completed job',
+      }],
     };
     try {
       const saved = await persistInvoice(draft);
@@ -6160,7 +6208,7 @@ export default function Tradevoice() {
 
   const content = {
     dashboard: <Dashboard    user={user} nav={setSection} invoices={sharedInvoices} plans={plans} onScheduleFromPlan={handleScheduleFromPlan} />,
-    invoice:   <VoiceInvoice user={user} logo={logo} payments={payments} taxRates={taxRates} sharedInvoices={sharedInvoices} setSharedInvoices={setSharedInvoices} persistInvoice={persistInvoice} removeInvoice={removeInvoice} handleUnInvoice={handleUnInvoice} pendingInvoiceId={pendingInvoiceId} clearPendingInvoice={() => setPendingInvoiceId(null)} />,
+    invoice:   <VoiceInvoice user={user} logo={logo} payments={payments} taxRates={taxRates} teamMembers={teamMembers} sharedInvoices={sharedInvoices} setSharedInvoices={setSharedInvoices} persistInvoice={persistInvoice} removeInvoice={removeInvoice} handleUnInvoice={handleUnInvoice} pendingInvoiceId={pendingInvoiceId} clearPendingInvoice={() => setPendingInvoiceId(null)} />,
     billing:   <Billing      user={user} payments={payments} />,
     quotes:    <Quotes       user={user} logo={logo} taxRates={taxRates} onConvertToInvoice={handleConvertToInvoice} />,
     schedule:  <ScheduleScreen user={user} team={teamMembers} onCreateInvoice={handleJobToInvoice} plans={plans} setPlans={setPlans} pendingJobDraft={pendingJobDraft} clearPendingJobDraft={() => setPendingJobDraft(null)} timeOff={timeOff} />,
