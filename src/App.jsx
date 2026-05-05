@@ -154,12 +154,16 @@ const Label = ({ children }) => <label style={s.label}>{children}</label>;
 // - Auto-selects on focus so typing replaces the value
 function NumberInput({ value, onChange, width = 76, prefix = '', placeholder = '0', style: extraStyle = {}, fontSize, textAlign = 'right' }) {
   const [text, setText] = useState(() => (value === 0 || value == null ? '' : String(value)));
-  // Tracks whether the user has typed anything since focusing the field. The first
-  // digit/dot keystroke after focus replaces the whole field — guarantees "click +
-  // type = replace" without depending on the browser's flaky select() behavior.
-  const [freshFocus, setFreshFocus] = useState(false);
+  // Use a ref instead of state for "is this the first keystroke after focus?"
+  // Refs update synchronously, so back-to-back keystrokes can't race ahead of
+  // React's re-render and see a stale freshFocus value (which was the bug —
+  // typing "50" fast would land as "0" because React hadn't flushed yet).
+  const freshRef = useRef(false);
+  const inputRef = useRef(null);
 
-  // Sync local state when the parent value changes externally (new row, etc.).
+  // Sync local state when the parent value changes externally (e.g. trade
+  // change auto-bumping the rate, or a new row mounting). Skip the overwrite
+  // if the user is mid-edit so we don't stomp their typing.
   useEffect(() => {
     const incoming = value === 0 || value == null ? '' : String(value);
     if (parseFloat(text || '0') !== value && incoming !== text) setText(incoming);
@@ -171,36 +175,42 @@ function NumberInput({ value, onChange, width = 76, prefix = '', placeholder = '
     if (v === '' || /^\d*\.?\d*$/.test(v)) setText(v);
   };
 
-  // Belt-and-suspenders behaviour for "type to replace":
-  //   1. onFocus fires select() (deferred so browser cursor-positioning doesn't undo it)
-  //   2. If select() failed silently, this handler still replaces the entire field on
-  //      the first digit/dot keystroke after focus.
+  // First keystroke after focus replaces the entire field — guarantees
+  // "click + type = replace what's there" regardless of where the cursor
+  // landed when the user clicked.
   const handleKeyDown = (e) => {
-    if (!freshFocus) return;
+    if (!freshRef.current) return;
     if (/^[0-9.]$/.test(e.key)) {
       e.preventDefault();
-      setText(e.key === '.' ? '0.' : e.key); // start with "0." if user types a leading dot
-      setFreshFocus(false);
-      // Move cursor to end on next tick
+      const next = e.key === '.' ? '0.' : e.key;
+      // CRITICAL: write the DOM value synchronously, not just the React state.
+      // If the user types fast, the next keystroke fires BEFORE React re-renders,
+      // and the browser appends it to whatever's currently in input.value. If
+      // that's still the old value ("1"), typing "5" → "0" results in "10"
+      // instead of "50". Setting el.value here keeps the DOM in sync with the
+      // state we just queued.
       const el = e.currentTarget;
-      setTimeout(() => { try { el?.setSelectionRange(el.value.length, el.value.length); } catch (_) {} }, 0);
+      el.value = next;
+      setText(next);
+      freshRef.current = false;
+      try { el.setSelectionRange(next.length, next.length); } catch (_) {}
     } else {
-      // Backspace, arrow, tab, etc. — exit fresh-focus mode but allow default behaviour
-      setFreshFocus(false);
+      // Backspace, arrow, tab, etc. — exit fresh-focus mode and let default behavior run.
+      freshRef.current = false;
     }
   };
 
   const commit = () => {
-    setFreshFocus(false);
-    const num = text === '' || text === '.' ? 0 : parseFloat(text);
+    freshRef.current = false;
+    const num = text === '' || text === '.' ? 0 : (parseFloat(text) || 0);
     if (num !== value) onChange(num);
     setText(num === 0 ? '' : String(num));
   };
 
   const handleFocus = (e) => {
-    setFreshFocus(true);
-    // Try to visually highlight the contents so the user sees what's about to be replaced.
-    // Deferred past the click's cursor placement.
+    freshRef.current = true;
+    // Visually highlight the contents so the user sees what's about to be replaced.
+    // Deferred past the click's cursor placement, otherwise the click resets the selection.
     const el = e.currentTarget;
     setTimeout(() => { try { el?.select(); } catch (_) {} }, 0);
   };
@@ -209,6 +219,7 @@ function NumberInput({ value, onChange, width = 76, prefix = '', placeholder = '
     <div style={{ position: 'relative', width, display: 'inline-flex', alignItems: 'center' }}>
       {prefix && <span style={{ position: 'absolute', left: 8, fontSize: 14, fontWeight: 700, color: C.muted, pointerEvents: 'none', zIndex: 1 }}>{prefix}</span>}
       <input
+        ref={inputRef}
         type="text"
         inputMode="decimal"
         value={text}
