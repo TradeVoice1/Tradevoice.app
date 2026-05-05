@@ -17,6 +17,7 @@ const dbToJob = (r) => ({
   status:     r.status        ?? 'scheduled',
   trade:      r.trade         ?? '',
   notes:      r.notes         ?? '',
+  photos:     Array.isArray(r.photos) ? r.photos : [],
 });
 
 const jobToDb = (j) => ({
@@ -33,6 +34,7 @@ const jobToDb = (j) => ({
   status:        j.status     ?? 'scheduled',
   trade:         j.trade      ?? null,
   notes:         j.notes      ?? null,
+  photos:        Array.isArray(j.photos) ? j.photos : [],
 });
 
 export async function listJobs() {

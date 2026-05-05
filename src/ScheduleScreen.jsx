@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect, useRef } from "react";
 import { listJobs, upsertJob, deleteJob } from "./data/jobs";
 import { markPlanServiced } from "./data/plans";
 import { isTechOffOn, timeOffInRange } from "./data/timeOff";
+import { uploadJobPhoto, deleteJobPhoto } from "./data/jobPhotos";
 
 // ─── DRAG-RESCHEDULE HOOK ────────────────────────────────────────────────────
 // Pointer-events-based drag so it works on both mouse and touch (iPad).
@@ -128,14 +129,53 @@ const formatDate = (date) =>
   `${MONTHS[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
 
 // ─── JOB DETAIL MODAL ────────────────────────────────────────────────────────
-function JobDetailModal({ job, techs, onClose, onStatusChange, onCreateInvoice, isTech = false }) {
+function JobDetailModal({ job, techs, onClose, onStatusChange, onCreateInvoice, onPhotosChange, userId, isTech = false }) {
   const tech = techs.find(t => t.id === job.techUserId);
   const sc = STATUS_COLORS[job.status] || STATUS_COLORS.scheduled;
+  const [uploading, setUploading]   = useState(false);
+  const [uploadErr, setUploadErr]   = useState('');
+  const [lightbox,  setLightbox]    = useState(null);  // url being viewed full-size
+  const fileInputRef = useRef(null);
+
+  const photos = Array.isArray(job.photos) ? job.photos : [];
+
+  const handlePickFiles = async (e) => {
+    const files = Array.from(e.target.files || []);
+    e.target.value = '';   // reset so re-picking the same file still fires onChange
+    if (!files.length || !userId) return;
+    setUploadErr('');
+    setUploading(true);
+    try {
+      // Upload sequentially so one failure doesn't take down the whole batch.
+      const newEntries = [];
+      for (const f of files) {
+        try {
+          const url = await uploadJobPhoto(userId, job.id, f);
+          newEntries.push({ url, addedBy: userId, addedAt: new Date().toISOString() });
+        } catch (innerErr) {
+          console.error('photo upload failed', f.name, innerErr);
+          setUploadErr(innerErr?.message || `Couldn't upload ${f.name}`);
+        }
+      }
+      if (newEntries.length && onPhotosChange) {
+        await onPhotosChange([...photos, ...newEntries]);
+      }
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleDeletePhoto = async (photo) => {
+    if (!window.confirm('Remove this photo?')) return;
+    // Best-effort storage cleanup; if it fails, the metadata removal still wins.
+    deleteJobPhoto(photo.url).catch(() => {});
+    if (onPhotosChange) await onPhotosChange(photos.filter(p => p.url !== photo.url));
+  };
 
   const s = {
     overlay: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 },
-    modal: { background: '#fff', borderRadius: 14, width: '100%', maxWidth: 480, overflow: 'hidden', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' },
-    header: { background: COLORS.green, padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' },
+    modal: { background: '#fff', borderRadius: 14, width: '100%', maxWidth: 520, maxHeight: '90vh', overflow: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' },
+    header: { background: COLORS.green, padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', position: 'sticky', top: 0, zIndex: 1 },
     closeBtn: { background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', width: 28, height: 28, borderRadius: '50%', cursor: 'pointer', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' },
     body: { padding: '20px 24px' },
     row: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '10px 0', borderBottom: '1px solid #f5f5f5' },
@@ -180,6 +220,68 @@ function JobDetailModal({ job, techs, onClose, onStatusChange, onCreateInvoice, 
               <div style={{ fontSize: 14, color: '#555', lineHeight: 1.6, marginTop: 4 }}>{job.notes}</div>
             </div>
           )}
+
+          {/* Photos — owner + tech can both add/remove. Tap a thumbnail to view full size. */}
+          <div style={{ padding: '10px 0' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+              <div style={s.label}>
+                Photos {photos.length > 0 && <span style={{ color: '#666', fontWeight: 600 }}>({photos.length})</span>}
+              </div>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                style={{
+                  background: COLORS.green, color: '#fff', border: 'none', borderRadius: 6,
+                  padding: '6px 12px', fontSize: 12, fontWeight: 700, cursor: uploading ? 'wait' : 'pointer',
+                  opacity: uploading ? 0.7 : 1,
+                }}
+              >
+                {uploading ? 'Uploading…' : '+ Add Photo'}
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                style={{ display: 'none' }}
+                onChange={handlePickFiles}
+              />
+            </div>
+            {uploadErr && <div style={{ fontSize: 12, color: '#b91c1c', marginBottom: 8 }}>{uploadErr}</div>}
+            {photos.length === 0 && !uploading ? (
+              <div style={{ fontSize: 13, color: '#999', fontStyle: 'italic' }}>
+                No photos yet. Snap before/after shots to attach to the eventual invoice.
+              </div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))', gap: 6 }}>
+                {photos.map((p, i) => (
+                  <div key={p.url || i} style={{ position: 'relative', aspectRatio: '1 / 1', borderRadius: 6, overflow: 'hidden', background: '#f5f5f5' }}>
+                    <img
+                      src={p.url}
+                      alt={`Job photo ${i + 1}`}
+                      onClick={() => setLightbox(p.url)}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', cursor: 'pointer', display: 'block' }}
+                    />
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); handleDeletePhoto(p); }}
+                      title="Remove photo"
+                      style={{
+                        position: 'absolute', top: 4, right: 4,
+                        width: 22, height: 22, borderRadius: '50%',
+                        background: 'rgba(15, 23, 42, 0.7)', color: '#fff',
+                        border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 700,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        padding: 0, lineHeight: 1,
+                      }}
+                    >×</button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           <div style={{ marginTop: 8 }}>
             <div style={s.label}>Update Status</div>
             <div style={s.statusBtns}>
@@ -215,6 +317,26 @@ function JobDetailModal({ job, techs, onClose, onStatusChange, onCreateInvoice, 
           )}
         </div>
       </div>
+
+      {/* Full-size photo viewer — click anywhere to dismiss. Lives at modal level
+          so it sits above everything else and can use the overlay backdrop. */}
+      {lightbox && (
+        <div
+          onClick={(e) => { e.stopPropagation(); setLightbox(null); }}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 2000,
+            background: 'rgba(0, 0, 0, 0.92)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: 20,
+          }}
+        >
+          <img
+            src={lightbox}
+            alt="Job photo"
+            style={{ maxWidth: '95vw', maxHeight: '95vh', objectFit: 'contain', borderRadius: 6 }}
+          />
+        </div>
+      )}
     </div>
   );
 }
@@ -744,6 +866,25 @@ export default function ScheduleScreen({
     }
   };
 
+  // Persist a new photos array for a job (called after add or remove).
+  // Keeps both the master jobs list and the currently-open detail modal in sync.
+  const handleJobPhotosChange = async (jobId, photos) => {
+    if (!user?.id) return;
+    const target = jobs.find(j => j.id === jobId);
+    if (!target) return;
+    const optimistic = { ...target, photos };
+    setJobs(prev => prev.map(j => j.id === jobId ? optimistic : j));
+    setSelectedJob(prev => prev && prev.id === jobId ? optimistic : prev);
+    try {
+      const saved = await upsertJob(user.id, optimistic);
+      setJobs(prev => prev.map(j => j.id === saved.id ? saved : j));
+      setSelectedJob(prev => prev && prev.id === saved.id ? saved : prev);
+    } catch (e) {
+      console.error('photos save failed', e);
+      alert(e?.message || 'Could not save photos.');
+    }
+  };
+
   // Drag-and-drop reschedule. `dayIso` is yyyy-mm-dd (local), `hour` is 0-23.
   // We update local state optimistically, then persist via upsertJob. If the
   // save fails we roll back so the calendar doesn't lie about server state.
@@ -936,6 +1077,8 @@ export default function ScheduleScreen({
           job={selectedJob}
           techs={techs}
           isTech={isTech}
+          userId={user?.id}
+          onPhotosChange={(photos) => handleJobPhotosChange(selectedJob.id, photos)}
           onClose={() => setSelectedJob(null)}
           onStatusChange={handleStatusChange}
           onCreateInvoice={async (job) => {
