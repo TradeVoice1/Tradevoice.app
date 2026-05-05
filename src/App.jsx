@@ -3871,47 +3871,117 @@ function QuoteEditor({ initial, clients, user, onSave, onCancel }) {
         </div>
       </div>
 
-      {/* Client + Title row */}
-      <div style={{ display: 'grid', gridTemplateColumns: isTablet ? '1fr' : '220px 1fr', gap: 12, marginBottom: 16 }}>
-        <div>
-          <Label>Client</Label>
-          <select value={clientId} onChange={e => setClientId(e.target.value)}
-            style={{ ...s.input, width: '100%', padding: '11px 12px', minHeight: 44, cursor: 'pointer', boxSizing: 'border-box' }}>
-            {clients.map(c => <option key={c.id} value={c.id}>{c.name}{c.company ? ` — ${c.company}` : ''}</option>)}
-          </select>
-        </div>
-        <div>
-          <Label>Quote Title / Job Description</Label>
-          <Input value={title} onChange={setTitle} placeholder="e.g. Kitchen Plumbing Repair & Valve Replacement" />
-        </div>
-      </div>
+      {/* ── JOB DETAILS CARD ─────────────────────────────────────────────
+          Wrapped in a real card with a trade-colored accent stripe so it
+          actually pulls the eye. Was three flat fields on a flat background
+          before — easy to skim past. The stripe + section heading give the
+          eye an anchor, and the inputs themselves are taller and bolder. */}
+      <div style={{
+        background: C.surface,
+        borderRadius: 10,
+        border: `1px solid ${C.border}`,
+        boxShadow: C.shadow1,
+        overflow: 'hidden',
+        marginBottom: 18,
+      }}>
+        {/* Trade-colored accent stripe — instantly tells the user what kind of doc this is */}
+        <div style={{ height: 5, background: tradeConf.stripe || tradeConf.color }} />
 
-      {/* Trade selector + Expiry row */}
-      <div style={{ display: 'grid', gridTemplateColumns: isTablet ? '1fr 1fr' : '240px 200px 1fr', gap: 12, marginBottom: 20 }}>
-        {/* Trade picker — hidden when single-trade user. Multi-trade users always get
-            the Multi-Trade Job option so they can quote cross-discipline work. */}
-        {!singleTrade && (
-          <div>
-            <Label>Quote Sheet Type</Label>
-            <select value={trade} onChange={e => handleTradeChange(e.target.value)}
-              style={{ ...s.input, width: '100%', padding: '11px 12px', minHeight: 44, cursor: 'pointer', boxSizing: 'border-box', borderColor: tradeConf.color + '88' }}>
-              {user?.trades?.map(t => (
-                <option key={t} value={t}>{t === 'Specialty' ? 'Specialty Trades' : `${t} Only`}</option>
-              ))}
-              {multiTrade && <option value="bundle">Multi-Trade Job ({user.trades.length} trades)</option>}
-            </select>
-          </div>
-        )}
-        {/* Trade badge shown for single-trade users */}
-        {singleTrade && (
-          <div style={{ display: 'flex', alignItems: 'flex-end', paddingBottom: 2 }}>
-            <span style={{ fontSize: 16, fontWeight: 900, letterSpacing: '0.08em', textTransform: 'uppercase', padding: '8px 14px', borderRadius: 3, background: tradeConf.color + '22', color: tradeConf.color, fontFamily: "'Inter', sans-serif", border: `1.5px solid ${tradeConf.color}44` }}>
+        <div style={{ padding: isTablet ? '16px 18px' : '20px 24px' }}>
+          {/* Section header */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14, gap: 12, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ width: 4, height: 22, background: tradeConf.color, borderRadius: 2 }} />
+              <span style={{
+                fontFamily: "'Inter', sans-serif",
+                fontSize: 14, fontWeight: 900, letterSpacing: '0.12em',
+                textTransform: 'uppercase', color: C.muted,
+              }}>Job Details</span>
+            </div>
+            {/* Inline trade chip — visible at a glance, color-coded so the user
+                sees the doc type without hunting the dropdown. */}
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              fontSize: 13, fontWeight: 800, letterSpacing: '0.06em', textTransform: 'uppercase',
+              padding: '5px 11px', borderRadius: 20,
+              background: tradeConf.color + '15', color: tradeConf.color,
+              border: `1.5px solid ${tradeConf.color}55`,
+              fontFamily: "'Inter', sans-serif",
+            }}>
+              <span style={{ width: 7, height: 7, borderRadius: '50%', background: tradeConf.color }} />
               {tradeConf.label}
             </span>
           </div>
-        )}
-        <div>
-          <CalendarPicker label="Expiration Date" value={expires} onChange={setExpires} />
+
+          {/* Row 1: Client + Title — title is the primary field, gets more space */}
+          <div style={{ display: 'grid', gridTemplateColumns: isTablet ? '1fr' : '240px 1fr', gap: 14, marginBottom: 14 }}>
+            <div>
+              <label style={{
+                display: 'block', marginBottom: 6,
+                fontSize: 12, fontWeight: 800, letterSpacing: '0.1em',
+                textTransform: 'uppercase', color: C.muted,
+                fontFamily: "'Inter', sans-serif",
+              }}>Client</label>
+              <select value={clientId} onChange={e => setClientId(e.target.value)}
+                style={{ ...s.input, width: '100%', padding: '12px 14px', minHeight: 48, cursor: 'pointer', boxSizing: 'border-box', fontSize: 16, fontWeight: 600 }}>
+                {clients.length === 0 && <option value="">— Add a client first —</option>}
+                {clients.map(c => <option key={c.id} value={c.id}>{c.name}{c.company ? ` — ${c.company}` : ''}</option>)}
+              </select>
+            </div>
+            <div>
+              <label style={{
+                display: 'block', marginBottom: 6,
+                fontSize: 12, fontWeight: 800, letterSpacing: '0.1em',
+                textTransform: 'uppercase', color: C.muted,
+                fontFamily: "'Inter', sans-serif",
+              }}>
+                Job Description <span style={{ color: C.errorBold, fontWeight: 900, marginLeft: 2 }}>*</span>
+              </label>
+              <input
+                type="text"
+                value={title}
+                onChange={e => setTitle(e.target.value)}
+                placeholder="e.g. Kitchen Plumbing Repair & Valve Replacement"
+                style={{
+                  ...s.input,
+                  width: '100%', padding: '12px 14px', minHeight: 48,
+                  fontSize: 16, fontWeight: 600, boxSizing: 'border-box',
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Row 2: Sheet type (multi-trade only) + Expiration */}
+          <div style={{ display: 'grid', gridTemplateColumns: isTablet ? '1fr' : (singleTrade ? '1fr 240px' : '240px 240px 1fr'), gap: 14, alignItems: 'end' }}>
+            {!singleTrade && (
+              <div>
+                <label style={{
+                  display: 'block', marginBottom: 6,
+                  fontSize: 12, fontWeight: 800, letterSpacing: '0.1em',
+                  textTransform: 'uppercase', color: C.muted,
+                  fontFamily: "'Inter', sans-serif",
+                }}>Quote Sheet Type</label>
+                <select value={trade} onChange={e => handleTradeChange(e.target.value)}
+                  style={{
+                    ...s.input, width: '100%', padding: '12px 14px', minHeight: 48,
+                    cursor: 'pointer', boxSizing: 'border-box',
+                    fontSize: 16, fontWeight: 600,
+                    borderColor: tradeConf.color + '88',
+                    borderWidth: 1.5,
+                  }}>
+                  {user?.trades?.map(t => (
+                    <option key={t} value={t}>{t === 'Specialty' ? 'Specialty Trades' : `${t} Only`}</option>
+                  ))}
+                  {multiTrade && <option value="bundle">Multi-Trade Job ({user.trades.length} trades)</option>}
+                </select>
+              </div>
+            )}
+            <div>
+              <CalendarPicker label="Expiration Date" value={expires} onChange={setExpires} />
+            </div>
+            {/* Empty filler cell on desktop (3-col grid) so the layout stays balanced */}
+            {!singleTrade && !isTablet && <div />}
+          </div>
         </div>
       </div>
 
