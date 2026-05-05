@@ -1,6 +1,79 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import { listJobs, upsertJob, deleteJob } from "./data/jobs";
 import { markPlanServiced } from "./data/plans";
+
+// ─── DRAG-RESCHEDULE HOOK ────────────────────────────────────────────────────
+// Pointer-events-based drag so it works on both mouse and touch (iPad).
+// A "drag" only kicks in once the pointer has moved more than DRAG_THRESHOLD
+// pixels from the press point — anything less is treated as a tap and
+// passes through to the job block's normal onClick handler.
+//
+// Drop targets are any DOM node carrying both `data-day` (yyyy-mm-dd) and
+// `data-hour` (int) attributes. We resolve the target via document.elementFromPoint
+// at pointerup, so cells don't need their own pointer handlers.
+const DRAG_THRESHOLD = 6;
+function useDragReschedule({ onDrop }) {
+  const [drag, setDrag] = useState(null); // { job, x, y } during drag, null otherwise
+  const startRef     = useRef(null);
+  // After a drag completes, a synthetic click fires — we need to swallow it
+  // so onJobClick (which opens the detail modal) doesn't fire on drop.
+  const justDragged  = useRef(false);
+
+  const beginPress = (job, e) => {
+    if (e.button === 2) return;
+    startRef.current = {
+      job,
+      startX: e.clientX,
+      startY: e.clientY,
+      started: false,
+      pointerId: e.pointerId,
+    };
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+  };
+
+  const onMove = (e) => {
+    const s = startRef.current;
+    if (!s) return;
+    const dx = e.clientX - s.startX;
+    const dy = e.clientY - s.startY;
+    if (!s.started && Math.hypot(dx, dy) > DRAG_THRESHOLD) s.started = true;
+    if (s.started) setDrag({ job: s.job, x: e.clientX, y: e.clientY });
+  };
+
+  const onUp = (e) => {
+    const s = startRef.current;
+    startRef.current = null;
+    if (!s) return;
+    if (!s.started) { setDrag(null); return; }   // tap, not drag — fall through
+
+    const el = document.elementFromPoint(e.clientX, e.clientY);
+    const cell = el?.closest?.('[data-day][data-hour]');
+    if (cell && onDrop) {
+      onDrop(s.job, cell.getAttribute('data-day'), parseInt(cell.getAttribute('data-hour'), 10));
+    }
+    setDrag(null);
+    // Tell the very next click to bug off.
+    justDragged.current = true;
+    setTimeout(() => { justDragged.current = false; }, 0);
+  };
+
+  // Returns props to spread onto a draggable job block. Wrap your onClick
+  // through `wrapClick` so post-drag clicks get suppressed cleanly.
+  const dragProps = (job) => ({
+    onPointerDown:   (e) => beginPress(job, e),
+    onPointerMove:   onMove,
+    onPointerUp:     onUp,
+    onPointerCancel: () => { startRef.current = null; setDrag(null); },
+    style: { touchAction: 'none' },
+  });
+
+  const wrapClick = (handler) => (e) => {
+    if (justDragged.current) { e.preventDefault(); e.stopPropagation(); return; }
+    handler?.(e);
+  };
+
+  return { drag, dragProps, wrapClick };
+}
 
 // ─── CONSTANTS ───────────────────────────────────────────────────────────────
 const COLORS = {
@@ -305,18 +378,24 @@ function AddJobModal({ techs, jobs = [], onClose, onAdd, defaultDate, prefill = 
 }
 
 // ─── WEEK VIEW ────────────────────────────────────────────────────────────────
-function WeekView({ weekDays, jobs, techs, onJobClick, filterTech }) {
+// Format a Date as yyyy-mm-dd for cell drop-target attributes (local time, not UTC,
+// so a Saturday 11pm doesn't accidentally write itself into Sunday).
+const isoLocalDate = (d) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+function WeekView({ weekDays, jobs, techs, onJobClick, filterTech, onReschedule, isTech }) {
   const filtered = filterTech ? jobs.filter(j => j.techUserId === filterTech) : jobs;
+  const { drag, dragProps, wrapClick } = useDragReschedule({ onDrop: onReschedule });
 
   const s = {
-    wrap: { overflowX: 'auto' },
+    wrap: { overflowX: 'auto', position: 'relative' },
     grid: { display: 'grid', gridTemplateColumns: '60px repeat(7, 1fr)', minWidth: 700 },
     dayHeader: (isToday) => ({ padding: '10px 8px', textAlign: 'center', background: isToday ? COLORS.greenLight : '#fafafa', borderBottom: '1px solid #e8e8e8', borderRight: '1px solid #f0f0f0' }),
     dayName: (isToday) => ({ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.1em', color: isToday ? COLORS.green : '#aaa' }),
     dayNum: (isToday) => ({ fontSize: 22, fontWeight: 900, color: isToday ? COLORS.green : '#111', marginTop: 2 }),
     timeCol: { fontSize: 11, color: '#bbb', textAlign: 'right', paddingRight: 8, paddingTop: 4, borderRight: '1px solid #e8e8e8' },
     cell: { borderRight: '1px solid #f0f0f0', borderBottom: '1px solid #f8f8f8', minHeight: 56, position: 'relative' },
-    jobBlock: (color) => ({ position: 'absolute', left: 2, right: 2, background: color, borderRadius: 6, padding: '4px 6px', cursor: 'pointer', overflow: 'hidden', zIndex: 1 }),
+    jobBlock: (color) => ({ position: 'absolute', left: 2, right: 2, background: color, borderRadius: 6, padding: '4px 6px', cursor: isTech ? 'pointer' : 'grab', overflow: 'hidden', zIndex: 1, userSelect: 'none' }),
   };
 
   const today = new Date();
@@ -345,27 +424,90 @@ function WeekView({ weekDays, jobs, techs, onJobClick, filterTech }) {
         })}
         {/* Time rows */}
         {HOURS.map(hour => (
-          <>
-            <div key={`time-${hour}`} style={{ ...s.timeCol, height: 56, display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end', paddingRight: 8, paddingTop: 4, fontSize: 11, color: '#bbb', borderRight: '1px solid #e8e8e8', borderBottom: '1px solid #f8f8f8' }}>
+          <React.Fragment key={`row-${hour}`}>
+            <div style={{ ...s.timeCol, height: 56, display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end', paddingRight: 8, paddingTop: 4, fontSize: 11, color: '#bbb', borderRight: '1px solid #e8e8e8', borderBottom: '1px solid #f8f8f8' }}>
               {formatTime(hour)}
             </div>
             {weekDays.map((day, di) => {
               const dayJobs = getJobsForDayHour(day, hour);
               const isToday = isSameDay(day, today);
+              const dayIso  = isoLocalDate(day);
+              // Highlight the cell beneath the dragged pointer so the user can
+              // see exactly where the job will land before they release.
+              const isDropHover = drag && (() => {
+                const el = document.elementFromPoint?.(drag.x, drag.y);
+                const cell = el?.closest?.('[data-day][data-hour]');
+                return cell?.getAttribute('data-day') === dayIso && parseInt(cell?.getAttribute('data-hour'), 10) === hour;
+              })();
               return (
-                <div key={`cell-${hour}-${di}`} style={{ ...s.cell, background: isToday ? '#fafff9' : '#fff', height: 56 }}>
-                  {dayJobs.map(job => (
-                    <div key={job.id} style={{ ...s.jobBlock(getTechColor(job.techUserId)), top: 2, height: job.duration * 56 - 4, opacity: job.status === 'cancelled' ? 0.35 : job.status === 'completed' ? 0.6 : 1, ...(job.status === 'scheduled' && new Date(job.date) < new Date(new Date().toDateString()) ? { background: '#fef2f2', borderLeft: '3px solid #dc2626' } : {}) }} onClick={() => onJobClick(job)}>
-                      <div style={{ fontSize: 11, fontWeight: 700, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{job.title}</div>
-                      <div style={{ fontSize: 10, color: 'rgba(255,255,255,.8)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{job.client}</div>
-                    </div>
-                  ))}
+                <div
+                  key={`cell-${hour}-${di}`}
+                  data-day={dayIso}
+                  data-hour={hour}
+                  style={{
+                    ...s.cell,
+                    background: isDropHover
+                      ? '#dcfce7'
+                      : isToday ? '#fafff9' : '#fff',
+                    boxShadow: isDropHover ? `inset 0 0 0 2px ${COLORS.green}` : 'none',
+                    height: 56,
+                  }}
+                >
+                  {dayJobs.map(job => {
+                    // Hide the original block while it's being dragged so only the ghost shows.
+                    const isBeingDragged = drag && drag.job.id === job.id;
+                    // Techs don't get drag handles — view-only schedule for them.
+                    const draggable = !isTech;
+                    return (
+                      <div
+                        key={job.id}
+                        {...(draggable ? dragProps(job) : {})}
+                        style={{
+                          ...s.jobBlock(getTechColor(job.techUserId)),
+                          top: 2,
+                          height: job.duration * 56 - 4,
+                          opacity: isBeingDragged ? 0.25 : (job.status === 'cancelled' ? 0.35 : job.status === 'completed' ? 0.6 : 1),
+                          ...(job.status === 'scheduled' && new Date(job.date) < new Date(new Date().toDateString()) ? { background: '#fef2f2', borderLeft: '3px solid #dc2626' } : {}),
+                          ...(draggable ? dragProps(job).style : {}),
+                        }}
+                        onClick={wrapClick(() => onJobClick(job))}
+                      >
+                        <div style={{ fontSize: 11, fontWeight: 700, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{job.title}</div>
+                        <div style={{ fontSize: 10, color: 'rgba(255,255,255,.8)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{job.client}</div>
+                      </div>
+                    );
+                  })}
                 </div>
               );
             })}
-          </>
+          </React.Fragment>
         ))}
       </div>
+
+      {/* Floating ghost — follows the cursor while dragging.
+          position:fixed so it isn't clipped by the scrollable grid. */}
+      {drag && (
+        <div style={{
+          position: 'fixed',
+          left: drag.x + 12,
+          top:  drag.y + 12,
+          background: getTechColor(drag.job.techUserId),
+          color: '#fff',
+          borderRadius: 6,
+          padding: '6px 10px',
+          fontSize: 12,
+          fontWeight: 700,
+          pointerEvents: 'none',
+          zIndex: 2000,
+          boxShadow: '0 6px 20px rgba(15, 23, 42, 0.25)',
+          maxWidth: 220,
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+        }}>
+          {drag.job.title}
+        </div>
+      )}
     </div>
   );
 }
@@ -574,6 +716,30 @@ export default function ScheduleScreen({
     }
   };
 
+  // Drag-and-drop reschedule. `dayIso` is yyyy-mm-dd (local), `hour` is 0-23.
+  // We update local state optimistically, then persist via upsertJob. If the
+  // save fails we roll back so the calendar doesn't lie about server state.
+  const handleReschedule = async (job, dayIso, hour) => {
+    // Skip the no-op case (drop in same cell) so we don't make a useless write.
+    const sameDay = isSameDay(new Date(job.date), new Date(dayIso + 'T12:00:00'));
+    if (sameDay && job.startHour === hour) return;
+    if (!user?.id) return;
+
+    const newDate = new Date(dayIso + 'T12:00:00');
+    const optimistic = { ...job, date: newDate, startHour: hour };
+    const original   = job;
+    setJobs(prev => prev.map(j => j.id === job.id ? optimistic : j));
+
+    try {
+      const saved = await upsertJob(user.id, optimistic);
+      setJobs(prev => prev.map(j => j.id === saved.id ? saved : j));
+    } catch (e) {
+      console.error('reschedule failed', e);
+      setJobs(prev => prev.map(j => j.id === original.id ? original : j));
+      alert('Could not move that job — restored.');
+    }
+  };
+
   const handleDayClick = (date) => {
     setCurrentDate(date);
     setView('day');
@@ -649,7 +815,7 @@ export default function ScheduleScreen({
       <div style={s.body}>
         <div style={s.calendar}>
           {view === 'month' && <MonthView date={currentDate} jobs={jobs} techs={techs} onJobClick={setSelectedJob} filterTech={filterTech} onDayClick={handleDayClick} />}
-          {view === 'week' && <WeekView weekDays={weekDays} jobs={jobs} techs={techs} onJobClick={setSelectedJob} filterTech={filterTech} />}
+          {view === 'week' && <WeekView weekDays={weekDays} jobs={jobs} techs={techs} onJobClick={setSelectedJob} filterTech={filterTech} onReschedule={handleReschedule} isTech={isTech} />}
           {view === 'day' && <DayView date={currentDate} jobs={jobs} techs={techs} onJobClick={setSelectedJob} filterTech={filterTech} />}
         </div>
 
