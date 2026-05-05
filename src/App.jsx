@@ -43,15 +43,24 @@ const C = {
   raised:    '#f4f8f6',     // input fills, raised inset surfaces
   border:    '#e6ede9',     // hairline borders — softened from #d6e4de
   border2:   '#cfdfd6',     // medium border (focus rings, dividers)
-  orange:    '#2d6a4f',     // brand green (kept under "orange" key for compat)
+  orange:    '#2d6a4f',     // brand green (kept under "orange" key for compat with the rest of the file)
   orangeLo:  '#eef7f2',
   orangeMd:  '#b7dfca',
-  text:      '#0f172a',     // slightly cooler than #111827 — feels more techy
-  muted:     '#64748b',     // cooler muted (was #6b7280)
-  dim:       '#94a3b8',     // cooler dim (was #9ca3af)
-  success:   '#1a7c42',
-  error:     '#dc2626',
+  // Real orange — secondary brand accent for "in-flight" states (sent, viewed, awaiting).
+  accent:    '#ea580c',     // vivid orange
+  accentLo:  '#fff4ed',     // very pale orange wash
+  accentMd:  '#fed7aa',     // medium orange
+  text:      '#0f172a',
+  muted:     '#64748b',
+  dim:       '#94a3b8',
+  success:   '#15803d',     // filled paid green — slightly punchier
+  successLo: '#dcfce7',
+  // Critical / overdue — bolder red. Two levels for filled vs subtle treatments.
+  error:     '#dc2626',     // tag-text color
+  errorBold: '#b91c1c',     // filled-pill bg
+  errorLo:   '#fef2f2',
   warn:      '#d97706',
+  warnLo:    '#fef3c7',
   // Elevation shadows — layered, brand-tinted, very soft.
   shadow1:   '0 1px 2px rgba(15, 23, 42, 0.04), 0 0 0 1px rgba(15, 23, 42, 0.03)',
   shadow2:   '0 1px 2px rgba(15, 23, 42, 0.05), 0 8px 24px rgba(15, 23, 42, 0.06)',
@@ -129,17 +138,28 @@ const Input = ({ value, onChange, placeholder, type = 'text', style = {}, rows }
 const Label = ({ children }) => <label style={s.label}>{children}</label>;
 
 const Badge = ({ status }) => {
+  // Quote status palette aligned with INV_STATUS: green-filled for accepted/invoiced,
+  // orange for sent, gold for revised, FILLED red for declined. No blue, no purple.
   const map = {
-    draft:    { label: 'Draft',    bg: '#f3f4f6',  color: '#6b7280' },
-    sent:     { label: 'Sent',     bg: '#eff6ff',  color: '#1d4ed8' },
-    accepted: { label: 'Accepted', bg: '#f0fdf4',  color: '#15803d' },
-    declined: { label: 'Declined', bg: '#fef2f2',  color: '#dc2626' },
-    revised:  { label: 'Revised',  bg: '#fffbeb',  color: '#d97706' },
-    invoiced: { label: 'Invoiced', bg: '#fdf4ff',  color: '#9333ea' },
+    draft:    { label: 'Draft',    bg: '#f1f5f9', color: '#475569', filled: false },
+    sent:     { label: 'Sent',     bg: '#fff4ed', color: '#c2410c', filled: false },
+    accepted: { label: 'Accepted', bg: '#15803d', color: '#ffffff', filled: true  },
+    declined: { label: 'Declined', bg: '#b91c1c', color: '#ffffff', filled: true  },
+    revised:  { label: 'Revised',  bg: '#fef3c7', color: '#92400e', filled: false },
+    invoiced: { label: 'Invoiced', bg: '#2d6a4f', color: '#ffffff', filled: true  },
   };
-  const { label, bg, color } = map[status] || map.draft;
+  const { label, bg, color, filled } = map[status] || map.draft;
   return (
-    <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '3px 8px', borderRadius: 4, background: bg, color, fontFamily: "'Inter', sans-serif", whiteSpace: 'nowrap', lineHeight: 1.6, display: 'inline-block', border: `1px solid ${color}1a` }}>
+    <span style={{
+      fontSize: 10, fontWeight: filled ? 800 : 700,
+      letterSpacing: '0.08em', textTransform: 'uppercase',
+      padding: '3px 9px', borderRadius: 4,
+      background: bg, color,
+      fontFamily: "'Inter', sans-serif",
+      whiteSpace: 'nowrap', lineHeight: 1.6, display: 'inline-block',
+      border: filled ? 'none' : `1px solid ${color}1a`,
+      boxShadow: filled ? `0 1px 2px ${bg}66` : 'none',
+    }}>
       {label}
     </span>
   );
@@ -239,18 +259,24 @@ const SectionHead = ({ icon, title, sub }) => (
 
 const StatCard = ({ icon, label, value, color = C.orange }) => (
   <div style={{
-    background: C.surface,
+    // Gradient wash tinted to the card's color — gives each tile real personality.
+    // White card with a soft tint of the accent color at the bottom-right corner.
+    background: `linear-gradient(135deg, ${C.surface} 0%, ${C.surface} 55%, ${color}0d 100%)`,
     border: `1px solid ${C.border}`,
-    borderRadius: 12,
+    borderRadius: 14,
     overflow: 'hidden',
     boxShadow: C.shadow1,
-    transition: 'box-shadow 0.15s, transform 0.15s',
-  }}>
-    {/* Top bar: 3px accent stripe instead of a full color block — quieter, more modern. */}
-    <div style={{ height: 3, background: `linear-gradient(90deg, ${color}, ${color}cc)` }} />
-    <div style={{ padding: '14px 16px 16px', textAlign: 'center' }}>
-      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: C.muted, marginBottom: 6 }}>{label}</div>
-      <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 28, fontWeight: 700, color, lineHeight: 1, fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.02em' }}>{value}</div>
+    transition: 'box-shadow 0.2s, transform 0.2s',
+    cursor: 'default',
+  }}
+  onMouseEnter={e => { e.currentTarget.style.boxShadow = C.shadow2; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+  onMouseLeave={e => { e.currentTarget.style.boxShadow = C.shadow1; e.currentTarget.style.transform = 'translateY(0)'; }}
+  >
+    {/* Bold accent stripe — 4px gradient with a fade-out tail on the right. */}
+    <div style={{ height: 4, background: `linear-gradient(90deg, ${color} 0%, ${color} 60%, ${color}88 100%)` }} />
+    <div style={{ padding: '16px 18px 18px', textAlign: 'center' }}>
+      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.muted, marginBottom: 8 }}>{label}</div>
+      <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 36, fontWeight: 800, color, lineHeight: 1, fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.03em' }}>{value}</div>
     </div>
   </div>
 );
@@ -848,11 +874,11 @@ function Dashboard({ user, nav, invoices = [] }) {
         sub={subtitleParts.length ? subtitleParts.join('  —  ') : 'Welcome to Tradevoice'} />
 
       {/* Stats — 2×2 on tablet, 4 across on laptop */}
-      <div style={{ display: 'grid', gridTemplateColumns: isTablet ? '1fr 1fr' : 'repeat(4,1fr)', gap: 10, marginBottom: 20 }}>
-        <StatCard icon="" label="Invoices This Month" value={String(monthInvoices.length)} />
-        <StatCard icon="" label="Outstanding"         value={fmtMoney(outstanding)} color={outstanding > 0 ? C.error : C.muted} />
+      <div style={{ display: 'grid', gridTemplateColumns: isTablet ? '1fr 1fr' : 'repeat(4,1fr)', gap: 12, marginBottom: 22 }}>
+        <StatCard icon="" label="Invoices This Month" value={String(monthInvoices.length)} color={C.orange} />
+        <StatCard icon="" label="Outstanding"         value={fmtMoney(outstanding)} color={outstanding > 0 ? C.errorBold : C.muted} />
         <StatCard icon="" label="Jobs Completed"      value={String(paidInvoices.length)} color={C.success} />
-        <StatCard icon="" label="Avg. Invoice"        value={fmtMoney(avgInvoice)} color={C.warn} />
+        <StatCard icon="" label="Avg. Invoice"        value={fmtMoney(avgInvoice)} color={C.accent} />
       </div>
 
       {/* Body — stacks fully on tablet */}
@@ -869,16 +895,27 @@ function Dashboard({ user, nav, invoices = [] }) {
             </div>
           ) : recent.map((inv, i) => {
             const calc = calcInvoice(inv, user?.state);
-            const meta = INV_STATUS[inv.status] || INV_STATUS.draft;
             return (
-              <div key={inv.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: i < recent.length - 1 ? `1px solid ${C.border}` : 'none', gap: 12 }}>
+              <div key={inv.id} style={{
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                padding: '12px 10px', margin: '0 -10px',
+                borderBottom: i < recent.length - 1 ? `1px solid ${C.border}` : 'none',
+                gap: 12,
+                borderRadius: 8,
+                cursor: 'pointer',
+                transition: 'background 0.12s, transform 0.05s',
+                WebkitTapHighlightColor: 'transparent',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = C.surface2; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+              >
                 <div style={{ minWidth: 0 }}>
                   <div style={{ fontSize: 14, fontWeight: 600, color: C.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{inv.clientName || '—'}</div>
                   <div style={{ fontSize: 12, color: C.muted, marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{inv.title} — {inv.createdAt}</div>
                 </div>
-                <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                  <div style={{ fontSize: 15, fontWeight: 700, fontFamily: "'Inter', sans-serif", color: C.text }}>{fmtMoney(calc.total)}</div>
-                  <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.08em', color: meta.color, textTransform: 'uppercase', marginTop: 2 }}>{meta.label}</div>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
+                  <div style={{ fontSize: 16, fontWeight: 700, fontFamily: "'Inter', sans-serif", color: C.text, fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.01em' }}>{fmtMoney(calc.total)}</div>
+                  <InvBadge status={inv.status} />
                 </div>
               </div>
             );
@@ -894,24 +931,33 @@ function Dashboard({ user, nav, invoices = [] }) {
             ].map(a => (
               <button key={a.label} onClick={() => nav(a.sec)} style={{
                 flex: 1, minWidth: 110,
-                padding: '11px 20px',
-                background: C.orange,
+                padding: '13px 22px',
+                // Diagonal gradient — green primary into a deeper green for a bolder, dimensional look.
+                background: a.label === 'New Quote'
+                  ? `linear-gradient(135deg, ${C.accent} 0%, #c2410c 100%)`   // orange gradient — quotes are warm/in-flight
+                  : `linear-gradient(135deg, ${C.orange} 0%, #1f4d39 100%)`,  // green gradient — invoices are the money
                 border: 'none',
-                borderRadius: 8,
+                borderRadius: 10,
                 color: '#fff',
                 cursor: 'pointer',
                 fontFamily: "'Inter', sans-serif",
                 fontSize: 14,
-                fontWeight: 600,
+                fontWeight: 700,
                 letterSpacing: '-0.005em',
                 whiteSpace: 'nowrap',
                 textAlign: 'center',
-                transition: 'box-shadow 0.15s',
+                transition: 'box-shadow 0.2s, transform 0.05s',
                 WebkitTapHighlightColor: 'transparent',
-                boxShadow: '0 1px 2px rgba(45, 106, 79, 0.2)',
+                boxShadow: a.label === 'New Quote'
+                  ? '0 2px 4px rgba(234, 88, 12, 0.25)'
+                  : '0 2px 4px rgba(45, 106, 79, 0.25)',
               }}
-              onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 2px 8px rgba(45, 106, 79, 0.35)'; }}
-              onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 1px 2px rgba(45, 106, 79, 0.2)'; }}
+              onMouseEnter={e => { e.currentTarget.style.boxShadow = a.label === 'New Quote'
+                ? '0 4px 14px rgba(234, 88, 12, 0.4)'
+                : '0 4px 14px rgba(45, 106, 79, 0.4)'; }}
+              onMouseLeave={e => { e.currentTarget.style.boxShadow = a.label === 'New Quote'
+                ? '0 2px 4px rgba(234, 88, 12, 0.25)'
+                : '0 2px 4px rgba(45, 106, 79, 0.25)'; }}
               >
                 {a.label}
               </button>
@@ -973,14 +1019,16 @@ const PAYMENT_TERMS = [
 ];
 
 // Invoice statuses — QB-aligned
+// Status palette: green for paid, orange for in-flight (sent/viewed), gold for partial,
+// FILLED red for overdue (so it pops in tables), gray for draft/void. No more blue.
 const INV_STATUS = {
-  draft:   { label:'Draft',   bg:'#f3f4f6', color:'#6b7280' },
-  sent:    { label:'Sent',    bg:'#eff6ff', color:'#1d4ed8' },
-  viewed:  { label:'Viewed',  bg:'#f0f9ff', color:'#0284c7' },
-  partial: { label:'Partial', bg:'#fffbeb', color:'#d97706' },
-  paid:    { label:'Paid',    bg:'#f0fdf4', color:'#15803d' },
-  overdue: { label:'Overdue', bg:'#fef2f2', color:'#dc2626' },
-  void:    { label:'Void',    bg:'#f9fafb', color:'#9ca3af' },
+  draft:   { label:'Draft',   bg:'#f1f5f9', color:'#475569', filled:false },
+  sent:    { label:'Sent',    bg:'#fff4ed', color:'#c2410c', filled:false },  // light-orange wash
+  viewed:  { label:'Viewed',  bg:'#fffbeb', color:'#a16207', filled:false },  // amber
+  partial: { label:'Partial', bg:'#fef3c7', color:'#92400e', filled:false },  // gold
+  paid:    { label:'Paid',    bg:'#15803d', color:'#ffffff', filled:true  },  // filled green — celebrate it
+  overdue: { label:'Overdue', bg:'#b91c1c', color:'#ffffff', filled:true  },  // filled red — can't miss it
+  void:    { label:'Void',    bg:'#f1f5f9', color:'#94a3b8', filled:false },
 };
 
 // ── State tax rules for contractor labor ─────────────────────────────────────
@@ -1099,8 +1147,18 @@ const SEED_INVOICES = [];
 
 // ── Status Badge ───────────────────────────────────────────────────────────────
 function InvBadge({ status }) {
-  const { label, bg, color } = INV_STATUS[status] || INV_STATUS.draft;
-  return <span style={{ fontSize:10, fontWeight:700, letterSpacing:'0.06em', textTransform:'uppercase', padding:'3px 8px', borderRadius:4, background:bg, color, fontFamily:"'Inter', sans-serif", whiteSpace:'nowrap', display:'inline-block', border: `1px solid ${color}1a` }}>{label}</span>;
+  const meta = INV_STATUS[status] || INV_STATUS.draft;
+  const { label, bg, color, filled } = meta;
+  return <span style={{
+    fontSize: 10, fontWeight: filled ? 800 : 700,
+    letterSpacing: '0.08em', textTransform: 'uppercase',
+    padding: '3px 9px', borderRadius: 4,
+    background: bg, color,
+    fontFamily: "'Inter', sans-serif",
+    whiteSpace: 'nowrap', display: 'inline-block',
+    border: filled ? 'none' : `1px solid ${color}1a`,
+    boxShadow: filled ? `0 1px 2px ${bg}66` : 'none',
+  }}>{label}</span>;
 }
 
 
@@ -5137,15 +5195,20 @@ export default function Tradevoice() {
         <Logo size={isTablet ? 40 : 44} />
       </div>
 
-      {/* Trial countdown pill — pinned just left of the settings button */}
+      {/* Trial countdown pill — bolder, gradient-filled */}
       <div style={{ position: 'absolute', top: 0, right: 70, height: TOP_H, display: 'flex', alignItems: 'center' }}>
         <span style={{
           fontFamily: "'Inter', sans-serif",
           fontSize: 11, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase',
-          padding: '6px 12px', borderRadius: 20,
-          background: trialInfo.expired ? '#fef2f2' : C.orangeLo,
-          color: trialInfo.expired ? C.error : C.orange,
-          border: `1px solid ${trialInfo.expired ? C.error + '55' : C.orange + '55'}`,
+          padding: '7px 14px', borderRadius: 20,
+          background: trialInfo.expired
+            ? `linear-gradient(135deg, ${C.errorBold} 0%, ${C.error} 100%)`
+            : `linear-gradient(135deg, ${C.accent} 0%, #c2410c 100%)`,
+          color: '#ffffff',
+          border: 'none',
+          boxShadow: trialInfo.expired
+            ? '0 2px 6px rgba(185, 28, 28, 0.35)'
+            : '0 2px 6px rgba(234, 88, 12, 0.3)',
           whiteSpace: 'nowrap',
         }}>
           {trialInfo.label}
