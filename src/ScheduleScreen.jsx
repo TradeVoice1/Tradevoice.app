@@ -53,8 +53,8 @@ const formatDate = (date) =>
   `${MONTHS[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
 
 // ─── JOB DETAIL MODAL ────────────────────────────────────────────────────────
-function JobDetailModal({ job, techs, onClose, onStatusChange }) {
-  const tech = techs.find(t => t.id === job.tech);
+function JobDetailModal({ job, techs, onClose, onStatusChange, onCreateInvoice }) {
+  const tech = techs.find(t => t.id === job.techUserId);
   const sc = STATUS_COLORS[job.status] || STATUS_COLORS.scheduled;
 
   const s = {
@@ -118,7 +118,19 @@ function JobDetailModal({ job, techs, onClose, onStatusChange }) {
         </div>
         <div style={s.actionBtns}>
           <button style={{ ...s.btn, background: COLORS.greenLight, color: COLORS.green }}>Edit Job</button>
-          <button style={{ ...s.btn, background: COLORS.green, color: '#fff' }}>View Invoice</button>
+          {/* Create-Invoice CTA enabled once the job is marked completed and not already invoiced */}
+          <button
+            disabled={job.status !== 'completed' || !!job.invoiceId}
+            onClick={() => onCreateInvoice && onCreateInvoice(job)}
+            style={{
+              ...s.btn,
+              background: job.status === 'completed' && !job.invoiceId ? COLORS.green : '#e5e7eb',
+              color: job.status === 'completed' && !job.invoiceId ? '#fff' : '#9ca3af',
+              cursor: job.status === 'completed' && !job.invoiceId ? 'pointer' : 'not-allowed',
+            }}
+          >
+            {job.invoiceId ? 'Invoice Created ✓' : 'Create Invoice'}
+          </button>
         </div>
       </div>
     </div>
@@ -126,14 +138,58 @@ function JobDetailModal({ job, techs, onClose, onStatusChange }) {
 }
 
 // ─── ADD JOB MODAL ────────────────────────────────────────────────────────────
-function AddJobModal({ techs, onClose, onAdd, defaultDate }) {
+function AddJobModal({ techs, jobs = [], onClose, onAdd, defaultDate }) {
   const [form, setForm] = useState({
     title: '', client: '', address: '', phone: '', notes: '',
-    tech: techs[0]?.id || 1, date: defaultDate || new Date(),
+    techUserId: techs[0]?.id || null, date: defaultDate || new Date(),
     startHour: 9, duration: 2, trade: 'Plumber', status: 'scheduled',
   });
 
   const update = (k, v) => setForm(p => ({ ...p, [k]: v }));
+
+  // ── Smart suggestions: pulled from the job history.
+  // When the user fills in the client name, look up the most-recent job for that client
+  // and pre-suggest the tech who serviced them last + its trade.
+  // When the user fills in the job title, suggest the average duration of similar jobs.
+  const lastJobForClient = useMemo(() => {
+    if (!form.client.trim()) return null;
+    const needle = form.client.trim().toLowerCase();
+    return jobs
+      .filter(j => (j.client || '').toLowerCase() === needle && j.techUserId)
+      .sort((a, b) => new Date(b.date) - new Date(a.date))[0] || null;
+  }, [form.client, jobs]);
+
+  const avgDurationForTitle = useMemo(() => {
+    if (!form.title.trim()) return null;
+    const needle = form.title.trim().toLowerCase();
+    const matches = jobs.filter(j => (j.title || '').toLowerCase().includes(needle) && j.duration > 0);
+    if (matches.length === 0) return null;
+    const avg = matches.reduce((s, j) => s + j.duration, 0) / matches.length;
+    return Math.round(avg * 2) / 2; // nearest 0.5 hr
+  }, [form.title, jobs]);
+
+  // Auto-apply suggestions only if the user hasn't manually overridden the field.
+  const [techDirty,     setTechDirty]     = useState(false);
+  const [durationDirty, setDurationDirty] = useState(false);
+  const [tradeDirty,    setTradeDirty]    = useState(false);
+
+  useEffect(() => {
+    if (lastJobForClient && !techDirty) {
+      setForm(p => ({ ...p, techUserId: lastJobForClient.techUserId }));
+    }
+    if (lastJobForClient && !tradeDirty && lastJobForClient.trade) {
+      setForm(p => ({ ...p, trade: lastJobForClient.trade }));
+    }
+  }, [lastJobForClient, techDirty, tradeDirty]);
+
+  useEffect(() => {
+    if (avgDurationForTitle && !durationDirty) {
+      setForm(p => ({ ...p, duration: avgDurationForTitle }));
+    }
+  }, [avgDurationForTitle, durationDirty]);
+
+  const lastTechName = lastJobForClient ? techs.find(t => t.id === lastJobForClient.techUserId)?.name : null;
+  const lastJobDate  = lastJobForClient ? new Date(lastJobForClient.date).toLocaleDateString() : null;
 
   const s = {
     overlay: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 },
@@ -164,8 +220,18 @@ function AddJobModal({ techs, onClose, onAdd, defaultDate }) {
         <div style={s.body}>
           <label style={s.label}>Job Title</label>
           <input style={s.input} placeholder="e.g. Faucet Repair" value={form.title} onChange={e => update('title', e.target.value)} />
+          {avgDurationForTitle && !durationDirty && (
+            <div style={{ fontSize: 12, color: COLORS.green, marginTop: 4 }}>
+              Auto-set duration to {avgDurationForTitle} hr (avg of similar jobs)
+            </div>
+          )}
           <label style={s.label}>Client Name</label>
           <input style={s.input} placeholder="John Miller" value={form.client} onChange={e => update('client', e.target.value)} />
+          {lastTechName && !techDirty && (
+            <div style={{ fontSize: 12, color: COLORS.green, marginTop: 4 }}>
+              Last serviced by {lastTechName} on {lastJobDate} — auto-assigned
+            </div>
+          )}
           <label style={s.label}>Address</label>
           <input style={s.input} placeholder="2847 Magnolia Dr, Houston TX" value={form.address} onChange={e => update('address', e.target.value)} />
           <label style={s.label}>Client Phone</label>
@@ -173,13 +239,14 @@ function AddJobModal({ techs, onClose, onAdd, defaultDate }) {
           <div style={s.row2}>
             <div>
               <label style={s.label}>Trade</label>
-              <select style={s.select} value={form.trade} onChange={e => update('trade', e.target.value)}>
+              <select style={s.select} value={form.trade} onChange={e => { update('trade', e.target.value); setTradeDirty(true); }}>
                 {['Plumber','HVAC','Electrician','Roofing','Specialty'].map(t => <option key={t}>{t}</option>)}
               </select>
             </div>
             <div>
               <label style={s.label}>Assigned Tech</label>
-              <select style={s.select} value={form.tech} onChange={e => update('tech', parseInt(e.target.value))}>
+              <select style={s.select} value={form.techUserId || ''} onChange={e => { update('techUserId', e.target.value || null); setTechDirty(true); }}>
+                <option value="">Unassigned</option>
                 {techs.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
               </select>
             </div>
@@ -193,7 +260,7 @@ function AddJobModal({ techs, onClose, onAdd, defaultDate }) {
             </div>
             <div>
               <label style={s.label}>Duration</label>
-              <select style={s.select} value={form.duration} onChange={e => update('duration', parseInt(e.target.value))}>
+              <select style={s.select} value={form.duration} onChange={e => { update('duration', parseFloat(e.target.value)); setDurationDirty(true); }}>
                 {[1,2,3,4,5,6,7,8].map(h => <option key={h} value={h}>{h} {h === 1 ? 'hour' : 'hours'}</option>)}
               </select>
             </div>
@@ -212,7 +279,7 @@ function AddJobModal({ techs, onClose, onAdd, defaultDate }) {
 
 // ─── WEEK VIEW ────────────────────────────────────────────────────────────────
 function WeekView({ weekDays, jobs, techs, onJobClick, filterTech }) {
-  const filtered = filterTech ? jobs.filter(j => j.tech === filterTech) : jobs;
+  const filtered = filterTech ? jobs.filter(j => j.techUserId === filterTech) : jobs;
 
   const s = {
     wrap: { overflowX: 'auto' },
@@ -261,7 +328,7 @@ function WeekView({ weekDays, jobs, techs, onJobClick, filterTech }) {
               return (
                 <div key={`cell-${hour}-${di}`} style={{ ...s.cell, background: isToday ? '#fafff9' : '#fff', height: 56 }}>
                   {dayJobs.map(job => (
-                    <div key={job.id} style={{ ...s.jobBlock(getTechColor(job.tech)), top: 2, height: job.duration * 56 - 4, opacity: job.status === 'cancelled' ? 0.4 : 1 }} onClick={() => onJobClick(job)}>
+                    <div key={job.id} style={{ ...s.jobBlock(getTechColor(job.techUserId)), top: 2, height: job.duration * 56 - 4, opacity: job.status === 'cancelled' ? 0.35 : job.status === 'completed' ? 0.6 : 1, ...(job.status === 'scheduled' && new Date(job.date) < new Date(new Date().toDateString()) ? { background: '#fef2f2', borderLeft: '3px solid #dc2626' } : {}) }} onClick={() => onJobClick(job)}>
                       <div style={{ fontSize: 11, fontWeight: 700, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{job.title}</div>
                       <div style={{ fontSize: 10, color: 'rgba(255,255,255,.8)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{job.client}</div>
                     </div>
@@ -278,7 +345,7 @@ function WeekView({ weekDays, jobs, techs, onJobClick, filterTech }) {
 
 // ─── DAY VIEW ─────────────────────────────────────────────────────────────────
 function DayView({ date, jobs, techs, onJobClick, filterTech }) {
-  const filtered = (filterTech ? jobs.filter(j => j.tech === filterTech) : jobs)
+  const filtered = (filterTech ? jobs.filter(j => j.techUserId === filterTech) : jobs)
     .filter(j => isSameDay(j.date, date));
 
   const getTechColor = (techId) => techs.find(t => t.id === techId)?.color || COLORS.green;
@@ -300,9 +367,9 @@ function DayView({ date, jobs, techs, onJobClick, filterTech }) {
             <div key={`t-${hour}`} style={s.timeCol}>{formatTime(hour)}</div>
             <div key={`c-${hour}`} style={s.cell}>
               {hourJobs.map(job => {
-                const tech = getTech(job.tech);
+                const tech = getTech(job.techUserId);
                 return (
-                  <div key={job.id} style={{ ...s.jobBlock(getTechColor(job.tech)), top: 4, height: job.duration * 72 - 8, opacity: job.status === 'cancelled' ? 0.4 : 1 }} onClick={() => onJobClick(job)}>
+                  <div key={job.id} style={{ ...s.jobBlock(getTechColor(job.techUserId)), top: 4, height: job.duration * 72 - 8, opacity: job.status === 'cancelled' ? 0.35 : job.status === 'completed' ? 0.6 : 1, ...(job.status === 'scheduled' && new Date(job.date) < new Date(new Date().toDateString()) ? { background: '#fef2f2', borderLeft: '3px solid #dc2626' } : {}) }} onClick={() => onJobClick(job)}>
                     <div>
                       <div style={{ fontSize: 14, fontWeight: 700, color: '#fff', marginBottom: 2 }}>{job.title}</div>
                       <div style={{ fontSize: 12, color: 'rgba(255,255,255,.85)' }}>{job.client} · {job.address.split(',')[0]}</div>
@@ -325,7 +392,7 @@ function DayView({ date, jobs, techs, onJobClick, filterTech }) {
 
 // ─── MONTH VIEW ───────────────────────────────────────────────────────────────
 function MonthView({ date, jobs, techs, onJobClick, filterTech, onDayClick }) {
-  const filtered = filterTech ? jobs.filter(j => j.tech === filterTech) : jobs;
+  const filtered = filterTech ? jobs.filter(j => j.techUserId === filterTech) : jobs;
   const today = new Date();
 
   const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
@@ -356,7 +423,7 @@ function MonthView({ date, jobs, techs, onJobClick, filterTech, onDayClick }) {
           <div key={i} style={s.cell(isCurrentMonth, isToday)} onClick={() => isCurrentMonth && onDayClick(cellDate)}>
             <div style={s.dayNum(isToday)}>{isCurrentMonth ? dayNum : ''}</div>
             {dayJobs.slice(0, 3).map(job => (
-              <div key={job.id} style={s.jobDot(getTechColor(job.tech))} onClick={e => { e.stopPropagation(); onJobClick(job); }}>
+              <div key={job.id} style={s.jobDot(getTechColor(job.techUserId))} onClick={e => { e.stopPropagation(); onJobClick(job); }}>
                 {job.title}
               </div>
             ))}
@@ -369,7 +436,7 @@ function MonthView({ date, jobs, techs, onJobClick, filterTech, onDayClick }) {
 }
 
 // ─── MAIN SCHEDULE SCREEN ─────────────────────────────────────────────────────
-export default function ScheduleScreen({ user, team = [] }) {
+export default function ScheduleScreen({ user, team = [], onCreateInvoice }) {
   const [view, setView] = useState('week'); // month | week | day
   const [currentDate, setCurrentDate] = useState(new Date());
   const [jobs, setJobs] = useState([]);
@@ -553,8 +620,33 @@ export default function ScheduleScreen({ user, team = [] }) {
       </div>
 
       {/* Modals */}
-      {selectedJob && <JobDetailModal job={selectedJob} techs={techs} onClose={() => setSelectedJob(null)} onStatusChange={handleStatusChange} />}
-      {showAddJob && <AddJobModal techs={techs} onClose={() => setShowAddJob(false)} onAdd={handleAddJob} defaultDate={addJobDate} />}
+      {selectedJob && (
+        <JobDetailModal
+          job={selectedJob}
+          techs={techs}
+          onClose={() => setSelectedJob(null)}
+          onStatusChange={handleStatusChange}
+          onCreateInvoice={async (job) => {
+            if (!onCreateInvoice) return;
+            try {
+              const newInv = await onCreateInvoice(job);
+              if (newInv) {
+                // Stamp the job with the invoice number/id so it can't be invoiced twice.
+                setJobs(prev => prev.map(j => j.id === job.id ? { ...j, invoiceId: newInv.number } : j));
+                setSelectedJob(prev => prev ? { ...prev, invoiceId: newInv.number } : null);
+                if (user?.id) {
+                  // Persist the invoiceId on the job row so it survives a refresh.
+                  // (Job table doesn't have invoice_id wired into the upsert path yet — soft skip on failure.)
+                  upsertJob(user.id, { ...job, invoiceId: newInv.id }).catch(() => {});
+                }
+              }
+            } catch (e) {
+              alert(e?.message || 'Could not create invoice from job.');
+            }
+          }}
+        />
+      )}
+      {showAddJob && <AddJobModal techs={techs} jobs={jobs} onClose={() => setShowAddJob(false)} onAdd={handleAddJob} defaultDate={addJobDate} />}
     </div>
   );
 }

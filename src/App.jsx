@@ -5250,12 +5250,60 @@ export default function Tradevoice() {
     }
   };
 
+  // Convert a completed Schedule job into a draft invoice with a single labor line
+  // representing the job duration at the user's default labor rate. The user can edit
+  // before sending — but this saves the manual rekey of client info + line items.
+  const handleJobToInvoice = async (job) => {
+    const today = new Date().toISOString().split('T')[0];
+    const trade = job.trade || (user?.trades?.[0] || 'Specialty');
+    // Pull the default labor rate from TRADE_CONFIG (defined elsewhere in this file).
+    const conf = (typeof TRADE_CONFIG !== 'undefined' && TRADE_CONFIG[trade]) || { defaultLaborRate: 100 };
+    const draft = {
+      number: nextInvNum(),
+      clientName:    job.client   || '',
+      clientPhone:   job.phone    || '',
+      clientAddress: job.address  || '',
+      clientEmail:   '',
+      title:         job.title    || 'Service Visit',
+      trade,
+      status:        'draft',
+      terms:         'Net 30',
+      createdAt:     today,
+      dueAt:         '',
+      paidAt:        null,
+      labor: [
+        {
+          id: Math.random().toString(36).slice(2, 9),
+          desc: job.title || 'Service Visit',
+          hrs:  Number(job.duration) || 1,
+          rate: conf.defaultLaborRate || 100,
+        },
+      ],
+      materials: [],
+      equipment: [],
+      markup: 15,
+      tax:    8.5,
+      notes:  job.notes ? `From scheduled job: ${job.notes}` : '',
+      payments: [],
+      activity: [{ date: today, type: 'created', note: 'Invoice created from completed job' }],
+    };
+    try {
+      const saved = await persistInvoice(draft);
+      // Don't auto-navigate — let the user finish reviewing the job in the modal first.
+      // They can click into Invoices later. Toast would be nice; alert is the placeholder.
+      return saved;
+    } catch (e) {
+      alert(e?.message || 'Could not create invoice from job.');
+      return null;
+    }
+  };
+
   const content = {
     dashboard: <Dashboard    user={user} nav={setSection} invoices={sharedInvoices} />,
     invoice:   <VoiceInvoice user={user} logo={logo} payments={payments} taxRates={taxRates} sharedInvoices={sharedInvoices} setSharedInvoices={setSharedInvoices} persistInvoice={persistInvoice} pendingInvoiceId={pendingInvoiceId} clearPendingInvoice={() => setPendingInvoiceId(null)} />,
     billing:   <Billing      user={user} payments={payments} />,
     quotes:    <Quotes       user={user} logo={logo} taxRates={taxRates} onConvertToInvoice={handleConvertToInvoice} />,
-    schedule:  <ScheduleScreen user={user} team={teamMembers} />,
+    schedule:  <ScheduleScreen user={user} team={teamMembers} onCreateInvoice={handleJobToInvoice} />,
     clients:   <Clients      user={user} nav={setSection} />,
     marketing: <MarketingScreen />,
     settings:  <Settings     user={user} setUser={setUser} logo={logo} onLogoChange={setLogo} showProfileModal={showProfileModal} setShowProfileModal={setShowProfileModal} payments={payments} setPayments={setPaymentsPersist} taxRates={taxRates} setTaxRates={setTaxRatesPersist} teamMembers={teamMembers} setTeamMembers={setTeamMembers} persistTeamMember={persistTeamMember} removeTeamMember={removeTeamMember} />,
