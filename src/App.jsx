@@ -237,7 +237,7 @@ function LoginScreen({ onLogin, onSignup, onJoin, onForgot }) {
     setLoading(true); setError('');
     try {
       const authUser = await signIn(email.trim(), password);
-      const profile  = await getProfile(authUser.id);
+      const profile  = await getProfile(authUser.id, authUser.email);
       onLogin(profile ?? { id: authUser.id, email: authUser.email, role: 'owner', trades: [], states: [] });
     } catch (e) {
       setError(e?.message || 'Could not sign in. Check your email and password.');
@@ -1406,8 +1406,17 @@ function InvoiceEditor({ initial, user, onSave, onCancel }) {
   ];
 
   const NI = (val,onChange,w=76) => (
-    <input type="number" value={val} onChange={e=>onChange(+e.target.value)} min={0} inputMode="decimal"
-      style={{ ...s.input, width:w, padding:'9px 8px', textAlign:'right', boxSizing:'border-box', minHeight:44 }} />
+    <input
+      type="number"
+      value={val === 0 || val === undefined || val === null ? '' : val}
+      onChange={e => onChange(e.target.value === '' ? 0 : +e.target.value)}
+      onFocus={e => e.target.select()}
+      min={0}
+      step="0.01"
+      inputMode="decimal"
+      placeholder="0"
+      style={{ ...s.input, width:w, padding:'9px 8px', textAlign:'right', boxSizing:'border-box', minHeight:44 }}
+    />
   );
   const TI = (val,onChange) => (
     <input type="text" value={val} onChange={e=>onChange(e.target.value)}
@@ -2302,7 +2311,12 @@ function QuoteDocument({ quote, client, user, logo, onRevise, onBack, onConvertT
           <Btn variant="ghost" size="sm" style={{ flex: isTablet ? 1 : undefined }} onClick={copyLink}>Copy Link</Btn>
           <Btn variant="ghost" size="sm" style={{ flex: isTablet ? 1 : undefined }} onClick={() => alert('Opening share sheet…')}>Share</Btn>
           {!locked && quote.status !== 'draft' && <Btn variant="flat" size="sm" style={{ flex: isTablet ? 1 : undefined }} onClick={onRevise}>Revise</Btn>}
-          {quote.status === 'accepted' && <Btn variant="primary" size="sm" style={{ flex: isTablet ? 1 : undefined }} onClick={onConvertToInvoice}>Convert to Invoice</Btn>}
+          {/* Convert-to-Invoice — shown on every quote that isn't already invoiced. Highlighted to stand out. */}
+          {quote.status !== 'invoiced' && (
+            <Btn variant="primary" size="sm" style={{ flex: isTablet ? 1 : undefined, background: C.success, border: `2px solid ${C.success}` }} onClick={onConvertToInvoice}>
+              Convert to Invoice →
+            </Btn>
+          )}
           {quote.status === 'draft' && <>
             <Btn variant="flat"    size="sm" style={{ flex: isTablet ? 1 : undefined }} onClick={onRevise}>Edit</Btn>
             <Btn variant="primary" size="sm" style={{ flex: isTablet ? 1 : undefined }} onClick={() => alert('Sending quote…')}>Send Quote</Btn>
@@ -2841,30 +2855,30 @@ function CalendarPicker({ value, onChange, label }) {
       {/* Calendar dropdown */}
       {open && (
         <div style={{
-          position: 'absolute', top: 'calc(100% + 8px)', left: 0, zIndex: 500,
-          background: C.surface, border: `2px solid ${C.orange}`,
-          borderRadius: 6, padding: '20px 20px 16px', width: 'min(420px, calc(100vw - 40px))',
-          boxShadow: '0 12px 48px #00000099',
+          position: 'absolute', top: 'calc(100% + 6px)', left: 0, zIndex: 500,
+          background: C.surface, border: `1.5px solid ${C.orange}`,
+          borderRadius: 6, padding: '12px 12px 10px', width: 'min(280px, calc(100vw - 32px))',
+          boxShadow: '0 8px 32px #00000044',
         }}>
 
           {/* Month / Year header */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-            <button onClick={prevMonth} style={{ ...s.btn, background: C.raised, border: `1px solid ${C.border2}`, color: C.text, padding: '10px 18px', fontSize: 22, minHeight: 48, borderRadius: 4 }}>&#8249;</button>
-            <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 26, fontWeight: 800, color: C.text, letterSpacing: '0.04em' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+            <button onClick={prevMonth} style={{ ...s.btn, background: C.raised, border: `1px solid ${C.border2}`, color: C.text, padding: '6px 12px', fontSize: 16, minHeight: 32, borderRadius: 4 }}>&#8249;</button>
+            <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 14, fontWeight: 800, color: C.text, letterSpacing: '0.04em' }}>
               {MONTHS[viewMonth]} {viewYear}
             </span>
-            <button onClick={nextMonth} style={{ ...s.btn, background: C.raised, border: `1px solid ${C.border2}`, color: C.text, padding: '10px 18px', fontSize: 22, minHeight: 48, borderRadius: 4 }}>&#8250;</button>
+            <button onClick={nextMonth} style={{ ...s.btn, background: C.raised, border: `1px solid ${C.border2}`, color: C.text, padding: '6px 12px', fontSize: 16, minHeight: 32, borderRadius: 4 }}>&#8250;</button>
           </div>
 
           {/* Day-of-week headers */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 3, marginBottom: 4 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2, marginBottom: 2 }}>
             {DAYS.map(d => (
-              <div key={d} style={{ textAlign: 'center', fontFamily: "'Inter', sans-serif", fontSize: 17, fontWeight: 800, color: C.muted, padding: '6px 0', letterSpacing: '0.05em' }}>{d}</div>
+              <div key={d} style={{ textAlign: 'center', fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 800, color: C.muted, padding: '4px 0', letterSpacing: '0.05em' }}>{d}</div>
             ))}
           </div>
 
           {/* Date cells */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 3 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2 }}>
             {cells.map((d, i) => {
               if (!d) return <div key={`e${i}`} />;
               const thisDate  = new Date(viewYear, viewMonth, d);
@@ -2877,10 +2891,10 @@ function CalendarPicker({ value, onChange, label }) {
                   onClick={() => !isPast && selectDay(d)}
                   style={{
                     ...s.btn,
-                    padding: '12px 4px', fontSize: 20, textAlign: 'center',
-                    borderRadius: 4, minHeight: 52,
+                    padding: '6px 0', fontSize: 13, textAlign: 'center',
+                    borderRadius: 4, minHeight: 32,
                     background: isSel ? C.orange : isToday ? C.orangeLo : 'transparent',
-                    color: isSel ? '#000' : isPast ? C.dim : isToday ? C.orange : C.text,
+                    color: isSel ? '#fff' : isPast ? C.dim : isToday ? C.orange : C.text,
                     border: isToday && !isSel ? `1px solid ${C.orangeMd}` : '1px solid transparent',
                     cursor: isPast ? 'default' : 'pointer',
                     opacity: isPast ? 0.4 : 1,
@@ -2894,14 +2908,14 @@ function CalendarPicker({ value, onChange, label }) {
           </div>
 
           {/* Today shortcut */}
-          <div style={{ marginTop: 14, paddingTop: 12, borderTop: `1px solid ${C.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ marginTop: 8, paddingTop: 8, borderTop: `1px solid ${C.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <button onClick={() => { onChange(toStr(today)); setOpen(false); }}
-              style={{ ...s.btn, background: 'transparent', border: `1px solid ${C.border2}`, color: C.muted, padding: '10px 20px', fontSize: 19, minHeight: 48, borderRadius: 4 }}>
+              style={{ ...s.btn, background: 'transparent', border: `1px solid ${C.border2}`, color: C.muted, padding: '6px 14px', fontSize: 12, minHeight: 32, borderRadius: 4 }}>
               Today
             </button>
             {value && (
               <button onClick={() => { onChange(''); setOpen(false); }}
-                style={{ ...s.btn, background: 'transparent', border: 'none', color: C.error, padding: '10px 16px', fontSize: 19, minHeight: 48 }}>
+                style={{ ...s.btn, background: 'transparent', border: 'none', color: C.error, padding: '6px 12px', fontSize: 12, minHeight: 32 }}>
                 Clear
               </button>
             )}
@@ -3200,27 +3214,24 @@ function QuoteEditor({ initial, clients, user, onSave, onCancel }) {
     <td style={{ padding: '6px 7px', textAlign: 'right', fontSize: 18, fontWeight: 700, color: val > 0 ? C.text : C.dim, fontFamily: "'Inter', sans-serif" }}>{fmt(val)}</td>
   );
   // Accounting-style number cell — formats as $1,234.00 at rest, plain number on focus
-  const AcctInput = ({ val, onChange, w = 90, prefix = '' }) => {
-    const [focused, setFocused] = useState(false);
-    const displayVal = focused ? (val || '') :
-      val > 0 ? (prefix ? `$${Number(val).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : Number(val).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })) : '—';
-    return (
-      <div style={{ position: 'relative', width: w, display: 'inline-flex', alignItems: 'center' }}>
-        {focused && prefix && <span style={{ position: 'absolute', left: 7, fontSize: 14, fontWeight: 700, color: C.muted, pointerEvents: 'none' }}>{prefix}</span>}
-        <input
-          type={focused ? 'number' : 'text'}
-          value={displayVal}
-          min={0}
-          inputMode="decimal"
-          onFocus={() => setFocused(true)}
-          onBlur={e => { setFocused(false); onChange(+e.target.value || 0); }}
-          onChange={e => focused && onChange(+e.target.value || 0)}
-          style={{ ...s.input, width: '100%', padding: focused && prefix ? '8px 7px 8px 16px' : '8px 7px', textAlign: 'right', boxSizing: 'border-box', minHeight: 44, fontFamily: "'Inter', sans-serif", fontWeight: 700, fontSize: 15, color: C.text, background: focused ? '#fff' : C.raised, borderColor: focused ? C.orange : C.border2 }}
-        />
-      </div>
-    );
-  };
-  const NI = (val, onChange, w = 90, prefix = '') => <AcctInput val={val} onChange={onChange} w={w} prefix={prefix} />;
+  // Always-numeric input. Empty when 0, decimal keypad on iPad, auto-select on focus.
+  // We dropped the formatted-on-blur display because the type-switch caused focus quirks.
+  const NI = (val, onChange, w = 90, prefix = '') => (
+    <div style={{ position: 'relative', width: w, display: 'inline-flex', alignItems: 'center' }}>
+      {prefix && <span style={{ position: 'absolute', left: 7, fontSize: 14, fontWeight: 700, color: C.muted, pointerEvents: 'none', zIndex: 1 }}>{prefix}</span>}
+      <input
+        type="number"
+        value={val === 0 || val === undefined || val === null ? '' : val}
+        onChange={e => onChange(e.target.value === '' ? 0 : +e.target.value)}
+        onFocus={e => e.target.select()}
+        min={0}
+        step="0.01"
+        inputMode="decimal"
+        placeholder="0"
+        style={{ ...s.input, width: '100%', padding: prefix ? '8px 7px 8px 16px' : '8px 7px', textAlign: 'right', boxSizing: 'border-box', minHeight: 44, fontFamily: "'Inter', sans-serif", fontWeight: 700, fontSize: 15, color: C.text, background: C.raised }}
+      />
+    </div>
+  );
   const TI = (val, onChange) => (
     <input type="text" value={val} onChange={e => onChange(e.target.value)}
       style={{ ...s.input, width: '100%', padding: '8px 9px', boxSizing: 'border-box', minHeight: 44 }} />
@@ -4093,7 +4104,7 @@ function Billing({ user, payments }) {
 // ══════════════════════════════════════════════════════════════════════════════
 // CLIENTS
 // ══════════════════════════════════════════════════════════════════════════════
-function Clients({ user }) {
+function Clients({ user, nav }) {
   const { isTablet } = useBreakpoint();
   const [clients,    setClients]    = useState([]);
   const [loading,    setLoading]    = useState(true);
@@ -4163,7 +4174,7 @@ function Clients({ user }) {
         </div>
 
         {/* Client info card */}
-        <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: '18px 20px', marginBottom: 18, display: 'grid', gridTemplateColumns: isTablet ? '1fr' : '1fr 1fr 1fr', gap: 14 }}>
+        <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: '18px 20px', marginBottom: 12, display: 'grid', gridTemplateColumns: isTablet ? '1fr' : '1fr 1fr 1fr', gap: 14 }}>
           {[
             { label: 'Email', val: c.email || '—' },
             { label: 'Phone', val: c.phone || '—' },
@@ -4175,6 +4186,22 @@ function Clients({ user }) {
             </div>
           ))}
         </div>
+
+        {/* Quick-add bar — start a new quote or invoice from this client folder */}
+        {nav && (
+          <div style={{ display: 'flex', gap: 10, marginBottom: 18, flexWrap: 'wrap' }}>
+            <button onClick={() => nav('quotes')} style={{
+              flex: 1, minWidth: 140,
+              ...s.btn, background: C.orangeLo, border: `2px solid ${C.orange}`, color: C.orange,
+              padding: '11px 18px', fontSize: 13, borderRadius: 50, minHeight: 44,
+            }}>+ New Quote</button>
+            <button onClick={() => nav('invoice')} style={{
+              flex: 1, minWidth: 140,
+              ...s.btn, background: C.orange, border: `2px solid ${C.orange}`, color: '#fff',
+              padding: '11px 18px', fontSize: 13, borderRadius: 50, minHeight: 44,
+            }}>+ New Invoice</button>
+          </div>
+        )}
 
         {/* Invoices */}
         <div style={{ marginBottom: 20 }}>
@@ -4801,7 +4828,7 @@ export default function Tradevoice() {
         const sessionUser = await getSessionUser();
         if (cancelled) return;
         if (sessionUser) {
-          const profile = await getProfile(sessionUser.id);
+          const profile = await getProfile(sessionUser.id, sessionUser.email);
           if (!cancelled) setUser(profile ?? { id: sessionUser.id, email: sessionUser.email, role: 'owner', trades: [], states: [] });
         }
       } catch (e) {
@@ -4816,7 +4843,7 @@ export default function Tradevoice() {
     const unsubscribe = onAuthChange(async (sessionUser) => {
       if (!sessionUser) { setUser(null); return; }
       try {
-        const profile = await getProfile(sessionUser.id);
+        const profile = await getProfile(sessionUser.id, sessionUser.email);
         setUser(profile ?? { id: sessionUser.id, email: sessionUser.email, role: 'owner', trades: [], states: [] });
       } catch (e) {
         console.error('profile fetch failed', e);
@@ -5031,7 +5058,7 @@ export default function Tradevoice() {
     billing:   <Billing      user={user} payments={payments} />,
     quotes:    <Quotes       user={user} logo={logo} taxRates={taxRates} onConvertToInvoice={handleConvertToInvoice} />,
     schedule:  <ScheduleScreen user={user} team={teamMembers} />,
-    clients:   <Clients      user={user} />,
+    clients:   <Clients      user={user} nav={setSection} />,
     marketing: <MarketingScreen />,
     settings:  <Settings     user={user} setUser={setUser} logo={logo} onLogoChange={setLogo} showProfileModal={showProfileModal} setShowProfileModal={setShowProfileModal} payments={payments} setPayments={setPaymentsPersist} taxRates={taxRates} setTaxRates={setTaxRatesPersist} teamMembers={teamMembers} setTeamMembers={setTeamMembers} persistTeamMember={persistTeamMember} removeTeamMember={removeTeamMember} />,
     privacy:   <PrivacyPolicyScreen onBack={() => setSection('settings')} />,
@@ -5042,6 +5069,17 @@ export default function Tradevoice() {
   const initials = user.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || '?';
   const TOP_H = 108;
 
+  // Free-trial countdown — 28-day trial starting at profile.createdAt.
+  // If we don't have a createdAt (older accounts), we just say "Free trial".
+  const trialInfo = (() => {
+    if (!user.createdAt) return { label: 'Free Trial', expired: false };
+    const start = new Date(user.createdAt);
+    const days = Math.floor((Date.now() - start.getTime()) / 86400000);
+    const left = 28 - days;
+    if (left > 0) return { label: `${left} day${left === 1 ? '' : 's'} left in trial`, expired: false };
+    return { label: 'Trial ended — add card', expired: true };
+  })();
+
   const TopBar = (
     <div style={{
       position: 'sticky', top: 0, zIndex: 100,
@@ -5051,6 +5089,21 @@ export default function Tradevoice() {
       {/* Logo — centered via flex justifyContent on parent */}
       <div onClick={() => setSection('dashboard')} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
         <Logo size={isTablet ? 40 : 44} />
+      </div>
+
+      {/* Trial countdown pill — pinned just left of the settings button */}
+      <div style={{ position: 'absolute', top: 0, right: 70, height: TOP_H, display: 'flex', alignItems: 'center' }}>
+        <span style={{
+          fontFamily: "'Inter', sans-serif",
+          fontSize: 11, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase',
+          padding: '6px 12px', borderRadius: 20,
+          background: trialInfo.expired ? '#fef2f2' : C.orangeLo,
+          color: trialInfo.expired ? C.error : C.orange,
+          border: `1px solid ${trialInfo.expired ? C.error + '55' : C.orange + '55'}`,
+          whiteSpace: 'nowrap',
+        }}>
+          {trialInfo.label}
+        </span>
       </div>
 
       {/* Settings/profile button — pinned to top right */}

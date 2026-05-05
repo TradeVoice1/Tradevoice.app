@@ -28,6 +28,7 @@ const dbToProfile = (row) => row && ({
   logoUrl:          row.logo_url          ?? null,
   payments:         row.payments          ?? {},
   taxRates:         row.tax_rates         ?? {},
+  createdAt:        row.created_at        ?? null,    // when the profile row was inserted (≈ signup time) — used for trial countdown
 });
 
 const profileToDb = (p) => ({
@@ -59,7 +60,7 @@ export async function getSessionUser() {
   return data.session?.user ?? null;
 }
 
-export async function getProfile(userId) {
+export async function getProfile(userId, authEmail) {
   const { data, error } = await supabase
     .from('profiles')
     .select('*')
@@ -67,9 +68,7 @@ export async function getProfile(userId) {
     .maybeSingle();
   if (error) throw error;
   if (!data) return null;
-  // attach the auth email so the front-end can show it without another fetch
-  const { data: { user } } = await supabase.auth.getUser();
-  return { ...dbToProfile(data), email: user?.email ?? '' };
+  return { ...dbToProfile(data), email: authEmail ?? '' };
 }
 
 export async function upsertProfile(userId, patch) {
