@@ -1786,12 +1786,17 @@ function InvoiceEditor({ initial, user, onSave, onCancel }) {
               style={{ ...s.input, width:'100%', padding:'11px 12px', boxSizing:'border-box', fontSize:18, minHeight:48 }} />
           </div>
         </div>
+        {/* Trade selector — single-trade users skip this (their trade is implicit).
+            Multi-trade users see each individual trade plus a Multi-Trade option
+            so cross-discipline jobs can be billed on one invoice with per-trade
+            grouping and subtotals on the printed doc. */}
         {user?.trades?.length > 1 && (
-          <div style={{ marginTop:14, maxWidth:220 }}>
-            <label style={s.label}>Trade</label>
+          <div style={{ marginTop:14, maxWidth:280 }}>
+            <label style={s.label}>Invoice Type</label>
             <select value={trade} onChange={e=>setTrade(e.target.value)}
               style={{ ...s.input, width:'100%', padding:'11px 12px', minHeight:48, cursor:'pointer', borderColor:tradeColor+'88' }}>
-              {user.trades.map(t => <option key={t} value={t}>{t==='Specialty'?'Specialty Trades':t}</option>)}
+              {user.trades.map(t => <option key={t} value={t}>{t==='Specialty'?'Specialty Trades':`${t} Only`}</option>)}
+              <option value="bundle">Multi-Trade Job ({user.trades.length} trades)</option>
             </select>
           </div>
         )}
@@ -1976,6 +1981,33 @@ function InvoiceDocument({ invoice, user, logo, payments, onEdit, onBack, onReco
   const isPaid = invoice.status === 'paid';
   const isOverdue = invoice.status === 'overdue';
 
+  // Multi-trade rendering — same pattern as QuoteDocument. When the invoice
+  // type is 'bundle', we group line items by their _trade tag, surface a
+  // per-trade subtotal under each section, and add a "By Trade" breakdown
+  // to the totals card so the customer sees how the bill splits by discipline.
+  const isBundleInv  = invoice.trade === 'bundle';
+  const fallbackTrd  = user?.trades?.[0] || 'Plumber';
+  const groupTrdInv  = (user?.trades && user.trades.length ? user.trades : ALL_TRADES).filter(t => TRADE_CONFIG[t]);
+  const invBundleGroups = isBundleInv
+    ? groupTrdInv.map(t => ({
+        trade: t,
+        label: TRADE_CONFIG[t].label,
+        color: TRADE_CONFIG[t].color,
+        labor:     (invoice.labor     || []).filter(r => (r._trade || fallbackTrd) === t),
+        materials: (invoice.materials || []).filter(r => (r._trade || fallbackTrd) === t),
+        equipment: (invoice.equipment || []).filter(r => (r._trade || fallbackTrd) === t),
+      })).filter(g => g.labor.length + g.materials.length + g.equipment.length > 0)
+    : null;
+  const invGroupSubs = invBundleGroups
+    ? invBundleGroups.map(g => {
+        const labT  = g.labor.reduce((s, r) => s + (r.hrs  || 0) * (r.rate || 0), 0);
+        const matT  = g.materials.reduce((s, r) => s + (r.qty  || 0) * (r.cost || 0), 0);
+        const eqT   = g.equipment.reduce((s, r) => s + (r.qty  || 0) * (r.rate || 0), 0);
+        const mkAmt = (matT + eqT) * (invoice.markup || 0) / 100;
+        return { trade: g.trade, label: g.label, color: g.color, sub: labT + matT + eqT + mkAmt };
+      })
+    : null;
+
   return (
     <div>
       {/* Action bar */}
@@ -2067,64 +2099,151 @@ function InvoiceDocument({ invoice, user, logo, payments, onEdit, onBack, onReco
           </div>
         </div>
 
-        {/* Line items */}
-        <div style={{ padding:isTablet?'0 18px':'0 44px', overflowX:'auto' }}>
-          {[
-            { label: tradeConf.laborTitle || 'Labor',    rows: invoice.labor,     type:'labor'     },
-            { label: 'Materials & Parts',                rows: invoice.materials, type:'materials' },
-            { label: 'Equipment & Rental',               rows: invoice.equipment, type:'equipment' },
-          ].filter(s=>s.rows?.length>0).map(({ label, rows, type }) => (
-            <div key={label}>
-              <div style={{ padding:'12px 0 6px', fontSize:16, fontWeight:900, color:tradeConf.color, textTransform:'uppercase', letterSpacing:'0.1em', fontFamily:"'Inter', sans-serif", borderTop:'1px solid #eee' }}>{label}</div>
-              <table style={{ width:'100%', borderCollapse:'collapse', minWidth:380 }}>
-                <thead>
-                  <tr style={{ borderBottom:'1.5px solid #222' }}>
-                    {type==='labor'
-                      ? ['Description','Hrs','$/Hr','Amount'].map((h,i)=><th key={h} style={{ padding:'9px 8px', textAlign:i===0?'left':'right', fontSize:15, fontWeight:900, color:'#999', textTransform:'uppercase', letterSpacing:'0.08em', fontFamily:"'Inter', sans-serif", whiteSpace:'nowrap' }}>{h}</th>)
-                      : type==='materials'
-                      ? ['Description','Qty','Unit','Unit Cost','Amount'].map((h,i)=><th key={h} style={{ padding:'9px 8px', textAlign:i===0?'left':'right', fontSize:15, fontWeight:900, color:'#999', textTransform:'uppercase', letterSpacing:'0.08em', fontFamily:"'Inter', sans-serif", whiteSpace:'nowrap' }}>{h}</th>)
-                      : ['Description','Qty','Unit','Rate','Amount'].map((h,i)=><th key={h} style={{ padding:'9px 8px', textAlign:i===0?'left':'right', fontSize:15, fontWeight:900, color:'#999', textTransform:'uppercase', letterSpacing:'0.08em', fontFamily:"'Inter', sans-serif", whiteSpace:'nowrap' }}>{h}</th>)
-                    }
-                  </tr>
-                </thead>
-                <tbody>
-                  {type==='labor' && rows.map((r,i)=>(
-                    <tr key={r.id||i} style={{ background:i%2===0?'#fff':'#fafafa', borderBottom:'1px solid #f0f0f0' }}>
-                      <td style={{ padding:'11px 8px', fontSize:17, color:'#222' }}>{r.desc}</td>
-                      <td style={{ padding:'11px 8px', textAlign:'right', fontSize:17, color:'#555' }}>{r.hrs}</td>
-                      <td style={{ padding:'11px 8px', textAlign:'right', fontSize:17, color:'#555' }}>{fmtMoney(r.rate)}</td>
-                      <td style={{ padding:'11px 8px', textAlign:'right', fontSize:17, fontWeight:700, color:'#111' }}>{fmtMoney(r.hrs*r.rate)}</td>
+        {/* Line items — single-trade view */}
+        {!isBundleInv && (
+          <div style={{ padding:isTablet?'0 18px':'0 44px', overflowX:'auto' }}>
+            {[
+              { label: tradeConf.laborTitle || 'Labor',    rows: invoice.labor,     type:'labor'     },
+              { label: 'Materials & Parts',                rows: invoice.materials, type:'materials' },
+              { label: 'Equipment & Rental',               rows: invoice.equipment, type:'equipment' },
+            ].filter(s=>s.rows?.length>0).map(({ label, rows, type }) => (
+              <div key={label}>
+                <div style={{ padding:'12px 0 6px', fontSize:16, fontWeight:900, color:tradeConf.color, textTransform:'uppercase', letterSpacing:'0.1em', fontFamily:"'Inter', sans-serif", borderTop:'1px solid #eee' }}>{label}</div>
+                <table style={{ width:'100%', borderCollapse:'collapse', minWidth:380 }}>
+                  <thead>
+                    <tr style={{ borderBottom:'1.5px solid #222' }}>
+                      {type==='labor'
+                        ? ['Description','Hrs','$/Hr','Amount'].map((h,i)=><th key={h} style={{ padding:'9px 8px', textAlign:i===0?'left':'right', fontSize:15, fontWeight:900, color:'#999', textTransform:'uppercase', letterSpacing:'0.08em', fontFamily:"'Inter', sans-serif", whiteSpace:'nowrap' }}>{h}</th>)
+                        : type==='materials'
+                        ? ['Description','Qty','Unit','Unit Cost','Amount'].map((h,i)=><th key={h} style={{ padding:'9px 8px', textAlign:i===0?'left':'right', fontSize:15, fontWeight:900, color:'#999', textTransform:'uppercase', letterSpacing:'0.08em', fontFamily:"'Inter', sans-serif", whiteSpace:'nowrap' }}>{h}</th>)
+                        : ['Description','Qty','Unit','Rate','Amount'].map((h,i)=><th key={h} style={{ padding:'9px 8px', textAlign:i===0?'left':'right', fontSize:15, fontWeight:900, color:'#999', textTransform:'uppercase', letterSpacing:'0.08em', fontFamily:"'Inter', sans-serif", whiteSpace:'nowrap' }}>{h}</th>)
+                      }
                     </tr>
-                  ))}
-                  {type==='materials' && rows.map((r,i)=>(
-                    <tr key={r.id||i} style={{ background:i%2===0?'#fff':'#fafafa', borderBottom:'1px solid #f0f0f0' }}>
-                      <td style={{ padding:'11px 8px', fontSize:17, color:'#222' }}>{r.desc}</td>
-                      <td style={{ padding:'11px 8px', textAlign:'right', fontSize:17, color:'#555' }}>{r.qty}</td>
-                      <td style={{ padding:'11px 8px', textAlign:'right', fontSize:15, color:'#aaa', fontStyle:'italic' }}>{r.unit}</td>
-                      <td style={{ padding:'11px 8px', textAlign:'right', fontSize:17, color:'#555' }}>{fmtMoney(r.cost)}</td>
-                      <td style={{ padding:'11px 8px', textAlign:'right', fontSize:17, fontWeight:700, color:'#111' }}>{fmtMoney(r.qty*r.cost)}</td>
-                    </tr>
-                  ))}
-                  {type==='equipment' && rows.map((r,i)=>(
-                    <tr key={r.id||i} style={{ background:i%2===0?'#fff':'#fafafa', borderBottom:'1px solid #f0f0f0' }}>
-                      <td style={{ padding:'11px 8px', fontSize:17, color:'#222' }}>{r.desc}</td>
-                      <td style={{ padding:'11px 8px', textAlign:'right', fontSize:17, color:'#555' }}>{r.qty}</td>
-                      <td style={{ padding:'11px 8px', textAlign:'right', fontSize:15, color:'#aaa', fontStyle:'italic' }}>{r.unit}</td>
-                      <td style={{ padding:'11px 8px', textAlign:'right', fontSize:17, color:'#555' }}>{fmtMoney(r.rate)}</td>
-                      <td style={{ padding:'11px 8px', textAlign:'right', fontSize:17, fontWeight:700, color:'#111' }}>{fmtMoney(r.qty*r.rate)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ))}
-        </div>
+                  </thead>
+                  <tbody>
+                    {type==='labor' && rows.map((r,i)=>(
+                      <tr key={r.id||i} style={{ background:i%2===0?'#fff':'#fafafa', borderBottom:'1px solid #f0f0f0' }}>
+                        <td style={{ padding:'11px 8px', fontSize:17, color:'#222' }}>{r.desc}</td>
+                        <td style={{ padding:'11px 8px', textAlign:'right', fontSize:17, color:'#555' }}>{r.hrs}</td>
+                        <td style={{ padding:'11px 8px', textAlign:'right', fontSize:17, color:'#555' }}>{fmtMoney(r.rate)}</td>
+                        <td style={{ padding:'11px 8px', textAlign:'right', fontSize:17, fontWeight:700, color:'#111' }}>{fmtMoney(r.hrs*r.rate)}</td>
+                      </tr>
+                    ))}
+                    {type==='materials' && rows.map((r,i)=>(
+                      <tr key={r.id||i} style={{ background:i%2===0?'#fff':'#fafafa', borderBottom:'1px solid #f0f0f0' }}>
+                        <td style={{ padding:'11px 8px', fontSize:17, color:'#222' }}>{r.desc}</td>
+                        <td style={{ padding:'11px 8px', textAlign:'right', fontSize:17, color:'#555' }}>{r.qty}</td>
+                        <td style={{ padding:'11px 8px', textAlign:'right', fontSize:15, color:'#aaa', fontStyle:'italic' }}>{r.unit}</td>
+                        <td style={{ padding:'11px 8px', textAlign:'right', fontSize:17, color:'#555' }}>{fmtMoney(r.cost)}</td>
+                        <td style={{ padding:'11px 8px', textAlign:'right', fontSize:17, fontWeight:700, color:'#111' }}>{fmtMoney(r.qty*r.cost)}</td>
+                      </tr>
+                    ))}
+                    {type==='equipment' && rows.map((r,i)=>(
+                      <tr key={r.id||i} style={{ background:i%2===0?'#fff':'#fafafa', borderBottom:'1px solid #f0f0f0' }}>
+                        <td style={{ padding:'11px 8px', fontSize:17, color:'#222' }}>{r.desc}</td>
+                        <td style={{ padding:'11px 8px', textAlign:'right', fontSize:17, color:'#555' }}>{r.qty}</td>
+                        <td style={{ padding:'11px 8px', textAlign:'right', fontSize:15, color:'#aaa', fontStyle:'italic' }}>{r.unit}</td>
+                        <td style={{ padding:'11px 8px', textAlign:'right', fontSize:17, color:'#555' }}>{fmtMoney(r.rate)}</td>
+                        <td style={{ padding:'11px 8px', textAlign:'right', fontSize:17, fontWeight:700, color:'#111' }}>{fmtMoney(r.qty*r.rate)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Line items — multi-trade view: grouped by trade with per-trade subtotal */}
+        {isBundleInv && invBundleGroups && (
+          <div style={{ padding:isTablet?'0 18px':'0 44px', overflowX:'auto' }}>
+            {invBundleGroups.map(group => (
+              <div key={group.trade}>
+                <div style={{ display:'flex', alignItems:'center', gap:10, padding:'14px 0 6px', borderTop:'1.5px solid #eee', marginTop:4 }}>
+                  <span style={{ display:'inline-block', fontSize:14, fontWeight:900, letterSpacing:'0.1em', textTransform:'uppercase', padding:'2px 8px', borderRadius:2, background:group.color, color:'#fff', fontFamily:"'Inter', sans-serif" }}>{group.label}</span>
+                </div>
+                {[
+                  { label: TRADE_CONFIG[group.trade].laborTitle, rows: group.labor,     type:'labor'     },
+                  { label: 'Materials & Parts',                  rows: group.materials, type:'materials' },
+                  { label: 'Equipment & Rental',                 rows: group.equipment, type:'equipment' },
+                ].filter(s=>s.rows?.length>0).map(({ label, rows, type }) => (
+                  <div key={label} style={{ marginBottom:8 }}>
+                    <div style={{ fontSize:15, fontWeight:800, color:'#aaa', textTransform:'uppercase', letterSpacing:'0.08em', padding:'6px 0 4px', fontFamily:"'Inter', sans-serif" }}>{label}</div>
+                    <table style={{ width:'100%', borderCollapse:'collapse', minWidth:380 }}>
+                      <thead>
+                        <tr style={{ borderBottom:'1px solid #ddd' }}>
+                          {(type==='labor'
+                            ? ['Description','Hrs','$/Hr','Amount']
+                            : type==='materials'
+                            ? ['Description','Qty','Unit','Unit Cost','Amount']
+                            : ['Description','Qty','Unit','Rate','Amount']
+                          ).map((h,i) => <th key={h} style={{ padding:'7px 8px', textAlign:i===0?'left':'right', fontSize:14, fontWeight:900, color:'#bbb', textTransform:'uppercase', letterSpacing:'0.08em', fontFamily:"'Inter', sans-serif", whiteSpace:'nowrap' }}>{h}</th>)}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {type==='labor' && rows.map((r,i)=>(
+                          <tr key={r.id||i} style={{ background:i%2===0?'#fff':'#fafafa', borderBottom:'1px solid #f5f5f5' }}>
+                            <td style={{ padding:'10px 8px', fontSize:17, color:'#222' }}>{r.desc}</td>
+                            <td style={{ padding:'10px 8px', textAlign:'right', fontSize:17, color:'#555' }}>{r.hrs}</td>
+                            <td style={{ padding:'10px 8px', textAlign:'right', fontSize:17, color:'#555' }}>{fmtMoney(r.rate)}</td>
+                            <td style={{ padding:'10px 8px', textAlign:'right', fontSize:17, fontWeight:700, color:'#111' }}>{fmtMoney(r.hrs*r.rate)}</td>
+                          </tr>
+                        ))}
+                        {type==='materials' && rows.map((r,i)=>(
+                          <tr key={r.id||i} style={{ background:i%2===0?'#fff':'#fafafa', borderBottom:'1px solid #f5f5f5' }}>
+                            <td style={{ padding:'10px 8px', fontSize:17, color:'#222' }}>{r.desc}</td>
+                            <td style={{ padding:'10px 8px', textAlign:'right', fontSize:17, color:'#555' }}>{r.qty}</td>
+                            <td style={{ padding:'10px 8px', textAlign:'right', fontSize:15, color:'#aaa', fontStyle:'italic' }}>{r.unit}</td>
+                            <td style={{ padding:'10px 8px', textAlign:'right', fontSize:17, color:'#555' }}>{fmtMoney(r.cost)}</td>
+                            <td style={{ padding:'10px 8px', textAlign:'right', fontSize:17, fontWeight:700, color:'#111' }}>{fmtMoney(r.qty*r.cost)}</td>
+                          </tr>
+                        ))}
+                        {type==='equipment' && rows.map((r,i)=>(
+                          <tr key={r.id||i} style={{ background:i%2===0?'#fff':'#fafafa', borderBottom:'1px solid #f5f5f5' }}>
+                            <td style={{ padding:'10px 8px', fontSize:17, color:'#222' }}>{r.desc}</td>
+                            <td style={{ padding:'10px 8px', textAlign:'right', fontSize:17, color:'#555' }}>{r.qty}</td>
+                            <td style={{ padding:'10px 8px', textAlign:'right', fontSize:15, color:'#aaa', fontStyle:'italic' }}>{r.unit}</td>
+                            <td style={{ padding:'10px 8px', textAlign:'right', fontSize:17, color:'#555' }}>{fmtMoney(r.rate)}</td>
+                            <td style={{ padding:'10px 8px', textAlign:'right', fontSize:17, fontWeight:700, color:'#111' }}>{fmtMoney(r.qty*r.rate)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ))}
+                {/* Per-trade subtotal */}
+                {(() => {
+                  const sub = invGroupSubs?.find(x => x.trade === group.trade)?.sub ?? 0;
+                  return (
+                    <div style={{ display:'flex', justifyContent:'flex-end', alignItems:'center', padding:'8px 0 14px', gap:14, borderBottom:'1px solid #eee', marginBottom:4 }}>
+                      <span style={{ fontSize:14, fontWeight:800, letterSpacing:'0.08em', textTransform:'uppercase', color: group.color }}>{group.label} Subtotal</span>
+                      <span style={{ fontFamily:"'Inter', sans-serif", fontSize:22, fontWeight:900, color:'#111', minWidth:110, textAlign:'right' }}>{fmtMoney(sub)}</span>
+                    </div>
+                  );
+                })()}
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Totals */}
         <div style={{ padding:isTablet?'16px 18px 24px':'20px 44px 32px', display:'flex', justifyContent:'flex-end' }}>
-          <div style={{ width:isTablet?'100%':280 }}>
+          <div style={{ width:isTablet?'100%':320 }}>
             <div style={{ background:'#f7f7f7', border:'1px solid #ebebeb', borderRadius:4, overflow:'hidden' }}>
-              {[['Subtotal', fmtMoney(calc.sub)], [`Markup (${invoice.markup}%) — mat+equip`, fmtMoney(calc.mkAmt)], [`Tax (${invoice.tax}%)`, fmtMoney(calc.txAmt)]].map(([label,val])=>( 
+              {/* Per-trade breakdown for multi-trade invoices */}
+              {isBundleInv && invGroupSubs && invGroupSubs.length > 0 && (
+                <div style={{ background:'#fff', borderBottom:'1px solid #eee' }}>
+                  <div style={{ fontSize:13, fontWeight:900, letterSpacing:'0.08em', textTransform:'uppercase', color:'#999', padding:'10px 16px 4px' }}>By Trade</div>
+                  {invGroupSubs.map(g => (
+                    <div key={g.trade} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'6px 16px 6px 14px', borderLeft:`4px solid ${g.color}` }}>
+                      <span style={{ fontSize:15, fontWeight:700, color:'#444' }}>{g.label}</span>
+                      <span style={{ fontFamily:"'Inter', sans-serif", fontSize:17, fontWeight:700, color:'#111' }}>{fmtMoney(g.sub)}</span>
+                    </div>
+                  ))}
+                  <div style={{ height:8 }} />
+                </div>
+              )}
+              {[['Subtotal', fmtMoney(calc.sub)], [`Markup (${invoice.markup}%) — mat+equip`, fmtMoney(calc.mkAmt)], [`Tax (${invoice.tax}%)`, fmtMoney(calc.txAmt)]].map(([label,val])=>(
                 <div key={label} style={{ display:'flex', justifyContent:'space-between', padding:'10px 16px', fontSize:17, color:'#777', borderBottom:'1px solid #e8e8e8' }}>
                   <span>{label}</span><span style={{ fontWeight:600, color:'#444' }}>{val}</span>
                 </div>
@@ -2558,7 +2677,7 @@ function QuoteDocument({ quote, client, user, logo, onRevise, onBack, onConvertT
   const calc      = calcQuote(quote, user?.state);
   const locked    = quote.status === 'accepted' || quote.status === 'invoiced';
   const pad       = isTablet ? '20px 18px' : '32px 44px';
-  const isBundle  = user?.trades?.length >= 5 || quote.trade === 'bundle';
+  const isBundle  = quote.trade === 'bundle';
   const tradeConf = getTradeConfig(quote.trade, user?.trades);
   const accentColor  = user?.accentColor || tradeConf.color;
   const accentStripe = user?.accentColor
@@ -2570,16 +2689,36 @@ function QuoteDocument({ quote, client, user, logo, onRevise, onBack, onConvertT
     alert(`Link for ${quote.number} copied to clipboard`);
   };
 
-  // For bundle: group line items by trade
+  // For bundle: group line items by trade. Untagged rows fall back to the
+  // user's first trade (not a hard-coded "Plumber") so the quote still
+  // looks correct for an Electrician+HVAC contractor who happens to have
+  // a row from before tagging was added.
+  const fallbackTrade = user?.trades?.[0] || 'Plumber';
+  // Limit the displayed groups to the user's actual trades — a 2-trade
+  // contractor doesn't need empty Roofing/HVAC sections.
+  const groupTrades = (user?.trades && user.trades.length ? user.trades : ALL_TRADES).filter(t => TRADE_CONFIG[t]);
   const bundleGroups = isBundle
-    ? ['Plumber','Electrician','HVAC','Roofing','Specialty'].map(t => ({
+    ? groupTrades.map(t => ({
         trade: t,
         label: TRADE_CONFIG[t].label,
         color: TRADE_CONFIG[t].color,
-        labor:     (quote.labor     || []).filter(r => r._trade === t || (!r._trade && t === 'Plumber')),
-        materials: (quote.materials || []).filter(r => r._trade === t || (!r._trade && t === 'Plumber')),
-        equipment: (quote.equipment || []).filter(r => r._trade === t || (!r._trade && t === 'Plumber')),
+        labor:     (quote.labor     || []).filter(r => (r._trade || fallbackTrade) === t),
+        materials: (quote.materials || []).filter(r => (r._trade || fallbackTrade) === t),
+        equipment: (quote.equipment || []).filter(r => (r._trade || fallbackTrade) === t),
       })).filter(g => g.labor.length + g.materials.length + g.equipment.length > 0)
+    : null;
+
+  // Per-trade subtotals so the printed quote can show "Plumbing $2,400 / Electrical $1,800".
+  // We pre-compute labor + materials (with markup baked in) + equipment per trade group;
+  // taxes are still applied at the document total since they may span trades.
+  const groupSubtotals = bundleGroups
+    ? bundleGroups.map(g => {
+        const labT  = g.labor.reduce((s, r) => s + (r.hrs  || 0) * (r.rate || 0), 0);
+        const matT  = g.materials.reduce((s, r) => s + (r.qty  || 0) * (r.cost || 0), 0);
+        const eqT   = g.equipment.reduce((s, r) => s + (r.qty  || 0) * (r.rate || 0), 0);
+        const mkAmt = (matT + eqT) * (quote.markup || 0) / 100;
+        return { trade: g.trade, label: g.label, color: g.color, sub: labT + matT + eqT + mkAmt };
+      })
     : null;
 
   return (
@@ -2814,6 +2953,26 @@ function QuoteDocument({ quote, client, user, logo, onRevise, onBack, onConvertT
                     </table>
                   </div>
                 ))}
+
+                {/* Per-trade subtotal — labor + materials (markup baked) + equipment for this discipline.
+                    Lets the customer see at a glance how the project cost splits across trades. */}
+                {(() => {
+                  const sub = groupSubtotals?.find(x => x.trade === group.trade)?.sub ?? 0;
+                  return (
+                    <div style={{
+                      display: 'flex', justifyContent: 'flex-end', alignItems: 'center',
+                      padding: '8px 0 14px', gap: 14,
+                      borderBottom: '1px solid #eee', marginBottom: 4,
+                    }}>
+                      <span style={{ fontSize: 14, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: group.color }}>
+                        {group.label} Subtotal
+                      </span>
+                      <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 22, fontWeight: 900, color: '#111', minWidth: 110, textAlign: 'right' }}>
+                        {fmt(sub)}
+                      </span>
+                    </div>
+                  );
+                })()}
               </div>
             ))}
           </div>
@@ -2821,8 +2980,24 @@ function QuoteDocument({ quote, client, user, logo, onRevise, onBack, onConvertT
 
         {/* Totals */}
         <div style={{ padding: isTablet ? '16px 18px 24px' : '20px 44px 28px', display: 'flex', justifyContent: 'flex-end' }}>
-          <div style={{ width: isTablet ? '100%' : 280 }}>
+          <div style={{ width: isTablet ? '100%' : 320 }}>
             <div style={{ background: '#f7f7f7', border: '1px solid #ebebeb', borderRadius: 4, overflow: 'hidden' }}>
+              {/* Multi-trade summary: a colored bar per trade so the customer
+                  immediately sees how the project cost splits by discipline. */}
+              {isBundle && groupSubtotals && groupSubtotals.length > 0 && (
+                <div style={{ background: '#fff', borderBottom: '1px solid #eee' }}>
+                  <div style={{ fontSize: 13, fontWeight: 900, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#999', padding: '10px 16px 4px' }}>
+                    By Trade
+                  </div>
+                  {groupSubtotals.map(g => (
+                    <div key={g.trade} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 16px 6px 14px', borderLeft: `4px solid ${g.color}` }}>
+                      <span style={{ fontSize: 15, fontWeight: 700, color: '#444' }}>{g.label}</span>
+                      <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 17, fontWeight: 700, color: '#111' }}>{fmt(g.sub)}</span>
+                    </div>
+                  ))}
+                  <div style={{ height: 8 }} />
+                </div>
+              )}
               {/* Customer sees: labor, materials (with markup baked in), equipment, tax — no markup line */}
               {[
                 [tradeConf.laborTitle, fmt(calc.laborT)],
@@ -3048,28 +3223,43 @@ const TRADE_CONFIG = {
   bundle: {
     color:            '#2d6a4f',
     stripe:           'linear-gradient(90deg, #2563eb 0%, #0891b2 25%, #b45309 50%, #16a34a 75%, #2d6a4f 100%)',
-    label:            'Full Service Bundle',
-    docLabel:         'Full Service — All Trades',
+    label:            'Multi-Trade',
+    docLabel:         'Multi-Trade Services',
     defaultLaborRate: 100,
     laborTitle:       'Labor',
-    licenseNote:      'Licensed & Insured — All Trades',
-    scopePlaceholder: 'Describe the full scope of work across all trades required for this project. Include all systems and installations to be addressed.',
+    licenseNote:      'Licensed & Insured',
+    scopePlaceholder: 'Describe the full scope of work across all trades required for this project. List each discipline involved (plumbing, electrical, HVAC, etc.) and what falls under each.',
     matLibrary: [],
     equipLibrary: [],
   },
 };
 
-// Build bundle libraries from all 5 trades
-TRADE_CONFIG.bundle.matLibrary  = ['Plumber','Electrician','HVAC','Roofing','Specialty']
-  .flatMap(t => TRADE_CONFIG[t].matLibrary.map(i => ({ ...i, id: `b${i.id}`, _trade: t })));
-TRADE_CONFIG.bundle.equipLibrary = ['Plumber','Electrician','HVAC','Roofing','Specialty']
-  .flatMap(t => TRADE_CONFIG[t].equipLibrary.map(i => ({ ...i, id: `b${i.id}`, _trade: t })));
+// All real trade keys (excludes "bundle" — that's a virtual aggregate).
+const ALL_TRADES = ['Plumber','Electrician','HVAC','Roofing','Specialty'];
 
-// Helper — resolve config for a quote's trade value and user's trades
+// Helper — resolve config for a quote's trade value and the user's trade list.
+// For 'bundle' (multi-trade) quotes we BUILD the config dynamically so the
+// libraries only show items from the trades this contractor actually offers.
+// e.g. a Plumber + Electrician will see ~24 quick-add materials (12 each)
+// rather than 60+ from all five trades.
 const getTradeConfig = (trade, userTrades = []) => {
-  if (trade === 'bundle' || userTrades.length >= 5) return TRADE_CONFIG.bundle;
-  return TRADE_CONFIG[trade] || TRADE_CONFIG.Specialty;
+  if (trade !== 'bundle') return TRADE_CONFIG[trade] || TRADE_CONFIG.Specialty;
+
+  // Build a bundle config scoped to the user's actual trades.
+  // Falls back to all five if the user somehow has none recorded.
+  const scoped = (userTrades && userTrades.length ? userTrades : ALL_TRADES)
+    .filter(t => TRADE_CONFIG[t]);
+  return {
+    ...TRADE_CONFIG.bundle,
+    matLibrary:   scoped.flatMap(t => TRADE_CONFIG[t].matLibrary.map(i  => ({ ...i, id: `b${t}-${i.id}`, _trade: t }))),
+    equipLibrary: scoped.flatMap(t => TRADE_CONFIG[t].equipLibrary.map(i => ({ ...i, id: `b${t}-${i.id}`, _trade: t }))),
+    _scopedTrades: scoped,   // consumers can use this for grouping/totals
+  };
 };
+
+// True when the user has multiple trades and the quote is flagged as multi-trade
+// (or they have so many trades that single-trade selection is impractical).
+const isMultiTradeUser = (userTrades = []) => (userTrades?.length ?? 0) >= 2;
 
 // ─── CALENDAR PICKER ──────────────────────────────────────────────────────────
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -3442,12 +3632,16 @@ function QuoteEditor({ initial, clients, user, onSave, onCancel }) {
   const [expires,  setExpires]  = useState(initial?.expiresAt|| '');
   const recRef = useRef(null);
 
-  // Trade selection
-  const isBundle    = user?.trades?.length >= 5;
+  // Trade selection.
+  // - Single-trade users always get their one trade (no picker).
+  // - Multi-trade users (2+) get a picker with each individual trade
+  //   AND a "Multi-Trade Job" option for cross-discipline work.
+  const multiTrade  = isMultiTradeUser(user?.trades);
   const singleTrade = user?.trades?.length === 1 ? user.trades[0] : null;
-  const defaultTrade = initial?.trade || singleTrade || (isBundle ? 'bundle' : user?.trades?.[0] || 'Specialty');
+  const defaultTrade = initial?.trade || singleTrade || user?.trades?.[0] || 'Specialty';
   const [trade, setTrade] = useState(defaultTrade);
   const tradeConf = getTradeConfig(trade, user?.trades);
+  const isBundle  = trade === 'bundle';
 
   // Quick-add libraries — swap when trade changes
   const [matLibrary,  setMatLibrary]  = useState(() => tradeConf.matLibrary.map(i => ({ ...i })));
@@ -3561,17 +3755,18 @@ function QuoteEditor({ initial, clients, user, onSave, onCancel }) {
       </div>
 
       {/* Trade selector + Expiry row */}
-      <div style={{ display: 'grid', gridTemplateColumns: isTablet ? '1fr 1fr' : '200px 200px 1fr', gap: 12, marginBottom: 20 }}>
-        {/* Trade picker — hidden when single-trade user */}
+      <div style={{ display: 'grid', gridTemplateColumns: isTablet ? '1fr 1fr' : '240px 200px 1fr', gap: 12, marginBottom: 20 }}>
+        {/* Trade picker — hidden when single-trade user. Multi-trade users always get
+            the Multi-Trade Job option so they can quote cross-discipline work. */}
         {!singleTrade && (
           <div>
-            <Label>Trade</Label>
+            <Label>Quote Sheet Type</Label>
             <select value={trade} onChange={e => handleTradeChange(e.target.value)}
               style={{ ...s.input, width: '100%', padding: '11px 12px', minHeight: 44, cursor: 'pointer', boxSizing: 'border-box', borderColor: tradeConf.color + '88' }}>
               {user?.trades?.map(t => (
-                <option key={t} value={t}>{t === 'Specialty' ? 'Specialty Trades' : t}</option>
+                <option key={t} value={t}>{t === 'Specialty' ? 'Specialty Trades' : `${t} Only`}</option>
               ))}
-              {isBundle && <option value="bundle">All Trades — Full Service</option>}
+              {multiTrade && <option value="bundle">Multi-Trade Job ({user.trades.length} trades)</option>}
             </select>
           </div>
         )}
@@ -3628,24 +3823,56 @@ function QuoteEditor({ initial, clients, user, onSave, onCancel }) {
               </div>
             )}
 
-            {/* ── LABOR TAB ── */}
+            {/* ── LABOR TAB ──
+                In Multi-Trade mode each row carries a `_trade` tag so the printed
+                quote can group + subtotal by discipline. The Trade column is
+                only rendered when isBundle. */}
             {tab === 'labor' && (
               <div style={{ overflowX: 'auto' }}>
                 <div style={{ marginBottom: 10, padding: '8px 12px', background: tradeConf.color + '18', border: `1px solid ${tradeConf.color}33`, borderRadius: 3, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
                   <span style={{ fontSize: 16, fontWeight: 800, color: tradeConf.color, fontFamily: "'Inter', sans-serif", letterSpacing: '0.06em', textTransform: 'uppercase' }}>
-                    {tradeConf.laborTitle} — Default rate: ${tradeConf.defaultLaborRate}/hr
+                    {tradeConf.laborTitle}
+                    {!isBundle && ` — Default rate: $${tradeConf.defaultLaborRate}/hr`}
+                    {isBundle && ` — Tag each row with its trade for the per-trade subtotals`}
                   </span>
-                  <button onClick={() => addRow(setLabor, { desc: '', hrs: 1, rate: tradeConf.defaultLaborRate })}
+                  <button onClick={() => {
+                    // For bundle, default the new row to the first user trade and use that
+                    // trade's labor rate so the row is useful immediately.
+                    const t = isBundle ? (user?.trades?.[0] || 'Plumber') : null;
+                    const baseRate = t ? TRADE_CONFIG[t]?.defaultLaborRate : tradeConf.defaultLaborRate;
+                    addRow(setLabor, { desc: '', hrs: 1, rate: baseRate, ...(isBundle ? { _trade: t } : {}) });
+                  }}
                     style={{ ...s.btn, background: tradeConf.color, color: '#fff', padding: '6px 14px', fontSize: 16, minHeight: 34 }}>
                     Add Labor Row
                   </button>
                 </div>
-                <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 400 }}>
-                  <thead><tr><TH>Description</TH><TH right>Hrs</TH><TH right>$/Hr</TH><TH right>Total</TH><TH /></tr></thead>
+                <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: isBundle ? 520 : 400 }}>
+                  <thead><tr>
+                    <TH>Description</TH>
+                    {isBundle && <TH>Trade</TH>}
+                    <TH right>Hrs</TH><TH right>$/Hr</TH><TH right>Total</TH><TH />
+                  </tr></thead>
                   <tbody>
                     {labor.map(r => (
                       <tr key={r.id} style={{ borderBottom: `1px solid ${C.border}` }}>
                         <td style={{ padding: '5px 5px' }}>{TI(r.desc, v => updRow(setLabor, r.id, 'desc', v))}</td>
+                        {isBundle && (
+                          <td style={{ padding: '5px 5px', width: 130 }}>
+                            <select value={r._trade || user?.trades?.[0] || 'Plumber'}
+                              onChange={e => {
+                                const t = e.target.value;
+                                // When the trade changes, also bump the rate to that trade's
+                                // default UNLESS the user has already manually set a rate.
+                                const newRate = (!r.rate || r.rate === TRADE_CONFIG[r._trade]?.defaultLaborRate) ? TRADE_CONFIG[t]?.defaultLaborRate : r.rate;
+                                setLabor(a => a.map(x => x.id === r.id ? { ...x, _trade: t, rate: newRate } : x));
+                              }}
+                              style={{ ...s.input, width: '100%', padding: '8px 5px', minHeight: 44, cursor: 'pointer', fontSize: 14, borderColor: (TRADE_CONFIG[r._trade]?.color || C.border2) + '88' }}>
+                              {(user?.trades || ALL_TRADES).map(t => (
+                                <option key={t} value={t}>{t}</option>
+                              ))}
+                            </select>
+                          </td>
+                        )}
                         <td style={{ padding: '5px 5px', width: 70 }}>{NI(r.hrs,  v => updRow(setLabor, r.id, 'hrs',  v), 68)}</td>
                         <td style={{ padding: '5px 5px', width: 80 }}>{NI(r.rate, v => updRow(setLabor, r.id, 'rate', v), 96, '$')}</td>
                         <TC val={r.hrs * r.rate} />
@@ -3664,17 +3891,30 @@ function QuoteEditor({ initial, clients, user, onSave, onCancel }) {
                 <QuickAddPanel
                   type="materials"
                   library={matLibrary}
-                  onInsert={item => addRow(setMats, { desc: item.desc, qty: item.qty, unit: item.unit, cost: item.cost })}
+                  onInsert={item => addRow(setMats, { desc: item.desc, qty: item.qty, unit: item.unit, cost: item.cost, ...(isBundle && item._trade ? { _trade: item._trade } : {}) })}
                   onSaveNew={item => setMatLibrary(prev => [...prev, item])}
                   onDelete={id  => setMatLibrary(prev => prev.filter(i => i.id !== id))}
                 />
                 <div style={{ overflowX: 'auto' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 480 }}>
-                    <thead><tr><TH>Description</TH><TH right>Qty</TH><TH right>Unit</TH><TH right>Cost ea.</TH><TH right>Total</TH><TH right>Library</TH><TH /></tr></thead>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: isBundle ? 600 : 480 }}>
+                    <thead><tr>
+                      <TH>Description</TH>
+                      {isBundle && <TH>Trade</TH>}
+                      <TH right>Qty</TH><TH right>Unit</TH><TH right>Cost ea.</TH><TH right>Total</TH><TH right>Library</TH><TH />
+                    </tr></thead>
                     <tbody>
                       {mats.map(r => (
                         <tr key={r.id} style={{ borderBottom: `1px solid ${C.border}` }}>
                           <td style={{ padding: '5px 5px' }}>{TI(r.desc, v => updRow(setMats, r.id, 'desc', v))}</td>
+                          {isBundle && (
+                            <td style={{ padding: '5px 5px', width: 130 }}>
+                              <select value={r._trade || user?.trades?.[0] || 'Plumber'}
+                                onChange={e => updRow(setMats, r.id, '_trade', e.target.value)}
+                                style={{ ...s.input, width: '100%', padding: '8px 5px', minHeight: 44, cursor: 'pointer', fontSize: 14, borderColor: (TRADE_CONFIG[r._trade]?.color || C.border2) + '88' }}>
+                                {(user?.trades || ALL_TRADES).map(t => <option key={t} value={t}>{t}</option>)}
+                              </select>
+                            </td>
+                          )}
                           <td style={{ padding: '5px 5px', width: 60 }}>{NI(r.qty,  v => updRow(setMats, r.id, 'qty',  v), 56)}</td>
                           <td style={{ padding: '5px 5px', width: 70 }}>
                             <select value={r.unit} onChange={e => updRow(setMats, r.id, 'unit', e.target.value)}
@@ -3691,7 +3931,7 @@ function QuoteEditor({ initial, clients, user, onSave, onCancel }) {
                                 if (!r.desc.trim()) return;
                                 const exists = matLibrary.some(i => i.desc.toLowerCase() === r.desc.toLowerCase());
                                 if (exists) return;
-                                setMatLibrary(prev => [...prev, { id: uid(), desc: r.desc, qty: r.qty, unit: r.unit, cost: r.cost }]);
+                                setMatLibrary(prev => [...prev, { id: uid(), desc: r.desc, qty: r.qty, unit: r.unit, cost: r.cost, ...(r._trade ? { _trade: r._trade } : {}) }]);
                               }}
                               style={{ ...s.btn, background: 'transparent', border: `1.5px solid ${C.border2}`, color: C.muted, padding: '5px 8px', fontSize: 15, minHeight: 44, minWidth: 44, WebkitTapHighlightColor: 'transparent' }}
                               onPointerEnter={e => { e.currentTarget.style.borderColor = C.orange; e.currentTarget.style.color = C.orange; }}
@@ -3703,7 +3943,7 @@ function QuoteEditor({ initial, clients, user, onSave, onCancel }) {
                       ))}
                     </tbody>
                   </table>
-                  <Btn variant="ghost" size="sm" style={{ marginTop: 10 }} onClick={() => addRow(setMats, { desc: '', qty: 1, unit: 'ea', cost: 0 })}>Add Material Row</Btn>
+                  <Btn variant="ghost" size="sm" style={{ marginTop: 10 }} onClick={() => addRow(setMats, { desc: '', qty: 1, unit: 'ea', cost: 0, ...(isBundle ? { _trade: user?.trades?.[0] || 'Plumber' } : {}) })}>Add Material Row</Btn>
                 </div>
               </div>
             )}
@@ -3714,17 +3954,30 @@ function QuoteEditor({ initial, clients, user, onSave, onCancel }) {
                 <QuickAddPanel
                   type="equipment"
                   library={equipLibrary}
-                  onInsert={item => addRow(setEquip, { desc: item.desc, qty: item.qty, unit: item.unit, rate: item.rate })}
+                  onInsert={item => addRow(setEquip, { desc: item.desc, qty: item.qty, unit: item.unit, rate: item.rate, ...(isBundle && item._trade ? { _trade: item._trade } : {}) })}
                   onSaveNew={item => setEquipLibrary(prev => [...prev, item])}
                   onDelete={id  => setEquipLibrary(prev => prev.filter(i => i.id !== id))}
                 />
                 <div style={{ overflowX: 'auto' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 500 }}>
-                    <thead><tr><TH>Description</TH><TH right>Qty</TH><TH right>Unit</TH><TH right>Rate</TH><TH right>Total</TH><TH right>Library</TH><TH /></tr></thead>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: isBundle ? 620 : 500 }}>
+                    <thead><tr>
+                      <TH>Description</TH>
+                      {isBundle && <TH>Trade</TH>}
+                      <TH right>Qty</TH><TH right>Unit</TH><TH right>Rate</TH><TH right>Total</TH><TH right>Library</TH><TH />
+                    </tr></thead>
                     <tbody>
                       {equip.map(r => (
                         <tr key={r.id} style={{ borderBottom: `1px solid ${C.border}` }}>
                           <td style={{ padding: '5px 5px' }}>{TI(r.desc, v => updRow(setEquip, r.id, 'desc', v))}</td>
+                          {isBundle && (
+                            <td style={{ padding: '5px 5px', width: 130 }}>
+                              <select value={r._trade || user?.trades?.[0] || 'Plumber'}
+                                onChange={e => updRow(setEquip, r.id, '_trade', e.target.value)}
+                                style={{ ...s.input, width: '100%', padding: '8px 5px', minHeight: 44, cursor: 'pointer', fontSize: 14, borderColor: (TRADE_CONFIG[r._trade]?.color || C.border2) + '88' }}>
+                                {(user?.trades || ALL_TRADES).map(t => <option key={t} value={t}>{t}</option>)}
+                              </select>
+                            </td>
+                          )}
                           <td style={{ padding: '5px 5px', width: 60 }}>{NI(r.qty,  v => updRow(setEquip, r.id, 'qty',  v), 56)}</td>
                           <td style={{ padding: '5px 5px', width: 78 }}>
                             <select value={r.unit} onChange={e => updRow(setEquip, r.id, 'unit', e.target.value)}
@@ -3741,7 +3994,7 @@ function QuoteEditor({ initial, clients, user, onSave, onCancel }) {
                                 if (!r.desc.trim()) return;
                                 const exists = equipLibrary.some(i => i.desc.toLowerCase() === r.desc.toLowerCase());
                                 if (exists) return;
-                                setEquipLibrary(prev => [...prev, { id: uid(), desc: r.desc, qty: r.qty, unit: r.unit, rate: r.rate }]);
+                                setEquipLibrary(prev => [...prev, { id: uid(), desc: r.desc, qty: r.qty, unit: r.unit, rate: r.rate, ...(r._trade ? { _trade: r._trade } : {}) }]);
                               }}
                               style={{ ...s.btn, background: 'transparent', border: `1.5px solid ${C.border2}`, color: C.muted, padding: '5px 8px', fontSize: 15, minHeight: 44, minWidth: 44, WebkitTapHighlightColor: 'transparent' }}
                               onPointerEnter={e => { e.currentTarget.style.borderColor = C.orange; e.currentTarget.style.color = C.orange; }}
@@ -3753,7 +4006,7 @@ function QuoteEditor({ initial, clients, user, onSave, onCancel }) {
                       ))}
                     </tbody>
                   </table>
-                  <Btn variant="ghost" size="sm" style={{ marginTop: 10 }} onClick={() => addRow(setEquip, { desc: '', qty: 1, unit: 'day', rate: 0 })}>Add Equipment Row</Btn>
+                  <Btn variant="ghost" size="sm" style={{ marginTop: 10 }} onClick={() => addRow(setEquip, { desc: '', qty: 1, unit: 'day', rate: 0, ...(isBundle ? { _trade: user?.trades?.[0] || 'Plumber' } : {}) })}>Add Equipment Row</Btn>
                   {equip.length === 0 && <div style={{ padding: '12px 0 4px', fontSize: 18, color: C.dim }}>No equipment added. Tap a saved item above or add a row manually.</div>}
                 </div>
               </div>
