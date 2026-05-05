@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
+import { listJobs, upsertJob, deleteJob } from "./data/jobs";
 
 // ─── CONSTANTS ───────────────────────────────────────────────────────────────
 const COLORS = {
@@ -23,9 +24,7 @@ const HOURS = Array.from({ length: 13 }, (_, i) => i + 7); // 7am - 7pm
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
-// ─── SAMPLE DATA ─────────────────────────────────────────────────────────────
-const SAMPLE_TECHS = [];
-const SAMPLE_JOBS = [];
+// (Tech list is now computed from team-member props inside ScheduleScreen.)
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
 const isSameDay = (a, b) =>
@@ -370,16 +369,36 @@ function MonthView({ date, jobs, techs, onJobClick, filterTech, onDayClick }) {
 }
 
 // ─── MAIN SCHEDULE SCREEN ─────────────────────────────────────────────────────
-export default function ScheduleScreen() {
+export default function ScheduleScreen({ user, team = [] }) {
   const [view, setView] = useState('week'); // month | week | day
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [jobs, setJobs] = useState(SAMPLE_JOBS);
+  const [jobs, setJobs] = useState([]);
   const [selectedJob, setSelectedJob] = useState(null);
   const [showAddJob, setShowAddJob] = useState(false);
   const [filterTech, setFilterTech] = useState(null);
   const [addJobDate, setAddJobDate] = useState(null);
 
+  // Load jobs from Supabase on mount.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const rows = await listJobs();
+        if (!cancelled) setJobs(rows);
+      } catch (e) {
+        console.error('listJobs failed', e);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
   const weekDays = getWeekDays(currentDate);
+
+  // Build a tech list from the owner's team (passed in from App.jsx). Fall back to a single
+  // "you" entry so the calendar still works before any techs are added.
+  const techs = (team && team.length)
+    ? team.map(t => ({ id: t.id, name: t.name || 'Tech', color: '#2d6a4f', initials: (t.name || 'T').split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase() }))
+    : (user ? [{ id: user.id, name: user.name || 'You', color: '#2d6a4f', initials: (user.name || 'Y').split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase() }] : []);
 
   const navigate = (dir) => {
     const d = new Date(currentDate);
@@ -389,13 +408,28 @@ export default function ScheduleScreen() {
     setCurrentDate(d);
   };
 
-  const handleStatusChange = (id, status) => {
+  const handleStatusChange = async (id, status) => {
     setJobs(prev => prev.map(j => j.id === id ? { ...j, status } : j));
     setSelectedJob(prev => prev ? { ...prev, status } : null);
+    if (!user?.id) return;
+    const target = jobs.find(j => j.id === id);
+    if (!target) return;
+    try {
+      await upsertJob(user.id, { ...target, status });
+    } catch (e) {
+      console.error('status change failed', e);
+    }
   };
 
-  const handleAddJob = (job) => {
-    setJobs(prev => [...prev, { ...job, date: addJobDate || currentDate }]);
+  const handleAddJob = async (job) => {
+    if (!user?.id) return;
+    try {
+      const draft = { ...job, date: addJobDate || currentDate };
+      const saved = await upsertJob(user.id, draft);
+      setJobs(prev => [...prev, saved]);
+    } catch (e) {
+      alert(e?.message || 'Could not save job.');
+    }
   };
 
   const handleDayClick = (date) => {
@@ -463,9 +497,9 @@ export default function ScheduleScreen() {
       {/* Body */}
       <div style={s.body}>
         <div style={s.calendar}>
-          {view === 'month' && <MonthView date={currentDate} jobs={jobs} techs={SAMPLE_TECHS} onJobClick={setSelectedJob} filterTech={filterTech} onDayClick={handleDayClick} />}
-          {view === 'week' && <WeekView weekDays={weekDays} jobs={jobs} techs={SAMPLE_TECHS} onJobClick={setSelectedJob} filterTech={filterTech} />}
-          {view === 'day' && <DayView date={currentDate} jobs={jobs} techs={SAMPLE_TECHS} onJobClick={setSelectedJob} filterTech={filterTech} />}
+          {view === 'month' && <MonthView date={currentDate} jobs={jobs} techs={techs} onJobClick={setSelectedJob} filterTech={filterTech} onDayClick={handleDayClick} />}
+          {view === 'week' && <WeekView weekDays={weekDays} jobs={jobs} techs={techs} onJobClick={setSelectedJob} filterTech={filterTech} />}
+          {view === 'day' && <DayView date={currentDate} jobs={jobs} techs={techs} onJobClick={setSelectedJob} filterTech={filterTech} />}
         </div>
 
         {/* Sidebar */}
@@ -477,7 +511,7 @@ export default function ScheduleScreen() {
               <div style={s.techDot('#aaa')} />
               <span style={s.techName}>All Technicians</span>
             </button>
-            {SAMPLE_TECHS.map(tech => (
+            {techs.map(tech => (
               <button key={tech.id} style={s.techBtn(filterTech === tech.id, tech.color)} onClick={() => setFilterTech(filterTech === tech.id ? null : tech.id)}>
                 <div style={s.techDot(tech.color)} />
                 <span style={s.techName}>{tech.name}</span>
@@ -519,8 +553,8 @@ export default function ScheduleScreen() {
       </div>
 
       {/* Modals */}
-      {selectedJob && <JobDetailModal job={selectedJob} techs={SAMPLE_TECHS} onClose={() => setSelectedJob(null)} onStatusChange={handleStatusChange} />}
-      {showAddJob && <AddJobModal techs={SAMPLE_TECHS} onClose={() => setShowAddJob(false)} onAdd={handleAddJob} defaultDate={addJobDate} />}
+      {selectedJob && <JobDetailModal job={selectedJob} techs={techs} onClose={() => setSelectedJob(null)} onStatusChange={handleStatusChange} />}
+      {showAddJob && <AddJobModal techs={techs} onClose={() => setShowAddJob(false)} onAdd={handleAddJob} defaultDate={addJobDate} />}
     </div>
   );
 }

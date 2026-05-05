@@ -26,6 +26,8 @@ const dbToProfile = (row) => row && ({
   companyCode:      row.company_code      ?? '',
   acceptedTermsAt:  row.accepted_terms_at ?? null,
   logoUrl:          row.logo_url          ?? null,
+  payments:         row.payments          ?? {},
+  taxRates:         row.tax_rates         ?? {},
 });
 
 const profileToDb = (p) => ({
@@ -45,6 +47,8 @@ const profileToDb = (p) => ({
   company_code:       p.companyCode       ?? null,
   accepted_terms_at:  p.acceptedTermsAt   ?? null,
   logo_url:           p.logoUrl           ?? null,
+  payments:           p.payments,
+  tax_rates:          p.taxRates,
 });
 
 // ── Public API ───────────────────────────────────────────────────────────────

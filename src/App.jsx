@@ -5,6 +5,10 @@ import MarketingScreen from "./MarketingScreen";
 import { PrivacyPolicyScreen, TermsScreen } from "./LegalScreens";
 import { signIn, signUp, signOut, getProfile, upsertProfile, getSessionUser, onAuthChange } from "./data/auth";
 import { listClients, addClient as apiAddClient, updateClient as apiUpdateClient, deleteClient as apiDeleteClient } from "./data/clients";
+import { listInvoices, upsertInvoice as apiUpsertInvoice, deleteInvoice as apiDeleteInvoice } from "./data/invoices";
+import { listQuotes,   upsertQuote   as apiUpsertQuote,   deleteQuote   as apiDeleteQuote   } from "./data/quotes";
+import { listJobs,     upsertJob     as apiUpsertJob,     deleteJob     as apiDeleteJob     } from "./data/jobs";
+import { listTeam,     upsertTeamMember as apiUpsertTeam, deleteTeamMember as apiDeleteTeam } from "./data/team";
 
 // ─── FONTS ─────────────────────────────────────────────────────────────────────
 const loadFonts = () => {
@@ -1937,9 +1941,8 @@ function InvoiceDocument({ invoice, user, logo, payments, onEdit, onBack, onReco
 }
 
 // ── Invoice Shell ──────────────────────────────────────────────────────────────
-function VoiceInvoice({ user, logo, payments, sharedInvoices, setSharedInvoices, pendingInvoiceId, clearPendingInvoice }) {
-  const invoices    = sharedInvoices || SEED_INVOICES;
-  const setInvoices = setSharedInvoices || (() => {});
+function VoiceInvoice({ user, logo, payments, sharedInvoices, setSharedInvoices, persistInvoice, pendingInvoiceId, clearPendingInvoice }) {
+  const invoices    = sharedInvoices || [];
   const [view,            setView]         = useState('hub');
   const [activeInvoice,   setActiveInv]    = useState(null);
   const [editingInvoice,  setEditingInv]   = useState(null);
@@ -1954,21 +1957,29 @@ function VoiceInvoice({ user, logo, payments, sharedInvoices, setSharedInvoices,
     }
   }, [pendingInvoiceId]);
 
-  const saveInvoice = (inv) => {
-    setInvoices(prev => {
-      const exists = prev.find(x=>x.id===inv.id);
-      return exists ? prev.map(x=>x.id===inv.id?inv:x) : [inv,...prev];
-    });
-    setActiveInv(inv.id);
-    setView('document');
+  const saveInvoice = async (inv) => {
+    try {
+      const saved = await persistInvoice(inv);
+      setActiveInv(saved.id);
+      setView('document');
+    } catch (e) {
+      alert(e?.message || 'Could not save invoice.');
+    }
   };
 
-  const voidInvoice = (id) => {
+  const voidInvoice = async (id) => {
     if (!window.confirm('Void this invoice? The record will be kept but the balance zeroed.')) return;
-    setInvoices(prev=>prev.map(x=>x.id===id?{
-      ...x, status:'void',
-      activity:[...(x.activity||[]), { date:today(), type:'voided', note:'Invoice voided' }]
-    }:x));
+    const target = invoices.find(x => x.id === id);
+    if (!target) return;
+    try {
+      await persistInvoice({
+        ...target,
+        status: 'void',
+        activity: [...(target.activity || []), { date: today(), type: 'voided', note: 'Invoice voided' }],
+      });
+    } catch (e) {
+      alert(e?.message || 'Could not void invoice.');
+    }
   };
 
   const active = invoices.find(i=>i.id===activeInvoice);
@@ -3887,25 +3898,50 @@ function ProfileModal({ profile, onSave, onClose }) {
 // QUOTES
 // ══════════════════════════════════════════════════════════════════════════════
 function Quotes({ user, logo, taxRates, onConvertToInvoice }) {
-  const [clients,       setClients]    = useState(SEED_CLIENTS);
-  const [quotes,        setQuotes]     = useState(SEED_QUOTES);
+  const [clients,       setClients]    = useState([]);
+  const [quotes,        setQuotes]     = useState([]);
+  const [loading,       setLoading]    = useState(true);
   const [view,          setView]       = useState('hub');
   const [activeQuote,   setActiveQ]    = useState(null);
   const [editingQuote,  setEditingQ]   = useState(null);
   const [showNewClient, setNewClient]  = useState(false);
 
-  const saveQuote = (q) => {
-    setQuotes(prev => {
-      const exists = prev.find(x => x.id === q.id);
-      return exists ? prev.map(x => x.id === q.id ? q : x) : [q, ...prev];
-    });
-    setActiveQ(q.id);
-    setView('document');
+  // Load both quotes and clients on mount.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const [qs, cs] = await Promise.all([listQuotes(), listClients()]);
+        if (!cancelled) { setQuotes(qs); setClients(cs); }
+      } catch (e) {
+        console.error('quotes/clients load failed', e);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  const saveQuote = async (q) => {
+    try {
+      const saved = await apiUpsertQuote(user.id, q);
+      setQuotes(prev => {
+        const exists = prev.find(x => x.id === saved.id || (q.id && x.id === q.id));
+        return exists
+          ? prev.map(x => (x.id === saved.id || x.id === q.id) ? saved : x)
+          : [saved, ...prev];
+      });
+      setActiveQ(saved.id);
+      setView('document');
+    } catch (e) {
+      alert(e?.message || 'Could not save quote.');
+    }
   };
 
   const startRevision = (q) => {
+    // The new revision starts as a fresh draft. We strip the DB id so upsert treats it as an insert.
     const rev = {
-      ...q, id: uid(), number: nextQuoteNum(), status: 'draft',
+      ...q, id: undefined, number: nextQuoteNum(), status: 'draft',
       revisionOf: q.number, revisionNumber: (q.revisionNumber || 1) + 1,
       createdAt: new Date().toISOString().split('T')[0], sentAt: null,
     };
@@ -3913,14 +3949,26 @@ function Quotes({ user, logo, taxRates, onConvertToInvoice }) {
     setView('editor');
   };
 
-  const convertToInvoice = (q) => {
+  const convertToInvoice = async (q) => {
     const client = clients.find(c => c.id === q.clientId);
-    // Mark quote as invoiced
-    setQuotes(prev => prev.map(x => x.id === q.id ? { ...x, status: 'invoiced' } : x));
+    try {
+      const updated = await apiUpsertQuote(user.id, { ...q, status: 'invoiced' });
+      setQuotes(prev => prev.map(x => x.id === updated.id ? updated : x));
+    } catch (e) {
+      console.error('mark quote invoiced failed', e);
+    }
     if (onConvertToInvoice) onConvertToInvoice(q, client);
   };
 
-  const addClient = (c) => { setClients(prev => [...prev, c]); setNewClient(false); };
+  const addClient = async (c) => {
+    try {
+      const created = await apiAddClient(user.id, c);
+      setClients(prev => [...prev, created].sort((a, b) => a.name.localeCompare(b.name)));
+      setNewClient(false);
+    } catch (e) {
+      alert(e?.message || 'Could not save client.');
+    }
+  };
 
   const active  = quotes.find(q => q.id === activeQuote);
   const activeC = active ? clients.find(c => c.id === active.clientId) : null;
@@ -4337,7 +4385,7 @@ function TeamMemberRow({ member, onUpdate, onRemove }) {
 // ══════════════════════════════════════════════════════════════════════════════
 // SETTINGS
 // ══════════════════════════════════════════════════════════════════════════════
-function Settings({ user, logo, onLogoChange, showProfileModal, setShowProfileModal, payments, setPayments, taxRates, setTaxRates, teamMembers, setTeamMembers }) {
+function Settings({ user, setUser, logo, onLogoChange, showProfileModal, setShowProfileModal, payments, setPayments, taxRates, setTaxRates, teamMembers, setTeamMembers, persistTeamMember, removeTeamMember }) {
   const { isTablet } = useBreakpoint();
   const tradeCount   = user.trades?.length || 1;
   const currentPrice = getPrice(tradeCount);
@@ -4411,7 +4459,27 @@ function Settings({ user, logo, onLogoChange, showProfileModal, setShowProfileMo
       {showProfileModal && (
         <ProfileModal
           profile={{ ...user, logo }}
-          onSave={p => { onLogoChange(p.logo); setShowProfileModal(false); }}
+          onSave={async (p) => {
+            // Logo is currently held in local state (no Storage upload yet); everything else persists.
+            onLogoChange(p.logo);
+            try {
+              const saved = await upsertProfile(user.id, {
+                name:         p.name,
+                company:      p.company,
+                phone:        p.phone,
+                trades:       user.trades,        // preserve existing — modal doesn't edit these
+                states:       user.states,
+                tagline:      p.tagline,
+                license:      p.license,
+                accentColor:  p.accentColor,
+                defaultTerms: p.defaultTerms,
+              });
+              if (setUser) setUser(prev => ({ ...prev, ...saved }));
+            } catch (e) {
+              alert(e?.message || 'Could not save profile.');
+            }
+            setShowProfileModal(false);
+          }}
           onClose={() => setShowProfileModal(false)}
         />
       )}
@@ -4618,16 +4686,30 @@ function Settings({ user, logo, onLogoChange, showProfileModal, setShowProfileMo
           {(teamMembers || []).length > 0 && (
             <div style={{ marginBottom: 14 }}>
               {(teamMembers || []).map(member => (
-                <TeamMemberRow key={member.id} member={member} onUpdate={updated => setTeamMembers(prev => prev.map(m => m.id === updated.id ? updated : m))} onRemove={id => setTeamMembers(prev => prev.filter(m => m.id !== id))} />
+                <TeamMemberRow
+                  key={member.id}
+                  member={member}
+                  onUpdate={async (updated) => {
+                    try { await persistTeamMember(updated); }
+                    catch (e) { alert(e?.message || 'Could not update team member.'); }
+                  }}
+                  onRemove={async (id) => { await removeTeamMember(id); }}
+                />
               ))}
             </div>
           )}
 
           {/* Add member button */}
-          <button onClick={() => setTeamMembers(prev => [...prev, {
-            id: 'new-' + Date.now(), name: 'New Team Member', email: '', role: 'tech', trades: [], status: 'pending',
-            perms: { createQuotes: true, createInvoices: true, viewAllJobs: false, recordPayments: false, viewClients: true, viewDashboard: false }
-          }])} style={{ ...s.btn, background: 'transparent', border: `2px dashed ${C.border2}`, color: C.muted, padding: '14px', fontSize: 15, borderRadius: 8, width: '100%', textAlign: 'center' }}>
+          <button onClick={async () => {
+            try {
+              await persistTeamMember({
+                name: 'New Team Member', email: '', role: 'tech', trades: [], status: 'pending',
+                perms: { createQuotes: true, createInvoices: true, viewAllJobs: false, recordPayments: false, viewClients: true, viewDashboard: false },
+              });
+            } catch (e) {
+              alert(e?.message || 'Could not add team member.');
+            }
+          }} style={{ ...s.btn, background: 'transparent', border: `2px dashed ${C.border2}`, color: C.muted, padding: '14px', fontSize: 15, borderRadius: 8, width: '100%', textAlign: 'center' }}>
             + Add Team Member — $19.99/mo
           </button>
         </div>
@@ -4758,8 +4840,103 @@ export default function Tradevoice() {
   const [taxRates, setTaxRates] = useState({}); // contractor overrides keyed by state name
   const [teamMembers, setTeamMembers] = useState([]);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const [sharedInvoices, setSharedInvoices] = useState(SEED_INVOICES);
+  const [sharedInvoices, setSharedInvoices] = useState([]);
   const [pendingInvoiceId, setPendingInvoiceId] = useState(null);
+
+  // Hydrate live data from Supabase whenever a user logs in.
+  useEffect(() => {
+    if (!user?.id) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const [invs, tm] = await Promise.all([
+          listInvoices().catch(e => { console.error('listInvoices', e); return []; }),
+          listTeam().catch(e => { console.error('listTeam', e); return []; }),
+        ]);
+        if (cancelled) return;
+        setSharedInvoices(invs);
+        setTeamMembers(tm);
+      } catch (e) {
+        console.error('hydration failed', e);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [user?.id]);
+
+  // Sync settings (payments + taxRates) from the loaded profile into local state.
+  useEffect(() => {
+    if (!user) return;
+    if (user.payments && Object.keys(user.payments).length > 0) {
+      setPayments(prev => ({ ...prev, ...user.payments }));
+    }
+    if (user.taxRates && Object.keys(user.taxRates).length > 0) {
+      setTaxRates(user.taxRates);
+    }
+  }, [user?.id]);
+
+  // Persist an invoice to Supabase and merge the saved row back into local state.
+  const persistInvoice = async (inv) => {
+    const saved = await apiUpsertInvoice(user.id, inv);
+    setSharedInvoices(prev => {
+      const exists = prev.find(x => x.id === saved.id || (inv.id && x.id === inv.id));
+      return exists
+        ? prev.map(x => (x.id === saved.id || x.id === inv.id) ? saved : x)
+        : [saved, ...prev];
+    });
+    return saved;
+  };
+
+  // Debounced persistence for the JSONB settings columns (payments + tax_rates on profiles).
+  // Without debouncing we'd fire a Supabase update on every keystroke as the user types a Venmo handle, etc.
+  const settingsTimer = useRef(null);
+  const queueSettingsSave = (patch) => {
+    if (!user?.id) return;
+    if (settingsTimer.current) clearTimeout(settingsTimer.current);
+    settingsTimer.current = setTimeout(async () => {
+      try { await upsertProfile(user.id, patch); }
+      catch (e) { console.error('settings save failed', e); }
+    }, 600);
+  };
+
+  const setPaymentsPersist = (next) => {
+    setPayments(prev => {
+      const resolved = typeof next === 'function' ? next(prev) : next;
+      queueSettingsSave({ payments: resolved });
+      return resolved;
+    });
+  };
+
+  const setTaxRatesPersist = (next) => {
+    setTaxRates(prev => {
+      const resolved = typeof next === 'function' ? next(prev) : next;
+      queueSettingsSave({ taxRates: resolved });
+      return resolved;
+    });
+  };
+
+  // Team-member persistence helpers (passed to Settings).
+  const persistTeamMember = async (member) => {
+    const saved = await apiUpsertTeam(user.id, member);
+    setTeamMembers(prev => {
+      const exists = prev.find(x => x.id === saved.id || (member.id && x.id === member.id));
+      return exists
+        ? prev.map(x => (x.id === saved.id || x.id === member.id) ? saved : x)
+        : [...prev, saved];
+    });
+    return saved;
+  };
+
+  const removeTeamMember = async (id) => {
+    try {
+      // Only call the API for rows that look like real DB uuids; client-only rows are dropped from state directly.
+      if (typeof id === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
+        await apiDeleteTeam(id);
+      }
+    } catch (e) {
+      console.error('removeTeamMember', e);
+    }
+    setTeamMembers(prev => prev.filter(m => m.id !== id));
+  };
 
   // ── Auth state ────────────────────────────────────────────────────────────
   // authScreen: null (app) | 'login' | 'signup' | 'join' | 'onboarding'
@@ -4812,11 +4989,11 @@ export default function Tradevoice() {
     return <LoginScreen onLogin={u => { setUser(u); setAuthScreen(null); }} onSignup={() => setAuthScreen('signup')} onJoin={() => setAuthScreen('join')} onForgot={() => setAuthScreen('forgot')} />;
   }
 
-  const handleConvertToInvoice = (quote, client) => {
+  const handleConvertToInvoice = async (quote, client) => {
     const today = new Date().toISOString().split('T')[0];
-    const newInv = {
-      id: uid(),
+    const draft = {
       number: nextInvNum(),
+      clientId:      client?.id     || null,
       clientName:    client?.name    || quote.clientName    || '',
       clientEmail:   client?.email   || quote.clientEmail   || '',
       clientPhone:   client?.phone   || quote.clientPhone   || '',
@@ -4839,20 +5016,24 @@ export default function Tradevoice() {
         { date: today, type: 'created', note: `Invoice created from quote ${quote.number}` },
       ],
     };
-    setSharedInvoices(prev => [newInv, ...prev]);
-    setPendingInvoiceId(newInv.id);
-    setSection('invoice');
+    try {
+      const saved = await persistInvoice(draft);
+      setPendingInvoiceId(saved.id);
+      setSection('invoice');
+    } catch (e) {
+      alert(e?.message || 'Could not create invoice from quote.');
+    }
   };
 
   const content = {
     dashboard: <Dashboard    user={user} nav={setSection} invoices={sharedInvoices} />,
-    invoice:   <VoiceInvoice user={user} logo={logo} payments={payments} taxRates={taxRates} sharedInvoices={sharedInvoices} setSharedInvoices={setSharedInvoices} pendingInvoiceId={pendingInvoiceId} clearPendingInvoice={() => setPendingInvoiceId(null)} />,
+    invoice:   <VoiceInvoice user={user} logo={logo} payments={payments} taxRates={taxRates} sharedInvoices={sharedInvoices} setSharedInvoices={setSharedInvoices} persistInvoice={persistInvoice} pendingInvoiceId={pendingInvoiceId} clearPendingInvoice={() => setPendingInvoiceId(null)} />,
     billing:   <Billing      user={user} payments={payments} />,
     quotes:    <Quotes       user={user} logo={logo} taxRates={taxRates} onConvertToInvoice={handleConvertToInvoice} />,
-    schedule:  <ScheduleScreen />,
+    schedule:  <ScheduleScreen user={user} team={teamMembers} />,
     clients:   <Clients      user={user} />,
     marketing: <MarketingScreen />,
-    settings:  <Settings     user={user} logo={logo} onLogoChange={setLogo} showProfileModal={showProfileModal} setShowProfileModal={setShowProfileModal} payments={payments} setPayments={setPayments} taxRates={taxRates} setTaxRates={setTaxRates} teamMembers={teamMembers} setTeamMembers={setTeamMembers} />,
+    settings:  <Settings     user={user} setUser={setUser} logo={logo} onLogoChange={setLogo} showProfileModal={showProfileModal} setShowProfileModal={setShowProfileModal} payments={payments} setPayments={setPaymentsPersist} taxRates={taxRates} setTaxRates={setTaxRatesPersist} teamMembers={teamMembers} setTeamMembers={setTeamMembers} persistTeamMember={persistTeamMember} removeTeamMember={removeTeamMember} />,
     privacy:   <PrivacyPolicyScreen onBack={() => setSection('settings')} />,
     terms:     <TermsScreen onBack={() => setSection('settings')} />,
   }[section];
