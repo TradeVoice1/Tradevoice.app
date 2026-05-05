@@ -3,6 +3,7 @@ import { listJobs, upsertJob, deleteJob } from "./data/jobs";
 import { markPlanServiced } from "./data/plans";
 import { isTechOffOn, timeOffInRange } from "./data/timeOff";
 import { uploadJobPhoto, deleteJobPhoto } from "./data/jobPhotos";
+import { compressImage } from "./lib/imageCompress";
 
 // ─── DRAG-RESCHEDULE HOOK ────────────────────────────────────────────────────
 // Pointer-events-based drag so it works on both mouse and touch (iPad).
@@ -128,6 +129,120 @@ const formatTime = (hour) => {
 const formatDate = (date) =>
   `${MONTHS[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
 
+// ─── PHOTO TILE ──────────────────────────────────────────────────────────────
+// A single photo card in the JobDetailModal grid: image at top, label pill
+// + delete button overlaid on the image, caption row below. Designed for
+// thumb-friendly tap targets so a tech in the field can label and caption
+// shots without fiddly precision.
+const PHOTO_LABEL_STYLES = {
+  before: { label: 'Before', bg: 'rgba(220, 252, 231, 0.95)', fg: '#166534' },
+  after:  { label: 'After',  bg: 'rgba(254, 215, 170, 0.95)', fg: '#9a3412' },
+  other:  { label: 'Other',  bg: 'rgba(255, 255, 255, 0.92)', fg: '#475569' },
+};
+
+function PhotoTile({ photo, onView, onCycleLabel, onSetCaption, onDelete }) {
+  const [editing, setEditing] = useState(false);
+  const [draft,   setDraft]   = useState(photo.caption || '');
+  const labelInfo = PHOTO_LABEL_STYLES[photo.label || 'other'];
+
+  // Sync the draft if the parent's caption value changes (e.g. another tile
+  // caused a re-render with the saved value).
+  useEffect(() => {
+    if (!editing) setDraft(photo.caption || '');
+  }, [photo.caption, editing]);
+
+  const commitCaption = () => {
+    setEditing(false);
+    if ((photo.caption || '') !== draft) onSetCaption(draft);
+  };
+
+  return (
+    <div style={{
+      borderRadius: 8, overflow: 'hidden',
+      background: '#fff', border: '1px solid #e8e8e8',
+      display: 'flex', flexDirection: 'column',
+    }}>
+      {/* Image area + overlays */}
+      <div style={{ position: 'relative', aspectRatio: '1 / 1', background: '#f5f5f5' }}>
+        <img
+          src={photo.url}
+          alt={photo.caption || 'Job photo'}
+          onClick={onView}
+          loading="lazy"
+          style={{ width: '100%', height: '100%', objectFit: 'cover', cursor: 'pointer', display: 'block' }}
+        />
+
+        {/* Label pill — tap to cycle Before → After → Other */}
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onCycleLabel(); }}
+          title="Tap to change label"
+          style={{
+            position: 'absolute', top: 6, left: 6,
+            background: labelInfo.bg, color: labelInfo.fg,
+            fontSize: 10, fontWeight: 800, letterSpacing: '0.05em', textTransform: 'uppercase',
+            padding: '4px 9px', borderRadius: 4, border: 'none', cursor: 'pointer',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.18)',
+          }}
+        >{labelInfo.label}</button>
+
+        {/* Delete × — top right */}
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onDelete(); }}
+          title="Remove photo"
+          style={{
+            position: 'absolute', top: 6, right: 6,
+            width: 24, height: 24, borderRadius: '50%',
+            background: 'rgba(15, 23, 42, 0.75)', color: '#fff',
+            border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: 0, lineHeight: 1,
+          }}
+        >×</button>
+      </div>
+
+      {/* Caption row — click to edit inline */}
+      <div style={{ padding: '6px 10px', minHeight: 32, display: 'flex', alignItems: 'center' }}>
+        {editing ? (
+          <input
+            type="text"
+            value={draft}
+            autoFocus
+            placeholder="Add a caption…"
+            onChange={(e) => setDraft(e.target.value)}
+            onBlur={commitCaption}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') commitCaption();
+              if (e.key === 'Escape') { setDraft(photo.caption || ''); setEditing(false); }
+            }}
+            style={{
+              width: '100%', border: 'none', outline: 'none',
+              fontSize: 12, fontFamily: 'inherit', color: '#333',
+              padding: 0, background: 'transparent',
+            }}
+          />
+        ) : (
+          <div
+            onClick={() => setEditing(true)}
+            title="Tap to add a caption"
+            style={{
+              width: '100%', cursor: 'text',
+              fontSize: 12,
+              color: photo.caption ? '#333' : '#aaa',
+              fontStyle: photo.caption ? 'normal' : 'italic',
+              fontWeight: photo.caption ? 500 : 400,
+              whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+            }}
+          >
+            {photo.caption || '+ caption'}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── JOB DETAIL MODAL ────────────────────────────────────────────────────────
 function JobDetailModal({ job, techs, onClose, onStatusChange, onCreateInvoice, onPhotosChange, userId, isTech = false }) {
   const tech = techs.find(t => t.id === job.techUserId);
@@ -150,8 +265,17 @@ function JobDetailModal({ job, techs, onClose, onStatusChange, onCreateInvoice, 
       const newEntries = [];
       for (const f of files) {
         try {
-          const url = await uploadJobPhoto(userId, job.id, f);
-          newEntries.push({ url, addedBy: userId, addedAt: new Date().toISOString() });
+          // Compress on the device before sending up — drops a 5 MB phone
+          // photo to ~400 KB without visible quality loss. See lib/imageCompress.
+          const compressed = await compressImage(f);
+          const url = await uploadJobPhoto(userId, job.id, compressed);
+          newEntries.push({
+            url,
+            label:   'other',     // Before / After / Other — owner or tech can change later
+            caption: null,        // optional free-text label like "Kitchen sink"
+            addedBy: userId,
+            addedAt: new Date().toISOString(),
+          });
         } catch (innerErr) {
           console.error('photo upload failed', f.name, innerErr);
           setUploadErr(innerErr?.message || `Couldn't upload ${f.name}`);
@@ -170,6 +294,20 @@ function JobDetailModal({ job, techs, onClose, onStatusChange, onCreateInvoice, 
     // Best-effort storage cleanup; if it fails, the metadata removal still wins.
     deleteJobPhoto(photo.url).catch(() => {});
     if (onPhotosChange) await onPhotosChange(photos.filter(p => p.url !== photo.url));
+  };
+
+  // Label pill cycles through: Before → After → Other → Before. One tap to
+  // change keeps the iPad-friendly "everything is a tap target" feel.
+  const cycleLabel = (photo) => {
+    const order = ['before', 'after', 'other'];
+    const cur   = photo.label || 'other';
+    const next  = order[(order.indexOf(cur) + 1) % order.length];
+    if (onPhotosChange) onPhotosChange(photos.map(x => x.url === photo.url ? { ...x, label: next } : x));
+  };
+
+  const setCaption = (photo, caption) => {
+    const trimmed = (caption || '').trim();
+    if (onPhotosChange) onPhotosChange(photos.map(x => x.url === photo.url ? { ...x, caption: trimmed || null } : x));
   };
 
   const s = {
@@ -254,29 +392,16 @@ function JobDetailModal({ job, techs, onClose, onStatusChange, onCreateInvoice, 
                 No photos yet. Snap before/after shots to attach to the eventual invoice.
               </div>
             ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))', gap: 6 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 10 }}>
                 {photos.map((p, i) => (
-                  <div key={p.url || i} style={{ position: 'relative', aspectRatio: '1 / 1', borderRadius: 6, overflow: 'hidden', background: '#f5f5f5' }}>
-                    <img
-                      src={p.url}
-                      alt={`Job photo ${i + 1}`}
-                      onClick={() => setLightbox(p.url)}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover', cursor: 'pointer', display: 'block' }}
-                    />
-                    <button
-                      type="button"
-                      onClick={(e) => { e.stopPropagation(); handleDeletePhoto(p); }}
-                      title="Remove photo"
-                      style={{
-                        position: 'absolute', top: 4, right: 4,
-                        width: 22, height: 22, borderRadius: '50%',
-                        background: 'rgba(15, 23, 42, 0.7)', color: '#fff',
-                        border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 700,
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        padding: 0, lineHeight: 1,
-                      }}
-                    >×</button>
-                  </div>
+                  <PhotoTile
+                    key={p.url || i}
+                    photo={p}
+                    onView={() => setLightbox(p.url)}
+                    onCycleLabel={() => cycleLabel(p)}
+                    onSetCaption={(cap) => setCaption(p, cap)}
+                    onDelete={() => handleDeletePhoto(p)}
+                  />
                 ))}
               </div>
             )}
