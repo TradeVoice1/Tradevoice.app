@@ -1208,8 +1208,8 @@ function Dashboard({ user, nav, invoices = [], plans = [], onScheduleFromPlan })
             return (
               <button
                 key={b.key}
-                onClick={() => nav && nav('invoice')}
-                title={`${b.label} ${b.year}: ${fmtMoney(b.invoiced)} invoiced, ${fmtMoney(b.paid)} paid (${b.count} invoice${b.count === 1 ? '' : 's'})`}
+                onClick={() => nav && nav('invoice', { month: b.key })}
+                title={`${b.label} ${b.year}: ${fmtMoney(b.invoiced)} invoiced, ${fmtMoney(b.paid)} paid (${b.count} invoice${b.count === 1 ? '' : 's'}) — click to open this month's folder`}
                 style={{
                   flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center',
                   gap: 6, height: '100%',
@@ -1740,13 +1740,52 @@ function RecordPaymentModal({ invoice, onSave, onClose }) {
 }
 
 // ── Invoice Hub ────────────────────────────────────────────────────────────────
-function InvoiceHub({ invoices, onSelect, onNew }) {
+function InvoiceHub({ invoices, onSelect, onNew, pendingMonthFilter, clearPendingMonthFilter }) {
   const { isTablet } = useBreakpoint();
   const [filter,  setFilter]  = useState('all');
   const [search,  setSearch]  = useState('');
   const [sortBy,  setSortBy]  = useState('createdAt');
   const [sortDir, setSortDir] = useState('desc');
   const [agingFilter, setAgingFilter] = useState(null);
+
+  // ── Year/Month folder filter ──
+  // Build a year tree from the actual invoice data so years that don't
+  // exist never show. Default to "all years" with no month selected so
+  // first-time users see their full list and can opt into folder mode.
+  const yearTree = (() => {
+    const years = {};                    // { 2026: { '2026-01': count, ... } }
+    for (const inv of invoices) {
+      const ymd = inv.createdAt || '';
+      if (ymd.length < 7) continue;
+      const yr  = ymd.slice(0, 4);
+      const ym  = ymd.slice(0, 7);
+      if (!years[yr]) years[yr] = {};
+      years[yr][ym] = (years[yr][ym] || 0) + 1;
+    }
+    const sortedYears = Object.keys(years).sort().reverse();   // newest first
+    return { years, sortedYears };
+  })();
+  const currentYear = String(new Date().getFullYear());
+  // Default selected year: the one with the newest invoice, or current year
+  // if there are none yet (so the "no invoices yet" state still shows the
+  // current year folder).
+  const [selectedYear, setSelectedYear] = useState(yearTree.sortedYears[0] || currentYear);
+  const [monthFilter, setMonthFilter]   = useState(null);  // 'YYYY-MM' or null
+
+  // Deep-link from the Dashboard trend bar: parent passes the YYYY-MM key,
+  // we pick year + month from it once and clear the parent's pending state
+  // so a subsequent normal nav doesn't reopen the same filter.
+  useEffect(() => {
+    if (!pendingMonthFilter) return;
+    const [yr] = pendingMonthFilter.split('-');
+    if (yr) setSelectedYear(yr);
+    setMonthFilter(pendingMonthFilter);
+    // Clear status + aging filters so the user actually sees that month's
+    // invoices instead of an empty intersection.
+    setFilter('all');
+    setAgingFilter(null);
+    if (clearPendingMonthFilter) clearPendingMonthFilter();
+  }, [pendingMonthFilter]);
 
   const handleSort = (col) => {
     if (sortBy === col) setSortDir(d => d==='asc'?'desc':'asc');
@@ -1760,6 +1799,7 @@ function InvoiceHub({ invoices, onSelect, onNew }) {
     .filter(inv => {
       if (filter !== 'all' && inv.status !== filter) return false;
       if (agingFilter && agingBucket(inv) !== agingFilter) return false;
+      if (monthFilter && !(inv.createdAt || '').startsWith(monthFilter)) return false;
       if (search) {
         const q = search.toLowerCase();
         if (!inv.title.toLowerCase().includes(q) && !inv.clientName.toLowerCase().includes(q) && !inv.number.toLowerCase().includes(q)) return false;
@@ -1819,6 +1859,125 @@ function InvoiceHub({ invoices, onSelect, onNew }) {
           <Btn variant="primary" onClick={onNew} style={{ fontSize:21, padding:'12px 22px', minHeight:52 }}>New Invoice</Btn>
         </div>
       </div>
+
+      {/* ── Year + Month folders ───────────────────────────────────────────
+          Year tabs at the top, twelve month cards below. Click a month to
+          drill in (sets monthFilter); click the active month again to clear.
+          Each month card shows the invoice count for that month so you can
+          see at a glance which months have real activity. */}
+      {(yearTree.sortedYears.length > 0 || monthFilter) && (
+        <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: '14px 16px', marginBottom: 16, boxShadow: C.shadow1 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, gap: 10, flexWrap: 'wrap' }}>
+            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, fontWeight: 800, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+              Browse by Month
+            </div>
+            {monthFilter && (
+              <button
+                onClick={() => setMonthFilter(null)}
+                style={{ ...s.btn, background: 'transparent', border: `1px solid ${C.border2}`, color: C.muted, padding: '6px 12px', fontSize: 13, minHeight: 32 }}
+              >
+                Clear ×
+              </button>
+            )}
+          </div>
+
+          {/* Year tabs */}
+          <div style={{ display: 'flex', gap: 6, marginBottom: 12, overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+            {(() => {
+              // Always include the current year so a fresh account still shows a folder.
+              const yrs = yearTree.sortedYears.includes(currentYear)
+                ? yearTree.sortedYears
+                : [currentYear, ...yearTree.sortedYears];
+              return yrs.map(yr => {
+                const count = Object.values(yearTree.years[yr] || {}).reduce((a, b) => a + b, 0);
+                const active = selectedYear === yr;
+                return (
+                  <button
+                    key={yr}
+                    onClick={() => { setSelectedYear(yr); setMonthFilter(null); }}
+                    style={{
+                      ...s.btn,
+                      padding: '8px 18px', fontSize: 15, minHeight: 40, flexShrink: 0,
+                      background: active ? C.orange : C.raised,
+                      border: `1.5px solid ${active ? C.orange : C.border2}`,
+                      color: active ? '#fff' : C.muted,
+                      fontWeight: 700, fontFamily: "'Inter', sans-serif", letterSpacing: '0.02em',
+                    }}
+                  >
+                    {yr} {count > 0 && <span style={{ opacity: 0.75, marginLeft: 4 }}>({count})</span>}
+                  </button>
+                );
+              });
+            })()}
+          </div>
+
+          {/* Month folders for the active year — 12 cards in a 6×2 (or 4×3 on tablet) grid */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: isTablet ? 'repeat(4, 1fr)' : 'repeat(6, 1fr)',
+            gap: 8,
+          }}>
+            {['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'].map((mLabel, idx) => {
+              const monthKey = `${selectedYear}-${String(idx + 1).padStart(2, '0')}`;
+              const count    = (yearTree.years[selectedYear] || {})[monthKey] || 0;
+              const isActive = monthFilter === monthKey;
+              const isCurrent = monthKey === `${currentYear}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
+              const empty    = count === 0;
+              return (
+                <button
+                  key={monthKey}
+                  onClick={() => {
+                    if (empty && !isActive) return;        // ignore taps on empty months
+                    setMonthFilter(isActive ? null : monthKey);
+                    setFilter('all');
+                    setAgingFilter(null);
+                  }}
+                  disabled={empty && !isActive}
+                  style={{
+                    ...s.btn,
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    padding: '12px 8px',
+                    minHeight: 64,
+                    fontFamily: "'Inter', sans-serif",
+                    background: isActive ? C.orange
+                              : empty   ? '#fafafa'
+                              :           C.raised,
+                    border: `1.5px solid ${
+                      isActive ? C.orange
+                      : isCurrent ? C.orangeMd
+                      : C.border2
+                    }`,
+                    color: isActive ? '#fff' : empty ? C.dim : C.text,
+                    cursor: empty ? 'default' : 'pointer',
+                    opacity: empty ? 0.55 : 1,
+                    fontWeight: 700,
+                  }}
+                >
+                  <span style={{ fontSize: 14, letterSpacing: '0.04em', textTransform: 'uppercase' }}>{mLabel}</span>
+                  <span style={{ fontSize: 12, fontWeight: 600, marginTop: 4, opacity: 0.85 }}>
+                    {count > 0 ? `${count} invoice${count === 1 ? '' : 's'}` : '—'}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          {monthFilter && (
+            <div style={{ marginTop: 12, paddingTop: 12, borderTop: `1px solid ${C.border}`, fontSize: 14, color: C.muted }}>
+              Showing <strong style={{ color: C.text }}>{(() => {
+                const [yr, mo] = monthFilter.split('-');
+                const moName = ['January','February','March','April','May','June','July','August','September','October','November','December'][parseInt(mo, 10) - 1];
+                return `${moName} ${yr}`;
+              })()}</strong>
+              {' '}only —{' '}
+              <button onClick={() => setMonthFilter(null)} style={{ background: 'none', border: 'none', color: C.orange, cursor: 'pointer', fontWeight: 700, padding: 0, fontSize: 14 }}>
+                show all months
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Money In summary — same bold treatment as Dashboard StatCard:
           gradient wash + 4px accent stripe + hover lift. No more blue. */}
@@ -2848,7 +3007,7 @@ function ShareInvoiceModal({ invoice, onClose, onSend }) {
 }
 
 // ── Invoice Shell ──────────────────────────────────────────────────────────────
-function VoiceInvoice({ user, logo, payments, teamMembers = [], sharedInvoices, setSharedInvoices, persistInvoice, removeInvoice, handleUnInvoice, pendingInvoiceId, clearPendingInvoice }) {
+function VoiceInvoice({ user, logo, payments, teamMembers = [], sharedInvoices, setSharedInvoices, persistInvoice, removeInvoice, handleUnInvoice, pendingInvoiceId, clearPendingInvoice, pendingMonthFilter, clearPendingMonthFilter }) {
   const invoices    = sharedInvoices || [];
   const [view,            setView]         = useState('hub');
   const [activeInvoice,   setActiveInv]    = useState(null);
@@ -2962,6 +3121,8 @@ function VoiceInvoice({ user, logo, payments, teamMembers = [], sharedInvoices, 
           invoices={invoices}
           onSelect={id=>{ setActiveInv(id); setView('document'); }}
           onNew={()=>{ setEditingInv(null); setView('editor'); }}
+          pendingMonthFilter={pendingMonthFilter}
+          clearPendingMonthFilter={clearPendingMonthFilter}
         />
       )}
       {view==='editor' && (
@@ -6594,6 +6755,10 @@ function TradevoiceApp() {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [sharedInvoices, setSharedInvoices] = useState([]);
   const [pendingInvoiceId, setPendingInvoiceId] = useState(null);
+  // Deep-link from the Dashboard's monthly trend bars: when a user taps a
+  // bar, we stash the YYYY-MM key here and jump to the Invoices tab. The
+  // InvoiceHub's effect picks it up, sets its own month filter, then clears.
+  const [pendingMonthFilter, setPendingMonthFilter] = useState(null);
   const [plans, setPlans] = useState([]);
   const [timeOff, setTimeOff] = useState([]);
   // When the user clicks "Schedule Job" on a plan, we stash a prefilled job draft here
@@ -7010,9 +7175,17 @@ function TradevoiceApp() {
     }
   };
 
+  // Single nav helper used everywhere — supports an optional opts.month
+  // payload that the Dashboard uses to deep-link into a specific month
+  // folder on the Invoices screen.
+  const navigateTo = (sec, opts) => {
+    if (opts && opts.month) setPendingMonthFilter(opts.month);
+    setSection(sec);
+  };
+
   const content = {
-    dashboard: <Dashboard    user={user} nav={setSection} invoices={sharedInvoices} plans={plans} onScheduleFromPlan={handleScheduleFromPlan} />,
-    invoice:   <VoiceInvoice user={user} logo={logo} payments={payments} taxRates={taxRates} teamMembers={teamMembers} sharedInvoices={sharedInvoices} setSharedInvoices={setSharedInvoices} persistInvoice={persistInvoice} removeInvoice={removeInvoice} handleUnInvoice={handleUnInvoice} pendingInvoiceId={pendingInvoiceId} clearPendingInvoice={() => setPendingInvoiceId(null)} />,
+    dashboard: <Dashboard    user={user} nav={navigateTo} invoices={sharedInvoices} plans={plans} onScheduleFromPlan={handleScheduleFromPlan} />,
+    invoice:   <VoiceInvoice user={user} logo={logo} payments={payments} taxRates={taxRates} teamMembers={teamMembers} sharedInvoices={sharedInvoices} setSharedInvoices={setSharedInvoices} persistInvoice={persistInvoice} removeInvoice={removeInvoice} handleUnInvoice={handleUnInvoice} pendingInvoiceId={pendingInvoiceId} clearPendingInvoice={() => setPendingInvoiceId(null)} pendingMonthFilter={pendingMonthFilter} clearPendingMonthFilter={() => setPendingMonthFilter(null)} />,
     billing:   <Billing      user={user} payments={payments} />,
     quotes:    <Quotes       user={user} logo={logo} taxRates={taxRates} onConvertToInvoice={handleConvertToInvoice} />,
     schedule:  <ScheduleScreen user={user} team={teamMembers} onCreateInvoice={handleJobToInvoice} plans={plans} setPlans={setPlans} pendingJobDraft={pendingJobDraft} clearPendingJobDraft={() => setPendingJobDraft(null)} timeOff={timeOff} />,
