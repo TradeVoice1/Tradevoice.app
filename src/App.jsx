@@ -366,16 +366,26 @@ const StatCard = ({ icon, label, value, color = C.orange }) => (
     boxShadow: C.shadow1,
     transition: 'box-shadow 0.2s, transform 0.2s',
     cursor: 'default',
+    minWidth: 0,   // allows the card to shrink in a grid track without overflowing
   }}
   onMouseEnter={e => { e.currentTarget.style.boxShadow = C.shadow2; e.currentTarget.style.transform = 'translateY(-1px)'; }}
   onMouseLeave={e => { e.currentTarget.style.boxShadow = C.shadow1; e.currentTarget.style.transform = 'translateY(0)'; }}
   >
     {/* Bold accent stripe — 4px gradient with a fade-out tail on the right. */}
     <div style={{ height: 4, background: `linear-gradient(90deg, ${color} 0%, ${color} 60%, ${color}88 100%)` }} />
-    <div style={{ padding: '18px 20px 20px', textAlign: 'center' }}>
+    <div style={{ padding: '18px 16px 20px', textAlign: 'center', minWidth: 0 }}>
       {/* Larger label and bolder weight for sun-readable text outdoors on iPad. */}
-      <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.muted, marginBottom: 10 }}>{label}</div>
-      <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 42, fontWeight: 800, color, lineHeight: 1, fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.03em' }}>{value}</div>
+      <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.muted, marginBottom: 10, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{label}</div>
+      {/* Value uses clamp() to scale 26–42px with viewport — fits "$12,345.00"
+          on iPad portrait without truncating, still big on laptop. nowrap +
+          ellipsis is the safety net for million-dollar invoices. */}
+      <div style={{
+        fontFamily: "'Inter', sans-serif",
+        fontSize: 'clamp(26px, 4.8vw, 42px)',
+        fontWeight: 800, color, lineHeight: 1,
+        fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.03em',
+        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+      }}>{value}</div>
     </div>
   </div>
 );
@@ -1564,7 +1574,7 @@ function InvoiceHub({ invoices, onSelect, onNew }) {
             <div style={{ padding: '16px 18px 18px', textAlign: 'center' }}>
               <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.muted, marginBottom: 4 }}>{c.label}</div>
               <div style={{ fontSize: 13, color: C.dim, marginBottom: 10, fontWeight: 500 }}>{c.sub}</div>
-              <div style={{ fontFamily:"'Inter', sans-serif", fontSize: 36, fontWeight: 800, color: c.color, lineHeight: 1, fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.03em' }}>{c.val}</div>
+              <div style={{ fontFamily:"'Inter', sans-serif", fontSize: 'clamp(24px, 4.4vw, 36px)', fontWeight: 800, color: c.color, lineHeight: 1, fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.03em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.val}</div>
             </div>
           </div>
         ))}
