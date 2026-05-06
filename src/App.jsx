@@ -1740,7 +1740,11 @@ function InvoiceEditor({ initial, user, teamMembers = [], existingInvoices = [],
   const tradeConf = getTradeConfig(user?.trades?.[0], user?.trades);
   const uid2 = () => Math.random().toString(36).slice(2,9);
 
-  const [number]    = useState(initial?.number || nextInvNum(existingInvoices));
+  // For new invoices, leave number as null — the DB BEFORE INSERT trigger
+  // (assign_invoice_number_trigger, migration 0012) assigns the next
+  // sequential number per owner under an advisory lock so concurrent saves
+  // can never collide. For an existing invoice, keep the assigned number.
+  const [number]    = useState(initial?.number || null);
   const [title,     setTitle]     = useState(initial?.title     || '');
   const [clientName,setClientName]= useState(initial?.clientName|| '');
   const [clientEmail,setClientEmail]=useState(initial?.clientEmail||'');
@@ -4060,7 +4064,9 @@ function QuoteEditor({ initial, clients, existingQuotes = [], user, onSave, onCa
 
     const q = {
       id: initial?.id || uid(),
-      number: initial?.number || nextQuoteNum(existingQuotes),
+      // Null for new quotes — DB trigger (assign_quote_number_trigger, migration
+      // 0012) assigns the next sequential number per owner under an advisory lock.
+      number: initial?.number || null,
       clientId: clientId || null,   // empty-string guard for the FK
       title: title.trim(),
       trade,
@@ -4970,7 +4976,7 @@ function Quotes({ user, logo, taxRates, onConvertToInvoice }) {
   const startRevision = (q) => {
     // The new revision starts as a fresh draft. We strip the DB id so upsert treats it as an insert.
     const rev = {
-      ...q, id: undefined, number: nextQuoteNum(quotes), status: 'draft',
+      ...q, id: undefined, number: null, status: 'draft',
       revisionOf: q.number, revisionNumber: (q.revisionNumber || 1) + 1,
       createdAt: new Date().toISOString().split('T')[0], sentAt: null,
     };
@@ -6642,7 +6648,8 @@ function TradevoiceApp() {
     const stripIfNotBundle = (rows) =>
       quote.trade === 'bundle' ? (rows || []) : (rows || []).map(({ _trade, ...rest }) => rest);
     const draft = {
-      number: nextInvNum(sharedInvoices),
+      // DB trigger assigns the number on insert (migration 0012).
+      number: null,
       clientId:      client?.id     || null,
       clientName:    client?.name    || quote.clientName    || '',
       clientEmail:   client?.email   || quote.clientEmail   || '',
@@ -6694,7 +6701,8 @@ function TradevoiceApp() {
     const techMember = (teamMembers || []).find(t => t.userId && t.userId === job.techUserId);
     const techName   = techMember?.name || (job.techUserId === user?.id ? user?.name : '') || '';
     const draft = {
-      number: nextInvNum(sharedInvoices),
+      // DB trigger assigns the number on insert (migration 0012).
+      number: null,
       clientName:    job.clientName || '',
       clientPhone:   job.phone      || '',
       clientAddress: job.address    || '',
