@@ -3,6 +3,7 @@ import { useState, useRef, useEffect, lazy, Suspense } from "react";
 // visits them. The auth bundle stays small so first paint is fast.
 const ForgotPasswordScreen = lazy(() => import("./ForgotPassword").then(m => ({ default: m.ForgotPasswordScreen })));
 const ScheduleScreen       = lazy(() => import("./ScheduleScreen"));
+const JobsScreen           = lazy(() => import("./JobsScreen"));
 const PlansScreen          = lazy(() => import("./PlansScreen"));
 const MarketingScreen      = lazy(() => import("./MarketingScreen"));
 const PrivacyPolicyScreen  = lazy(() => import("./LegalScreens").then(m => ({ default: m.PrivacyPolicyScreen })));
@@ -5773,6 +5774,7 @@ const NAV = [
   { id: 'invoice',   label: 'Invoice'   },
   { id: 'quotes',    label: 'Quotes'    },
   { id: 'schedule',  label: 'Schedule'  },
+  { id: 'jobs',      label: 'Jobs'      },
   { id: 'plans',     label: 'Plans'     },
   { id: 'clients',   label: 'Clients'   },
   { id: 'marketing', label: 'Marketing' },
@@ -6247,6 +6249,7 @@ export default function Tradevoice() {
     billing:   <Billing      user={user} payments={payments} />,
     quotes:    <Quotes       user={user} logo={logo} taxRates={taxRates} onConvertToInvoice={handleConvertToInvoice} />,
     schedule:  <ScheduleScreen user={user} team={teamMembers} onCreateInvoice={handleJobToInvoice} plans={plans} setPlans={setPlans} pendingJobDraft={pendingJobDraft} clearPendingJobDraft={() => setPendingJobDraft(null)} timeOff={timeOff} />,
+    jobs:      <JobsScreen   user={user} team={teamMembers} onCreateInvoice={handleJobToInvoice} />,
     plans:     <PlansScreen  user={user} team={teamMembers} plans={plans} persistPlan={persistPlan} removePlan={removePlan} onScheduleFromPlan={handleScheduleFromPlan} />,
     clients:   <Clients      user={user} nav={setSection} invoices={sharedInvoices} />,
     marketing: <MarketingScreen />,

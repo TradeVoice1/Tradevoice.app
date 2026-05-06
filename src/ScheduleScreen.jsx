@@ -266,7 +266,7 @@ function PhotoTile({ photo, onView, onCycleLabel, onSetCaption, onDelete }) {
 }
 
 // ─── JOB DETAIL MODAL ────────────────────────────────────────────────────────
-function JobDetailModal({ job, techs, onClose, onStatusChange, onCreateInvoice, onPhotosChange, userId, isTech = false }) {
+export function JobDetailModal({ job, techs, onClose, onStatusChange, onCreateInvoice, onPhotosChange, userId, isTech = false }) {
   useEscapeClose(onClose);
   const tech = techs.find(t => t.id === job.techUserId);
   const sc = STATUS_COLORS[job.status] || STATUS_COLORS.scheduled;
