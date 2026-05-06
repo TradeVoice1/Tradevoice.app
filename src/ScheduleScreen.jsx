@@ -1194,6 +1194,18 @@ export default function ScheduleScreen({
               </button>
             ))}
           </div>
+          {/* Sidebar toggle lives in the header bar (was a floating button
+              before — overlapped Saturday's column header). */}
+          <button
+            onClick={() => setSidebarOpen(o => !o)}
+            style={{
+              padding: '10px 12px', minHeight: 44,
+              background: sidebarOpen ? COLORS.green : '#f0f0f0',
+              color: sidebarOpen ? '#fff' : '#666',
+              border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700,
+              cursor: 'pointer', whiteSpace: 'nowrap',
+            }}
+          >{sidebarOpen ? 'Hide ✕' : 'Details'}</button>
           {!isTech && (
             <button style={{ ...s.addBtn, padding: '10px 14px', fontSize: 13, marginLeft: 4 }} onClick={() => { setAddJobDate(currentDate); setShowAddJob(true); }}>+ Job</button>
           )}
@@ -1325,24 +1337,8 @@ export default function ScheduleScreen({
         </div>
         )}
 
-        {/* Tablet-only floating toggle to slide the sidebar in/out without
-            taking nav real estate. Hidden on laptop where the sidebar is
-            always docked. */}
-        {isTablet && (
-          <button
-            onClick={() => setSidebarOpen(o => !o)}
-            style={{
-              position: 'absolute', right: sidebarOpen ? 332 : 12, top: 12,
-              zIndex: 11, padding: '10px 14px', minHeight: 44,
-              background: COLORS.green, color: '#fff', border: 'none',
-              borderRadius: 8, fontSize: 14, fontWeight: 700, cursor: 'pointer',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-              transition: 'right 0.2s',
-            }}
-          >
-            {sidebarOpen ? 'Hide ✕' : 'Details'}
-          </button>
-        )}
+        {/* Sidebar toggle is in the compact header bar above (tablet only) —
+            avoids overlap with the calendar's day-column headers. */}
       </div>
 
       {/* Modals */}
