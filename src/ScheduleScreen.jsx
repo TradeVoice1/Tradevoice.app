@@ -1207,7 +1207,7 @@ export default function ScheduleScreen({
             }}
           >{sidebarOpen ? 'Hide ✕' : 'Details'}</button>
           {!isTech && (
-            <button style={{ ...s.addBtn, padding: '10px 14px', fontSize: 13, marginLeft: 4 }} onClick={() => { setAddJobDate(currentDate); setShowAddJob(true); }}>+ Job</button>
+            <button style={{ ...s.addBtn, padding: '10px 14px', fontSize: 13, marginLeft: 4 }} onClick={() => { setAddJobDate(currentDate); setShowAddJob(true); }}>Schedule Job</button>
           )}
         </div>
       ) : (
