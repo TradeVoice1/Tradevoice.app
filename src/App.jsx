@@ -3991,11 +3991,26 @@ function QuickAddPanel({ library, onInsert, onSaveNew, onDelete, type }) {
 }
 
 
-function QuoteEditor({ initial, clients, existingQuotes = [], user, onSave, onCancel }) {
+function QuoteEditor({ initial, clients, existingQuotes = [], user, onSave, onAddClient, onCancel }) {
   const { isTablet } = useBreakpoint();
   const [tab,      setTab]      = useState('scope');
   const [title,    setTitle]    = useState(initial?.title    || '');
   const [clientId, setClientId] = useState(initial?.clientId || (clients[0]?.id || ''));
+  // Inline new-client modal — opened from the "+ New" button next to the Client select.
+  // We auto-select the newly created client so the user can save the quote in one step.
+  const [showNewClient, setShowNewClient] = useState(false);
+  const handleNewClientSave = async (c) => {
+    if (!onAddClient) { setShowNewClient(false); return; }
+    try {
+      const created = await onAddClient(c);
+      if (created?.id) setClientId(created.id);
+    } catch (e) {
+      // onAddClient already alerts on failure; just keep the modal open
+      console.error('inline add client failed', e);
+      return;
+    }
+    setShowNewClient(false);
+  };
   const [scope,    setScope]    = useState(initial?.scope    || '');
   const [labor,    setLabor]    = useState(initial?.labor    || [{ id: 1, desc: '', hrs: 1, rate: 0 }]);
   const [mats,     setMats]     = useState(initial?.materials|| [{ id: 1, desc: '', qty: 1, unit: 'ea', cost: 0 }]);
@@ -4159,11 +4174,14 @@ function QuoteEditor({ initial, clients, existingQuotes = [], user, onSave, onCa
         borderRadius: 10,
         border: `1px solid ${C.border}`,
         boxShadow: C.shadow1,
-        overflow: 'hidden',
+        // Was overflow:hidden — that clipped the Expiration Date dropdown so the
+        // calendar disappeared as soon as it tried to extend past the card. The
+        // stripe below now carries its own top-corner radii, so we don't need
+        // overflow:hidden to mask its corners.
         marginBottom: 18,
       }}>
         {/* Trade-colored accent stripe — instantly tells the user what kind of doc this is */}
-        <div style={{ height: 5, background: tradeConf.stripe || tradeConf.color }} />
+        <div style={{ height: 5, background: tradeConf.stripe || tradeConf.color, borderTopLeftRadius: 10, borderTopRightRadius: 10 }} />
 
         <div style={{ padding: isTablet ? '16px 18px' : '20px 24px' }}>
           {/* Section header */}
@@ -4194,12 +4212,31 @@ function QuoteEditor({ initial, clients, existingQuotes = [], user, onSave, onCa
           {/* Row 1: Client + Title — title is the primary field, gets more space */}
           <div style={{ display: 'grid', gridTemplateColumns: isTablet ? '1fr' : '240px 1fr', gap: 14, marginBottom: 14 }}>
             <div>
-              <label style={{
-                display: 'block', marginBottom: 6,
-                fontSize: 12, fontWeight: 800, letterSpacing: '0.1em',
-                textTransform: 'uppercase', color: C.muted,
-                fontFamily: "'Inter', sans-serif",
-              }}>Client</label>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                <label style={{
+                  fontSize: 12, fontWeight: 800, letterSpacing: '0.1em',
+                  textTransform: 'uppercase', color: C.muted,
+                  fontFamily: "'Inter', sans-serif",
+                }}>Client</label>
+                {/* Inline "+ New" — saves a trip to the Clients screen for the
+                    common case of "this is a brand-new customer I'm quoting". */}
+                {onAddClient && (
+                  <button
+                    type="button"
+                    onClick={() => setShowNewClient(true)}
+                    style={{
+                      background: 'transparent', border: 'none',
+                      color: C.orange, cursor: 'pointer',
+                      fontFamily: "'Inter', sans-serif",
+                      fontSize: 12, fontWeight: 800, letterSpacing: '0.08em',
+                      textTransform: 'uppercase', padding: '2px 4px',
+                      WebkitTapHighlightColor: 'transparent',
+                    }}
+                  >
+                    + New
+                  </button>
+                )}
+              </div>
               <select value={clientId} onChange={e => setClientId(e.target.value)}
                 style={{ ...s.input, width: '100%', padding: '12px 14px', minHeight: 48, cursor: 'pointer', boxSizing: 'border-box', fontSize: 16, fontWeight: 600 }}>
                 {clients.length === 0 && <option value="">— Add a client first —</option>}
@@ -4563,6 +4600,16 @@ function QuoteEditor({ initial, clients, existingQuotes = [], user, onSave, onCa
           </div>
         </div>
       </div>
+
+      {/* Inline new-client modal — reuses the same component QuotesScreen uses,
+          but flows the saved client straight back into clientId so the user
+          doesn't have to manually re-pick after creating it. */}
+      {showNewClient && (
+        <NewClientModal
+          onSave={handleNewClientSave}
+          onClose={() => setShowNewClient(false)}
+        />
+      )}
     </div>
   );
 }
@@ -5016,13 +5063,18 @@ function Quotes({ user, logo, taxRates, onConvertToInvoice }) {
     }
   };
 
+  // Returns the created client so callers (e.g. inline "+ New" inside QuoteEditor)
+  // can auto-select it after creation. Keeps the existing modal flow working too —
+  // NewClientModal doesn't care about the return value.
   const addClient = async (c) => {
     try {
       const created = await apiAddClient(user.id, c);
       setClients(prev => [...prev, created].sort((a, b) => a.name.localeCompare(b.name)));
       setNewClient(false);
+      return created;
     } catch (e) {
       alert(e?.message || 'Could not save client.');
+      throw e;
     }
   };
 
@@ -5043,6 +5095,7 @@ function Quotes({ user, logo, taxRates, onConvertToInvoice }) {
         <QuoteEditor
           initial={editingQuote} clients={clients} existingQuotes={quotes} user={user}
           onSave={saveQuote}
+          onAddClient={addClient}
           onCancel={() => setView(activeQuote ? 'document' : 'hub')}
         />
       )}
