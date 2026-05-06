@@ -253,6 +253,34 @@ export default function JobsScreen({ user, team = [], onCreateInvoice }) {
     catch (e) { console.error('JobsScreen photos save failed', e); }
   };
 
+  // Reschedule a job from inside the JobDetailModal. Optimistic update,
+  // rollback on save failure (mirrors ScheduleScreen.handleReschedule but
+  // without the calendar-specific drag/drop and time-off prompts — Jobs is
+  // a flat list and we don't want extra confirms blocking the user there).
+  const handleReschedule = async (job, patch) => {
+    if (!user?.id) return;
+    const newDate = new Date(patch.dateIso + 'T12:00:00');
+    const optimistic = {
+      ...job,
+      date: newDate,
+      startHour: patch.startHour,
+      ...(patch.duration != null ? { duration: patch.duration } : {}),
+    };
+    const original = job;
+    setJobs(prev => prev.map(j => j.id === job.id ? optimistic : j));
+    setSelectedJob(prev => prev && prev.id === job.id ? optimistic : prev);
+    try {
+      const saved = await upsertJob(user.id, optimistic);
+      setJobs(prev => prev.map(j => j.id === saved.id ? saved : j));
+      setSelectedJob(prev => prev && prev.id === saved.id ? saved : prev);
+    } catch (e) {
+      console.error('JobsScreen reschedule failed', e);
+      setJobs(prev => prev.map(j => j.id === original.id ? original : j));
+      setSelectedJob(prev => prev && prev.id === original.id ? original : prev);
+      throw e;
+    }
+  };
+
   // Inline tech reassignment from a row — owner-only.
   const handleTechChange = async (jobId, newTechId) => {
     const target = jobs.find(j => j.id === jobId);
@@ -472,6 +500,7 @@ export default function JobsScreen({ user, team = [], onCreateInvoice }) {
           onClose={() => setSelectedJob(null)}
           onStatusChange={handleStatusChange}
           onCreateInvoice={handleCreateInvoiceFromJob}
+          onReschedule={handleReschedule}
         />
       )}
     </div>

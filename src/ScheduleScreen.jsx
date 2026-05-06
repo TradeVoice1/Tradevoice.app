@@ -278,7 +278,12 @@ function PhotoTile({ photo, onView, onCycleLabel, onSetCaption, onDelete }) {
 }
 
 // ─── JOB DETAIL MODAL ────────────────────────────────────────────────────────
-export function JobDetailModal({ job, techs, onClose, onStatusChange, onCreateInvoice, onPhotosChange, userId, isTech = false }) {
+// Renders the full job sheet — when, where, who, photos, status. Also where
+// the user can reschedule a job inline without dragging it on the calendar
+// (drag-reschedule still works on Schedule, but Jobs/list and phone use cases
+// need a tap-to-edit path). When `onReschedule` is provided, the date/time
+// row exposes a Change button that flips the row into an editor.
+export function JobDetailModal({ job, techs, onClose, onStatusChange, onCreateInvoice, onPhotosChange, onReschedule, userId, isTech = false }) {
   useEscapeClose(onClose);
   const tech = techs.find(t => t.id === job.techUserId);
   const sc = STATUS_COLORS[job.status] || STATUS_COLORS.scheduled;
@@ -286,6 +291,48 @@ export function JobDetailModal({ job, techs, onClose, onStatusChange, onCreateIn
   const [uploadErr, setUploadErr]   = useState('');
   const [lightbox,  setLightbox]    = useState(null);  // url being viewed full-size
   const fileInputRef = useRef(null);
+
+  // ── Reschedule form state ──
+  // The inline reschedule editor seeds itself from the current job and only
+  // fires onReschedule on Save, so an accidental tap-and-cancel changes nothing.
+  const initialDateIso = (() => {
+    const d = new Date(job.date);
+    const yyyy = d.getFullYear();
+    const mm   = String(d.getMonth() + 1).padStart(2, '0');
+    const dd   = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  })();
+  const [rescheduling, setRescheduling] = useState(false);
+  const [reDate,       setReDate]       = useState(initialDateIso);
+  const [reHour,       setReHour]       = useState(job.startHour ?? 8);
+  const [reDuration,   setReDuration]   = useState(job.duration  ?? 2);
+  const [reSaving,     setReSaving]     = useState(false);
+
+  const startReschedule = () => {
+    setReDate(initialDateIso);
+    setReHour(job.startHour ?? 8);
+    setReDuration(job.duration ?? 2);
+    setRescheduling(true);
+  };
+  const cancelReschedule = () => setRescheduling(false);
+  const saveReschedule = async () => {
+    if (!onReschedule || reSaving) return;
+    setReSaving(true);
+    try {
+      await onReschedule(job, { dateIso: reDate, startHour: reHour, duration: reDuration });
+      setRescheduling(false);
+    } catch (e) {
+      alert(e?.message || 'Could not reschedule the job.');
+    } finally {
+      setReSaving(false);
+    }
+  };
+
+  // Hour options 6 AM through 8 PM in half-hour steps would be ideal, but the
+  // existing job model stores startHour as an int. Stick with whole hours
+  // until we add a minutes field — same constraint as drag-reschedule today.
+  const HOURS = Array.from({ length: 15 }, (_, i) => 6 + i); // 6..20
+  const DURATIONS = [1, 2, 3, 4, 6, 8]; // hours
 
   const photos = Array.isArray(job.photos) ? job.photos : [];
 
@@ -374,7 +421,85 @@ export function JobDetailModal({ job, techs, onClose, onStatusChange, onCreateIn
         </div>
         <div style={s.body}>
           <div style={s.row}>
-            <div><div style={s.label}>Date & Time</div><div style={s.value}>{formatDate(job.date)} · {formatTime(job.startHour)} — {formatTime(job.startHour + job.duration)}</div></div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+                <div style={s.label}>Date & Time</div>
+                {/* Reschedule trigger — owner only, hidden while editing. The
+                    drag-reschedule on the calendar still works in parallel; this
+                    is the tap-friendly path for Jobs list / phone use. */}
+                {!isTech && onReschedule && !rescheduling && (
+                  <button
+                    type="button"
+                    onClick={startReschedule}
+                    style={{
+                      background: 'transparent', border: 'none',
+                      color: COLORS.green, cursor: 'pointer',
+                      fontSize: 12, fontWeight: 800, letterSpacing: '0.06em',
+                      textTransform: 'uppercase', padding: '2px 4px',
+                      WebkitTapHighlightColor: 'transparent',
+                    }}
+                  >
+                    Reschedule
+                  </button>
+                )}
+              </div>
+              {!rescheduling && (
+                <div style={s.value}>{formatDate(new Date(job.date))} · {formatTime(job.startHour)} — {formatTime(job.startHour + job.duration)}</div>
+              )}
+              {rescheduling && (
+                <div style={{ marginTop: 6, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+                    <label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      <span style={{ fontSize: 10, fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Date</span>
+                      <input
+                        type="date"
+                        value={reDate}
+                        onChange={e => setReDate(e.target.value)}
+                        style={{ padding: '8px 10px', border: '1.5px solid #ddd', borderRadius: 6, fontSize: 14, minHeight: 40 }}
+                      />
+                    </label>
+                    <label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      <span style={{ fontSize: 10, fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Start</span>
+                      <select
+                        value={reHour}
+                        onChange={e => setReHour(parseInt(e.target.value, 10))}
+                        style={{ padding: '8px 10px', border: '1.5px solid #ddd', borderRadius: 6, fontSize: 14, minHeight: 40, background: '#fff' }}
+                      >
+                        {HOURS.map(h => <option key={h} value={h}>{formatTime(h)}</option>)}
+                      </select>
+                    </label>
+                    <label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      <span style={{ fontSize: 10, fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Duration</span>
+                      <select
+                        value={reDuration}
+                        onChange={e => setReDuration(parseInt(e.target.value, 10))}
+                        style={{ padding: '8px 10px', border: '1.5px solid #ddd', borderRadius: 6, fontSize: 14, minHeight: 40, background: '#fff' }}
+                      >
+                        {DURATIONS.map(d => <option key={d} value={d}>{d} hr{d === 1 ? '' : 's'}</option>)}
+                      </select>
+                    </label>
+                  </div>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button
+                      type="button"
+                      onClick={cancelReschedule}
+                      disabled={reSaving}
+                      style={{ flex: 1, padding: '10px', border: '1.5px solid #ddd', background: '#fff', color: '#666', borderRadius: 6, fontSize: 13, fontWeight: 700, cursor: 'pointer', minHeight: 40 }}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={saveReschedule}
+                      disabled={reSaving}
+                      style={{ flex: 2, padding: '10px', border: 'none', background: COLORS.green, color: '#fff', borderRadius: 6, fontSize: 13, fontWeight: 800, cursor: reSaving ? 'wait' : 'pointer', opacity: reSaving ? 0.6 : 1, minHeight: 40 }}
+                    >
+                      {reSaving ? 'Saving…' : 'Save New Time'}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
             <div style={s.badge}>{job.status.replace('-', ' ').replace(/\b\w/g, c => c.toUpperCase())}</div>
           </div>
           <div style={s.row}>
@@ -454,10 +579,26 @@ export function JobDetailModal({ job, techs, onClose, onStatusChange, onCreateIn
           </div>
         </div>
         <div style={s.actionBtns}>
-          {/* Owner-only: edit + create-invoice. Techs only see Done. */}
+          {/* Owner-only: reschedule + create-invoice. Techs only see Done.
+              The Reschedule button mirrors the inline "Reschedule" link on the
+              date row — bigger tap target at the bottom of the modal for the
+              common case ("I just need to move this to next Tuesday"). */}
           {!isTech && (
             <>
-              <button style={{ ...s.btn, background: COLORS.greenLight, color: COLORS.green }}>Edit Job</button>
+              <button
+                type="button"
+                onClick={startReschedule}
+                disabled={rescheduling || !onReschedule}
+                style={{
+                  ...s.btn,
+                  background: rescheduling ? '#e5e7eb' : COLORS.greenLight,
+                  color:      rescheduling ? '#9ca3af' : COLORS.green,
+                  cursor:     rescheduling ? 'default' : 'pointer',
+                  opacity:    onReschedule ? 1 : 0.5,
+                }}
+              >
+                {rescheduling ? 'Editing time…' : 'Reschedule'}
+              </button>
               <button
                 disabled={job.status !== 'completed' || !!job.invoiceId}
                 onClick={() => onCreateInvoice && onCreateInvoice(job)}
@@ -1078,10 +1219,13 @@ export default function ScheduleScreen({
   // Drag-and-drop reschedule. `dayIso` is yyyy-mm-dd (local), `hour` is 0-23.
   // We update local state optimistically, then persist via upsertJob. If the
   // save fails we roll back so the calendar doesn't lie about server state.
-  const handleReschedule = async (job, dayIso, hour) => {
+  // Optional `duration` lets the inline modal editor change the length too;
+  // drag-reschedule on the calendar leaves duration alone.
+  const handleReschedule = async (job, dayIso, hour, duration) => {
     // Skip the no-op case (drop in same cell) so we don't make a useless write.
     const sameDay = isSameDay(new Date(job.date), new Date(dayIso + 'T12:00:00'));
-    if (sameDay && job.startHour === hour) return;
+    const sameDuration = duration == null || duration === job.duration;
+    if (sameDay && job.startHour === hour && sameDuration) return;
     if (!user?.id) return;
 
     // If the assigned tech is off on the new date, give the owner a chance to
@@ -1094,17 +1238,27 @@ export default function ScheduleScreen({
     }
 
     const newDate = new Date(dayIso + 'T12:00:00');
-    const optimistic = { ...job, date: newDate, startHour: hour };
+    const optimistic = {
+      ...job,
+      date: newDate,
+      startHour: hour,
+      ...(duration != null ? { duration } : {}),
+    };
     const original   = job;
     setJobs(prev => prev.map(j => j.id === job.id ? optimistic : j));
+    // Keep the open modal in sync with the new times so it doesn't show stale data.
+    setSelectedJob(prev => prev && prev.id === job.id ? optimistic : prev);
 
     try {
       const saved = await upsertJob(user.id, optimistic);
       setJobs(prev => prev.map(j => j.id === saved.id ? saved : j));
+      setSelectedJob(prev => prev && prev.id === saved.id ? saved : prev);
     } catch (e) {
       console.error('reschedule failed', e);
       setJobs(prev => prev.map(j => j.id === original.id ? original : j));
+      setSelectedJob(prev => prev && prev.id === original.id ? original : prev);
       alert('Could not move that job — restored.');
+      throw e;
     }
   };
 
@@ -1351,6 +1505,9 @@ export default function ScheduleScreen({
           onPhotosChange={(photos) => handleJobPhotosChange(selectedJob.id, photos)}
           onClose={() => setSelectedJob(null)}
           onStatusChange={handleStatusChange}
+          // Inline reschedule from the modal — same engine drag-reschedule uses,
+          // just wired to a tap-friendly date/time picker instead of a drag handle.
+          onReschedule={(j, patch) => handleReschedule(j, patch.dateIso, patch.startHour, patch.duration)}
           onCreateInvoice={async (job) => {
             if (!onCreateInvoice) return;
             try {
