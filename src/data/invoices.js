@@ -34,6 +34,9 @@ const dbToInvoice = (r) => ({
   // Replaces the old "parse it from notes" approach which broke if the user
   // edited the notes.
   sourceQuoteId:  r.source_quote_id ?? null,
+  // Public-link share token (migration 0011). One unguessable UUID per
+  // invoice; powers the /i/<token> public viewer.
+  shareToken:     r.share_token    ?? null,
 });
 
 // Translate the front-end invoice shape into the DB column names. We do NOT include
@@ -111,4 +114,33 @@ export async function upsertInvoice(ownerId, inv) {
 export async function deleteInvoice(id) {
   const { error } = await supabase.from('invoices').delete().eq('id', id);
   if (error) throw error;
+}
+
+// Public lookup by share_token — used by the customer-facing /i/<token> page.
+// Goes through a security-definer RPC so RLS still locks SELECT for normal
+// queries; only this function (and only via the unguessable token) returns
+// the invoice + the contractor's branding/payment info.
+export async function getPublicInvoice(shareToken) {
+  if (!shareToken) return null;
+  const { data, error } = await supabase.rpc('get_public_invoice', { p_token: shareToken });
+  if (error) throw error;
+  if (!data) return null;
+  // The RPC returns { invoice: <db row>, profile: <subset> }. Convert the
+  // invoice row into the front-end shape via the same dbToInvoice mapper so
+  // the public page can reuse the same render code.
+  return {
+    invoice: dbToInvoice(data.invoice),
+    profile: data.profile
+      ? {
+          name:        data.profile.name        || '',
+          company:     data.profile.company     || '',
+          phone:       data.profile.phone       || '',
+          tagline:     data.profile.tagline     || '',
+          license:     data.profile.license     || '',
+          payments:    data.profile.payments    || {},
+          accentColor: data.profile.accent_color || '',
+          logoUrl:     data.profile.logo_url    || null,
+        }
+      : null,
+  };
 }

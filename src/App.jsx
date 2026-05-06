@@ -5,6 +5,7 @@ const ForgotPasswordScreen = lazy(() => import("./ForgotPassword").then(m => ({ 
 const ScheduleScreen       = lazy(() => import("./ScheduleScreen"));
 const JobsScreen           = lazy(() => import("./JobsScreen"));
 const PlansScreen          = lazy(() => import("./PlansScreen"));
+const InvoicePaymentPage   = lazy(() => import("./InvoicePaymentPage").then(m => ({ default: m.InvoicePaymentPage })));
 const MarketingScreen      = lazy(() => import("./MarketingScreen"));
 const PrivacyPolicyScreen  = lazy(() => import("./LegalScreens").then(m => ({ default: m.PrivacyPolicyScreen })));
 const TermsScreen          = lazy(() => import("./LegalScreens").then(m => ({ default: m.TermsScreen })));
@@ -2091,7 +2092,8 @@ function InvoiceEditor({ initial, user, teamMembers = [], onSave, onCancel }) {
 }
 
 // ── Invoice Document ───────────────────────────────────────────────────────────
-function InvoiceDocument({ invoice, user, logo, payments, onEdit, onBack, onRecordPayment, onVoid, onDelete, onUnInvoice, onSendReminder }) {
+function InvoiceDocument({ invoice, user, logo, payments, onEdit, onBack, onRecordPayment, onVoid, onDelete, onUnInvoice, onSendReminder, onSend }) {
+  const [showShare, setShowShare] = useState(false);
   const { isTablet } = useBreakpoint();
   const calc = calcInvoice(invoice, user?.state);
   const tradeConf = getTradeConfig(invoice.trade, user?.trades);
@@ -2144,8 +2146,17 @@ function InvoiceDocument({ invoice, user, logo, payments, onEdit, onBack, onReco
         )}
         <div style={{ marginLeft:'auto', display:'flex', gap:8, flexWrap:'wrap' }}>
           {!isVoid && !isPaid && <Btn variant="ghost" size="sm" onClick={onEdit} style={{ fontSize:18, padding:'10px 18px', minHeight:48 }}>Edit</Btn>}
-          <Btn variant="ghost" size="sm" style={{ fontSize:18, padding:'10px 18px', minHeight:48 }}>Download PDF</Btn>
-          {!isVoid && !isPaid && <Btn variant="ghost" size="sm" style={{ fontSize:18, padding:'10px 18px', minHeight:48 }}>Send</Btn>}
+          {/* Download PDF — uses the browser's print dialog to "save as PDF".
+              Crude but works on every browser; a real PDF generator can come later. */}
+          <Btn variant="ghost" size="sm" onClick={() => window.print()} style={{ fontSize:18, padding:'10px 18px', minHeight:48 }}>Download PDF</Btn>
+          {/* Send — opens the share modal with a copyable link to the public invoice page. */}
+          {!isVoid && !isPaid && (
+            <Btn variant="primary" size="sm" onClick={() => setShowShare(true)} style={{ fontSize:18, padding:'10px 18px', minHeight:48 }}>Send</Btn>
+          )}
+          {/* Re-send link for invoices that have already been sent */}
+          {(invoice.status === 'sent' || invoice.status === 'viewed' || invoice.status === 'partial') && (
+            <Btn variant="ghost" size="sm" onClick={() => setShowShare(true)} style={{ fontSize:18, padding:'10px 18px', minHeight:48 }}>Share Link</Btn>
+          )}
           {isOverdue && <Btn variant="ghost" size="sm" onClick={onSendReminder} style={{ fontSize:18, padding:'10px 18px', minHeight:48, color:C.warn, borderColor:C.warn+'66' }}>Send Reminder</Btn>}
           {!isVoid && !isPaid && calc.balance > 0 && (
             <Btn variant="primary" size="sm" onClick={onRecordPayment} style={{ fontSize:18, padding:'10px 18px', minHeight:48 }}>Record Payment</Btn>
@@ -2498,6 +2509,125 @@ function InvoiceDocument({ invoice, user, logo, payments, onEdit, onBack, onReco
           })}
         </div>
       )}
+
+      {/* Share-link modal — pops when the user clicks Send. Copies the
+          public invoice URL, auto-bumps status draft → sent on first open. */}
+      {showShare && (
+        <ShareInvoiceModal
+          invoice={invoice}
+          onClose={() => setShowShare(false)}
+          onSend={onSend}
+        />
+      )}
+    </div>
+  );
+}
+
+// ── Share Invoice Modal — public link + send actions ─────────────────────────
+// Surfaces the /i/<share_token> URL and gives the user three quick ways to
+// hand it to the customer: copy link, text (mobile sms: scheme), or email
+// (mailto: scheme). On open, fires onSend(invoice) which the parent uses to
+// flip the invoice status from draft → sent.
+function ShareInvoiceModal({ invoice, onClose, onSend }) {
+  const url = `https://app.thetradevoice.com/i/${invoice.shareToken}`;
+  const [copied, setCopied] = useState('');
+  const stamped = useRef(false);
+
+  // Bump status the first time this modal opens for a draft.
+  useEffect(() => {
+    if (!stamped.current && invoice.status === 'draft' && onSend) {
+      stamped.current = true;
+      onSend(invoice);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const copy = (text, key) => {
+    navigator.clipboard?.writeText(text);
+    setCopied(key);
+    setTimeout(() => setCopied(''), 1500);
+  };
+
+  const subject = encodeURIComponent(`Invoice ${invoice.number} from your contractor`);
+  const body    = encodeURIComponent(
+    `Hi ${invoice.clientName || ''},\n\n` +
+    `Here's your invoice: ${url}\n\n` +
+    `Total: ${fmtMoney((invoice.labor||[]).reduce((s,r)=>s+(r.hrs||0)*(r.rate||0),0)+(invoice.materials||[]).reduce((s,r)=>s+(r.qty||0)*(r.cost||0),0)+(invoice.equipment||[]).reduce((s,r)=>s+(r.qty||0)*(r.rate||0),0))}\n\n` +
+    `Thanks!`
+  );
+  const smsBody = encodeURIComponent(`Invoice ${invoice.number}: ${url}`);
+
+  const phoneClean = (invoice.clientPhone || '').replace(/\D/g, '');
+  const smsHref    = phoneClean ? `sms:${phoneClean}?body=${smsBody}` : `sms:?body=${smsBody}`;
+  const mailHref   = invoice.clientEmail
+    ? `mailto:${invoice.clientEmail}?subject=${subject}&body=${body}`
+    : `mailto:?subject=${subject}&body=${body}`;
+
+  return (
+    <div onClick={onClose} style={{
+      position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.5)', zIndex: 1000,
+      display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
+    }}>
+      <div onClick={e => e.stopPropagation()} style={{
+        background: '#fff', borderRadius: 14, width: '100%', maxWidth: 500,
+        boxShadow: '0 20px 60px rgba(0,0,0,0.25)', overflow: 'hidden',
+      }}>
+        {/* Header */}
+        <div style={{ padding: '20px 24px', background: C.success, color: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', opacity: 0.85 }}>{invoice.status === 'draft' ? 'Sending Invoice' : 'Invoice Link'}</div>
+            <div style={{ fontSize: 19, fontWeight: 700, marginTop: 2 }}>{invoice.number}</div>
+          </div>
+          <button onClick={onClose} style={{ width: 44, height: 44, borderRadius: '50%', background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', fontSize: 22, cursor: 'pointer' }}>×</button>
+        </div>
+
+        {/* Body */}
+        <div style={{ padding: '20px 24px' }}>
+          <div style={{ fontSize: 13, color: C.muted, lineHeight: 1.55, marginBottom: 14 }}>
+            Send this link to <strong style={{ color: C.text }}>{invoice.clientName || 'your customer'}</strong>. They'll see a clean read-only invoice and your payment options. Mobile? Tap "Text" to open your messaging app with the link pre-filled.
+          </div>
+
+          {/* The URL */}
+          <div style={{ ...s.label, marginBottom: 6 }}>Public Link</div>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+            <input readOnly value={url} onFocus={e => e.target.select()}
+              style={{ flex: 1, padding: '12px 14px', minHeight: 48, fontSize: 14, border: `1px solid ${C.border}`, borderRadius: 8, background: C.raised, color: C.text, fontFamily: 'ui-monospace, monospace', boxSizing: 'border-box' }} />
+            <button onClick={() => copy(url, 'url')} style={{
+              padding: '0 18px', minHeight: 48, border: `1.5px solid ${copied === 'url' ? C.success : C.border2}`,
+              borderRadius: 8, background: copied === 'url' ? '#f0fdf4' : '#fff',
+              color: copied === 'url' ? C.success : C.muted, fontSize: 14, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap',
+            }}>{copied === 'url' ? '✓ Copied' : 'Copy'}</button>
+          </div>
+
+          {/* Send via... */}
+          <div style={{ ...s.label, marginBottom: 6 }}>Send Via</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 14 }}>
+            <a href={smsHref} style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              padding: '14px', minHeight: 50, borderRadius: 8, textDecoration: 'none',
+              background: C.orange, color: '#fff', fontSize: 14, fontWeight: 700,
+              boxShadow: '0 1px 2px rgba(45,106,79,0.25)',
+            }}>📱 Text {invoice.clientName ? `${invoice.clientName.split(' ')[0]}` : 'Customer'}</a>
+            <a href={mailHref} style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              padding: '14px', minHeight: 50, borderRadius: 8, textDecoration: 'none',
+              background: '#fff', color: C.orange, fontSize: 14, fontWeight: 700,
+              border: `1.5px solid ${C.orange}88`,
+            }}>✉️ Email Customer</a>
+          </div>
+
+          <div style={{ fontSize: 12, color: C.dim, lineHeight: 1.5, marginBottom: 4 }}>
+            <strong style={{ color: C.muted }}>Tip:</strong> the customer doesn't need an account. They open the link, see the invoice, and pay using whatever method you have set in Settings → Payments (Venmo, Zelle, check, cash, etc.).
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div style={{ padding: '14px 24px', borderTop: `1px solid ${C.border}`, display: 'flex', gap: 10 }}>
+          <button onClick={onClose} style={{
+            flex: 1, padding: '14px', minHeight: 50, border: 'none', borderRadius: 8,
+            background: C.success, color: '#fff', fontSize: 15, fontWeight: 700, cursor: 'pointer',
+          }}>Done</button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -2586,6 +2716,28 @@ function VoiceInvoice({ user, logo, payments, teamMembers = [], sharedInvoices, 
     }
   };
 
+  // Auto-bumps a draft invoice to 'sent' the first time the user opens the
+  // share modal. Adds an activity-log entry so the audit trail records that
+  // a public link was generated. Idempotent — calling it on a non-draft
+  // invoice just no-ops.
+  const sendInvoice = async (inv) => {
+    if (!inv || inv.status !== 'draft') return;
+    try {
+      await persistInvoice({
+        ...inv,
+        status: 'sent',
+        activity: [...(inv.activity || []), {
+          date: today(),
+          type: 'sent',
+          note: `Public invoice link shared with ${inv.clientName || 'customer'}`,
+        }],
+      });
+    } catch (e) {
+      console.error('sendInvoice failed', e);
+      // Non-fatal — the share modal still works; user can resend later.
+    }
+  };
+
   const active = invoices.find(i=>i.id===activeInvoice);
 
   return (
@@ -2618,6 +2770,7 @@ function VoiceInvoice({ user, logo, payments, teamMembers = [], sharedInvoices, 
           onVoid={()=>voidInvoice(active.id)}
           onDelete={()=>deleteInvoiceFlow(active.id)}
           onUnInvoice={()=>unInvoiceFlow(active.id)}
+          onSend={sendInvoice}
           onSendReminder={()=>{
             const note = `Overdue reminder sent to ${active.clientEmail}`;
             saveInvoice({ ...active, activity:[...(active.activity||[]), { date:today(), type:'reminder', note }] });
@@ -6072,7 +6225,27 @@ const NAV = [
 ];
 const BOTTOM_H = 68;
 
+// Top-level routing — picks between the customer-facing public invoice page
+// (no auth required) and the main authenticated app. Done here instead of
+// inside Tradevoice() so the hook order stays stable in either branch.
 export default function Tradevoice() {
+  const publicInvoiceToken = (() => {
+    if (typeof window === 'undefined') return null;
+    const m = window.location.pathname.match(/^\/i\/([0-9a-f-]{36})/i);
+    return m ? m[1] : null;
+  })();
+
+  if (publicInvoiceToken) {
+    return (
+      <Suspense fallback={<div style={{ minHeight: '100vh', background: C.bg }} />}>
+        <InvoicePaymentPage token={publicInvoiceToken} />
+      </Suspense>
+    );
+  }
+  return <TradevoiceApp />;
+}
+
+function TradevoiceApp() {
   useEffect(() => { loadFonts(); }, []);
   const { isTablet } = useBreakpoint();
 
