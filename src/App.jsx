@@ -356,7 +356,12 @@ const SectionHead = ({ icon, title, sub }) => (
   </div>
 );
 
-const StatCard = ({ icon, label, value, color = C.orange }) => (
+// `delta` (optional): { pct: number|null, label: string } — renders a small
+// chip under the value, e.g. "▲ 18% vs last month". Pass pct: null when there's
+// no prior period to compare against (shows "—" instead of a misleading 0%).
+// `sub` (optional): plain string sub-line under the value — used for non-comparison
+// context like "12 invoices YTD".
+const StatCard = ({ icon, label, value, color = C.orange, delta, sub }) => (
   <div style={{
     // Gradient wash tinted to the card's color — gives each tile real personality.
     // White card with a soft tint of the accent color at the bottom-right corner.
@@ -387,6 +392,22 @@ const StatCard = ({ icon, label, value, color = C.orange }) => (
         fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.03em',
         whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
       }}>{value}</div>
+      {/* Optional MoM delta chip. Green for positive, red for negative,
+          neutral gray when there's no prior month to compare. */}
+      {delta && (
+        <div style={{ marginTop: 8, fontSize: 12, fontWeight: 700, lineHeight: 1.3 }}>
+          {delta.pct == null ? (
+            <span style={{ color: C.dim }}>— {delta.label}</span>
+          ) : (
+            <span style={{ color: delta.pct >= 0 ? C.success : C.errorBold }}>
+              {delta.pct >= 0 ? '▲' : '▼'} {Math.abs(delta.pct).toFixed(0)}% {delta.label}
+            </span>
+          )}
+        </div>
+      )}
+      {sub && !delta && (
+        <div style={{ marginTop: 8, fontSize: 12, color: C.muted, fontWeight: 500 }}>{sub}</div>
+      )}
     </div>
   </div>
 );
@@ -1061,17 +1082,61 @@ function Dashboard({ user, nav, invoices = [], plans = [], onScheduleFromPlan })
     .sort((a, b) => (a.nextDueAt || '').localeCompare(b.nextDueAt || ''))
     .slice(0, 5);
 
-  // Compute live stats from real invoices
+  // ── Monthly invoice tracking ──────────────────────────────────────────────
+  // Build 12 month buckets ending with the current month, then walk the
+  // invoices once and sum into them. Cheaper than filtering 12 separate
+  // times. Each bucket carries the invoiced total, paid total, and count
+  // so the dashboard can show $ amounts AND a comparison to last month.
   const now = new Date();
   const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const monthBuckets = (() => {
+    const buckets = [];
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      buckets.push({
+        key,
+        label:    MONTH_NAMES[d.getMonth()],
+        year:     d.getFullYear(),
+        invoiced: 0,
+        paid:     0,
+        count:    0,
+      });
+    }
+    const idx = Object.create(null);
+    for (const b of buckets) idx[b.key] = b;
+    for (const inv of invoices) {
+      const monthKey = (inv.createdAt || '').slice(0, 7);
+      const bucket = idx[monthKey];
+      if (!bucket) continue;
+      const total = calcInvoice(inv, user?.state).total;
+      bucket.invoiced += total;
+      bucket.count    += 1;
+      if (inv.status === 'paid') bucket.paid += total;
+    }
+    return buckets;
+  })();
+  const thisMonthBucket = monthBuckets[11];
+  const lastMonthBucket = monthBuckets[10];
+  const moMPct = (a, b) => (b > 0 ? ((a - b) / b) * 100 : (a > 0 ? null : 0));
+  const invoicedDeltaPct = moMPct(thisMonthBucket.invoiced, lastMonthBucket.invoiced);
+  const paidDeltaPct     = moMPct(thisMonthBucket.paid,     lastMonthBucket.paid);
+
   const monthInvoices = invoices.filter(i => (i.createdAt || '').startsWith(thisMonth));
   const outstanding   = invoices
     .filter(i => i.status !== 'paid' && i.status !== 'draft' && i.status !== 'void')
     .reduce((sum, i) => sum + calcInvoice(i, user?.state).balance, 0);
+  const overdueCount  = invoices
+    .filter(i => i.status === 'overdue' || (i.dueAt && i.dueAt < new Date().toISOString().split('T')[0] && i.status !== 'paid' && i.status !== 'draft' && i.status !== 'void'))
+    .length;
   const paidInvoices  = invoices.filter(i => i.status === 'paid');
   const avgInvoice    = invoices.length
     ? invoices.reduce((sum, i) => sum + calcInvoice(i, user?.state).total, 0) / invoices.length
     : 0;
+  // Peak month over the visible window — used to scale the trend bars so the
+  // tallest bar is always full-height and the rest scale relative to it.
+  const peakMonthInvoiced = Math.max(1, ...monthBuckets.map(b => b.invoiced));
 
   const recent = [...invoices]
     .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''))
@@ -1084,12 +1149,109 @@ function Dashboard({ user, nav, invoices = [], plans = [], onScheduleFromPlan })
       <SectionHead icon="" title={`Hey, ${firstName}`}
         sub={subtitleParts.length ? subtitleParts.join('  —  ') : 'Welcome to Tradevoice'} />
 
-      {/* Stats — 2×2 on tablet, 4 across on laptop */}
+      {/* Stats — 2×2 on tablet, 4 across on laptop. Each card now shows the
+          dollar total this month + how it compares to last month so the
+          owner sees momentum at a glance, not just a count. */}
       <div style={{ display: 'grid', gridTemplateColumns: isTablet ? '1fr 1fr' : 'repeat(4,1fr)', gap: 12, marginBottom: 22 }}>
-        <StatCard icon="" label="Invoices This Month" value={String(monthInvoices.length)} color={C.orange} />
-        <StatCard icon="" label="Outstanding"         value={fmtMoney(outstanding)} color={outstanding > 0 ? C.errorBold : C.muted} />
-        <StatCard icon="" label="Jobs Completed"      value={String(paidInvoices.length)} color={C.success} />
-        <StatCard icon="" label="Avg. Invoice"        value={fmtMoney(avgInvoice)} color={C.accent} />
+        <StatCard
+          label="Invoiced This Month"
+          value={fmtMoney(thisMonthBucket.invoiced)}
+          color={C.orange}
+          delta={{ pct: invoicedDeltaPct, label: 'vs last month' }}
+        />
+        <StatCard
+          label="Paid This Month"
+          value={fmtMoney(thisMonthBucket.paid)}
+          color={C.success}
+          delta={{ pct: paidDeltaPct, label: 'vs last month' }}
+        />
+        <StatCard
+          label="Outstanding"
+          value={fmtMoney(outstanding)}
+          color={outstanding > 0 ? C.errorBold : C.muted}
+          sub={overdueCount > 0 ? `${overdueCount} overdue` : 'All on time'}
+        />
+        <StatCard
+          label="Avg. Invoice"
+          value={fmtMoney(avgInvoice)}
+          color={C.accent}
+          sub={`${invoices.length} invoice${invoices.length === 1 ? '' : 's'} all-time`}
+        />
+      </div>
+
+      {/* ── 12-Month Invoice Trend ─────────────────────────────────────────
+          Bar chart of monthly invoiced totals so the owner can spot the
+          slow seasons and the boom months at a glance. Tap any bar to jump
+          into the Invoices screen filtered to that month — turns the chart
+          from passive read-only into a real navigation surface. */}
+      <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: '18px 20px', marginBottom: 22, boxShadow: C.shadow1 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14, gap: 10, flexWrap: 'wrap' }}>
+          <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, fontWeight: 800, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+            12-Month Invoice Trend
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14, fontSize: 12, color: C.muted, fontWeight: 600 }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ width: 10, height: 10, background: C.orange, borderRadius: 2, display: 'inline-block' }} />
+              Invoiced
+            </span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ width: 10, height: 10, background: C.success, borderRadius: 2, display: 'inline-block' }} />
+              Paid
+            </span>
+          </div>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, height: 160, padding: '8px 0' }}>
+          {monthBuckets.map((b, i) => {
+            const isCurrent = b.key === thisMonth;
+            const invH = (b.invoiced / peakMonthInvoiced) * 100;
+            const paidH = b.invoiced > 0 ? (b.paid / b.invoiced) * invH : 0;
+            return (
+              <button
+                key={b.key}
+                onClick={() => nav && nav('invoice')}
+                title={`${b.label} ${b.year}: ${fmtMoney(b.invoiced)} invoiced, ${fmtMoney(b.paid)} paid (${b.count} invoice${b.count === 1 ? '' : 's'})`}
+                style={{
+                  flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center',
+                  gap: 6, height: '100%',
+                  background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+                  WebkitTapHighlightColor: 'transparent',
+                  minWidth: 0,
+                }}
+              >
+                <div style={{ flex: 1, width: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', minWidth: 0 }}>
+                  {/* Single bar with two stacked segments — paid (success green)
+                      at the bottom, the unpaid remainder (orange) on top. The
+                      total bar height = b.invoiced as % of peakMonthInvoiced. */}
+                  <div style={{
+                    height: `${invH}%`,
+                    minHeight: b.invoiced > 0 ? 2 : 0,
+                    background: C.orange,
+                    borderRadius: '4px 4px 0 0',
+                    border: isCurrent ? `2px solid ${C.text}` : 'none',
+                    boxSizing: 'border-box',
+                    position: 'relative',
+                    transition: 'opacity 0.15s',
+                    overflow: 'hidden',
+                  }}>
+                    {b.paid > 0 && (
+                      <div style={{
+                        position: 'absolute', left: 0, right: 0, bottom: 0,
+                        height: `${(b.paid / b.invoiced) * 100}%`,
+                        background: C.success,
+                      }} />
+                    )}
+                  </div>
+                </div>
+                <div style={{ fontSize: 11, fontWeight: isCurrent ? 800 : 600, color: isCurrent ? C.text : C.muted, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                  {b.label}
+                </div>
+                <div style={{ fontSize: 10, fontWeight: 700, color: isCurrent ? C.orange : C.dim, fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>
+                  {b.invoiced >= 1000 ? `$${(b.invoiced / 1000).toFixed(b.invoiced >= 10000 ? 0 : 1)}k` : (b.invoiced > 0 ? `$${Math.round(b.invoiced)}` : '—')}
+                </div>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* Body — stacks fully on tablet */}
