@@ -552,7 +552,6 @@
         <a href="#pricing">Pricing</a>
         <a href="#compare">Compare</a>
         <a href="#faq">FAQ</a>
-        <a href="#blog">Blog</a>
       </div>
       <div class="nav-cta">
         <a href="https://app.thetradevoice.com" class="nav-signin">Sign in</a>
@@ -1160,7 +1159,7 @@
           <li>Custom branding & logo</li>
           <li>Email & chat support</li>
         </ul>
-        <button class="plan-btn">Start Free Trial</button>
+        <a href="https://app.thetradevoice.com" class="plan-btn" style="display:block;text-decoration:none">Start Free Trial</a>
       </div>
       <div class="plan-card popular">
         <div class="popular-badge">Most Popular</div>
@@ -1174,7 +1173,7 @@
           <li>Priority support</li>
           <li>Early access to new features</li>
         </ul>
-        <button class="plan-btn">Start Free Trial</button>
+        <a href="https://app.thetradevoice.com" class="plan-btn" style="display:block;text-decoration:none">Start Free Trial</a>
       </div>
       <div class="plan-card">
         <div class="plan-name">All Trades</div>
@@ -1187,7 +1186,7 @@
           <li>Dedicated onboarding call</li>
           <li>Custom QuickAdd library setup</li>
         </ul>
-        <button class="plan-btn">Start Free Trial</button>
+        <a href="https://app.thetradevoice.com" class="plan-btn" style="display:block;text-decoration:none">Start Free Trial</a>
       </div>
     </div>
     <p class="plan-note">All plans include a 1% platform fee on card payments — passed to the client. You keep 100% of every invoice.</p>
@@ -1232,36 +1231,13 @@
   </div>
 </section>
 
-<!-- ── REFERRAL ─────────────────────────────────────────────────────────────────── -->
-<section class="referral">
-  <div class="container">
-    <div class="referral-inner">
-      <div>
-        <span class="section-tag" style="background:rgba(255,255,255,0.2);color:#fff">Spread the word</span>
-        <h2>Give $20. Get $20.</h2>
-        <p>Contractors talk. When you refer another contractor to Tradevoice, you both get a $20 credit on your next month. No limit on how many you refer.</p>
-        <a href="#" class="referral-btn">Get My Referral Link</a>
-      </div>
-      <div class="referral-cards">
-        <div class="referral-card">
-          <div class="ref-amount">$20</div>
-          <div><div class="ref-title">Your friend gets</div><div class="ref-desc">$20 off their first month when they sign up with your link</div></div>
-        </div>
-        <div class="referral-card">
-          <div class="ref-amount">$20</div>
-          <div><div class="ref-title">You get</div><div class="ref-desc">$20 credit on your account the moment they subscribe</div></div>
-        </div>
-        <div class="referral-card">
-          <div class="ref-amount">∞</div>
-          <div><div class="ref-title">No limit</div><div class="ref-desc">Refer as many contractors as you want. Every one earns you $20.</div></div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
+<!-- Referral section removed — the program isn't built yet. The dead
+     "Get My Referral Link" CTA was making a promise the app couldn't
+     keep. Will be reinstated when the referral feature ships. -->
+
 
 <!-- ── TAX UPDATES ─────────────────────────────────────────────────────────────── -->
-<section class="tax-updates">
+<section class="tax-updates" id="tax-updates">
   <div class="container">
     <div class="tax-inner">
       <div>
@@ -1288,46 +1264,10 @@
   </div>
 </section>
 
-<!-- ── BLOG ────────────────────────────────────────────────────────────────────── -->
-<section class="blog" id="blog">
-  <div class="container">
-    <span class="section-tag">From the field</span>
-    <h2>Tips for running a tighter trade business</h2>
-    <p class="sub">No fluff. Just real advice from contractors who figured it out.</p>
-    <div class="blog-grid">
-      <div class="blog-card fade-in">
-        <div class="blog-thumb" style="background:#effaf4"></div>
-        <div class="blog-body">
-          <div class="blog-category">Invoicing</div>
-          <div class="blog-title">Why contractors lose $12,000 a year on slow invoicing</div>
-          <div class="blog-excerpt">Every day between finishing a job and sending the invoice is a day your money is sitting in someone else's pocket. Here's the math.</div>
-          <a href="#" class="blog-read">Read more →</a>
-        </div>
-      </div>
-      <div class="blog-card fade-in">
-        <div class="blog-thumb" style="background:#eff6ff"></div>
-        <div class="blog-body">
-          <div class="blog-category">Quoting</div>
-          <div class="blog-title">How to write a quote that wins the job before you leave the driveway</div>
-          <div class="blog-excerpt">The difference between a quote that gets accepted on the spot and one that gets "we'll think about it" is how professional it looks. Here's the template.</div>
-          <a href="#" class="blog-read">Read more →</a>
-        </div>
-      </div>
-      <div class="blog-card fade-in">
-        <div class="blog-thumb" style="background:#fffbeb"></div>
-        <div class="blog-body">
-          <div class="blog-category">Tax & Compliance</div>
-          <div class="blog-title">Texas contractor sales tax: what's taxable, what's not, and how to avoid an audit</div>
-          <div class="blog-excerpt">Texas taxes repair labor but not new construction labor. Most contractors get this wrong. Here's the complete breakdown for plumbers, electricians, and HVAC.</div>
-          <a href="#" class="blog-read">Read more →</a>
-        </div>
-      </div>
-    </div>
-    <div style="text-align:center;margin-top:36px">
-      <a href="#" class="btn-ghost">Read all articles</a>
-    </div>
-  </div>
-</section>
+<!-- Blog section removed — there's no blog yet, so the three "Read more"
+     links and the "Read all articles" button all pointed to "#". Will be
+     reinstated when actual posts exist. -->
+
 
 <!-- ── LICENSE LOOKUP ─────────────────────────────────────────────────────────── -->
 <section style="padding:90px 0;background:#fff;">
@@ -1398,14 +1338,17 @@
     <h2>Works on iPhone, Android, and any browser</h2>
     <p>Quote a job in the driveway. Invoice from the truck. Check what's owed from anywhere.</p>
     <div class="store-btns">
-      <a href="#" class="store-btn">
+      <!-- Non-clickable: native apps aren't shipped yet. The "Coming Soon"
+           tag already says so; making these <span> instead of <a href="#">
+           prevents a useless click-through to the top of the page. -->
+      <span class="store-btn" style="opacity:0.6;cursor:default" aria-disabled="true">
         <span class="store-icon"></span>
         <div><div class="store-sub">Download on the</div><div class="store-name">App Store</div><div class="coming-tag">Coming Soon</div></div>
-      </a>
-      <a href="#" class="store-btn">
+      </span>
+      <span class="store-btn" style="opacity:0.6;cursor:default" aria-disabled="true">
         <span class="store-icon">▶</span>
         <div><div class="store-sub">Get it on</div><div class="store-name">Google Play</div><div class="coming-tag">Coming Soon</div></div>
-      </a>
+      </span>
       <a href="https://app.thetradevoice.com" class="store-btn">
         <span class="store-icon"></span>
         <div><div class="store-sub">Start now on</div><div class="store-name">thetradevoice.com</div><div style="font-size:11px;color:#4ade80;font-weight:600;margin-top:4px">Available Now</div></div>
@@ -1420,11 +1363,12 @@
     <span class="section-tag">Get started today</span>
     <h2>Your first quote is 3 minutes away</h2>
     <p>No credit card required. No setup fee. 28-day free trial. Cancel anytime.</p>
-    <div class="cta-form">
-      <input type="email" class="cta-input" placeholder="Your email address"/>
-      <a href="https://app.thetradevoice.com" class="btn-primary">Start Free Trial</a>
+    <div class="cta-form" style="justify-content:center">
+      <!-- Removed the email input — it wasn't wired to anything, so users
+           were typing into a black hole. Signup happens on the app side. -->
+      <a href="https://app.thetradevoice.com" class="btn-primary" style="font-size:18px;padding:18px 44px">Start Free Trial</a>
     </div>
-    <p class="cta-disclaimer">By signing up you agree to our Terms of Service and Privacy Policy.</p>
+    <p class="cta-disclaimer">28-day free trial. No credit card needed.</p>
   </div>
 </section>
 
@@ -1449,29 +1393,25 @@
       <div>
         <div class="footer-col-title">Resources</div>
         <ul class="footer-links">
-          <li><a href="#blog">Blog</a></li>
           <li><a href="#faq">FAQ</a></li>
-          <li><a href="#">Tax Rate Updates</a></li>
-          <li><a href="#">Referral Program</a></li>
-          <li><a href="#">State Guide</a></li>
+          <li><a href="#tax-updates">Tax Rate Updates</a></li>
+          <li><a href="#trades">Trade Guides</a></li>
         </ul>
       </div>
       <div>
         <div class="footer-col-title">Company</div>
         <ul class="footer-links">
-          <li><a href="#">About</a></li>
-          <li><a href="#">Contact</a></li>
-          <li><a href="#">Privacy Policy</a></li>
-          <li><a href="#">Terms of Service</a></li>
-          <li><a href="/cdn-cgi/l/email-protection#94fcf1f8f8fbd4e0fcf1e0e6f5f0f1e2fbfdf7f1baf7fbf9"><span class="__cf_email__" data-cfemail="620a070e0e0d22160a071610030607140d0b01074c010d0f">[email&#160;protected]</span></a></li>
+          <li><a href="mailto:hello@thetradevoice.com">Contact</a></li>
+          <li><a href="https://app.thetradevoice.com">Sign in</a></li>
         </ul>
       </div>
     </div>
     <div class="footer-bottom">
       <div class="footer-copy">© 2026 Tradevoice. All rights reserved. thetradevoice.com</div>
       <div class="footer-legal">
-        <a href="/privacy">Privacy Policy</a>
-        <a href="/terms">Terms of Service</a>
+        <!-- Privacy/Terms links removed until real pages exist (the
+             /privacy and /terms routes 404'd). Keep contact-legal mailto
+             so people can reach us about either. -->
         <a href="mailto:legal@thetradevoice.com">Contact Legal</a>
       </div>
     </div>
