@@ -149,7 +149,81 @@
   .trade-tab:hover { border-color: var(--green); color: var(--green); }
   .trade-tab.active { background: var(--green); color: #fff; border-color: var(--green); }
   .trade-content { display: none; }
-  .trade-content.active { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center; }
+  /* Single column now — the per-trade invoice sheet IS the demonstration. */
+  .trade-content.active { display: block; max-width: 720px; margin: 0 auto; }
+
+  /* ── Trade invoice sheet mock ─────────────────────────────────────────────
+     Replaces the small per-trade quote card. Full-width, clearly branded
+     with the trade's accent color, with realistic-but-fake line items so a
+     contractor in that trade sees themselves on the page. */
+  .ti {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 14px 40px rgba(17, 24, 39, 0.08), 0 2px 6px rgba(17, 24, 39, 0.04);
+    color: var(--text);
+    text-align: left;
+  }
+  .ti-stripe { height: 6px; background: var(--ti-color, var(--green)); }
+  .ti-head {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    gap: 18px; padding: 22px 26px 18px;
+    border-bottom: 1px solid var(--border);
+  }
+  .ti-co-name { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 800; color: var(--text); line-height: 1.2; }
+  .ti-co-meta { font-size: 12px; color: var(--muted); margin-top: 4px; letter-spacing: 0.04em; }
+  .ti-badge {
+    display: inline-block; font-size: 10px; font-weight: 800;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--ti-color, var(--green));
+    background: color-mix(in srgb, var(--ti-color, var(--green)) 12%, white);
+    padding: 4px 10px; border-radius: 14px; margin-bottom: 6px;
+  }
+  .ti-num-block { text-align: right; flex-shrink: 0; }
+  .ti-num-lbl { font-size: 10px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; font-weight: 700; }
+  .ti-num-val { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 900; color: var(--ti-color, var(--green)); line-height: 1; margin-top: 4px; }
+  .ti-due { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+  .ti-meta-row {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 18px;
+    padding: 16px 26px; background: #fafbfa; border-bottom: 1px solid var(--border);
+  }
+  .ti-meta-lbl { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+  .ti-meta-val { font-size: 13px; font-weight: 600; color: var(--text); line-height: 1.4; }
+
+  .ti-rows { padding: 4px 26px; }
+  .ti-row { display: grid; grid-template-columns: 1fr 60px 80px 90px; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--border); font-size: 13px; align-items: center; }
+  .ti-row:last-child { border-bottom: none; }
+  .ti-row.head { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); padding: 10px 0 8px; border-bottom: 1.5px solid var(--border); }
+  .ti-row .desc { font-weight: 600; color: var(--text); }
+  .ti-row .qty, .ti-row .rate { color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; }
+  .ti-row .tot { color: var(--text); text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+  .ti-totals { padding: 14px 26px 18px; background: #fafbfa; border-top: 1px solid var(--border); }
+  .ti-totals-row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 13px; color: var(--muted); }
+  .ti-totals-row.grand { border-top: 1.5px solid var(--border); margin-top: 6px; padding-top: 12px; font-size: 16px; font-weight: 800; color: var(--text); }
+  .ti-totals-row.grand .v { color: var(--ti-color, var(--green)); font-family: 'Playfair Display', serif; font-size: 22px; }
+
+  .ti-pay { padding: 14px 26px 22px; border-top: 1px solid var(--border); background: #fff; }
+  .ti-pay-lbl { font-size: 10px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+  .ti-pay-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .ti-pay-chip { font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 12px; background: var(--green-light); color: var(--green-dark); }
+  .ti-pay-chip.primary { background: var(--ti-color, var(--green)); color: #fff; }
+
+  /* Caption above the invoice — short trade-specific blurb */
+  .ti-caption { text-align: center; max-width: 640px; margin: 0 auto 24px; font-size: 16px; color: var(--muted); line-height: 1.6; }
+  .ti-caption strong { color: var(--text); font-weight: 700; }
+
+  @media (max-width: 640px) {
+    .ti-head { flex-direction: column; }
+    .ti-num-block { text-align: left; }
+    .ti-meta-row { grid-template-columns: 1fr; gap: 10px; }
+    .ti-row { grid-template-columns: 1fr 60px 80px; gap: 8px; font-size: 12px; }
+    .ti-row .rate { display: none; }
+    .ti-row.head { grid-template-columns: 1fr 60px 80px; }
+    .ti-row.head span:nth-child(3) { display: none; }
+  }
   .trade-feature { display: flex; gap: 14px; margin-bottom: 24px; align-items: flex-start; }
   .trade-icon { width: 4px; height: 36px; background: var(--green); border-radius: 2px; flex-shrink: 0; margin-top: 2px; }
   .trade-feature-title { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
@@ -674,45 +748,231 @@
       <button class="trade-tab" onclick="selectTrade('roofer',this)"> Roofer</button>
       <button class="trade-tab" onclick="selectTrade('specialty',this)"> Specialty</button>
     </div>
+    <!-- ── Plumber ── -->
     <div id="trade-plumber" class="trade-content active">
-      <div>
-        <div class="trade-feature"><div><div class="trade-feature-title">Plumbing quick-add library</div><div class="trade-feature-desc">Ball valves, supply lines, shut-off valves, P-traps — tap to add, no typing required.</div></div></div>
-        <div class="trade-feature"><div><div class="trade-feature-title">Texas & Louisiana tax rules built in</div><div class="trade-feature-desc">Repair labor is taxable in Texas. We handle it automatically so you never under-charge.</div></div></div>
-        <div class="trade-feature"><div><div class="trade-feature-title">Quote on the driveway</div><div class="trade-feature-desc">Walk the job, build the estimate on your phone, client accepts before you leave the truck.</div></div></div>
+      <p class="ti-caption">Tankless install on a Saturday morning. Walk the job, build the invoice on your phone, customer pays before you pack the truck. <strong>Texas labor-tax rules handled automatically.</strong></p>
+      <div class="ti" style="--ti-color:#2d6a4f">
+        <div class="ti-stripe"></div>
+        <div class="ti-head">
+          <div>
+            <span class="ti-badge">Plumbing</span>
+            <div class="ti-co-name">Mason Brothers Plumbing</div>
+            <div class="ti-co-meta">License TX-PL-12847 · Austin, TX</div>
+          </div>
+          <div class="ti-num-block">
+            <div class="ti-num-lbl">Invoice</div>
+            <div class="ti-num-val">INV-2026-0087</div>
+            <div class="ti-due">Due Net 30 · Performed by Carlos R.</div>
+          </div>
+        </div>
+        <div class="ti-meta-row">
+          <div><div class="ti-meta-lbl">Bill to</div><div class="ti-meta-val">Sandra Johnson<br/>412 Oak Street, Austin TX 78704</div></div>
+          <div><div class="ti-meta-lbl">Job</div><div class="ti-meta-val">Tankless water heater install — kitchen + 2 baths</div></div>
+        </div>
+        <div class="ti-rows">
+          <div class="ti-row head"><span>Description</span><span>Qty</span><span>Rate</span><span>Total</span></div>
+          <div class="ti-row"><span class="desc">Install labor — tankless heater &amp; tie-in</span><span class="qty">4 hr</span><span class="rate">$95.00</span><span class="tot">$380.00</span></div>
+          <div class="ti-row"><span class="desc">Rinnai RU199 tankless unit</span><span class="qty">1</span><span class="rate">$1,540.00</span><span class="tot">$1,540.00</span></div>
+          <div class="ti-row"><span class="desc">1/2" copper supply &amp; PEX fittings</span><span class="qty">1 lot</span><span class="rate">$76.50</span><span class="tot">$76.50</span></div>
+          <div class="ti-row"><span class="desc">Permit + city inspection</span><span class="qty">1</span><span class="rate">$165.00</span><span class="tot">$165.00</span></div>
+        </div>
+        <div class="ti-totals">
+          <div class="ti-totals-row"><span>Subtotal</span><span>$2,161.50</span></div>
+          <div class="ti-totals-row"><span>Markup 15%</span><span>$324.23</span></div>
+          <div class="ti-totals-row"><span>Tax 8.25% (TX repair labor)</span><span>$204.78</span></div>
+          <div class="ti-totals-row grand"><span>Total Due</span><span class="v">$2,690.51</span></div>
+        </div>
+        <div class="ti-pay">
+          <div class="ti-pay-lbl">Sandra can pay by</div>
+          <div class="ti-pay-chips">
+            <span class="ti-pay-chip primary">Card / ACH</span>
+            <span class="ti-pay-chip">Zelle</span>
+            <span class="ti-pay-chip">Cash App</span>
+            <span class="ti-pay-chip">Check</span>
+          </div>
+        </div>
       </div>
-      <div class="trade-screenshot"><div class="trade-screenshot-inner"><div class="trade-badge-large">Plumbing</div><div class="sample-quote-line"><span>Shut-off valve replacement</span><span>$187.50</span></div><div class="sample-quote-line"><span>1/2" ball valve × 2</span><span>$77.00</span></div><div class="sample-quote-line"><span>SS supply line × 2</span><span>$28.00</span></div><div class="sample-quote-line"><span>Markup 15%</span><span>$15.75</span></div><div class="sample-quote-line"><span>Tax 8.5%</span><span>$28.59</span></div><div class="sample-quote-line"><span>Total</span><span>$336.84</span></div></div></div>
     </div>
+
+    <!-- ── Electrician ── -->
     <div id="trade-electrician" class="trade-content">
-      <div>
-        <div class="trade-feature"><div><div class="trade-feature-title">Electrical quick-add library</div><div class="trade-feature-desc">GFCI outlets, breakers, wire by the foot, panel components — built for how electricians bid.</div></div></div>
-        <div class="trade-feature"><div><div class="trade-feature-title">New construction vs repair billing</div><div class="trade-feature-desc">Labor tax rules differ by job type. Tradevoice tracks it per invoice automatically.</div></div></div>
-        <div class="trade-feature"><div><div class="trade-feature-title">Panel upgrade templates</div><div class="trade-feature-desc">100A to 200A upgrades pre-built with all labor steps, materials, and permit line items.</div></div></div>
+      <p class="ti-caption">100A to 200A panel upgrade. Permits, breakers, GFCI outlets — all <strong>pre-built in your Quick-Add library</strong> so the bid takes minutes instead of an evening.</p>
+      <div class="ti" style="--ti-color:#b45309">
+        <div class="ti-stripe"></div>
+        <div class="ti-head">
+          <div>
+            <span class="ti-badge">Electrical</span>
+            <div class="ti-co-name">Reyes Electric LLC</div>
+            <div class="ti-co-meta">License TX-EC-19044 · Houston, TX</div>
+          </div>
+          <div class="ti-num-block">
+            <div class="ti-num-lbl">Invoice</div>
+            <div class="ti-num-val">INV-2026-0042</div>
+            <div class="ti-due">Due Net 30 · Performed by Jake M.</div>
+          </div>
+        </div>
+        <div class="ti-meta-row">
+          <div><div class="ti-meta-lbl">Bill to</div><div class="ti-meta-val">Ray Torres<br/>2208 Maple Ave, Houston TX 77006</div></div>
+          <div><div class="ti-meta-lbl">Job</div><div class="ti-meta-val">100A → 200A panel upgrade + GFCI updates</div></div>
+        </div>
+        <div class="ti-rows">
+          <div class="ti-row head"><span>Description</span><span>Qty</span><span>Rate</span><span>Total</span></div>
+          <div class="ti-row"><span class="desc">Panel swap labor — 100A to 200A</span><span class="qty">8 hr</span><span class="rate">$110.00</span><span class="tot">$880.00</span></div>
+          <div class="ti-row"><span class="desc">Square D 200A main breaker panel</span><span class="qty">1</span><span class="rate">$485.00</span><span class="tot">$485.00</span></div>
+          <div class="ti-row"><span class="desc">GFCI outlets — kitchen + baths</span><span class="qty">4</span><span class="rate">$24.00</span><span class="tot">$96.00</span></div>
+          <div class="ti-row"><span class="desc">Permit + utility coordination</span><span class="qty">1</span><span class="rate">$220.00</span><span class="tot">$220.00</span></div>
+        </div>
+        <div class="ti-totals">
+          <div class="ti-totals-row"><span>Subtotal</span><span>$1,681.00</span></div>
+          <div class="ti-totals-row"><span>Markup 20%</span><span>$336.20</span></div>
+          <div class="ti-totals-row"><span>Tax 8.25% (materials only — TX)</span><span>$66.55</span></div>
+          <div class="ti-totals-row grand"><span>Total Due</span><span class="v">$2,083.75</span></div>
+        </div>
+        <div class="ti-pay">
+          <div class="ti-pay-lbl">Ray can pay by</div>
+          <div class="ti-pay-chips">
+            <span class="ti-pay-chip primary">Card / ACH</span>
+            <span class="ti-pay-chip">PayPal</span>
+            <span class="ti-pay-chip">Zelle</span>
+            <span class="ti-pay-chip">Check</span>
+          </div>
+        </div>
       </div>
-      <div class="trade-screenshot"><div class="trade-screenshot-inner"><div class="trade-badge-large" style="background:#b45309">Electrical</div><div class="sample-quote-line"><span>Panel swap 100A → 200A</span><span>$750.00</span></div><div class="sample-quote-line"><span>200A main breaker</span><span>$185.00</span></div><div class="sample-quote-line"><span>GFCI outlets × 4</span><span>$96.00</span></div><div class="sample-quote-line"><span>Markup 20%</span><span>$56.20</span></div><div class="sample-quote-line"><span>Total</span><span>$1,087.20</span></div></div></div>
     </div>
+
+    <!-- ── HVAC ── -->
     <div id="trade-hvac" class="trade-content">
-      <div>
-        <div class="trade-feature"><div><div class="trade-feature-title">HVAC equipment library</div><div class="trade-feature-desc">Carrier, Trane, Lennox units pre-loaded. Add tonnage, SEER rating, and model in two taps.</div></div></div>
-        <div class="trade-feature"><div><div class="trade-feature-title">Maintenance plan invoicing</div><div class="trade-feature-desc">Set up recurring seasonal tune-ups with one-tap billing every spring and fall.</div></div></div>
-        <div class="trade-feature"><div><div class="trade-feature-title">Quote commercial jobs on site</div><div class="trade-feature-desc">Multi-unit commercial quotes with per-unit breakdowns. City Rental Group approved before you left.</div></div></div>
+      <p class="ti-caption">3-ton condenser swap on a 102° afternoon. Customer signs off, money's in your account before the new unit's even cycled. <strong>Equipment library by brand &amp; tonnage built in.</strong></p>
+      <div class="ti" style="--ti-color:#0891b2">
+        <div class="ti-stripe"></div>
+        <div class="ti-head">
+          <div>
+            <span class="ti-badge">HVAC</span>
+            <div class="ti-co-name">Burke Mechanical Services</div>
+            <div class="ti-co-meta">License TX-AC-08711 · San Antonio, TX</div>
+          </div>
+          <div class="ti-num-block">
+            <div class="ti-num-lbl">Invoice</div>
+            <div class="ti-num-val">INV-2026-0156</div>
+            <div class="ti-due">Due Net 30 · Performed by Mason B.</div>
+          </div>
+        </div>
+        <div class="ti-meta-row">
+          <div><div class="ti-meta-lbl">Bill to</div><div class="ti-meta-val">City Rentals Group<br/>Unit 4B · 1840 Commerce Blvd</div></div>
+          <div><div class="ti-meta-lbl">Job</div><div class="ti-meta-val">3-ton condenser replacement + line set</div></div>
+        </div>
+        <div class="ti-rows">
+          <div class="ti-row head"><span>Description</span><span>Qty</span><span>Rate</span><span>Total</span></div>
+          <div class="ti-row"><span class="desc">Carrier 3-ton 14 SEER condenser</span><span class="qty">1</span><span class="rate">$1,850.00</span><span class="tot">$1,850.00</span></div>
+          <div class="ti-row"><span class="desc">Install labor — pull &amp; replace</span><span class="qty">4 hr</span><span class="rate">$120.00</span><span class="tot">$480.00</span></div>
+          <div class="ti-row"><span class="desc">Refrigerant line set + R-410A</span><span class="qty">1</span><span class="rate">$245.00</span><span class="tot">$245.00</span></div>
+          <div class="ti-row"><span class="desc">Disposal of old unit</span><span class="qty">1</span><span class="rate">$85.00</span><span class="tot">$85.00</span></div>
+        </div>
+        <div class="ti-totals">
+          <div class="ti-totals-row"><span>Subtotal</span><span>$2,660.00</span></div>
+          <div class="ti-totals-row"><span>Markup 15%</span><span>$399.00</span></div>
+          <div class="ti-totals-row"><span>Tax 8.25%</span><span>$252.47</span></div>
+          <div class="ti-totals-row grand"><span>Total Due</span><span class="v">$3,311.47</span></div>
+        </div>
+        <div class="ti-pay">
+          <div class="ti-pay-lbl">City Rentals can pay by</div>
+          <div class="ti-pay-chips">
+            <span class="ti-pay-chip primary">Card / ACH</span>
+            <span class="ti-pay-chip">PayPal</span>
+            <span class="ti-pay-chip">Check</span>
+          </div>
+        </div>
       </div>
-      <div class="trade-screenshot"><div class="trade-screenshot-inner"><div class="trade-badge-large" style="background:#0891b2">HVAC</div><div class="sample-quote-line"><span>3-ton Carrier 14 SEER unit</span><span>$1,850.00</span></div><div class="sample-quote-line"><span>Installation labor 4hr</span><span>$380.00</span></div><div class="sample-quote-line"><span>Refrigerant line set</span><span>$145.00</span></div><div class="sample-quote-line"><span>Markup 15%</span><span>$299.25</span></div><div class="sample-quote-line"><span>Total</span><span>$2,674.25</span></div></div></div>
     </div>
+
+    <!-- ── Roofer ── -->
     <div id="trade-roofer" class="trade-content">
-      <div>
-        <div class="trade-feature"><div><div class="trade-feature-title">Roofing material library</div><div class="trade-feature-desc">Shingles by square, underlayment, ridge cap, flashing — priced by the job, not per item.</div></div></div>
-        <div class="trade-feature"><div><div class="trade-feature-title">Storm damage estimates</div><div class="trade-feature-desc">Emergency quotes for insurance jobs. Itemized, photo-ready, and sent within minutes.</div></div></div>
-        <div class="trade-feature"><div><div class="trade-feature-title">Insurance-ready documentation</div><div class="trade-feature-desc">Line-item detail that adjusters accept. No more rejected claims from vague invoices.</div></div></div>
+      <p class="ti-caption">Storm damage call. <strong>Insurance-ready line-item detail</strong> adjusters actually accept — itemized squares, underlayment, flashing, no more rejected claims from vague invoices.</p>
+      <div class="ti" style="--ti-color:#7c3aed">
+        <div class="ti-stripe"></div>
+        <div class="ti-head">
+          <div>
+            <span class="ti-badge">Roofing</span>
+            <div class="ti-co-name">Castillo Roofing Co.</div>
+            <div class="ti-co-meta">License TX-RC-22480 · Dallas, TX</div>
+          </div>
+          <div class="ti-num-block">
+            <div class="ti-num-lbl">Invoice</div>
+            <div class="ti-num-val">INV-2026-0211</div>
+            <div class="ti-due">Due Net 30 · Performed by Tony W.</div>
+          </div>
+        </div>
+        <div class="ti-meta-row">
+          <div><div class="ti-meta-lbl">Bill to</div><div class="ti-meta-val">Allstate Claim #87234<br/>Property: 318 Cypress Ln, Dallas TX</div></div>
+          <div><div class="ti-meta-lbl">Job</div><div class="ti-meta-val">Hail damage tear-off &amp; full reroof — 28 sq</div></div>
+        </div>
+        <div class="ti-rows">
+          <div class="ti-row head"><span>Description</span><span>Qty</span><span>Rate</span><span>Total</span></div>
+          <div class="ti-row"><span class="desc">Tear-off + dumpster + disposal</span><span class="qty">28 sq</span><span class="rate">$45.00</span><span class="tot">$1,260.00</span></div>
+          <div class="ti-row"><span class="desc">30-yr architectural shingles</span><span class="qty">28 sq</span><span class="rate">$80.00</span><span class="tot">$2,240.00</span></div>
+          <div class="ti-row"><span class="desc">Synthetic underlayment + ice &amp; water</span><span class="qty">28 sq</span><span class="rate">$15.00</span><span class="tot">$420.00</span></div>
+          <div class="ti-row"><span class="desc">Drip edge, ridge cap, flashing</span><span class="qty">1 lot</span><span class="rate">$310.00</span><span class="tot">$310.00</span></div>
+        </div>
+        <div class="ti-totals">
+          <div class="ti-totals-row"><span>Subtotal</span><span>$4,230.00</span></div>
+          <div class="ti-totals-row"><span>Markup 18%</span><span>$761.40</span></div>
+          <div class="ti-totals-row"><span>Tax 8.25% (materials)</span><span>$204.41</span></div>
+          <div class="ti-totals-row grand"><span>Total Due</span><span class="v">$5,195.81</span></div>
+        </div>
+        <div class="ti-pay">
+          <div class="ti-pay-lbl">Allstate can pay by</div>
+          <div class="ti-pay-chips">
+            <span class="ti-pay-chip primary">Card / ACH</span>
+            <span class="ti-pay-chip">Check</span>
+          </div>
+        </div>
       </div>
-      <div class="trade-screenshot"><div class="trade-screenshot-inner"><div class="trade-badge-large" style="background:#7c3aed">Roofing</div><div class="sample-quote-line"><span>Tear-off & disposal</span><span>$1,200.00</span></div><div class="sample-quote-line"><span>30yr shingles 28 sq</span><span>$2,240.00</span></div><div class="sample-quote-line"><span>Underlayment + ice & water</span><span>$420.00</span></div><div class="sample-quote-line"><span>Markup 18%</span><span>$511.20</span></div><div class="sample-quote-line"><span>Total</span><span>$4,371.20</span></div></div></div>
     </div>
+
+    <!-- ── Specialty ── -->
     <div id="trade-specialty" class="trade-content">
-      <div>
-        <div class="trade-feature"><div><div class="trade-feature-title">Custom material library</div><div class="trade-feature-desc">Build your own quick-add library from scratch. Any trade, any material, your prices.</div></div></div>
-        <div class="trade-feature"><div><div class="trade-feature-title">Mix any trade on one quote</div><div class="trade-feature-desc">All Trades plan lets you combine plumbing, electrical, and HVAC on one document.</div></div></div>
-        <div class="trade-feature"><div><div class="trade-feature-title">Full business management</div><div class="trade-feature-desc">Quotes, invoices, payments, client folders, tax management — one app for everything.</div></div></div>
+      <p class="ti-caption">Multi-trade remodel — plumbing rough-in, electrical, and HVAC on <strong>one invoice with per-trade subtotals.</strong> Nobody else does multi-trade jobs cleanly. We do.</p>
+      <div class="ti" style="--ti-color:#374151">
+        <div class="ti-stripe"></div>
+        <div class="ti-head">
+          <div>
+            <span class="ti-badge">Multi-Trade</span>
+            <div class="ti-co-name">Lone Star Trade Group</div>
+            <div class="ti-co-meta">Plumbing · Electrical · HVAC · Austin, TX</div>
+          </div>
+          <div class="ti-num-block">
+            <div class="ti-num-lbl">Invoice</div>
+            <div class="ti-num-val">INV-2026-0293</div>
+            <div class="ti-due">Due Net 30 · 3-tech crew</div>
+          </div>
+        </div>
+        <div class="ti-meta-row">
+          <div><div class="ti-meta-lbl">Bill to</div><div class="ti-meta-val">Reyes Construction GC<br/>Master bath remodel — 1224 Live Oak Dr</div></div>
+          <div><div class="ti-meta-lbl">Job</div><div class="ti-meta-val">Plumbing rough-in + new circuits + bath fan</div></div>
+        </div>
+        <div class="ti-rows">
+          <div class="ti-row head"><span>Description</span><span>Qty</span><span>Rate</span><span>Total</span></div>
+          <div class="ti-row"><span class="desc">Plumbing rough-in (Carlos R.)</span><span class="qty">1 lot</span><span class="rate">$1,680.00</span><span class="tot">$1,680.00</span></div>
+          <div class="ti-row"><span class="desc">Electrical — 2 new circuits + GFCI (Jake M.)</span><span class="qty">1 lot</span><span class="rate">$920.00</span><span class="tot">$920.00</span></div>
+          <div class="ti-row"><span class="desc">HVAC — bath exhaust + duct (Mason B.)</span><span class="qty">1 lot</span><span class="rate">$540.00</span><span class="tot">$540.00</span></div>
+          <div class="ti-row"><span class="desc">Materials &amp; permits — combined</span><span class="qty">1 lot</span><span class="rate">$485.00</span><span class="tot">$485.00</span></div>
+        </div>
+        <div class="ti-totals">
+          <div class="ti-totals-row"><span>Subtotal</span><span>$3,625.00</span></div>
+          <div class="ti-totals-row"><span>Markup 18%</span><span>$652.50</span></div>
+          <div class="ti-totals-row"><span>Tax 8.25%</span><span>$352.78</span></div>
+          <div class="ti-totals-row grand"><span>Total Due</span><span class="v">$4,630.28</span></div>
+        </div>
+        <div class="ti-pay">
+          <div class="ti-pay-lbl">Reyes Construction can pay by</div>
+          <div class="ti-pay-chips">
+            <span class="ti-pay-chip primary">Card / ACH</span>
+            <span class="ti-pay-chip">PayPal</span>
+            <span class="ti-pay-chip">Zelle</span>
+            <span class="ti-pay-chip">Check</span>
+          </div>
+        </div>
       </div>
-      <div class="trade-screenshot"><div class="trade-screenshot-inner"><div class="trade-badge-large" style="background:#374151">Specialty</div><div class="sample-quote-line"><span>Custom scope line 1</span><span>$640.00</span></div><div class="sample-quote-line"><span>Custom materials</span><span>$380.00</span></div><div class="sample-quote-line"><span>Custom equipment rental</span><span>$220.00</span></div><div class="sample-quote-line"><span>Markup custom %</span><span>$144.00</span></div><div class="sample-quote-line"><span>Total</span><span>$1,384.00</span></div></div></div>
     </div>
   </div>
 </section>
