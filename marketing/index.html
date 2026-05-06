@@ -154,16 +154,173 @@
   .sample-quote-line { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
   .sample-quote-line:last-child { border: none; font-weight: 700; color: var(--green-dark); font-size: 15px; }
 
-  /* ── FEATURES ─────────────────────────────────────────────────────────────── */
+  /* ── FEATURES (showcase slideshow) ───────────────────────────────────────── */
   .features { padding: 90px 0; background: var(--green-dark); }
   .features h2 { font-size: clamp(30px, 4vw, 46px); font-weight: 900; text-align: center; margin-bottom: 12px; color: #fff; }
-  .features .sub { text-align: center; color: rgba(255,255,255,0.7); font-size: 18px; margin-bottom: 64px; font-weight: 300; }
-  .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
-  .feature-card { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12); border-radius: 16px; padding: 28px; transition: background 0.2s; }
-  .feature-card:hover { background: rgba(255,255,255,0.11); }
-  .feature-emoji { font-size: 32px; margin-bottom: 16px; display: block; }
-  .feature-title { font-size: 18px; font-weight: 700; color: #fff; margin-bottom: 8px; }
-  .feature-desc { font-size: 14px; color: rgba(255,255,255,0.65); line-height: 1.6; }
+  .features .sub { text-align: center; color: rgba(255,255,255,0.7); font-size: 18px; margin-bottom: 40px; font-weight: 300; }
+
+  /* Numbered chip nav — jump to any slide */
+  .showcase-tabs { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-bottom: 36px; }
+  .showcase-tab {
+    padding: 10px 20px; border-radius: 50px;
+    border: 1.5px solid rgba(255,255,255,0.2);
+    background: transparent;
+    color: rgba(255,255,255,0.65);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px; font-weight: 600; letter-spacing: 0.04em;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex; align-items: center; gap: 8px;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .showcase-tab:hover { border-color: rgba(255,255,255,0.5); color: #fff; }
+  .showcase-tab.active { background: #fff; color: var(--green-dark); border-color: #fff; }
+  .showcase-tab-num { font-family: 'Playfair Display', serif; font-weight: 900; font-size: 14px; opacity: 0.7; }
+  .showcase-tab.active .showcase-tab-num { opacity: 1; }
+
+  /* Stage with arrows */
+  .showcase-stage { position: relative; max-width: 920px; margin: 0 auto; }
+  .showcase-arrow {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    width: 44px; height: 44px; border-radius: 50%;
+    background: rgba(255,255,255,0.1);
+    border: 1.5px solid rgba(255,255,255,0.25);
+    color: #fff;
+    font-size: 22px; font-weight: 700; line-height: 1;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+    z-index: 5;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .showcase-arrow:hover { background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.5); }
+  .showcase-arrow.prev { left: -22px; }
+  .showcase-arrow.next { right: -22px; }
+
+  /* Slides — stacked, only active visible */
+  .showcase-slide-wrap { position: relative; min-height: 480px; }
+  .showcase-slide {
+    position: absolute; inset: 0;
+    opacity: 0; visibility: hidden;
+    transition: opacity 0.35s ease;
+    display: grid; grid-template-columns: 1.2fr 1fr; gap: 40px; align-items: center;
+  }
+  .showcase-slide.active { opacity: 1; visibility: visible; position: relative; }
+
+  /* Mock device frame — the "screenshot" container */
+  .showcase-frame {
+    background: #fff; border-radius: 16px;
+    padding: 18px;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.35), 0 4px 12px rgba(0,0,0,0.2);
+    color: var(--text);
+  }
+  .showcase-frame-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 4px 14px; border-bottom: 1px solid var(--border); margin-bottom: 14px;
+  }
+  .showcase-frame-title { font-family: 'Playfair Display', serif; font-size: 16px; font-weight: 700; color: var(--green-dark); }
+  .showcase-frame-pill { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+
+  /* Side caption */
+  .showcase-caption { color: #fff; padding: 12px 8px; }
+  .showcase-caption .step {
+    display: inline-block;
+    font-family: 'Playfair Display', serif;
+    font-size: 14px; font-weight: 700;
+    color: var(--green-mist);
+    letter-spacing: 0.1em;
+    margin-bottom: 14px;
+    text-transform: uppercase;
+  }
+  .showcase-caption h3 {
+    font-size: 28px; font-weight: 900; line-height: 1.2;
+    margin-bottom: 14px; color: #fff;
+  }
+  .showcase-caption p {
+    font-size: 16px; color: rgba(255,255,255,0.75);
+    line-height: 1.6; margin-bottom: 18px;
+  }
+  .showcase-caption ul { list-style: none; padding: 0; margin: 0; }
+  .showcase-caption li {
+    padding: 6px 0 6px 22px; position: relative;
+    font-size: 14px; color: rgba(255,255,255,0.85);
+  }
+  .showcase-caption li::before {
+    content: '✓'; position: absolute; left: 0; top: 6px;
+    color: var(--green-mist); font-weight: 700;
+  }
+
+  /* Dot indicators */
+  .showcase-dots { display: flex; gap: 8px; justify-content: center; margin-top: 32px; }
+  .showcase-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: rgba(255,255,255,0.25); border: none; cursor: pointer;
+    transition: all 0.2s; padding: 0;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .showcase-dot.active { background: #fff; width: 24px; border-radius: 4px; }
+
+  /* In-frame data styles — used inside the white mockup */
+  .sf-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 14px; }
+  .sf-row:last-child { border-bottom: none; }
+  .sf-row.total { background: var(--green-light); margin: 6px -6px -6px; border-radius: 8px; padding: 12px; font-weight: 700; color: var(--green-dark); border: none; }
+  .sf-row.head { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); padding: 6px 12px; }
+  .sf-name { font-weight: 600; color: var(--text); }
+  .sf-sub { font-size: 12px; color: var(--muted); margin-top: 1px; }
+  .sf-amt { font-weight: 700; color: var(--green-dark); font-family: 'DM Sans', sans-serif; }
+  .sf-pill { font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 10px; letter-spacing: 0.04em; text-transform: uppercase; }
+  .sf-pill.paid { background: #f0fdf4; color: #166534; }
+  .sf-pill.sent { background: #eff6ff; color: #1d4ed8; }
+  .sf-pill.due  { background: #fef2f2; color: #991b1b; }
+  .sf-pill.draft{ background: #f3f4f6; color: #4b5563; }
+
+  /* Stat grid for dashboard slide */
+  .sf-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .sf-stat { background: var(--green-light); border-radius: 10px; padding: 14px; }
+  .sf-stat-lbl { font-size: 10px; color: var(--green-dark); font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 4px; }
+  .sf-stat-val { font-family: 'Playfair Display', serif; font-size: 24px; font-weight: 900; color: var(--green-dark); line-height: 1; }
+  .sf-stat-sub { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+  /* Calendar mock */
+  .sf-cal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .sf-cal-month { font-family: 'Playfair Display', serif; font-size: 16px; font-weight: 800; color: var(--green-dark); }
+  .sf-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; font-size: 11px; }
+  .sf-cal-dow { text-align: center; font-weight: 700; color: var(--muted); padding: 4px 0; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; }
+  .sf-cal-cell { aspect-ratio: 1; border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 4px 2px; background: #fafbfa; border: 1px solid #f0f2f0; position: relative; }
+  .sf-cal-cell .d { font-size: 11px; font-weight: 600; color: var(--text); }
+  .sf-cal-cell.today { border-color: var(--green); background: var(--green-light); }
+  .sf-cal-cell.today .d { color: var(--green-dark); font-weight: 800; }
+  .sf-cal-job { font-size: 8px; background: var(--green); color: #fff; border-radius: 3px; padding: 1px 3px; margin-top: 2px; font-weight: 700; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sf-cal-job.elec { background: #b45309; }
+  .sf-cal-job.hvac { background: #0891b2; }
+
+  /* Bucket list (jobs hub) */
+  .sf-bucket-head { font-size: 11px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; padding: 10px 12px 6px; color: var(--muted); }
+  .sf-bucket-head.over { color: var(--error); }
+  .sf-bucket-head.today { color: var(--green); }
+  .sf-bucket-head.tom { color: var(--warn); }
+
+  /* Customer-facing payment page */
+  .sf-pay-hero { background: linear-gradient(135deg, var(--green-dark), var(--green)); margin: -18px -18px 14px; padding: 18px; border-radius: 16px 16px 0 0; color: #fff; }
+  .sf-pay-co { font-size: 12px; font-weight: 700; opacity: 0.85; letter-spacing: 0.06em; text-transform: uppercase; }
+  .sf-pay-num { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 900; margin-top: 4px; }
+  .sf-pay-amt { font-size: 26px; font-weight: 900; margin-top: 8px; font-family: 'Playfair Display', serif; }
+  .sf-pay-due { font-size: 11px; opacity: 0.8; margin-top: 2px; }
+  .sf-pay-btn { background: var(--green); color: #fff; padding: 12px; border-radius: 10px; text-align: center; font-weight: 700; font-size: 14px; margin-top: 12px; }
+  .sf-pay-methods { display: flex; gap: 6px; justify-content: center; margin-top: 10px; flex-wrap: wrap; }
+  .sf-pay-method { font-size: 10px; padding: 4px 9px; background: var(--green-light); color: var(--green-dark); border-radius: 12px; font-weight: 700; }
+
+  @media (max-width: 768px) {
+    .showcase-slide { grid-template-columns: 1fr; gap: 24px; }
+    .showcase-slide-wrap { min-height: 0; }
+    .showcase-slide { position: relative; }
+    .showcase-slide:not(.active) { display: none; }
+    .showcase-arrow.prev { left: -8px; }
+    .showcase-arrow.next { right: -8px; }
+    .showcase-caption { order: 2; padding-top: 0; text-align: center; }
+    .showcase-caption ul { display: inline-block; text-align: left; }
+    .showcase-caption h3 { font-size: 22px; }
+  }
 
   /* ── BEFORE / AFTER ────────────────────────────────────────────────────────── */
   .before-after { padding: 90px 0; background: var(--cream); }
@@ -415,7 +572,7 @@
         <p class="hero-sub">From the first estimate to the final payment — Tradevoice handles quotes, invoices, and client payments so you can focus on the work.</p>
         <div class="hero-btns">
           <a href="https://app.thetradevoice.com" class="hero-btn-white">Start Free — 28 Days</a>
-          <a href="#demo" class="hero-btn-outline">Watch Demo</a>
+          <a href="#features" class="hero-btn-outline">See It In Action</a>
         </div>
         <div class="hero-stats">
           <div>
@@ -555,22 +712,265 @@
   </div>
 </section>
 
-<!-- ── FEATURES ──────────────────────────────────────────────────────────────── -->
+<!-- ── FEATURES (showcase slideshow) ──────────────────────────────────────────
+     Click the numbered tabs OR the arrows / dots to scan through the five
+     core features end-to-end. Each slide is a styled mock of the real screen
+     with realistic but fake data, so a contractor can see exactly what the
+     app does without leaving the page.
+-->
 <section class="features" id="features">
   <div class="container">
-    <span class="section-tag" style="background:rgba(255,255,255,0.15);color:#fff">Everything you need</span>
-    <h2>Run your entire business from your phone</h2>
-    <p class="sub">No laptop needed. No office required. From the first estimate to the final payment.</p>
-    <div class="features-grid">
-      <div class="feature-card fade-in"><div class="feature-title">Professional Quotes</div><div class="feature-desc">Build detailed estimates with labor, materials, and equipment in minutes. Client taps Accept — you get the job.</div></div>
-      <div class="feature-card fade-in"><div class="feature-title">Smart Invoicing</div><div class="feature-desc">7 invoice statuses synced with QuickBooks logic. A/R aging, payment terms, partial payments — all tracked.</div></div>
-      <div class="feature-card fade-in"><div class="feature-title">Get Paid Faster</div><div class="feature-desc">Stripe, PayPal, Venmo, Zelle, Cash App, check, or cash. Client pays how they want. You get paid the same day.</div></div>
-      <div class="feature-card fade-in"><div class="feature-title">Client Folders</div><div class="feature-desc">Every client gets a folder with their full history — every quote, every invoice, every payment. No more digging.</div></div>
-      <div class="feature-card fade-in"><div class="feature-title">Live Dashboard</div><div class="feature-desc">Outstanding, overdue, paid this month, average invoice — at a glance before you leave the driveway.</div></div>
-      <div class="feature-card fade-in"><div class="feature-title">50-State Tax System</div><div class="feature-desc">2026 rates for every state. Labor tax rules built in for Texas, Kansas, West Virginia, and 6 more. Updated every January.</div></div>
-      <div class="feature-card fade-in"><div class="feature-title">Your Brand, Your Logo</div><div class="feature-desc">Upload your logo, choose your accent color, add your license number. Every document looks like it came from a real company.</div></div>
-      <div class="feature-card fade-in"><div class="feature-title">Quick-Add Library</div><div class="feature-desc">Your most-used materials and equipment saved and ready to tap. Build a quote without typing a single price.</div></div>
-      <div class="feature-card fade-in"><div class="feature-title">Quote → Invoice in One Tap</div><div class="feature-desc">Client accepts the quote. Tap Convert. Invoice is done. Payment sent. No re-entering data ever again.</div></div>
+    <span class="section-tag" style="background:rgba(255,255,255,0.15);color:#fff">See it in action</span>
+    <h2>From walking the job to getting paid</h2>
+    <p class="sub">Five steps. One app. Click any step to see the screen.</p>
+
+    <!-- Numbered tabs — clickable to jump straight to a step -->
+    <div class="showcase-tabs" role="tablist">
+      <button class="showcase-tab active" data-step="1" onclick="selectShowcase(1,this)">
+        <span class="showcase-tab-num">01</span> Build the Quote
+      </button>
+      <button class="showcase-tab" data-step="2" onclick="selectShowcase(2,this)">
+        <span class="showcase-tab-num">02</span> Send to Customer
+      </button>
+      <button class="showcase-tab" data-step="3" onclick="selectShowcase(3,this)">
+        <span class="showcase-tab-num">03</span> Schedule the Job
+      </button>
+      <button class="showcase-tab" data-step="4" onclick="selectShowcase(4,this)">
+        <span class="showcase-tab-num">04</span> Track the Crew
+      </button>
+      <button class="showcase-tab" data-step="5" onclick="selectShowcase(5,this)">
+        <span class="showcase-tab-num">05</span> Get Paid
+      </button>
+    </div>
+
+    <div class="showcase-stage">
+      <button class="showcase-arrow prev" onclick="stepShowcase(-1)" aria-label="Previous slide">‹</button>
+      <button class="showcase-arrow next" onclick="stepShowcase(1)"  aria-label="Next slide">›</button>
+
+      <div class="showcase-slide-wrap">
+
+        <!-- ── SLIDE 1 — Build the Quote ── -->
+        <div class="showcase-slide active" data-slide="1">
+          <div class="showcase-frame">
+            <div class="showcase-frame-header">
+              <span class="showcase-frame-title">QT-2026-0042 · Kitchen Repair</span>
+              <span class="showcase-frame-pill">Plumbing</span>
+            </div>
+            <div class="sf-row head"><span>Description</span><span>Total</span></div>
+            <div class="sf-row">
+              <div><div class="sf-name">Shut-off valve replacement</div><div class="sf-sub">2 hr · $95/hr</div></div>
+              <div class="sf-amt">$190.00</div>
+            </div>
+            <div class="sf-row">
+              <div><div class="sf-name">1/2" ball valve × 2</div><div class="sf-sub">Quick-Add library</div></div>
+              <div class="sf-amt">$77.00</div>
+            </div>
+            <div class="sf-row">
+              <div><div class="sf-name">Stainless supply line × 2</div><div class="sf-sub">Quick-Add library</div></div>
+              <div class="sf-amt">$28.00</div>
+            </div>
+            <div class="sf-row">
+              <div><div class="sf-name">Markup 15% + Tax 8.5%</div><div class="sf-sub">Auto-calc, TX rate</div></div>
+              <div class="sf-amt">$67.59</div>
+            </div>
+            <div class="sf-row total">
+              <div>Total</div><div>$362.59</div>
+            </div>
+          </div>
+          <div class="showcase-caption">
+            <span class="step">Step 01</span>
+            <h3>Build the quote on the driveway.</h3>
+            <p>Trade-specific line items, labor at your rate, materials from your saved library. Markup and state tax calculated automatically.</p>
+            <ul>
+              <li>Per-trade quote sheets — Plumber, Electrician, HVAC, Painter, Specialty</li>
+              <li>Multi-trade jobs combined onto one quote with per-trade subtotals</li>
+              <li>Quick-Add library so you never type a price twice</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- ── SLIDE 2 — Send to Customer ── -->
+        <div class="showcase-slide" data-slide="2">
+          <div class="showcase-frame">
+            <div class="sf-pay-hero">
+              <div class="sf-pay-co">Mason Brothers Plumbing</div>
+              <div class="sf-pay-num">INV-2026-0118</div>
+              <div class="sf-pay-amt">$1,847.50</div>
+              <div class="sf-pay-due">Due Nov 12 · Net 30</div>
+            </div>
+            <div class="sf-row head"><span>Line items</span><span>Amount</span></div>
+            <div class="sf-row">
+              <div><div class="sf-name">Tankless water heater install</div><div class="sf-sub">Performed by Carlos R.</div></div>
+              <div class="sf-amt">$1,540.00</div>
+            </div>
+            <div class="sf-row">
+              <div><div class="sf-name">Permit + disposal</div></div>
+              <div class="sf-amt">$165.00</div>
+            </div>
+            <div class="sf-pay-btn">Pay $1,847.50 securely →</div>
+            <div class="sf-pay-methods">
+              <span class="sf-pay-method">Card</span>
+              <span class="sf-pay-method">ACH</span>
+              <span class="sf-pay-method">Zelle</span>
+              <span class="sf-pay-method">Cash App</span>
+              <span class="sf-pay-method">Check</span>
+            </div>
+          </div>
+          <div class="showcase-caption">
+            <span class="step">Step 02</span>
+            <h3>Send a link. They pay from a phone.</h3>
+            <p>Every invoice gets a private payment link. The customer opens it, taps Pay, and the money lands in your account — no app install, no account, no friction.</p>
+            <ul>
+              <li>Branded with your logo, colors, and license number</li>
+              <li>Customer picks how to pay — card, ACH, Zelle, Cash App, or check</li>
+              <li>You see "Viewed" the second they open it</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- ── SLIDE 3 — Schedule the Job ── -->
+        <div class="showcase-slide" data-slide="3">
+          <div class="showcase-frame">
+            <div class="sf-cal-head">
+              <span class="sf-cal-month">November 2026</span>
+              <span class="showcase-frame-pill">Drag to reschedule</span>
+            </div>
+            <div class="sf-cal-grid">
+              <div class="sf-cal-dow">S</div><div class="sf-cal-dow">M</div><div class="sf-cal-dow">T</div><div class="sf-cal-dow">W</div><div class="sf-cal-dow">T</div><div class="sf-cal-dow">F</div><div class="sf-cal-dow">S</div>
+              <div class="sf-cal-cell"><span class="d">9</span><span class="sf-cal-job">Valve job</span></div>
+              <div class="sf-cal-cell"><span class="d">10</span><span class="sf-cal-job hvac">HVAC tune-up</span></div>
+              <div class="sf-cal-cell today"><span class="d">11</span><span class="sf-cal-job">Tankless</span><span class="sf-cal-job elec">Panel</span></div>
+              <div class="sf-cal-cell"><span class="d">12</span><span class="sf-cal-job">Bathroom</span></div>
+              <div class="sf-cal-cell"><span class="d">13</span></div>
+              <div class="sf-cal-cell"><span class="d">14</span><span class="sf-cal-job hvac">Mini-split</span></div>
+              <div class="sf-cal-cell"><span class="d">15</span></div>
+              <div class="sf-cal-cell"><span class="d">16</span><span class="sf-cal-job elec">GFCI run</span></div>
+              <div class="sf-cal-cell"><span class="d">17</span></div>
+              <div class="sf-cal-cell"><span class="d">18</span><span class="sf-cal-job">Drain rough-in</span></div>
+              <div class="sf-cal-cell"><span class="d">19</span><span class="sf-cal-job hvac">Furnace</span></div>
+              <div class="sf-cal-cell"><span class="d">20</span></div>
+              <div class="sf-cal-cell"><span class="d">21</span></div>
+              <div class="sf-cal-cell"><span class="d">22</span></div>
+            </div>
+          </div>
+          <div class="showcase-caption">
+            <span class="step">Step 03</span>
+            <h3>Drop the job on the calendar.</h3>
+            <p>Color-coded by trade. Drag to reschedule. Tap to assign a tech. Customer gets notified the moment it's set.</p>
+            <ul>
+              <li>Drag-and-drop reschedule — no menus, no forms</li>
+              <li>Per-trade colors so you see your week at a glance</li>
+              <li>Job → Invoice in one tap when the work is done</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- ── SLIDE 4 — Track the Crew ── -->
+        <div class="showcase-slide" data-slide="4">
+          <div class="showcase-frame">
+            <div class="showcase-frame-header">
+              <span class="showcase-frame-title">All Jobs · Today</span>
+              <span class="showcase-frame-pill">12 active</span>
+            </div>
+            <div class="sf-bucket-head over">⚠ Overdue · 1</div>
+            <div class="sf-row">
+              <div><div class="sf-name">Wilson — Drain repair</div><div class="sf-sub">Carlos R. · Was scheduled Nov 9</div></div>
+              <span class="sf-pill due">Overdue</span>
+            </div>
+            <div class="sf-bucket-head today">Today · 3</div>
+            <div class="sf-row">
+              <div><div class="sf-name">City Rentals — Tankless install</div><div class="sf-sub">Jake M. · 9:00 AM</div></div>
+              <span class="sf-pill sent">In progress</span>
+            </div>
+            <div class="sf-row">
+              <div><div class="sf-name">Torres — 200A panel upgrade</div><div class="sf-sub">Carlos R. · 1:00 PM</div></div>
+              <span class="sf-pill draft">Scheduled</span>
+            </div>
+            <div class="sf-row">
+              <div><div class="sf-name">Alvarez — Mini-split tune-up</div><div class="sf-sub">Mason B. · 3:30 PM</div></div>
+              <span class="sf-pill draft">Scheduled</span>
+            </div>
+            <div class="sf-bucket-head tom">Tomorrow · 2</div>
+            <div class="sf-row">
+              <div><div class="sf-name">Johnson — Bathroom rough-in</div><div class="sf-sub">Jake M. · 8:00 AM</div></div>
+              <span class="sf-pill draft">Scheduled</span>
+            </div>
+          </div>
+          <div class="showcase-caption">
+            <span class="step">Step 04</span>
+            <h3>One screen. Every job. Every tech.</h3>
+            <p>Overdue, today, tomorrow, this week — every job in your shop, grouped by when it matters and who owns it.</p>
+            <ul>
+              <li>Each tech gets their own login with a unique Tech ID</li>
+              <li>Every invoice records who did the work — automatically</li>
+              <li>Reassign a job in one tap when something comes up</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- ── SLIDE 5 — Get Paid + Dashboard ── -->
+        <div class="showcase-slide" data-slide="5">
+          <div class="showcase-frame">
+            <div class="showcase-frame-header">
+              <span class="showcase-frame-title">November · Snapshot</span>
+              <span class="showcase-frame-pill">Live</span>
+            </div>
+            <div class="sf-stats">
+              <div class="sf-stat">
+                <div class="sf-stat-lbl">Paid this month</div>
+                <div class="sf-stat-val">$34,820</div>
+                <div class="sf-stat-sub">▲ 18% vs October</div>
+              </div>
+              <div class="sf-stat">
+                <div class="sf-stat-lbl">Outstanding</div>
+                <div class="sf-stat-val">$12,450</div>
+                <div class="sf-stat-sub">7 invoices · avg 4 days</div>
+              </div>
+              <div class="sf-stat">
+                <div class="sf-stat-lbl">Avg. invoice</div>
+                <div class="sf-stat-val">$1,846</div>
+                <div class="sf-stat-sub">23 invoices YTD</div>
+              </div>
+              <div class="sf-stat">
+                <div class="sf-stat-lbl">Quote → close</div>
+                <div class="sf-stat-val">74%</div>
+                <div class="sf-stat-sub">Up from 41% (manual)</div>
+              </div>
+            </div>
+            <div style="margin-top:14px;">
+              <div class="sf-row head"><span>Recent activity</span><span></span></div>
+              <div class="sf-row">
+                <div><div class="sf-name">Sandra Johnson paid INV-0117</div><div class="sf-sub">Card · 4 minutes ago</div></div>
+                <span class="sf-pill paid">+$365.00</span>
+              </div>
+              <div class="sf-row">
+                <div><div class="sf-name">City Rentals viewed INV-0118</div><div class="sf-sub">2 hours ago</div></div>
+                <span class="sf-pill sent">$1,847.50</span>
+              </div>
+            </div>
+          </div>
+          <div class="showcase-caption">
+            <span class="step">Step 05</span>
+            <h3>The numbers, the moment they happen.</h3>
+            <p>Paid, outstanding, average invoice, close rate. The same dashboard your accountant wants — running live in your pocket.</p>
+            <ul>
+              <li>Real-time activity feed — see "Viewed" and "Paid" the instant they happen</li>
+              <li>50-state tax rates kept current — never under-charge again</li>
+              <li>Export to QuickBooks when it's time to do the books</li>
+            </ul>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Dot indicators below the stage -->
+      <div class="showcase-dots">
+        <button class="showcase-dot active" data-step="1" onclick="selectShowcase(1)" aria-label="Slide 1"></button>
+        <button class="showcase-dot" data-step="2" onclick="selectShowcase(2)" aria-label="Slide 2"></button>
+        <button class="showcase-dot" data-step="3" onclick="selectShowcase(3)" aria-label="Slide 3"></button>
+        <button class="showcase-dot" data-step="4" onclick="selectShowcase(4)" aria-label="Slide 4"></button>
+        <button class="showcase-dot" data-step="5" onclick="selectShowcase(5)" aria-label="Slide 5"></button>
+      </div>
     </div>
   </div>
 </section>
@@ -1080,6 +1480,30 @@
     document.querySelectorAll('.trade-content').forEach(c => c.classList.remove('active'));
     btn.classList.add('active');
     document.getElementById('trade-' + trade).classList.add('active');
+  }
+
+  // ── Feature showcase slideshow ──
+  // Five slides; numbered tab nav + arrow buttons + dot indicators all jump
+  // to the same state. Keep the active step in a single source-of-truth so
+  // every control stays in sync no matter which one the user clicks.
+  let showcaseStep = 1;
+  const SHOWCASE_TOTAL = 5;
+  function selectShowcase(step, btn) {
+    if (step < 1) step = SHOWCASE_TOTAL;
+    if (step > SHOWCASE_TOTAL) step = 1;
+    showcaseStep = step;
+    document.querySelectorAll('.showcase-tab').forEach(t => {
+      t.classList.toggle('active', +t.dataset.step === step);
+    });
+    document.querySelectorAll('.showcase-slide').forEach(s => {
+      s.classList.toggle('active', +s.dataset.slide === step);
+    });
+    document.querySelectorAll('.showcase-dot').forEach(d => {
+      d.classList.toggle('active', +d.dataset.step === step);
+    });
+  }
+  function stepShowcase(delta) {
+    selectShowcase(showcaseStep + delta);
   }
 
   // FAQ accordion
