@@ -93,6 +93,34 @@ export async function signIn(email, password) {
   return data.user;
 }
 
+// Tech sign-in: takes the Tech ID (e.g. TV-T-K3M9R7) the owner shared and
+// converts it to the synthetic email Supabase auth was registered with.
+// No DB lookup needed pre-auth — the email is deterministic from the ID.
+export async function techSignIn(techId, password) {
+  const trimmed = String(techId).trim().toUpperCase();
+  if (!/^TV-T-[A-Z0-9]{6}$/.test(trimmed)) {
+    throw new Error('Tech ID should look like TV-T-XXXXXX. Check the ID your employer gave you.');
+  }
+  const body = trimmed.replace(/^TV-T-/, '').toLowerCase();
+  const email = `tech-${body}@tradevoice.app`;
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) throw error;
+  return data.user;
+}
+
+// Tech changes their password (used on first login + later from settings).
+// Calls supabase.auth.updateUser, then flips must_change_password on the
+// team_members row so the prompt doesn't recur.
+export async function techChangePassword(techMemberId, newPassword) {
+  const { error: pwErr } = await supabase.auth.updateUser({ password: newPassword });
+  if (pwErr) throw pwErr;
+  const { error: memErr } = await supabase
+    .from('team_members')
+    .update({ must_change_password: false })
+    .eq('id', techMemberId);
+  if (memErr) throw memErr;
+}
+
 export async function signUp(email, password) {
   const { data, error } = await supabase.auth.signUp({ email, password });
   if (error) throw error;

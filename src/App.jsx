@@ -8,12 +8,12 @@ const PlansScreen          = lazy(() => import("./PlansScreen"));
 const MarketingScreen      = lazy(() => import("./MarketingScreen"));
 const PrivacyPolicyScreen  = lazy(() => import("./LegalScreens").then(m => ({ default: m.PrivacyPolicyScreen })));
 const TermsScreen          = lazy(() => import("./LegalScreens").then(m => ({ default: m.TermsScreen })));
-import { signIn, signUp, signOut, getProfile, upsertProfile, getSessionUser, onAuthChange } from "./data/auth";
+import { signIn, signUp, signOut, getProfile, upsertProfile, getSessionUser, onAuthChange, techSignIn, techChangePassword } from "./data/auth";
 import { listClients, addClient as apiAddClient, updateClient as apiUpdateClient, deleteClient as apiDeleteClient } from "./data/clients";
 import { listInvoices, upsertInvoice as apiUpsertInvoice, deleteInvoice as apiDeleteInvoice } from "./data/invoices";
 import { listQuotes,   upsertQuote   as apiUpsertQuote,   deleteQuote   as apiDeleteQuote   } from "./data/quotes";
 import { listJobs,     upsertJob     as apiUpsertJob,     deleteJob     as apiDeleteJob     } from "./data/jobs";
-import { listTeam,     upsertTeamMember as apiUpsertTeam, deleteTeamMember as apiDeleteTeam } from "./data/team";
+import { listTeam,     upsertTeamMember as apiUpsertTeam, deleteTeamMember as apiDeleteTeam, createTechAccount as apiCreateTechAccount } from "./data/team";
 import { listPlans,    upsertPlan       as apiUpsertPlan, deletePlan       as apiDeletePlan, dueWithinDays } from "./data/plans";
 import { listTimeOff,  upsertTimeOff    as apiUpsertTimeOff, deleteTimeOff as apiDeleteTimeOff } from "./data/timeOff";
 import { uploadLogo, deleteLogo } from "./data/storage";
@@ -406,77 +406,135 @@ function AuthShell({ children }) {
 }
 
 // ── LOGIN ─────────────────────────────────────────────────────────────────────
-function LoginScreen({ onLogin, onSignup, onJoin, onForgot }) {
+function LoginScreen({ onLogin, onSignup, onForgot }) {
+  // Two modes share this screen: 'owner' (email + password) and 'tech' (Tech ID + password).
+  // Default mode is owner since most logins are them; techs flip the toggle.
+  const [mode,     setMode]     = useState('owner');
   const [email,    setEmail]    = useState('');
+  const [techId,   setTechId]   = useState('');
   const [password, setPassword] = useState('');
   const [error,    setError]    = useState('');
   const [loading,  setLoading]  = useState(false);
 
   const handleLogin = async () => {
-    if (!email.trim() || !password.trim()) { setError('Please enter your email and password.'); return; }
-    setLoading(true); setError('');
-    try {
-      const authUser = await signIn(email.trim(), password);
-      const profile  = await getProfile(authUser.id, authUser.email);
-      onLogin(profile ?? { id: authUser.id, email: authUser.email, role: 'owner', trades: [], states: [] });
-    } catch (e) {
-      setError(e?.message || 'Could not sign in. Check your email and password.');
-      setLoading(false);
+    if (mode === 'owner') {
+      if (!email.trim() || !password.trim()) { setError('Please enter your email and password.'); return; }
+      setLoading(true); setError('');
+      try {
+        const authUser = await signIn(email.trim(), password);
+        const profile  = await getProfile(authUser.id, authUser.email);
+        onLogin(profile ?? { id: authUser.id, email: authUser.email, role: 'owner', trades: [], states: [] });
+      } catch (e) {
+        setError(e?.message || 'Could not sign in. Check your email and password.');
+        setLoading(false);
+      }
+    } else {
+      if (!techId.trim() || !password.trim()) { setError('Please enter your Tech ID and password.'); return; }
+      setLoading(true); setError('');
+      try {
+        const authUser = await techSignIn(techId.trim(), password);
+        const profile  = await getProfile(authUser.id, authUser.email);
+        // Tech profile should already have role='tech' from createTechAccount;
+        // fall back to 'tech' explicitly if the profile patch missed.
+        onLogin(profile ? { ...profile, role: profile.role || 'tech' } : { id: authUser.id, email: authUser.email, role: 'tech', trades: [], states: [] });
+      } catch (e) {
+        setError(e?.message || 'Could not sign in. Check your Tech ID and password.');
+        setLoading(false);
+      }
     }
   };
+
+  // Toggle pill for Owner / Tech mode
+  const ModePill = ({ value, label }) => (
+    <button
+      onClick={() => { setMode(value); setError(''); }}
+      style={{
+        flex: 1, padding: '10px 14px', minHeight: 44, border: 'none', cursor: 'pointer',
+        background: mode === value ? '#fff' : 'transparent',
+        color: mode === value ? C.text : C.muted,
+        fontWeight: mode === value ? 700 : 600, fontSize: 14,
+        borderRadius: 6, fontFamily: "'Inter', sans-serif",
+        boxShadow: mode === value ? '0 1px 2px rgba(15, 23, 42, 0.1)' : 'none',
+        transition: 'all 0.15s',
+      }}
+    >{label}</button>
+  );
 
   return (
     <AuthShell>
       <div style={{ fontSize: 22, fontWeight: 700, color: C.text, marginBottom: 4, fontFamily: "'Inter', sans-serif", letterSpacing: '-0.02em' }}>Welcome back</div>
-      <div style={{ fontSize: 13, color: C.muted, marginBottom: 22 }}>Sign in to your Tradevoice account</div>
+      <div style={{ fontSize: 13, color: C.muted, marginBottom: 18 }}>
+        {mode === 'owner' ? 'Sign in to your Tradevoice account' : 'Sign in with the Tech ID your employer gave you'}
+      </div>
+
+      {/* Mode toggle */}
+      <div style={{ display: 'flex', gap: 4, padding: 4, background: C.raised, borderRadius: 8, marginBottom: 18 }}>
+        <ModePill value="owner" label="Owner / Admin" />
+        <ModePill value="tech"  label="Tech sign in" />
+      </div>
 
       {error && <div style={{ background: '#fef2f2', border: `1px solid ${C.error}33`, borderRadius: 6, padding: '9px 12px', fontSize: 13, color: C.error, marginBottom: 14 }}>{error}</div>}
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 18 }}>
-        <div>
-          <label style={s.label}>Email address</label>
-          <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="matt@company.com"
-            style={{ ...s.input, width: '100%', padding: '11px 13px', boxSizing: 'border-box' }}
-            onKeyDown={e => e.key === 'Enter' && handleLogin()} />
-        </div>
+        {mode === 'owner' ? (
+          <div>
+            <label style={s.label}>Email address</label>
+            <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="matt@company.com"
+              style={{ ...s.input, width: '100%', padding: '12px 14px', minHeight: 48, fontSize: 16, boxSizing: 'border-box' }}
+              onKeyDown={e => e.key === 'Enter' && handleLogin()} />
+          </div>
+        ) : (
+          <div>
+            <label style={s.label}>Tech ID</label>
+            <input type="text" value={techId} onChange={e => setTechId(e.target.value.toUpperCase())} placeholder="TV-T-XXXXXX"
+              style={{ ...s.input, width: '100%', padding: '14px', minHeight: 52, fontSize: 18, fontWeight: 700, letterSpacing: '0.08em', textAlign: 'center', fontFamily: 'ui-monospace, monospace', boxSizing: 'border-box' }}
+              onKeyDown={e => e.key === 'Enter' && handleLogin()} />
+            <div style={{ fontSize: 12, color: C.dim, marginTop: 4 }}>
+              Don't have one? Ask your employer — they create Tech IDs from their Settings.
+            </div>
+          </div>
+        )}
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
             <label style={{ ...s.label, margin: 0 }}>Password</label>
-            <button type="button" onClick={onForgot} style={{ background: 'none', border: 'none', padding: 0, fontSize: 12, color: C.orange, textDecoration: 'none', fontWeight: 600, cursor: 'pointer', fontFamily: "'Inter', sans-serif" }}>Forgot password?</button>
+            {mode === 'owner' && (
+              <button type="button" onClick={onForgot} style={{ background: 'none', border: 'none', padding: 0, fontSize: 12, color: C.orange, textDecoration: 'none', fontWeight: 600, cursor: 'pointer', fontFamily: "'Inter', sans-serif" }}>Forgot password?</button>
+            )}
           </div>
           <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••"
-            style={{ ...s.input, width: '100%', padding: '11px 13px', boxSizing: 'border-box' }}
+            style={{ ...s.input, width: '100%', padding: '12px 14px', minHeight: 48, fontSize: 16, boxSizing: 'border-box' }}
             onKeyDown={e => e.key === 'Enter' && handleLogin()} />
         </div>
       </div>
 
       <button onClick={handleLogin} disabled={loading} style={{
         ...s.btn, width: '100%', background: loading ? C.muted : C.orange, color: '#fff',
-        padding: '12px', fontSize: 14, letterSpacing: '0.06em', borderRadius: 50,
-        border: 'none', marginBottom: 14, opacity: loading ? 0.7 : 1,
-      }}>{loading ? 'Signing in…' : 'Sign In'}</button>
+        padding: '14px', minHeight: 50, fontSize: 15, letterSpacing: '0.06em', borderRadius: 50,
+        border: 'none', marginBottom: 14, opacity: loading ? 0.7 : 1, fontWeight: 700,
+      }}>{loading ? 'Signing in…' : (mode === 'owner' ? 'Sign In' : 'Sign In as Tech')}</button>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-        <div style={{ flex: 1, height: 1, background: C.border }} />
-        <span style={{ fontSize: 11, color: C.dim }}>or</span>
-        <div style={{ flex: 1, height: 1, background: C.border }} />
-      </div>
+      {mode === 'owner' && (
+        <>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+            <div style={{ flex: 1, height: 1, background: C.border }} />
+            <span style={{ fontSize: 11, color: C.dim }}>or</span>
+            <div style={{ flex: 1, height: 1, background: C.border }} />
+          </div>
 
-      {/* Google sign in */}
-      <button style={{ ...s.btn, width: '100%', background: C.surface, border: `1.5px solid ${C.border2}`, color: C.text, padding: '11px', fontSize: 13, borderRadius: 50, marginBottom: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
-        <svg width="16" height="16" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/></svg>
-        Continue with Google
-      </button>
+          {/* Google sign in */}
+          <button style={{ ...s.btn, width: '100%', background: C.surface, border: `1.5px solid ${C.border2}`, color: C.text, padding: '11px', minHeight: 48, fontSize: 14, borderRadius: 50, marginBottom: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+            <svg width="16" height="16" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/></svg>
+            Continue with Google
+          </button>
 
-      <div style={{ textAlign: 'center', fontSize: 12, color: C.muted, marginBottom: 8 }}>
-        New to Tradevoice?{' '}
-        <button onClick={onSignup} style={{ background: 'none', border: 'none', padding: 0, color: C.orange, fontWeight: 700, cursor: 'pointer', fontSize: 12, fontFamily: "'Inter', sans-serif" }}>
-          Create an account →
-        </button>
-      </div>
-      <div style={{ textAlign: 'center', fontSize: 12, color: C.muted }}>
-        Got a company code? <button onClick={onJoin} style={{ background: 'none', border: 'none', color: C.orange, fontWeight: 700, cursor: 'pointer', fontSize: 12, padding: 0 }}>Join a company</button>
-      </div>
+          <div style={{ textAlign: 'center', fontSize: 12, color: C.muted, marginBottom: 8 }}>
+            New to Tradevoice?{' '}
+            <button onClick={onSignup} style={{ background: 'none', border: 'none', padding: 0, color: C.orange, fontWeight: 700, cursor: 'pointer', fontSize: 12, fontFamily: "'Inter', sans-serif" }}>
+              Create an account →
+            </button>
+          </div>
+        </>
+      )}
     </AuthShell>
   );
 }
@@ -5224,6 +5282,217 @@ function TeamMemberRow({ member, onUpdate, onRemove }) {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
+// BUY TECH SEAT MODAL — owner provisions a new tech account
+// ══════════════════════════════════════════════════════════════════════════════
+// Master account fills out name + trade(s) + branch + phone + permissions, the
+// system generates a unique Tech ID + initial password, and creates a real
+// Supabase auth user behind the scenes (with a synthetic email derived from
+// the Tech ID). Owner gets the credentials to share with the tech.
+function BuyTechSeatModal({ user, onClose, onCreate }) {
+  const ownerTrades = user?.trades?.length ? user.trades : ['Plumber','HVAC','Electrician','Roofing','Specialty'];
+  const [name,    setName]    = useState('');
+  const [trades,  setTrades]  = useState(ownerTrades.length ? [ownerTrades[0]] : []);
+  const [branch,  setBranch]  = useState('');
+  const [phone,   setPhone]   = useState('');
+  const [perms,   setPerms]   = useState({
+    createQuotes:    true,
+    createInvoices:  true,
+    viewAllJobs:     false,
+    recordPayments:  false,
+    viewClients:     true,
+    viewDashboard:   false,
+  });
+  const [saving,  setSaving]  = useState(false);
+  const [err,     setErr]     = useState('');
+
+  const toggleTrade = (t) => setTrades(prev => prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t]);
+  const togglePerm  = (k) => setPerms(prev => ({ ...prev, [k]: !prev[k] }));
+
+  const submit = async () => {
+    if (!name.trim()) { setErr('Tech name is required.'); return; }
+    if (trades.length === 0) { setErr('Pick at least one trade for this tech.'); return; }
+    setErr('');
+    setSaving(true);
+    try {
+      await onCreate({ name: name.trim(), trades, branch: branch.trim(), phone: phone.trim(), perms });
+      // onCreate closes this modal and opens the credentials display.
+    } catch (e) {
+      console.error('createTechAccount failed', e);
+      setErr(e?.message || 'Could not create tech account. Try again.');
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div onClick={onClose} style={{
+      position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.5)', zIndex: 1000,
+      display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
+    }}>
+      <div onClick={e => e.stopPropagation()} style={{
+        background: '#fff', borderRadius: 14, width: '100%', maxWidth: 520,
+        maxHeight: '92vh', overflow: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.25)',
+      }}>
+        {/* Header */}
+        <div style={{ padding: '20px 24px', borderBottom: `1px solid ${C.border}`, background: C.orange, color: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', opacity: 0.85 }}>New Tech Seat — $19.99/mo</div>
+            <div style={{ fontSize: 19, fontWeight: 700, marginTop: 2 }}>Add a Technician</div>
+          </div>
+          <button onClick={onClose} style={{ width: 44, height: 44, borderRadius: '50%', background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', fontSize: 22, cursor: 'pointer' }}>×</button>
+        </div>
+
+        {/* Body */}
+        <div style={{ padding: '20px 24px' }}>
+          {err && <div style={{ background: C.errorLo, border: `1px solid ${C.error}33`, color: C.errorBold, padding: '10px 14px', borderRadius: 8, fontSize: 14, marginBottom: 16 }}>{err}</div>}
+
+          <label style={{ ...s.label, marginTop: 0 }}>Tech Name <span style={{ color: C.errorBold }}>*</span></label>
+          <input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Carlos Reyes"
+            style={{ ...s.input, width: '100%', padding: '12px 14px', minHeight: 48, fontSize: 16, fontWeight: 600, marginBottom: 14, boxSizing: 'border-box' }} />
+
+          <label style={s.label}>Trade(s) — what this tech can do <span style={{ color: C.errorBold }}>*</span></label>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 14 }}>
+            {ownerTrades.map(t => (
+              <button key={t} onClick={() => toggleTrade(t)} style={{
+                padding: '10px 14px', minHeight: 44, borderRadius: 50, border: `1.5px solid ${trades.includes(t) ? C.orange : C.border2}`,
+                background: trades.includes(t) ? C.orange : '#fff',
+                color: trades.includes(t) ? '#fff' : C.muted,
+                fontSize: 14, fontWeight: 600, cursor: 'pointer',
+              }}>{t}</button>
+            ))}
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
+            <div>
+              <label style={s.label}>Branch / Location</label>
+              <input value={branch} onChange={e => setBranch(e.target.value)} placeholder="Houston North"
+                style={{ ...s.input, width: '100%', padding: '12px 14px', minHeight: 48, fontSize: 16, boxSizing: 'border-box' }} />
+            </div>
+            <div>
+              <label style={s.label}>Phone</label>
+              <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="(713) 555-0100" type="tel"
+                style={{ ...s.input, width: '100%', padding: '12px 14px', minHeight: 48, fontSize: 16, boxSizing: 'border-box' }} />
+            </div>
+          </div>
+
+          <label style={s.label}>Permissions — what this tech can access</label>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, background: C.raised, borderRadius: 8, padding: '12px 14px', marginBottom: 12 }}>
+            {[
+              { key: 'createQuotes',    label: 'Create quotes' },
+              { key: 'createInvoices',  label: 'Create invoices' },
+              { key: 'recordPayments',  label: 'Record payments' },
+              { key: 'viewClients',     label: 'View client list' },
+              { key: 'viewAllJobs',     label: 'View ALL company jobs (vs only theirs)' },
+              { key: 'viewDashboard',   label: 'View dashboard / financials' },
+            ].map(({ key, label }) => (
+              <label key={key} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', cursor: 'pointer', fontSize: 14, color: C.text, fontWeight: 500 }}>
+                <input type="checkbox" checked={!!perms[key]} onChange={() => togglePerm(key)} style={{ width: 20, height: 20, accentColor: C.orange, cursor: 'pointer' }} />
+                <span>{label}</span>
+              </label>
+            ))}
+          </div>
+
+          <div style={{ background: C.orangeLo, border: `1px solid ${C.orange}33`, borderRadius: 8, padding: '12px 14px', fontSize: 13, color: C.muted, lineHeight: 1.5 }}>
+            <strong style={{ color: C.orange }}>How this works:</strong> we'll generate a unique Tech ID
+            and password for them. Share those credentials with the tech — they sign in with the ID
+            (no email needed). They'll be prompted to set their own password on first login.
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div style={{ padding: '14px 24px', borderTop: `1px solid ${C.border}`, display: 'flex', gap: 10, position: 'sticky', bottom: 0, background: '#fff' }}>
+          <button onClick={onClose} disabled={saving} style={{
+            flex: 1, padding: '14px', minHeight: 50, border: `1.5px solid ${C.border2}`, borderRadius: 8,
+            background: '#fff', color: C.muted, fontSize: 15, fontWeight: 600, cursor: 'pointer',
+          }}>Cancel</button>
+          <button onClick={submit} disabled={saving || !name.trim() || trades.length === 0} style={{
+            flex: 2, padding: '14px', minHeight: 50, border: 'none', borderRadius: 8,
+            background: saving || !name.trim() || trades.length === 0 ? C.dim : C.orange,
+            color: '#fff', fontSize: 15, fontWeight: 700, cursor: saving ? 'wait' : 'pointer',
+            opacity: saving || !name.trim() || trades.length === 0 ? 0.55 : 1,
+          }}>{saving ? 'Creating account…' : 'Create Tech Account ($19.99/mo)'}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// TECH CREDENTIALS DISPLAY — shown to owner right after a successful create
+// ══════════════════════════════════════════════════════════════════════════════
+// One-time view of the generated Tech ID + initial password. Owner copies and
+// shares with the tech. We don't store the plaintext password — once the modal
+// closes, it's gone.
+function TechCredentialsDisplay({ creds, onClose }) {
+  const [copied, setCopied] = useState('');
+
+  const copy = (text, label) => {
+    navigator.clipboard?.writeText(text);
+    setCopied(label);
+    setTimeout(() => setCopied(''), 1500);
+  };
+
+  const both = `Tech Name: ${creds.member?.name || 'Tech'}\nTech ID: ${creds.techId}\nPassword: ${creds.password}\n\nGo to: https://app.thetradevoice.com — click "Tech sign in" — enter the Tech ID and password.`;
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.55)', zIndex: 1001,
+      display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
+    }}>
+      <div style={{ background: '#fff', borderRadius: 14, width: '100%', maxWidth: 520, maxHeight: '92vh', overflow: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}>
+        <div style={{ padding: '24px', borderBottom: `1px solid ${C.border}`, background: C.success, color: '#fff' }}>
+          <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', opacity: 0.85 }}>Account Created</div>
+          <div style={{ fontSize: 20, fontWeight: 700, marginTop: 4 }}>{creds.member?.name || 'Tech'} is ready to sign in</div>
+        </div>
+        <div style={{ padding: '24px' }}>
+          <div style={{ background: '#fef9c3', border: `1px solid ${C.warn}55`, borderRadius: 8, padding: '12px 16px', marginBottom: 20, fontSize: 13, color: C.muted, lineHeight: 1.55 }}>
+            <strong style={{ color: C.warn }}>Save these now.</strong> The password won't be shown again. Copy them, write them down, or text them to the tech.
+          </div>
+
+          {/* Tech ID block */}
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ ...s.label, marginBottom: 8 }}>Tech ID</div>
+            <div style={{ display: 'flex', alignItems: 'stretch', gap: 8 }}>
+              <div style={{ flex: 1, background: C.raised, border: `1px solid ${C.border}`, borderRadius: 8, padding: '14px 18px', fontFamily: 'ui-monospace, monospace', fontSize: 22, fontWeight: 800, color: C.text, letterSpacing: '0.06em', textAlign: 'center' }}>
+                {creds.techId}
+              </div>
+              <button onClick={() => copy(creds.techId, 'id')} style={{
+                padding: '0 18px', minHeight: 50, border: `1.5px solid ${C.border2}`, borderRadius: 8,
+                background: '#fff', color: copied === 'id' ? C.success : C.muted, fontSize: 14, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap',
+              }}>{copied === 'id' ? '✓ Copied' : 'Copy'}</button>
+            </div>
+          </div>
+
+          {/* Password block */}
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ ...s.label, marginBottom: 8 }}>Initial Password</div>
+            <div style={{ display: 'flex', alignItems: 'stretch', gap: 8 }}>
+              <div style={{ flex: 1, background: C.raised, border: `1px solid ${C.border}`, borderRadius: 8, padding: '14px 18px', fontFamily: 'ui-monospace, monospace', fontSize: 22, fontWeight: 800, color: C.text, letterSpacing: '0.06em', textAlign: 'center' }}>
+                {creds.password}
+              </div>
+              <button onClick={() => copy(creds.password, 'pw')} style={{
+                padding: '0 18px', minHeight: 50, border: `1.5px solid ${C.border2}`, borderRadius: 8,
+                background: '#fff', color: copied === 'pw' ? C.success : C.muted, fontSize: 14, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap',
+              }}>{copied === 'pw' ? '✓ Copied' : 'Copy'}</button>
+            </div>
+            <div style={{ fontSize: 12, color: C.dim, marginTop: 6 }}>The tech will be asked to change this on first sign-in.</div>
+          </div>
+
+          <button onClick={() => copy(both, 'all')} style={{
+            width: '100%', padding: '14px', minHeight: 50, border: `1.5px solid ${C.orange}88`, borderRadius: 8,
+            background: copied === 'all' ? C.orangeLo : '#fff', color: C.orange, fontSize: 14, fontWeight: 700, cursor: 'pointer', marginBottom: 14,
+          }}>{copied === 'all' ? '✓ Copied — paste into a text or email to the tech' : 'Copy both + sign-in instructions'}</button>
+
+          <button onClick={onClose} style={{
+            width: '100%', padding: '14px', minHeight: 50, border: 'none', borderRadius: 8,
+            background: C.success, color: '#fff', fontSize: 15, fontWeight: 700, cursor: 'pointer',
+          }}>Done</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
 // TIME OFF — block out periods when a tech is unavailable. Surfaces in the
 // Schedule's Add-Job dropdown (disabled tech) and drag-reschedule (warn).
 // ══════════════════════════════════════════════════════════════════════════════
@@ -5374,11 +5643,14 @@ function TimeOffPanel({ team = [], timeOff = [], onAdd, onRemove }) {
 // ══════════════════════════════════════════════════════════════════════════════
 // SETTINGS
 // ══════════════════════════════════════════════════════════════════════════════
-function Settings({ user, setUser, logo, onLogoChange, showProfileModal, setShowProfileModal, payments, setPayments, taxRates, setTaxRates, teamMembers, setTeamMembers, persistTeamMember, removeTeamMember, timeOff = [], persistTimeOff, removeTimeOff }) {
+function Settings({ user, setUser, logo, onLogoChange, showProfileModal, setShowProfileModal, payments, setPayments, taxRates, setTaxRates, teamMembers, setTeamMembers, persistTeamMember, removeTeamMember, createTechAccount: createTechAccountFn, timeOff = [], persistTimeOff, removeTimeOff }) {
   const { isTablet } = useBreakpoint();
   const tradeCount   = user.trades?.length || 1;
   const currentPrice = getPrice(tradeCount);
   const planName     = PLANS.find(p => p.trades === tradeCount)?.name || 'Starter';
+  // Tech-onboarding modals (owner buys a seat → fills out profile → sees credentials)
+  const [showBuySeat,    setShowBuySeat]    = useState(false);
+  const [techCredsToShow, setTechCredsToShow] = useState(null);
 
   const updateHandle = (key, val) => setPayments(p => ({ ...p, [key]: { ...p[key], handle: val } }));
   const toggleConnect = (key) => setPayments(p => ({ ...p, [key]: { ...p[key], connected: !p[key]?.connected } }));
@@ -5692,20 +5964,36 @@ function Settings({ user, setUser, logo, onLogoChange, showProfileModal, setShow
             </div>
           )}
 
-          {/* Add member button */}
-          <button onClick={async () => {
-            try {
-              await persistTeamMember({
-                name: 'New Team Member', email: '', role: 'tech', trades: [], status: 'pending',
-                perms: { createQuotes: true, createInvoices: true, viewAllJobs: false, recordPayments: false, viewClients: true, viewDashboard: false },
-              });
-            } catch (e) {
-              alert(e?.message || 'Could not add team member.');
-            }
-          }} style={{ ...s.btn, background: 'transparent', border: `2px dashed ${C.border2}`, color: C.muted, padding: '14px', fontSize: 15, borderRadius: 8, width: '100%', textAlign: 'center' }}>
-            + Add Team Member — $19.99/mo
+          {/* Buy a tech seat — opens the proper provisioning flow that creates
+              a real Supabase auth account and gives the owner a Tech ID +
+              password to share. Replaces the old "blank row" stub which
+              didn't actually create a usable account. */}
+          <button onClick={() => setShowBuySeat(true)} style={{
+            ...s.btn, background: C.orange, color: '#fff', border: 'none',
+            padding: '14px', fontSize: 15, fontWeight: 700, borderRadius: 8,
+            width: '100%', textAlign: 'center', minHeight: 50,
+            boxShadow: '0 1px 3px rgba(45, 106, 79, 0.3)',
+          }}>
+            + Buy a Tech Seat — $19.99/mo
           </button>
         </div>
+      )}
+
+      {showBuySeat && (
+        <BuyTechSeatModal
+          user={user}
+          onClose={() => setShowBuySeat(false)}
+          onCreate={async (profileData) => {
+            const result = await createTechAccountFn(profileData);
+            // Update the team list so the new tech shows up immediately.
+            if (result?.member) setTeamMembers(prev => [...prev, result.member]);
+            setShowBuySeat(false);
+            setTechCredsToShow(result);
+          }}
+        />
+      )}
+      {techCredsToShow && (
+        <TechCredentialsDisplay creds={techCredsToShow} onClose={() => setTechCredsToShow(null)} />
       )}
 
       {/* ── Time Off (owner only) ───────────────────────────────────────────
@@ -6022,6 +6310,16 @@ export default function Tradevoice() {
     setTeamMembers(prev => prev.filter(m => m.id !== id));
   };
 
+  // Owner-driven tech provisioning. Wraps the data-layer helper that handles
+  // the full ceremony: generate Tech ID + password, create Supabase auth user,
+  // patch their profile to role='tech', insert team_members row, restore the
+  // owner's session. Returns { techId, password, member } so the caller can
+  // show creds via the TechCredentialsDisplay modal.
+  const createTechAccountHandler = async (profileData) => {
+    if (!user?.id) throw new Error('Sign in as the owner before creating tech accounts.');
+    return apiCreateTechAccount(user.id, profileData);
+  };
+
   // ── Plans persistence ──────────────────────────────────────────────────────
   const persistPlan = async (plan) => {
     const saved = await apiUpsertPlan(user.id, plan);
@@ -6132,12 +6430,14 @@ export default function Tradevoice() {
 
   // Show auth screens when no user
   if (!user) {
-    if (authScreen === 'login')    return <LoginScreen    onLogin={u => { setUser(u); setAuthScreen(null); }} onSignup={() => setAuthScreen('signup')} onJoin={() => setAuthScreen('join')} onForgot={() => setAuthScreen('forgot')} />;
+    if (authScreen === 'login')    return <LoginScreen    onLogin={u => { setUser(u); setAuthScreen(null); }} onSignup={() => setAuthScreen('signup')} onForgot={() => setAuthScreen('forgot')} />;
     if (authScreen === 'signup')   return <SignupScreen onComplete={handleSignupComplete} onBack={() => setAuthScreen('login')} />;
-    if (authScreen === 'join')     return <JoinScreen     onJoin={data => { setUser({ ...data, role: 'tech' }); setAuthScreen(null); }} onBack={() => setAuthScreen('login')} />;
+    // Legacy 'join' route — redirect to login. The proper tech sign-in lives
+    // inside the LoginScreen as a mode toggle now (Owner / Tech sign in).
+    if (authScreen === 'join')     { setAuthScreen('login'); return null; }
     if (authScreen === 'forgot')   return <Suspense fallback={<div style={{ minHeight: '100vh', background: C.bg }} />}><ForgotPasswordScreen onBack={() => setAuthScreen('login')} /></Suspense>;
     if (authScreen === 'onboarding') return <Onboarding  onComplete={data => { setUser({ ...data, state: data.states?.join(', '), role: 'owner', companyCode: 'TV-' + Math.random().toString(36).slice(2,8).toUpperCase() }); setAuthScreen(null); }} />;
-    return <LoginScreen onLogin={u => { setUser(u); setAuthScreen(null); }} onSignup={() => setAuthScreen('signup')} onJoin={() => setAuthScreen('join')} onForgot={() => setAuthScreen('forgot')} />;
+    return <LoginScreen onLogin={u => { setUser(u); setAuthScreen(null); }} onSignup={() => setAuthScreen('signup')} onForgot={() => setAuthScreen('forgot')} />;
   }
 
   const handleConvertToInvoice = async (quote, client) => {
@@ -6256,7 +6556,7 @@ export default function Tradevoice() {
     plans:     <PlansScreen  user={user} team={teamMembers} plans={plans} persistPlan={persistPlan} removePlan={removePlan} onScheduleFromPlan={handleScheduleFromPlan} />,
     clients:   <Clients      user={user} nav={setSection} invoices={sharedInvoices} />,
     marketing: <MarketingScreen />,
-    settings:  <Settings     user={user} setUser={setUser} logo={logo} onLogoChange={setLogo} showProfileModal={showProfileModal} setShowProfileModal={setShowProfileModal} payments={payments} setPayments={setPaymentsPersist} taxRates={taxRates} setTaxRates={setTaxRatesPersist} teamMembers={teamMembers} setTeamMembers={setTeamMembers} persistTeamMember={persistTeamMember} removeTeamMember={removeTeamMember} timeOff={timeOff} persistTimeOff={persistTimeOff} removeTimeOff={removeTimeOff} />,
+    settings:  <Settings     user={user} setUser={setUser} logo={logo} onLogoChange={setLogo} showProfileModal={showProfileModal} setShowProfileModal={setShowProfileModal} payments={payments} setPayments={setPaymentsPersist} taxRates={taxRates} setTaxRates={setTaxRatesPersist} teamMembers={teamMembers} setTeamMembers={setTeamMembers} persistTeamMember={persistTeamMember} removeTeamMember={removeTeamMember} createTechAccount={createTechAccountHandler} timeOff={timeOff} persistTimeOff={persistTimeOff} removeTimeOff={removeTimeOff} />,
     privacy:   <PrivacyPolicyScreen onBack={() => setSection('settings')} />,
     terms:     <TermsScreen onBack={() => setSection('settings')} />,
   }[section];
