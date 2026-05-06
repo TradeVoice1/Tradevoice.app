@@ -698,15 +698,21 @@ function WeekView({ weekDays, jobs, techs, onJobClick, filterTech, onReschedule,
   const filtered = filterTech ? jobs.filter(j => j.techUserId === filterTech) : jobs;
   const { drag, dragProps, wrapClick } = useDragReschedule({ onDrop: onReschedule });
 
+  // Detect portrait orientation so the week view can tighten itself for narrow
+  // viewports (iPad portrait = 768 wide, 7 day columns get ~97px each — every
+  // saved pixel matters).
+  const isPortrait = typeof window !== 'undefined' && window.innerWidth < window.innerHeight;
+
   const s = {
     wrap: { overflowX: 'auto', position: 'relative' },
-    grid: { display: 'grid', gridTemplateColumns: '60px repeat(7, 1fr)', minWidth: 700 },
-    dayHeader: (isToday) => ({ padding: '10px 8px', textAlign: 'center', background: isToday ? COLORS.greenLight : '#fafafa', borderBottom: '1px solid #e8e8e8', borderRight: '1px solid #f0f0f0' }),
-    dayName: (isToday) => ({ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.1em', color: isToday ? COLORS.green : '#aaa' }),
-    dayNum: (isToday) => ({ fontSize: 22, fontWeight: 900, color: isToday ? COLORS.green : '#111', marginTop: 2 }),
-    timeCol: { fontSize: 11, color: '#bbb', textAlign: 'right', paddingRight: 8, paddingTop: 4, borderRight: '1px solid #e8e8e8' },
+    // Time column drops 60→44 in portrait (gives 16 more px back to day cols).
+    grid: { display: 'grid', gridTemplateColumns: isPortrait ? '44px repeat(7, 1fr)' : '60px repeat(7, 1fr)', minWidth: isPortrait ? 600 : 700 },
+    dayHeader: (isToday) => ({ padding: isPortrait ? '8px 4px' : '10px 8px', textAlign: 'center', background: isToday ? COLORS.greenLight : '#fafafa', borderBottom: '1px solid #e8e8e8', borderRight: '1px solid #f0f0f0' }),
+    dayName: (isToday) => ({ fontSize: isPortrait ? 10 : 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.08em', color: isToday ? COLORS.green : '#aaa' }),
+    dayNum: (isToday) => ({ fontSize: isPortrait ? 18 : 22, fontWeight: 900, color: isToday ? COLORS.green : '#111', marginTop: 2 }),
+    timeCol: { fontSize: isPortrait ? 10 : 11, color: '#bbb', textAlign: 'right', paddingRight: isPortrait ? 4 : 8, paddingTop: 4, borderRight: '1px solid #e8e8e8' },
     cell: { borderRight: '1px solid #f0f0f0', borderBottom: '1px solid #f8f8f8', minHeight: 56, position: 'relative' },
-    jobBlock: (color) => ({ position: 'absolute', left: 2, right: 2, background: color, borderRadius: 6, padding: '4px 6px', cursor: isTech ? 'pointer' : 'grab', overflow: 'hidden', zIndex: 1, userSelect: 'none' }),
+    jobBlock: (color) => ({ position: 'absolute', left: 2, right: 2, background: color, borderRadius: 6, padding: isPortrait ? '3px 4px' : '4px 6px', cursor: isTech ? 'pointer' : 'grab', overflow: 'hidden', zIndex: 1, userSelect: 'none' }),
   };
 
   const today = new Date();
