@@ -6309,44 +6309,64 @@ export default function Tradevoice() {
         </span>
       </div>
 
-      {/* Settings/profile button — pinned to top right */}
+      {/* Settings/profile button — pinned to top right.
+          Avatar bumped to 48×48 (was 42) and the dropdown to 280px wide with
+          larger touch-friendly menu items so it's easy to read + tap on iPad. */}
       <div style={{ position: 'absolute', top: 0, right: 14, height: TOP_H, display: 'flex', alignItems: 'center' }}>
         <button onClick={() => setShowProfileMenu(m => !m)} aria-label="Open settings menu" style={{
-          width: 42, height: 42, borderRadius: '50%',
+          width: 48, height: 48, borderRadius: '50%',
           background: showProfileMenu ? C.orangeLo : C.orange,
           border: showProfileMenu ? `2px solid ${C.orange}` : 'none',
           cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
           WebkitTapHighlightColor: 'transparent', transition: 'all 0.15s',
+          boxShadow: showProfileMenu ? 'none' : '0 1px 3px rgba(45, 106, 79, 0.25)',
         }}>
-          <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, fontWeight: 900, color: showProfileMenu ? C.orange : '#fff', letterSpacing: '0.04em' }}>
+          <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 17, fontWeight: 900, color: showProfileMenu ? C.orange : '#fff', letterSpacing: '0.04em' }}>
             {initials}
           </span>
         </button>
 
         {showProfileMenu && (
           <div style={{
-            position: 'absolute', top: TOP_H - 4, right: 0, width: 220,
+            position: 'absolute', top: TOP_H - 4, right: 0, width: 300,
             background: C.surface, border: `1px solid ${C.border}`,
-            borderRadius: 8, boxShadow: '0 8px 32px #00000022', zIndex: 999, overflow: 'hidden',
+            borderRadius: 10, boxShadow: '0 12px 40px rgba(15, 23, 42, 0.18)', zIndex: 999, overflow: 'hidden',
           }}>
-            <div style={{ padding: '12px 14px', borderBottom: `1px solid ${C.border}`, background: C.raised }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: C.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user.name || 'Account'}</div>
-              {user.email && <div style={{ fontSize: 11, color: C.muted, marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user.email}</div>}
-              {user.trades?.length > 0 && <div style={{ fontSize: 11, color: C.dim, marginTop: 2 }}>{user.trades.join(' · ')}</div>}
+            {/* Account header — name, email, trades */}
+            <div style={{ padding: '16px 18px', borderBottom: `1px solid ${C.border}`, background: C.raised }}>
+              <div style={{ fontSize: 16, fontWeight: 800, color: C.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', letterSpacing: '-0.01em' }}>
+                {user.name || 'Account'}
+              </div>
+              {user.email && (
+                <div style={{ fontSize: 14, color: C.muted, marginTop: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {user.email}
+                </div>
+              )}
+              {user.trades?.length > 0 && (
+                <div style={{ fontSize: 13, color: C.dim, marginTop: 4, fontWeight: 500 }}>
+                  {user.trades.join(' · ')}
+                </div>
+              )}
             </div>
+            {/* Menu items — 56px tall each so they're easy to tap on iPad. */}
             {[
               { label: 'Settings',     action: () => { setSection('settings'); setShowProfileMenu(false); } },
               { label: 'Edit Profile', action: () => { setSection('settings'); setShowProfileModal(true); setShowProfileMenu(false); } },
               { label: 'Sign Out',     action: async () => { setShowProfileMenu(false); try { await signOut(); } catch (e) { console.error('signOut failed', e); } setUser(null); setAuthScreen('login'); }, danger: true },
             ].map((item, i, arr) => (
               <button key={item.label} onClick={item.action} style={{
-                width: '100%', padding: '11px 14px', background: 'transparent', border: 'none',
+                width: '100%', padding: '16px 18px', minHeight: 56,
+                background: 'transparent', border: 'none',
                 borderBottom: i < arr.length - 1 ? `1px solid ${C.border}` : 'none',
                 textAlign: 'left', cursor: 'pointer',
-                fontSize: 13, fontWeight: 600, color: item.danger ? C.error : C.text,
+                fontSize: 16, fontWeight: 600, color: item.danger ? C.error : C.text,
                 fontFamily: "'Inter', sans-serif",
                 WebkitTapHighlightColor: 'transparent',
-              }}>{item.label}</button>
+                transition: 'background 0.12s',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = item.danger ? C.errorLo : C.raised; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+              >{item.label}</button>
             ))}
           </div>
         )}
