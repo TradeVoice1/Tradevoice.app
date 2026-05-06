@@ -68,29 +68,31 @@
     position: sticky; top: 0; z-index: 100;
     background: rgba(255,255,255,0.95); backdrop-filter: blur(8px);
     border-bottom: 1px solid var(--border);
-    /* Was 14px — bumped to 18px so the larger 72px logo sits comfortably
-       inside the header without the nav row feeling crowded. */
-    padding: 18px 0;
+    /* Sized so the 104px logo fits flush — 8px above and below — without
+       making the nav row feel oversized. Sticky-on-scroll is still
+       readable on phones because the mobile breakpoint above shrinks the
+       logo to 76px, keeping the row compact on small screens. */
+    padding: 8px 0;
   }
   .nav-inner { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
-  /* Restored the original PNG logo (lion + TRADEVOICE + tagline baked in).
-     Header padding bumped from 14px → 22px so the bigger logo image has
-     real breathing room and the nav doesn't feel cramped. */
+  /* Restored PNG logo, pushed as large as it can go before spilling out
+     of the header. 104px on desktop / 76px on mobile — at this size the
+     wordmark and tagline both read clearly without zooming. The image
+     uses object-fit:contain so it can never get squished even with the
+     small bit of object-position vertical bias to keep it centered. */
   .nav-logo {
     display: flex; align-items: center; gap: 10px;
     text-decoration: none;
     flex-shrink: 0;
   }
   .nav-logo img {
-    /* Override the inline 36px height — bigger logo so the wordmark and
-       tagline are actually readable at desktop scale. */
-    height: 72px !important;
-    max-width: 260px;
+    height: 104px !important;
+    max-width: 360px;
     object-fit: contain;
     display: block;
   }
   @media (max-width: 720px) {
-    .nav-logo img { height: 52px !important; max-width: 200px; }
+    .nav-logo img { height: 76px !important; max-width: 240px; }
   }
   .nav-logo-text { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 900; color: var(--green-dark); }
   .nav-links { display: flex; align-items: center; gap: 28px; }
