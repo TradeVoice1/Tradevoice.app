@@ -1518,7 +1518,23 @@
         <a href="https://app.thetradevoice.com/?signup" class="plan-btn" style="display:block;text-decoration:none">Start Free Trial</a>
       </div>
     </div>
-    <p class="plan-note">All plans include a 1% platform fee on card payments — passed to the client. You keep 100% of every invoice.</p>
+    <div class="plan-note" style="margin-top: 28px;">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:14px;max-width:720px;margin:0 auto;">
+        <!-- Tech seats — important for owners with crews. Used to be only
+             surfaced after sign-up; mention it here so multi-tech shops can
+             plan their seat budget before they buy. -->
+        <div style="font-size:15px;color:var(--text);font-weight:500;line-height:1.6;">
+          Need a crew? Add tech seats for <strong style="color:var(--green-dark);font-weight:800;">$19.99/mo each</strong>.
+          Every tech gets their own login with a unique Tech ID and custom permissions you control.
+        </div>
+        <!-- Honest fee breakdown. Was buried on Settings → Payment Setup;
+             the "you keep 100%" line works better here at the moment of decision. -->
+        <div style="font-size:13px;color:var(--muted);line-height:1.6;">
+          Card &amp; ACH payments via Stripe — 2.9% + $0.30 Stripe fee + 1% Tradevoice fee, all passed to the client.
+          <strong style="color:var(--text);">You keep 100% of every invoice.</strong>
+        </div>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -1686,18 +1702,22 @@
   </div>
 </section>
 
-<!-- ── CTA BANNER ──────────────────────────────────────────────────────────────── -->
+<!-- ── CTA BANNER ──────────────────────────────────────────────────────────────
+     Cleaned up: was repeating "28-day free trial / no credit card" twice (once
+     in the body paragraph, once in the disclaimer below the button). Now the
+     body line carries one tight pitch and the disclaimer carries the trial
+     terms — each one earns its place. -->
 <section class="cta-banner" id="signup">
   <div class="container">
     <span class="section-tag">Get started today</span>
     <h2>Your first quote is 3 minutes away</h2>
-    <p>No credit card required. No setup fee. 28-day free trial. Cancel anytime.</p>
+    <p>Sign up, pick your trade, walk a job — invoice your first customer before lunch.</p>
     <div class="cta-form" style="justify-content:center">
-      <!-- Removed the email input — it wasn't wired to anything, so users
-           were typing into a black hole. Signup happens on the app side. -->
+      <!-- Email input lives on the signup page, not here — sending people
+           straight into the 3-step flow keeps the friction at zero. -->
       <a href="https://app.thetradevoice.com/?signup" class="btn-primary" style="font-size:18px;padding:18px 44px">Start Free Trial</a>
     </div>
-    <p class="cta-disclaimer">28-day free trial. No credit card needed.</p>
+    <p class="cta-disclaimer">28-day free trial · No credit card required · Cancel anytime</p>
   </div>
 </section>
 
