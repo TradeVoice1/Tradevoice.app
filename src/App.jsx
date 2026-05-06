@@ -6245,8 +6245,73 @@ function Settings({ user, setUser, logo, onLogoChange, showProfileModal, setShow
   const [techCredsToShow, setTechCredsToShow] = useState(null);
 
   const updateHandle = (key, val) => setPayments(p => ({ ...p, [key]: { ...p[key], handle: val } }));
+  // PayPal still uses the placeholder boolean toggle until we wire its OAuth
+  // (separate task). Stripe gets a real connect/disconnect flow below.
   const toggleConnect = (key) => setPayments(p => ({ ...p, [key]: { ...p[key], connected: !p[key]?.connected } }));
   const toggleEnabled = (key) => setPayments(p => ({ ...p, [key]: { ...p[key], enabled: !p[key]?.enabled } }));
+
+  // ── Real Stripe Connect (OAuth Standard) ──
+  // The button calls our /api/stripe/connect-start, gets a stripe.com OAuth
+  // URL, and redirects the browser there. The contractor signs in to Stripe
+  // (or creates an account), grants our app access, and bounces back to
+  // /api/stripe/callback which saves the connected account ID and redirects
+  // them back into Settings with ?stripe=connected. Disconnect calls
+  // /api/stripe/disconnect, which deauthorizes via Stripe and clears our row.
+  const [stripeBusy, setStripeBusy] = useState(false);
+  const stripeConnected = !!user?.stripe_account_id;
+  const stripeChargesEnabled = !!user?.stripe_account_charges_enabled;
+
+  const handleStripeConnect = async () => {
+    if (stripeBusy) return;
+    setStripeBusy(true);
+    try {
+      const r = await fetch('/api/stripe/connect-start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id, returnUrl: window.location.origin }),
+      });
+      const j = await r.json();
+      if (!r.ok || !j.url) throw new Error(j.error || 'Could not start Stripe connection.');
+      window.location.href = j.url;
+    } catch (e) {
+      alert(e?.message || 'Could not start Stripe connection.');
+      setStripeBusy(false);
+    }
+  };
+  const handleStripeDisconnect = async () => {
+    if (stripeBusy) return;
+    if (!window.confirm('Disconnect your Stripe account? Customers won\'t be able to pay invoices online until you reconnect.')) return;
+    setStripeBusy(true);
+    try {
+      const r = await fetch('/api/stripe/disconnect', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id }),
+      });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.error || 'Disconnect failed.');
+      setUser(prev => prev ? { ...prev, stripe_account_id: null, stripe_account_charges_enabled: false } : prev);
+    } catch (e) {
+      alert(e?.message || 'Could not disconnect Stripe.');
+    } finally {
+      setStripeBusy(false);
+    }
+  };
+
+  // After the OAuth redirect: read ?stripe= from the URL, show a banner,
+  // then strip the param so refresh doesn't re-show it.
+  const [stripeBanner, setStripeBanner] = useState(null);
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const flag = params.get('stripe');
+    if (!flag) return;
+    if (flag === 'connected') setStripeBanner({ kind: 'success', text: 'Stripe connected. Customers can now pay your invoices online.' });
+    else if (flag === 'error') setStripeBanner({ kind: 'error', text: `Stripe connection failed: ${params.get('msg') || 'unknown error'}.` });
+    // Clean the URL so the banner doesn't fire on every reload.
+    params.delete('stripe'); params.delete('msg');
+    const newSearch = params.toString();
+    window.history.replaceState({}, '', window.location.pathname + (newSearch ? `?${newSearch}` : ''));
+  }, []);
 
   // Build list of states the contractor works in
   const activeStates = (user.states?.length > 1 ? user.states : [user.state || 'Texas'])
@@ -6345,13 +6410,33 @@ function Settings({ user, setUser, logo, onLogoChange, showProfileModal, setShow
           Connect your accounts so clients can pay you directly. These appear on every invoice and quote you send.
         </div>
 
-        {/* Stripe Connect */}
+        {/* Post-OAuth banner — surfaces success/error from the redirect flow. */}
+        {stripeBanner && (
+          <div style={{
+            marginBottom: 12, padding: '12px 14px', borderRadius: 6,
+            background: stripeBanner.kind === 'success' ? '#f0fdf4' : '#fef2f2',
+            border: `1px solid ${stripeBanner.kind === 'success' ? C.success + '44' : C.error + '44'}`,
+            color: stripeBanner.kind === 'success' ? C.success : C.error,
+            fontSize: 14, fontWeight: 600,
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12,
+          }}>
+            <span>{stripeBanner.text}</span>
+            <button onClick={() => setStripeBanner(null)} style={{ background: 'transparent', border: 'none', color: 'inherit', cursor: 'pointer', fontSize: 18, fontWeight: 700 }}>×</button>
+          </div>
+        )}
+
+        {/* Stripe Connect — real OAuth flow now (was a fake toggle). */}
         <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 4, padding: '18px 20px', marginBottom: 10 }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
             <div style={{ flex: 1 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6, flexWrap: 'wrap' }}>
                 <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 18, fontWeight: 800, color: C.text }}>Card &amp; ACH — Stripe</div>
-                {payments?.stripe?.connected && <span style={{ fontSize: 13, fontWeight: 700, background: '#f0fdf4', color: C.success, padding: '2px 8px', borderRadius: 3 }}>Connected</span>}
+                {stripeConnected && stripeChargesEnabled && (
+                  <span style={{ fontSize: 13, fontWeight: 700, background: '#f0fdf4', color: C.success, padding: '2px 8px', borderRadius: 3 }}>Connected</span>
+                )}
+                {stripeConnected && !stripeChargesEnabled && (
+                  <span style={{ fontSize: 13, fontWeight: 700, background: '#fef9c3', color: C.warn, padding: '2px 8px', borderRadius: 3 }}>Verifying with Stripe…</span>
+                )}
               </div>
               <div style={{ fontSize: 15, color: C.muted, lineHeight: 1.6, marginBottom: 10 }}>
                 Clients pay online by card or bank transfer. Money deposits directly to your bank account.
@@ -6373,18 +6458,23 @@ function Settings({ user, setUser, logo, onLogoChange, showProfileModal, setShow
                 You always receive 100% of your invoice amount. The fee is added to the client's total automatically.
               </div>
             </div>
-            <button onClick={() => toggleConnect('stripe')} style={{
-              ...s.btn,
-              padding: '12px 22px', fontSize: 15, fontWeight: 700, minHeight: 46, flexShrink: 0,
-              background: payments?.stripe?.connected ? '#fef2f2' : C.orange,
-              border: payments?.stripe?.connected ? `1.5px solid ${C.error}44` : 'none',
-              color: payments?.stripe?.connected ? C.error : '#ffffff',
-              boxShadow: payments?.stripe?.connected ? 'none' : '0 1px 2px rgba(45, 106, 79, 0.25)',
-            }}
-            onMouseEnter={e => { if (!payments?.stripe?.connected) e.currentTarget.style.boxShadow = '0 4px 12px rgba(45, 106, 79, 0.4)'; }}
-            onMouseLeave={e => { if (!payments?.stripe?.connected) e.currentTarget.style.boxShadow = '0 1px 2px rgba(45, 106, 79, 0.25)'; }}
+            <button
+              onClick={stripeConnected ? handleStripeDisconnect : handleStripeConnect}
+              disabled={stripeBusy}
+              style={{
+                ...s.btn,
+                padding: '12px 22px', fontSize: 15, fontWeight: 700, minHeight: 46, flexShrink: 0,
+                background: stripeConnected ? '#fef2f2' : C.orange,
+                border:     stripeConnected ? `1.5px solid ${C.error}44` : 'none',
+                color:      stripeConnected ? C.error : '#ffffff',
+                boxShadow:  stripeConnected ? 'none' : '0 1px 2px rgba(45, 106, 79, 0.25)',
+                opacity:    stripeBusy ? 0.6 : 1,
+                cursor:     stripeBusy ? 'wait' : 'pointer',
+              }}
+              onMouseEnter={e => { if (!stripeConnected && !stripeBusy) e.currentTarget.style.boxShadow = '0 4px 12px rgba(45, 106, 79, 0.4)'; }}
+              onMouseLeave={e => { if (!stripeConnected && !stripeBusy) e.currentTarget.style.boxShadow = '0 1px 2px rgba(45, 106, 79, 0.25)'; }}
             >
-              {payments?.stripe?.connected ? 'Disconnect' : 'Connect Stripe'}
+              {stripeBusy ? '…' : stripeConnected ? 'Disconnect' : 'Connect Stripe'}
             </button>
           </div>
         </div>

@@ -140,6 +140,12 @@ export async function getPublicInvoice(shareToken) {
           payments:    data.profile.payments    || {},
           accentColor: data.profile.accent_color || '',
           logoUrl:     data.profile.logo_url    || null,
+          // Stripe Connect readiness — true only when the contractor has
+          // finished OAuth AND Stripe has verified their account can accept
+          // charges. Drives whether the public page shows "Pay with Card"
+          // vs the existing handle-based payment instructions.
+          stripeAccountId:      data.profile.stripe_account_id || null,
+          stripeChargesEnabled: !!data.profile.stripe_account_charges_enabled,
         }
       : null,
   };

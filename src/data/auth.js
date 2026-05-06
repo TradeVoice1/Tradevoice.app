@@ -28,6 +28,11 @@ const dbToProfile = (row) => row && ({
   logoUrl:          row.logo_url          ?? null,
   payments:         row.payments          ?? {},
   taxRates:         row.tax_rates         ?? {},
+  // Stripe Connect (migration 0013). Null until the contractor finishes the
+  // OAuth handshake; charges_enabled flips true once Stripe verifies their
+  // account can accept charges (driven by the account.updated webhook).
+  stripe_account_id:              row.stripe_account_id              ?? null,
+  stripe_account_charges_enabled: row.stripe_account_charges_enabled ?? false,
   createdAt:        row.created_at        ?? null,    // when the profile row was inserted (≈ signup time) — used for trial countdown
 });
 

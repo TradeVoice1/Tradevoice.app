@@ -8,6 +8,7 @@
 
 import React, { useState, useEffect } from "react";
 import { getPublicInvoice } from "./data/invoices";
+import { StripePayPanel } from "./StripePayPanel";
 
 const C = {
   bg:        '#f3f6f4',
@@ -239,6 +240,16 @@ export function InvoicePaymentPage({ token }) {
               </div>
             </div>
           </div>
+
+          {/* Stripe Pay panel — only when contractor has Connect set up
+              AND the invoice still has a balance. Renders inline so the
+              customer never leaves the page; on success the panel swaps
+              into a green "Payment Received" confirmation. */}
+          {!isPaid && !isVoid && profile?.stripeChargesEnabled && (
+            <div style={{ padding: '0 32px', marginTop: 18 }}>
+              <StripePayPanel shareToken={token} accentColor={accent} />
+            </div>
+          )}
 
           {/* How to pay — only when not paid */}
           {!isPaid && !isVoid && (() => {
