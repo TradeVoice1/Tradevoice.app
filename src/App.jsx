@@ -634,6 +634,38 @@ function SignupScreen({ onComplete, onBack }) {
             Need team members? Add techs for <strong style={{ color: C.orange }}>$19.99/mo each</strong> after sign-up in Settings → Team. 28-day free trial on all plans.
           </div>
 
+          {/* ── Payment methods preview ──
+              Tells the user up-front what payment options will be available
+              once they're in the app. Stripe handles online card + ACH; the
+              other six are tagged onto each invoice so the customer can pay
+              however they want. */}
+          <div style={{ marginTop: 16, padding: '14px 16px', background: C.raised, border: `1px solid ${C.border2}`, borderRadius: 10 }}>
+            <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.muted, marginBottom: 8, fontFamily: "'Inter', sans-serif", textAlign: 'center' }}>
+              How your customers can pay you
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, justifyContent: 'center', marginBottom: 8 }}>
+              {[
+                { label: 'Card / ACH (Stripe)', highlight: true },
+                { label: 'PayPal' },
+                { label: 'Venmo' },
+                { label: 'Cash App' },
+                { label: 'Zelle' },
+                { label: 'Check' },
+                { label: 'Cash' },
+              ].map(m => (
+                <span key={m.label} style={{
+                  fontSize: 12, fontWeight: 700, padding: '4px 10px', borderRadius: 12,
+                  background: m.highlight ? C.orange : C.surface,
+                  color:      m.highlight ? '#fff'   : C.text,
+                  border: m.highlight ? 'none' : `1px solid ${C.border2}`,
+                }}>{m.label}</span>
+              ))}
+            </div>
+            <div style={{ fontSize: 12, color: C.muted, textAlign: 'center', lineHeight: 1.5 }}>
+              Connect Stripe in 2 minutes after sign-up to accept card &amp; ACH online — you keep 100% of the invoice (3.9% + $0.30 fee added to client&apos;s total). Tag the others as handles on every invoice.
+            </div>
+          </div>
+
           {/* Terms + Privacy clickwrap — required */}
           <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '12px 14px', marginTop: 14, background: acceptedTerms ? C.orangeLo : C.raised, border: `1.5px solid ${acceptedTerms ? C.orange : C.border2}`, borderRadius: 8, cursor: 'pointer', WebkitTapHighlightColor: 'transparent' }}>
             <input
@@ -6642,7 +6674,18 @@ function TradevoiceApp() {
 
   // ── Auth state ────────────────────────────────────────────────────────────
   // authScreen: null (app) | 'login' | 'signup' | 'join' | 'onboarding'
-  const [authScreen, setAuthScreen] = useState('login');
+  // Deep-link support: marketing "Start Free Trial" buttons send people to
+  // app.thetradevoice.com/?signup so they land directly on the signup flow
+  // instead of the login screen. URL params take precedence on first load;
+  // after that, normal in-app navigation drives this state.
+  const [authScreen, setAuthScreen] = useState(() => {
+    if (typeof window === 'undefined') return 'login';
+    const params = new URLSearchParams(window.location.search);
+    const path = window.location.pathname || '';
+    if (params.has('signup') || path === '/signup' || path === '/start') return 'signup';
+    if (params.has('join')   || path === '/join')                         return 'join';
+    return 'login';
+  });
 
   const handleSignupComplete = async (data) => {
     try {
