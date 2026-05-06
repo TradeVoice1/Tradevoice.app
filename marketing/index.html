@@ -70,7 +70,22 @@
     border-bottom: 1px solid var(--border); padding: 14px 0;
   }
   .nav-inner { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
-  .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+  /* Logo: visually large, but the <a> wrapper is locked to 36px so the
+     nav bar height doesn't grow. The img overflows above and below the
+     nav row — overflow:visible on the wrapper lets that happen. */
+  .nav-logo {
+    display: flex; align-items: center; gap: 10px; text-decoration: none;
+    height: 36px;             /* layout box stays small */
+    overflow: visible;        /* but let the larger img overflow visibly */
+    flex-shrink: 0;           /* never squeeze the logo on narrow viewports */
+  }
+  .nav-logo img {
+    /* Override the inline 36px so the brand mark is actually readable.
+       max-height keeps it from getting absurd on huge displays. */
+    height: 84px !important;
+    max-width: 280px;
+    object-fit: contain;
+  }
   .nav-logo-text { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 900; color: var(--green-dark); }
   .nav-links { display: flex; align-items: center; gap: 28px; }
   .nav-links a { color: var(--muted); text-decoration: none; font-size: 15px; font-weight: 500; transition: color 0.15s; }
@@ -1755,4 +1770,12 @@
     const annualImpact = Math.round(jobs * inv * (daysSaved / 30) * 12);
     document.getElementById('monthly-rev').textContent = '$' + monthlyRev.toLocaleString();
     document.getElementById('days-saved').textContent = daysSaved + ' days';
-    document.getElementById('annual-impac
+    document.getElementById('annual-impact').textContent = '+$' + annualImpact.toLocaleString();
+  }
+
+  // Sync the ROI tiles to the default slider values on first paint so the
+  // result cards never read stale numbers if a slider's HTML default changes.
+  if (document.getElementById('jobs-slider')) calcROI();
+</script>
+</body>
+</html>
