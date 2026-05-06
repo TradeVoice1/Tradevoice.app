@@ -398,7 +398,11 @@ const StatCard = ({ icon, label, value, color = C.orange }) => (
 function AuthShell({ children }) {
   return (
     <div style={{ minHeight: '100vh', background: C.bg, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px 16px', fontFamily: "'Inter', sans-serif" }}>
-      <div style={{ marginBottom: 28 }}><Logo size={38} /></div>
+      {/* Big logo on the auth screens — first impression for new sign-ups
+          and a clear brand anchor for returning logins. Was size=38 (tiny).
+          size=80 renders ~176px tall, capped at 640px wide so it still
+          fits comfortably on tablets and phones. */}
+      <div style={{ marginBottom: 36 }}><Logo size={80} /></div>
       <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: '32px 28px', width: '100%', maxWidth: 420 }}>
         {children}
       </div>
