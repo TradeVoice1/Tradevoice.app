@@ -1217,8 +1217,21 @@ function Dashboard({ user, nav, invoices = [], plans = [], onScheduleFromPlan })
 // ══════════════════════════════════════════════════════════════════════════════
 // INVOICE MODULE — QuickBooks-aligned tracking
 // ══════════════════════════════════════════════════════════════════════════════
-let invoiceCounter = 5;
-const nextInvNum = () => { const n = invoiceCounter++; return `INV-2026-${String(n).padStart(4,'0')}`; };
+// Derive the next sequential number by looking at the existing list and
+// finding the highest INV-YYYY-NNNN suffix. Year defaults to current.
+// Falls back to 0001 for the first invoice. Always pass the latest invoice
+// list — using a static counter would collide on reload (Postgres has a
+// unique constraint on (owner_id, number)).
+const nextInvNum = (existing = []) => {
+  const year = new Date().getFullYear();
+  const re = new RegExp(`^INV-${year}-(\\d{4,})$`);
+  let max = 0;
+  for (const inv of existing) {
+    const m = re.exec(inv?.number || '');
+    if (m) max = Math.max(max, parseInt(m[1], 10));
+  }
+  return `INV-${year}-${String(max + 1).padStart(4, '0')}`;
+};
 const fmtMoney = n => '$' + Number(n||0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const today = () => new Date().toISOString().split('T')[0];
 const addDays = (dateStr, days) => { const d = new Date(dateStr + 'T12:00:00'); d.setDate(d.getDate()+days); return d.toISOString().split('T')[0]; };
@@ -1722,12 +1735,12 @@ function InvoiceHub({ invoices, onSelect, onNew }) {
 }
 
 // ── Invoice Editor ─────────────────────────────────────────────────────────────
-function InvoiceEditor({ initial, user, teamMembers = [], onSave, onCancel }) {
+function InvoiceEditor({ initial, user, teamMembers = [], existingInvoices = [], onSave, onCancel }) {
   const { isTablet } = useBreakpoint();
   const tradeConf = getTradeConfig(user?.trades?.[0], user?.trades);
   const uid2 = () => Math.random().toString(36).slice(2,9);
 
-  const [number]    = useState(initial?.number || nextInvNum());
+  const [number]    = useState(initial?.number || nextInvNum(existingInvoices));
   const [title,     setTitle]     = useState(initial?.title     || '');
   const [clientName,setClientName]= useState(initial?.clientName|| '');
   const [clientEmail,setClientEmail]=useState(initial?.clientEmail||'');
@@ -2754,6 +2767,7 @@ function VoiceInvoice({ user, logo, payments, teamMembers = [], sharedInvoices, 
           initial={editingInvoice}
           user={user}
           teamMembers={teamMembers}
+          existingInvoices={invoices}
           onSave={saveInvoice}
           onCancel={()=>setView(activeInvoice?'document':'hub')}
         />
@@ -2989,10 +3003,17 @@ const SEED_CLIENTS = [];
 
 const SEED_QUOTES = [];
 
-let quoteCounter = 4;
-const nextQuoteNum = () => {
-  const n = quoteCounter++;
-  return `QT-2026-${String(n).padStart(4, '0')}`;
+// Mirror of nextInvNum — derive from the existing list so reloads don't
+// collide with the unique (owner_id, number) constraint on quotes.
+const nextQuoteNum = (existing = []) => {
+  const year = new Date().getFullYear();
+  const re = new RegExp(`^QT-${year}-(\\d{4,})$`);
+  let max = 0;
+  for (const q of existing) {
+    const m = re.exec(q?.number || '');
+    if (m) max = Math.max(max, parseInt(m[1], 10));
+  }
+  return `QT-${year}-${String(max + 1).padStart(4, '0')}`;
 };
 const uid = () => Math.random().toString(36).slice(2, 9);
 
@@ -3966,7 +3987,7 @@ function QuickAddPanel({ library, onInsert, onSaveNew, onDelete, type }) {
 }
 
 
-function QuoteEditor({ initial, clients, user, onSave, onCancel }) {
+function QuoteEditor({ initial, clients, existingQuotes = [], user, onSave, onCancel }) {
   const { isTablet } = useBreakpoint();
   const [tab,      setTab]      = useState('scope');
   const [title,    setTitle]    = useState(initial?.title    || '');
@@ -4039,7 +4060,7 @@ function QuoteEditor({ initial, clients, user, onSave, onCancel }) {
 
     const q = {
       id: initial?.id || uid(),
-      number: initial?.number || nextQuoteNum(),
+      number: initial?.number || nextQuoteNum(existingQuotes),
       clientId: clientId || null,   // empty-string guard for the FK
       title: title.trim(),
       trade,
@@ -4949,7 +4970,7 @@ function Quotes({ user, logo, taxRates, onConvertToInvoice }) {
   const startRevision = (q) => {
     // The new revision starts as a fresh draft. We strip the DB id so upsert treats it as an insert.
     const rev = {
-      ...q, id: undefined, number: nextQuoteNum(), status: 'draft',
+      ...q, id: undefined, number: nextQuoteNum(quotes), status: 'draft',
       revisionOf: q.number, revisionNumber: (q.revisionNumber || 1) + 1,
       createdAt: new Date().toISOString().split('T')[0], sentAt: null,
     };
@@ -5014,7 +5035,7 @@ function Quotes({ user, logo, taxRates, onConvertToInvoice }) {
       )}
       {view === 'editor' && (
         <QuoteEditor
-          initial={editingQuote} clients={clients} user={user}
+          initial={editingQuote} clients={clients} existingQuotes={quotes} user={user}
           onSave={saveQuote}
           onCancel={() => setView(activeQuote ? 'document' : 'hub')}
         />
@@ -6621,7 +6642,7 @@ function TradevoiceApp() {
     const stripIfNotBundle = (rows) =>
       quote.trade === 'bundle' ? (rows || []) : (rows || []).map(({ _trade, ...rest }) => rest);
     const draft = {
-      number: nextInvNum(),
+      number: nextInvNum(sharedInvoices),
       clientId:      client?.id     || null,
       clientName:    client?.name    || quote.clientName    || '',
       clientEmail:   client?.email   || quote.clientEmail   || '',
@@ -6673,7 +6694,7 @@ function TradevoiceApp() {
     const techMember = (teamMembers || []).find(t => t.userId && t.userId === job.techUserId);
     const techName   = techMember?.name || (job.techUserId === user?.id ? user?.name : '') || '';
     const draft = {
-      number: nextInvNum(),
+      number: nextInvNum(sharedInvoices),
       clientName:    job.clientName || '',
       clientPhone:   job.phone      || '',
       clientAddress: job.address    || '',
