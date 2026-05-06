@@ -108,8 +108,10 @@ function PlanModal({ initial, clients, team, trades, onClose, onSave }) {
     header:  { background: C.green, padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0 },
     body:    { padding: '20px 24px' },
     label:   { fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.1em', color: C.muted, marginBottom: 6, display: 'block', marginTop: 14 },
-    input:   { width: '100%', padding: '11px 14px', fontSize: 15, border: `1px solid ${C.border}`, borderRadius: 8, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' },
-    select:  { width: '100%', padding: '11px 14px', fontSize: 15, border: `1px solid ${C.border}`, borderRadius: 8, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', background: '#fff' },
+    // 16px font + 44px min height — iOS Safari otherwise zooms the page on
+    // input focus, and tap targets <44pt are unreliable on touch.
+    input:   { width: '100%', padding: '12px 14px', fontSize: 16, minHeight: 44, border: `1px solid ${C.border}`, borderRadius: 8, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' },
+    select:  { width: '100%', padding: '12px 14px', fontSize: 16, minHeight: 44, border: `1px solid ${C.border}`, borderRadius: 8, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', background: '#fff' },
     row2:    { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 },
     footer:  { padding: '16px 24px', borderTop: `1px solid ${C.border}`, display: 'flex', gap: 10, position: 'sticky', bottom: 0, background: '#fff' },
     btn: (primary, disabled) => ({
@@ -236,22 +238,23 @@ function PlanRow({ plan, onEdit, onSchedule, onTogglePause, onDelete }) {
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: 6, flexShrink: 0, flexWrap: 'wrap' }}>
+      {/* All actions sized to 44px min — iPad-friendly tap targets. */}
+      <div style={{ display: 'flex', gap: 8, flexShrink: 0, flexWrap: 'wrap' }}>
         <button onClick={() => onSchedule(plan)} style={{
-          padding: '8px 14px', borderRadius: 6, border: 'none', background: C.green, color: '#fff',
-          fontSize: 13, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
+          padding: '11px 16px', minHeight: 44, borderRadius: 6, border: 'none', background: C.green, color: '#fff',
+          fontSize: 14, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
         }}>Schedule Job</button>
         <button onClick={() => onEdit(plan)} style={{
-          padding: '8px 12px', borderRadius: 6, border: `1px solid ${C.border}`, background: '#fff', color: C.muted,
-          fontSize: 13, fontWeight: 600, cursor: 'pointer',
+          padding: '11px 14px', minHeight: 44, borderRadius: 6, border: `1px solid ${C.border}`, background: '#fff', color: C.muted,
+          fontSize: 14, fontWeight: 600, cursor: 'pointer',
         }}>Edit</button>
         <button onClick={() => onTogglePause(plan)} style={{
-          padding: '8px 12px', borderRadius: 6, border: `1px solid ${C.border}`, background: '#fff', color: C.muted,
-          fontSize: 13, fontWeight: 600, cursor: 'pointer',
+          padding: '11px 14px', minHeight: 44, borderRadius: 6, border: `1px solid ${C.border}`, background: '#fff', color: C.muted,
+          fontSize: 14, fontWeight: 600, cursor: 'pointer',
         }}>{plan.active ? 'Pause' : 'Resume'}</button>
         <button onClick={() => onDelete(plan)} style={{
-          padding: '8px 12px', borderRadius: 6, border: `1px solid ${C.error}33`, background: '#fff', color: C.error,
-          fontSize: 13, fontWeight: 600, cursor: 'pointer',
+          padding: '11px 14px', minHeight: 44, borderRadius: 6, border: `1px solid ${C.error}33`, background: '#fff', color: C.error,
+          fontSize: 14, fontWeight: 600, cursor: 'pointer',
         }}>Delete</button>
       </div>
     </div>

@@ -9,6 +9,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { listJobs, upsertJob } from "./data/jobs";
 import { JobDetailModal } from "./ScheduleScreen";
+import { useBreakpoint } from "./lib/useBreakpoint";
 
 // Local palette / status colors — duplicated from ScheduleScreen so this
 // component is self-contained at module scope (avoids cross-file pulls
@@ -44,6 +45,83 @@ const STATUS_PALETTE = {
 
 const formatTime = (h) => h == null ? '' : (h === 12 ? '12 PM' : h > 12 ? `${h - 12} PM` : `${h} AM`);
 
+// ── Inline row controls — extracted so laptop and tablet branches share them.
+// Each returns a JSX fragment, sized to hit Apple's 44pt minimum on touch.
+
+function renderTechSelector({ job, tech, isTech, techs, handleTechChange, C, fullWidth = false }) {
+  if (isTech) {
+    return (
+      <span style={{
+        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+        fontSize: 14, fontWeight: 700, color: tech?.color || C.muted,
+        padding: '10px 14px', minHeight: 44,
+        background: (tech?.color || C.muted) + '15',
+        borderRadius: 6, minWidth: 100, textAlign: 'center',
+      }}>
+        {tech?.name || 'Unassigned'}
+      </span>
+    );
+  }
+  return (
+    <select
+      value={job.techUserId || ''}
+      // stopPropagation on BOTH onClick and onPointerDown so an iPad tap
+      // on the dropdown trigger doesn't bubble up and open the row's modal.
+      onClick={e => e.stopPropagation()}
+      onPointerDown={e => e.stopPropagation()}
+      onChange={e => handleTechChange(job.id, e.target.value || null)}
+      style={{
+        padding: '10px 14px',
+        // 16px so iOS Safari doesn't zoom the page on focus.
+        fontSize: 16, fontWeight: 600, fontFamily: 'inherit',
+        border: `1px solid ${C.border}`, borderRadius: 6, cursor: 'pointer',
+        background: tech ? tech.color + '15' : C.bg,
+        color:      tech ? tech.color        : C.muted,
+        minHeight: 44,
+        width: fullWidth ? '100%' : 160,
+        boxSizing: 'border-box',
+      }}
+    >
+      <option value="">— Unassigned —</option>
+      {techs.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+    </select>
+  );
+}
+
+function renderPhotosBadge({ photos, C, large = false }) {
+  return (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+      fontSize: 13, fontWeight: 700,
+      padding: large ? '10px 14px' : '7px 11px',
+      minHeight: large ? 44 : 36,
+      borderRadius: 6,
+      background: photos.length > 0 ? C.greenLo : C.bg,
+      color:      photos.length > 0 ? C.green   : C.dim,
+      border: `1px solid ${photos.length > 0 ? C.green + '33' : C.border}`,
+      whiteSpace: 'nowrap',
+    }}>
+      {photos.length > 0 ? `${photos.length} photo${photos.length === 1 ? '' : 's'}` : 'No photos'}
+    </span>
+  );
+}
+
+function renderStatusPill({ sc, large = false }) {
+  return (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+      fontSize: 12, fontWeight: 800, letterSpacing: '0.06em', textTransform: 'uppercase',
+      padding: large ? '10px 14px' : '6px 11px',
+      minHeight: large ? 44 : 32,
+      borderRadius: 4,
+      background: sc.bg, color: sc.fg, border: `1px solid ${sc.border}`,
+      whiteSpace: 'nowrap',
+    }}>
+      {sc.label}
+    </span>
+  );
+}
+
 // Groups a job into one of seven date buckets. The order in the returned
 // object's keys also drives display order (Overdue first, Past last).
 const dateBuckets = () => ({
@@ -57,6 +135,7 @@ const dateBuckets = () => ({
 });
 
 export default function JobsScreen({ user, team = [], onCreateInvoice }) {
+  const { isTablet } = useBreakpoint();
   const [jobs,         setJobs]         = useState([]);
   const [loading,      setLoading]      = useState(true);
   const [selectedJob,  setSelectedJob]  = useState(null);
@@ -199,6 +278,11 @@ export default function JobsScreen({ user, team = [], onCreateInvoice }) {
   };
 
   // ── Row component (declared inline so it closes over handlers) ────────────
+  // Layout strategy: laptop = single row (date | title | tech | photos | status).
+  // Tablet = two rows: top has date + title; bottom has tech + photos + status.
+  // Stacking on tablet keeps long client names from squeezing the title to
+  // ellipsis at iPad portrait width, AND gives the inline tech dropdown a
+  // proper 44px tall tap target without crowding everything else.
   const Row = ({ job }) => {
     const tech = techs.find(t => t.id === job.techUserId);
     const sc = STATUS_PALETTE[job.status] || STATUS_PALETTE.scheduled;
@@ -211,87 +295,62 @@ export default function JobsScreen({ user, team = [], onCreateInvoice }) {
         style={{
           background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8,
           padding: '12px 14px', marginBottom: 8, cursor: 'pointer',
-          display: 'grid',
-          gridTemplateColumns: 'auto 1fr auto auto auto',
-          gap: 14, alignItems: 'center',
           boxShadow: C.shadow1,
-          transition: 'border-color 0.15s, transform 0.05s',
+          transition: 'border-color 0.15s',
         }}
-        onMouseEnter={e => { e.currentTarget.style.borderColor = C.green + '99'; }}
-        onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; }}
       >
-        {/* Date + time micro-block */}
-        <div style={{ minWidth: 64, textAlign: 'center', paddingRight: 12, borderRight: `1px solid ${C.border}` }}>
-          <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.06em', textTransform: 'uppercase', color: C.muted }}>
-            {date.toLocaleDateString('en-US', { weekday: 'short' })}
+        {/* Top row: date block + title + (on laptop only) actions */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: isTablet
+            ? 'auto 1fr'
+            : 'auto 1fr auto auto auto',
+          gap: 14, alignItems: 'center',
+        }}>
+          {/* Date + time micro-block */}
+          <div style={{ minWidth: 64, textAlign: 'center', paddingRight: 12, borderRight: `1px solid ${C.border}` }}>
+            <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.06em', textTransform: 'uppercase', color: C.muted }}>
+              {date.toLocaleDateString('en-US', { weekday: 'short' })}
+            </div>
+            <div style={{ fontSize: 19, fontWeight: 900, color: C.text, lineHeight: 1, margin: '2px 0' }}>
+              {date.getDate()}
+            </div>
+            <div style={{ fontSize: 12, color: C.dim, fontWeight: 600 }}>
+              {formatTime(job.startHour)}
+            </div>
           </div>
-          <div style={{ fontSize: 18, fontWeight: 900, color: C.text, lineHeight: 1, margin: '2px 0' }}>
-            {date.getDate()}
+
+          {/* Title + client + address */}
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontSize: 16, fontWeight: 700, color: C.text, marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {job.title || '(no title)'}
+            </div>
+            <div style={{ fontSize: 13, color: C.muted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {job.clientName || 'No client'}
+              {job.address ? ` · ${job.address.split(',')[0]}` : ''}
+            </div>
           </div>
-          <div style={{ fontSize: 11, color: C.dim, fontWeight: 600 }}>
-            {formatTime(job.startHour)}
-          </div>
+
+          {/* Laptop-only inline actions (tablet renders these below in a separate row) */}
+          {!isTablet && renderTechSelector({ job, tech, isTech, techs, handleTechChange, C })}
+          {!isTablet && renderPhotosBadge({ photos, C })}
+          {!isTablet && renderStatusPill({ sc })}
         </div>
 
-        {/* Title + client + address */}
-        <div style={{ minWidth: 0 }}>
-          <div style={{ fontSize: 15, fontWeight: 700, color: C.text, marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {job.title || '(no title)'}
-          </div>
-          <div style={{ fontSize: 13, color: C.muted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {job.clientName || 'No client'}
-            {job.address ? ` · ${job.address.split(',')[0]}` : ''}
-          </div>
-        </div>
-
-        {/* Inline tech reassign — owner-only. Click stops propagation so the
-            row's onClick (which opens the detail modal) doesn't fire. */}
-        {!isTech ? (
-          <select
-            value={job.techUserId || ''}
-            onClick={e => e.stopPropagation()}
-            onChange={e => handleTechChange(job.id, e.target.value || null)}
-            style={{
-              padding: '6px 10px', fontSize: 13, border: `1px solid ${C.border}`,
-              borderRadius: 6, cursor: 'pointer', fontWeight: 600,
-              background: tech ? tech.color + '15' : C.bg,
-              color:      tech ? tech.color        : C.muted,
-              minWidth: 140, fontFamily: 'inherit',
-            }}
-          >
-            <option value="">— Unassigned —</option>
-            {techs.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-          </select>
-        ) : (
-          <span style={{
-            fontSize: 13, fontWeight: 700, color: tech?.color || C.muted,
-            padding: '6px 10px', background: (tech?.color || C.muted) + '15',
-            borderRadius: 6, minWidth: 80, textAlign: 'center',
+        {/* Tablet-only action row — full-width controls below the title */}
+        {isTablet && (
+          <div style={{
+            display: 'flex', gap: 8, marginTop: 10, paddingTop: 10,
+            borderTop: `1px solid ${C.border}`,
+            alignItems: 'center', flexWrap: 'wrap',
           }}>
-            {tech?.name || 'Unassigned'}
-          </span>
+            <div style={{ flex: '1 1 180px', minWidth: 160 }}>
+              {renderTechSelector({ job, tech, isTech, techs, handleTechChange, C, fullWidth: true })}
+            </div>
+            {renderPhotosBadge({ photos, C, large: true })}
+            {renderStatusPill({ sc, large: true })}
+          </div>
         )}
-
-        {/* Photos count badge */}
-        <span title={`${photos.length} photo${photos.length === 1 ? '' : 's'}`} style={{
-          fontSize: 12, fontWeight: 700, padding: '5px 10px', borderRadius: 5,
-          background: photos.length > 0 ? C.greenLo : C.bg,
-          color:      photos.length > 0 ? C.green   : C.dim,
-          border: `1px solid ${photos.length > 0 ? C.green + '33' : C.border}`,
-          minWidth: 56, textAlign: 'center', whiteSpace: 'nowrap',
-        }}>
-          {photos.length > 0 ? `${photos.length} photo${photos.length === 1 ? '' : 's'}` : 'No photos'}
-        </span>
-
-        {/* Status pill */}
-        <span style={{
-          fontSize: 11, fontWeight: 800, letterSpacing: '0.06em', textTransform: 'uppercase',
-          padding: '4px 9px', borderRadius: 4,
-          background: sc.bg, color: sc.fg, border: `1px solid ${sc.border}`,
-          minWidth: 92, textAlign: 'center', whiteSpace: 'nowrap',
-        }}>
-          {sc.label}
-        </span>
       </div>
     );
   };
@@ -317,7 +376,7 @@ export default function JobsScreen({ user, team = [], onCreateInvoice }) {
         </div>
       </div>
 
-      {/* Filters */}
+      {/* Filters — all inputs 16px font + 44px min height for iOS Safari (no zoom on focus, comfortable tap targets). */}
       <div style={{ display: 'flex', gap: 10, marginBottom: 18, flexWrap: 'wrap', alignItems: 'center' }}>
         <input
           type="text"
@@ -325,17 +384,17 @@ export default function JobsScreen({ user, team = [], onCreateInvoice }) {
           value={search}
           onChange={e => setSearch(e.target.value)}
           style={{
-            flex: '1 1 240px', minWidth: 200, padding: '10px 14px',
-            border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 14,
-            background: C.surface, fontFamily: 'inherit',
+            flex: '1 1 240px', minWidth: 200, padding: '11px 14px', minHeight: 44,
+            border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 16,
+            background: C.surface, fontFamily: 'inherit', boxSizing: 'border-box',
           }}
         />
         {!isTech && techs.length > 0 && (
           <select value={filterTech} onChange={e => setFilterTech(e.target.value)}
             style={{
-              padding: '10px 14px', border: `1px solid ${C.border}`,
-              borderRadius: 8, fontSize: 14, background: C.surface,
-              cursor: 'pointer', fontFamily: 'inherit',
+              padding: '11px 14px', minHeight: 44, border: `1px solid ${C.border}`,
+              borderRadius: 8, fontSize: 16, background: C.surface,
+              cursor: 'pointer', fontFamily: 'inherit', boxSizing: 'border-box',
             }}>
             <option value="all">All techs</option>
             {techs.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
@@ -344,9 +403,9 @@ export default function JobsScreen({ user, team = [], onCreateInvoice }) {
         )}
         <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}
           style={{
-            padding: '10px 14px', border: `1px solid ${C.border}`,
-            borderRadius: 8, fontSize: 14, background: C.surface,
-            cursor: 'pointer', fontFamily: 'inherit',
+            padding: '11px 14px', minHeight: 44, border: `1px solid ${C.border}`,
+            borderRadius: 8, fontSize: 16, background: C.surface,
+            cursor: 'pointer', fontFamily: 'inherit', boxSizing: 'border-box',
           }}>
           <option value="all">All status</option>
           <option value="scheduled">Scheduled</option>
@@ -358,8 +417,8 @@ export default function JobsScreen({ user, team = [], onCreateInvoice }) {
           <button
             onClick={() => { setFilterTech('all'); setFilterStatus('all'); setSearch(''); }}
             style={{
-              padding: '10px 14px', border: `1px solid ${C.border}`,
-              borderRadius: 8, fontSize: 14, background: C.surface,
+              padding: '11px 14px', minHeight: 44, border: `1px solid ${C.border}`,
+              borderRadius: 8, fontSize: 15, background: C.surface,
               cursor: 'pointer', color: C.muted, fontFamily: 'inherit',
             }}>
             Clear filters

@@ -18,6 +18,7 @@ import { listPlans,    upsertPlan       as apiUpsertPlan, deletePlan       as ap
 import { listTimeOff,  upsertTimeOff    as apiUpsertTimeOff, deleteTimeOff as apiDeleteTimeOff } from "./data/timeOff";
 import { uploadLogo, deleteLogo } from "./data/storage";
 import { invoicesToQbCsv, downloadCsv } from "./lib/qbExport";
+import { useBreakpoint } from "./lib/useBreakpoint";
 
 // ─── FONTS ─────────────────────────────────────────────────────────────────────
 const loadFonts = () => {
@@ -29,16 +30,8 @@ const loadFonts = () => {
   document.head.appendChild(link);
 };
 
-// ─── BREAKPOINT HOOK ───────────────────────────────────────────────────────────
-function useBreakpoint() {
-  const [w, setW] = useState(window.innerWidth);
-  useEffect(() => {
-    const fn = () => setW(window.innerWidth);
-    window.addEventListener('resize', fn);
-    return () => window.removeEventListener('resize', fn);
-  }, []);
-  return { isTablet: w < 1024, w };
-}
+// Shared breakpoint hook lives in lib/useBreakpoint.js so JobsScreen +
+// ScheduleScreen + PlansScreen can use the same flag without redefining.
 
 // ─── TOKENS ────────────────────────────────────────────────────────────────────
 // Color system: keep brand greens, soften borders, add elevation tones for layered depth.

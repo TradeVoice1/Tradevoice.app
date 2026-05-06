@@ -5,6 +5,7 @@ import { isTechOffOn, timeOffInRange } from "./data/timeOff";
 import { uploadJobPhoto, deleteJobPhoto } from "./data/jobPhotos";
 import { compressImage } from "./lib/imageCompress";
 import { useEscapeClose } from "./lib/useEscapeClose";
+import { useBreakpoint } from "./lib/useBreakpoint";
 
 // ─── DRAG-RESCHEDULE HOOK ────────────────────────────────────────────────────
 // Pointer-events-based drag so it works on both mouse and touch (iPad).
@@ -62,7 +63,16 @@ function useDragReschedule({ onDrop }) {
     const dx = e.clientX - s.startX;
     const dy = e.clientY - s.startY;
     if (!s.started && Math.hypot(dx, dy) > DRAG_THRESHOLD) s.started = true;
-    if (s.started) setDrag({ job: s.job, x: e.clientX, y: e.clientY });
+    if (s.started) {
+      // Compute the hover-target cell ONCE per move event (instead of having
+      // every WeekView cell call elementFromPoint on every render — that was
+      // 91 calls per frame on an iPad, causing visible jank).
+      const el = document.elementFromPoint(e.clientX, e.clientY);
+      const cell = el?.closest?.('[data-day][data-hour]');
+      const overDay  = cell?.getAttribute('data-day')   || null;
+      const overHour = cell ? parseInt(cell.getAttribute('data-hour'), 10) : null;
+      setDrag({ job: s.job, x: e.clientX, y: e.clientY, overDay, overHour });
+    }
   };
 
   const onUp = (e) => {
@@ -214,10 +224,12 @@ function PhotoTile({ photo, onView, onCycleLabel, onSetCaption, onDelete }) {
           onClick={(e) => { e.stopPropagation(); onDelete(); }}
           title="Remove photo"
           style={{
-            position: 'absolute', top: 6, right: 6,
-            width: 24, height: 24, borderRadius: '50%',
+            position: 'absolute', top: 4, right: 4,
+            // 44×44 tap target (Apple's minimum) with the visible × inset
+            // via padding so the icon still looks compact.
+            width: 44, height: 44, borderRadius: '50%',
             background: 'rgba(15, 23, 42, 0.75)', color: '#fff',
-            border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700,
+            border: 'none', cursor: 'pointer', fontSize: 20, fontWeight: 700,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             padding: 0, lineHeight: 1,
           }}
@@ -337,7 +349,7 @@ export function JobDetailModal({ job, techs, onClose, onStatusChange, onCreateIn
     overlay: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 },
     modal: { background: '#fff', borderRadius: 14, width: '100%', maxWidth: 520, maxHeight: '90vh', overflow: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' },
     header: { background: COLORS.green, padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', position: 'sticky', top: 0, zIndex: 1 },
-    closeBtn: { background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', width: 28, height: 28, borderRadius: '50%', cursor: 'pointer', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' },
+    closeBtn: { background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', width: 44, height: 44, borderRadius: '50%', cursor: 'pointer', fontSize: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
     body: { padding: '20px 24px' },
     row: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '10px 0', borderBottom: '1px solid #f5f5f5' },
     label: { fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.1em', color: '#aaa', marginBottom: 3 },
@@ -572,8 +584,10 @@ function AddJobModal({ techs, jobs = [], onClose, onAdd, defaultDate, prefill = 
     header: { background: COLORS.green, padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0 },
     body: { padding: '20px 24px' },
     label: { fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.1em', color: '#888', marginBottom: 6, display: 'block', marginTop: 14 },
-    input: { width: '100%', padding: '11px 14px', fontSize: 15, border: '1px solid #ddd', borderRadius: 8, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' },
-    select: { width: '100%', padding: '11px 14px', fontSize: 15, border: '1px solid #ddd', borderRadius: 8, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box', background: '#fff' },
+    // 16px font + 44px min height — iOS Safari otherwise zooms the page on
+    // input focus, and tap targets <44pt are unreliable with gloved fingers.
+    input: { width: '100%', padding: '12px 14px', fontSize: 16, minHeight: 44, border: '1px solid #ddd', borderRadius: 8, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' },
+    select: { width: '100%', padding: '12px 14px', fontSize: 16, minHeight: 44, border: '1px solid #ddd', borderRadius: 8, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box', background: '#fff' },
     row2: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 },
     footer: { padding: '16px 24px', borderTop: '1px solid #f0f0f0', display: 'flex', gap: 10, position: 'sticky', bottom: 0, background: '#fff' },
     btn: (primary) => ({ flex: 1, padding: '12px', borderRadius: 8, border: primary ? 'none' : '1px solid #ddd', background: primary ? COLORS.green : '#fff', color: primary ? '#fff' : '#666', fontSize: 14, fontWeight: 600, cursor: 'pointer' }),
@@ -590,7 +604,7 @@ function AddJobModal({ techs, jobs = [], onClose, onAdd, defaultDate, prefill = 
       <div style={s.modal} onClick={e => e.stopPropagation()}>
         <div style={s.header}>
           <span style={{ fontSize: 17, fontWeight: 700, color: '#fff' }}>Schedule New Job</span>
-          <button style={{ background: 'rgba(255,255,255,.2)', border: 'none', color: '#fff', width: 28, height: 28, borderRadius: '50%', cursor: 'pointer', fontSize: 16 }} onClick={onClose}>×</button>
+          <button style={{ background: 'rgba(255,255,255,.2)', border: 'none', color: '#fff', width: 44, height: 44, borderRadius: '50%', cursor: 'pointer', fontSize: 22, flexShrink: 0 }} onClick={onClose}>×</button>
         </div>
         <div style={s.body}>
           <label style={s.label}>Job Title</label>
@@ -731,11 +745,9 @@ function WeekView({ weekDays, jobs, techs, onJobClick, filterTech, onReschedule,
               const dayIso  = isoLocalDate(day);
               // Highlight the cell beneath the dragged pointer so the user can
               // see exactly where the job will land before they release.
-              const isDropHover = drag && (() => {
-                const el = document.elementFromPoint?.(drag.x, drag.y);
-                const cell = el?.closest?.('[data-day][data-hour]');
-                return cell?.getAttribute('data-day') === dayIso && parseInt(cell?.getAttribute('data-hour'), 10) === hour;
-              })();
+              // Cheap equality check now that the hook computes the hover
+              // target once per pointermove rather than per cell per frame.
+              const isDropHover = drag && drag.overDay === dayIso && drag.overHour === hour;
               return (
                 <div
                   key={`cell-${hour}-${di}`}
@@ -934,6 +946,7 @@ export default function ScheduleScreen({
   // "My Schedule" — filtered to only jobs assigned to them, with no add/reassign UI.
   // Owners see everything across the company and can create + reassign.
   const isTech = user?.role === 'tech';
+  const { isTablet } = useBreakpoint();
 
   const [view, setView] = useState('week'); // month | week | day
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -942,6 +955,10 @@ export default function ScheduleScreen({
   const [showAddJob, setShowAddJob] = useState(false);
   const [filterTech, setFilterTech] = useState(null);
   const [addJobDate, setAddJobDate] = useState(null);
+  // On tablet (iPad portrait) the sidebar would cover half the calendar.
+  // Default it to collapsed there — the user can tap a "Show details" toggle
+  // to slide it in.
+  const [sidebarOpen, setSidebarOpen] = useState(!isTablet);
 
   // Auto-filter to the tech's own jobs when they're a tech. The owner sees everything.
   const jobs = useMemo(() => (
@@ -1117,7 +1134,14 @@ export default function ScheduleScreen({
     dateLabel: { fontSize: 15, fontWeight: 700, color: '#111', minWidth: 200, textAlign: 'center' },
     viewBtns: { display: 'flex', gap: 4 },
     viewBtn: (active) => ({ padding: '6px 14px', borderRadius: 8, border: 'none', background: active ? COLORS.green : '#f0f0f0', color: active ? '#fff' : '#666', fontSize: 13, fontWeight: active ? 700 : 400, cursor: 'pointer' }),
-    body: { display: 'grid', gridTemplateColumns: '1fr 280px', gap: 0, height: 'calc(100vh - 120px)' },
+    // On tablet, hide the sidebar by default so the calendar gets the full
+    // viewport. The sidebar drops in as an overlay when the user toggles it.
+    body: {
+      display: 'grid',
+      gridTemplateColumns: isTablet ? '1fr' : (sidebarOpen ? '1fr 280px' : '1fr'),
+      gap: 0, height: 'calc(100vh - 120px)',
+      position: 'relative',
+    },
     calendar: { background: '#fff', overflow: 'auto', borderRight: '1px solid #e8e8e8' },
     sidebar: { background: '#fff', overflowY: 'auto', padding: '20px 16px' },
     sideSection: { marginBottom: 24 },
@@ -1172,8 +1196,17 @@ export default function ScheduleScreen({
           {view === 'day' && <DayView date={currentDate} jobs={jobs} techs={techs} onJobClick={setSelectedJob} filterTech={filterTech} />}
         </div>
 
-        {/* Sidebar */}
-        <div style={s.sidebar}>
+        {/* Sidebar — on tablet this slides in as an overlay (sidebar covers
+            the right 280px of the calendar instead of pushing it). On laptop
+            it sits inline as a column. */}
+        {(sidebarOpen || !isTablet) && (
+        <div style={{
+          ...s.sidebar,
+          ...(isTablet ? {
+            position: 'absolute', top: 0, right: 0, bottom: 0, width: 320,
+            zIndex: 10, boxShadow: '-4px 0 16px rgba(0,0,0,0.08)',
+          } : {}),
+        }}>
           {/* Tech Filter — owner-only. Tech accounts only see their own jobs anyway. */}
           {!isTech && techs.length > 0 && (
             <div style={s.sideSection}>
@@ -1244,6 +1277,26 @@ export default function ScheduleScreen({
             ))}
           </div>
         </div>
+        )}
+
+        {/* Tablet-only floating toggle to slide the sidebar in/out without
+            taking nav real estate. Hidden on laptop where the sidebar is
+            always docked. */}
+        {isTablet && (
+          <button
+            onClick={() => setSidebarOpen(o => !o)}
+            style={{
+              position: 'absolute', right: sidebarOpen ? 332 : 12, top: 12,
+              zIndex: 11, padding: '10px 14px', minHeight: 44,
+              background: COLORS.green, color: '#fff', border: 'none',
+              borderRadius: 8, fontSize: 14, fontWeight: 700, cursor: 'pointer',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+              transition: 'right 0.2s',
+            }}
+          >
+            {sidebarOpen ? 'Hide ✕' : 'Details'}
+          </button>
+        )}
       </div>
 
       {/* Modals */}
