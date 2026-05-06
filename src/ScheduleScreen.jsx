@@ -1125,21 +1125,29 @@ export default function ScheduleScreen({
   };
 
   const s = {
-    wrap: { minHeight: '100vh', background: '#f7f7f5', fontFamily: "'Inter', sans-serif" },
+    // On tablet the parent gives us flex: 1 with a fixed viewport height —
+    // claim it via height: 100% + flex column so the body row can use flex: 1
+    // and the calendar fills the rest of the screen below the chrome.
+    wrap: isTablet
+      ? { height: '100%', background: '#f7f7f5', fontFamily: "'Inter', sans-serif", display: 'flex', flexDirection: 'column', margin: '-14px -16px' }
+      : { minHeight: '100vh', background: '#f7f7f5', fontFamily: "'Inter', sans-serif" },
     header: { background: '#fff', borderBottom: '1px solid #e8e8e8', padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 },
     title: { fontSize: 20, fontWeight: 800, color: '#111' },
-    addBtn: { padding: '10px 18px', background: COLORS.green, color: '#fff', border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 700, cursor: 'pointer' },
+    addBtn: { padding: '10px 18px', minHeight: 44, background: COLORS.green, color: '#fff', border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 700, cursor: 'pointer' },
     toolbar: { background: '#fff', borderBottom: '1px solid #e8e8e8', padding: '10px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 },
-    navBtn: { background: 'none', border: '1px solid #e0e0e0', borderRadius: 8, padding: '6px 12px', cursor: 'pointer', fontSize: 16, color: '#666' },
+    navBtn: { background: 'none', border: '1px solid #e0e0e0', borderRadius: 8, padding: '8px 12px', minHeight: 44, minWidth: 44, cursor: 'pointer', fontSize: 16, color: '#666' },
     dateLabel: { fontSize: 15, fontWeight: 700, color: '#111', minWidth: 200, textAlign: 'center' },
     viewBtns: { display: 'flex', gap: 4 },
-    viewBtn: (active) => ({ padding: '6px 14px', borderRadius: 8, border: 'none', background: active ? COLORS.green : '#f0f0f0', color: active ? '#fff' : '#666', fontSize: 13, fontWeight: active ? 700 : 400, cursor: 'pointer' }),
-    // On tablet, hide the sidebar by default so the calendar gets the full
-    // viewport. The sidebar drops in as an overlay when the user toggles it.
+    viewBtn: (active) => ({ padding: '10px 14px', minHeight: 44, borderRadius: 8, border: 'none', background: active ? COLORS.green : '#f0f0f0', color: active ? '#fff' : '#666', fontSize: 13, fontWeight: active ? 700 : 500, cursor: 'pointer' }),
+    // Body — laptop uses calc(100vh - chrome). Tablet uses flex: 1 to fill
+    // whatever's left under the combined header bar.
     body: {
       display: 'grid',
       gridTemplateColumns: isTablet ? '1fr' : (sidebarOpen ? '1fr 280px' : '1fr'),
-      gap: 0, height: 'calc(100vh - 120px)',
+      gap: 0,
+      ...(isTablet
+        ? { flex: 1, minHeight: 0 }
+        : { height: 'calc(100vh - 200px)' }),
       position: 'relative',
     },
     calendar: { background: '#fff', overflow: 'auto', borderRight: '1px solid #e8e8e8' },
@@ -1156,37 +1164,69 @@ export default function ScheduleScreen({
 
   return (
     <div style={s.wrap}>
-      {/* Header — owner sees the company schedule + Add Job; tech sees their own. */}
-      <div style={s.header}>
-        <div>
-          <div style={s.title}>{isTech ? 'My Schedule' : 'Schedule'}</div>
-          {isTech && (
-            <div style={{ fontSize: 13, color: '#666', marginTop: 2 }}>
-              Jobs assigned to you · {jobs.length} this {view === 'day' ? 'day' : view}
-            </div>
+      {isTablet ? (
+        // Single combined bar on tablet — title + nav + view picker + Add Job
+        // in one row so the calendar gets every spare pixel below.
+        <div style={{
+          background: '#fff', borderBottom: '1px solid #e8e8e8',
+          padding: '8px 12px', display: 'flex', flexWrap: 'wrap',
+          alignItems: 'center', gap: 6, flexShrink: 0,
+        }}>
+          <span style={{ fontSize: 17, fontWeight: 800, color: '#111', marginRight: 4 }}>
+            {isTech ? 'My Schedule' : 'Schedule'}
+          </span>
+          <button style={s.navBtn} onClick={() => navigate(-1)}>‹</button>
+          <button style={{ ...s.navBtn, fontSize: 13, padding: '8px 12px' }} onClick={() => setCurrentDate(new Date())}>Today</button>
+          <button style={s.navBtn} onClick={() => navigate(1)}>›</button>
+          <span style={{ fontSize: 14, fontWeight: 700, color: '#111', flex: 1, textAlign: 'center', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 80 }}>
+            {headerTitle()}
+          </span>
+          <div style={s.viewBtns}>
+            {['month', 'week', 'day'].map(v => (
+              <button key={v} style={s.viewBtn(view === v)} onClick={() => setView(v)}>
+                {v.charAt(0).toUpperCase() + v.slice(1)}
+              </button>
+            ))}
+          </div>
+          {!isTech && (
+            <button style={{ ...s.addBtn, padding: '10px 14px', fontSize: 13, marginLeft: 4 }} onClick={() => { setAddJobDate(currentDate); setShowAddJob(true); }}>+ Job</button>
           )}
         </div>
-        {!isTech && (
-          <button style={s.addBtn} onClick={() => { setAddJobDate(currentDate); setShowAddJob(true); }}>+ Schedule Job</button>
-        )}
-      </div>
+      ) : (
+        <>
+          {/* Header — owner sees the company schedule + Add Job; tech sees their own. */}
+          <div style={s.header}>
+            <div>
+              <div style={s.title}>{isTech ? 'My Schedule' : 'Schedule'}</div>
+              {isTech && (
+                <div style={{ fontSize: 13, color: '#666', marginTop: 2 }}>
+                  Jobs assigned to you · {jobs.length} this {view === 'day' ? 'day' : view}
+                </div>
+              )}
+            </div>
+            {!isTech && (
+              <button style={s.addBtn} onClick={() => { setAddJobDate(currentDate); setShowAddJob(true); }}>+ Schedule Job</button>
+            )}
+          </div>
 
-      {/* Toolbar */}
-      <div style={s.toolbar}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <button style={s.navBtn} onClick={() => navigate(-1)}>‹</button>
-          <button style={{ ...s.navBtn, fontSize: 13 }} onClick={() => setCurrentDate(new Date())}>Today</button>
-          <button style={s.navBtn} onClick={() => navigate(1)}>›</button>
-          <span style={s.dateLabel}>{headerTitle()}</span>
-        </div>
-        <div style={s.viewBtns}>
-          {['month', 'week', 'day'].map(v => (
-            <button key={v} style={s.viewBtn(view === v)} onClick={() => setView(v)}>
-              {v.charAt(0).toUpperCase() + v.slice(1)}
-            </button>
-          ))}
-        </div>
-      </div>
+          {/* Toolbar */}
+          <div style={s.toolbar}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <button style={s.navBtn} onClick={() => navigate(-1)}>‹</button>
+              <button style={{ ...s.navBtn, fontSize: 13 }} onClick={() => setCurrentDate(new Date())}>Today</button>
+              <button style={s.navBtn} onClick={() => navigate(1)}>›</button>
+              <span style={s.dateLabel}>{headerTitle()}</span>
+            </div>
+            <div style={s.viewBtns}>
+              {['month', 'week', 'day'].map(v => (
+                <button key={v} style={s.viewBtn(view === v)} onClick={() => setView(v)}>
+                  {v.charAt(0).toUpperCase() + v.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Body */}
       <div style={s.body}>

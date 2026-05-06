@@ -6359,26 +6359,26 @@ export default function Tradevoice() {
     <div style={{ position: 'fixed', inset: 0, zIndex: 90 }} onClick={() => setShowProfileMenu(false)} />
   );
 
-  // ── TABLET: top bar + scrollable body + bottom tab nav ─────────────────────
+  // ── TABLET: top bar + top tab nav + flex-fill content ─────────────────────
+  // Nav moved to the top (was at the bottom) so the page content — especially
+  // the calendar — gets the maximum vertical room. Outer container is fixed
+  // 100vh + flex column so the content area can use flex: 1 and inner
+  // pages (like ScheduleScreen) can fill it via height: 100%.
   if (isTablet) {
     return (
-      <div style={{ minHeight: '100vh', background: C.bg, fontFamily: "'Inter', sans-serif", display: 'flex', flexDirection: 'column' }}>
+      <div style={{ height: '100vh', background: C.bg, fontFamily: "'Inter', sans-serif", display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         {TopBar}
         {MenuOverlay}
 
-        {/* Content */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '22px 16px', paddingBottom: BOTTOM_H + 20 }}>
-          <Suspense fallback={<div style={{ padding: 24, color: C.dim, fontSize: 13 }}>Loading…</div>}>{content}</Suspense>
-        </div>
-
-        {/* Bottom nav — oval pill buttons */}
-        <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, height: BOTTOM_H, background: C.surface, borderTop: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '0 10px', zIndex: 100 }}>
+        {/* Top tab nav — oval pill buttons */}
+        <div style={{ background: C.surface, borderBottom: `1px solid ${C.border}`, height: BOTTOM_H, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '0 10px', overflowX: 'auto' }}>
           {NAV.map(item => {
             const active = section === item.id;
             return (
               <button key={item.id} onClick={() => setSection(item.id)} style={{
-                flex: 1,
-                padding: '9px 8px',
+                flex: '1 1 auto',
+                minWidth: 70,
+                padding: '8px 10px', minHeight: 44,
                 borderRadius: 10,
                 background: active ? C.orange : 'transparent',
                 border: 'none',
@@ -6386,7 +6386,7 @@ export default function Tradevoice() {
                 cursor: 'pointer',
                 fontFamily: "'Inter', sans-serif",
                 fontSize: 13,
-                fontWeight: active ? 600 : 500,
+                fontWeight: active ? 700 : 500,
                 letterSpacing: '-0.005em',
                 whiteSpace: 'nowrap',
                 textAlign: 'center',
@@ -6398,6 +6398,12 @@ export default function Tradevoice() {
               </button>
             );
           })}
+        </div>
+
+        {/* Content fills the rest of the viewport. Calendar pages (Schedule)
+            use height: 100% to claim it. List pages scroll inside this. */}
+        <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '14px 16px' }}>
+          <Suspense fallback={<div style={{ padding: 24, color: C.dim, fontSize: 13 }}>Loading…</div>}>{content}</Suspense>
         </div>
       </div>
     );
