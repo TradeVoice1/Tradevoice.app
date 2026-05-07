@@ -1071,7 +1071,237 @@ function Onboarding({ onComplete }) {
 // ══════════════════════════════════════════════════════════════════════════════
 // DASHBOARD
 // ══════════════════════════════════════════════════════════════════════════════
-function Dashboard({ user, nav, invoices = [], plans = [], onScheduleFromPlan }) {
+// ─── Tech Performance widget ─────────────────────────────────────────────────
+// Per-tech revenue + activity breakdown with a period selector. Used on the
+// owner Dashboard to answer "who's pulling weight, who's not?" without making
+// the owner click into each tech individually.
+//
+// Roster includes the owner themselves (they often do work) plus every
+// team_members row with status='active' and a real userId. Each invoice's
+// techUserId field (set since migration 0008) drives the matching.
+function TechPerformanceWidget({ user, invoices, teamMembers, nav }) {
+  const { isTablet } = useBreakpoint();
+  const [period, setPeriod] = useState('this-month');
+
+  // ── Build period bounds ────────────────────────────────────────────────
+  const periodBounds = (() => {
+    const now = new Date();
+    const yyyy = now.getFullYear();
+    const mm   = now.getMonth();
+    if (period === 'this-month') {
+      const from = `${yyyy}-${String(mm + 1).padStart(2, '0')}-01`;
+      return { from, to: null, label: 'This Month' };
+    }
+    if (period === 'last-month') {
+      const last = new Date(yyyy, mm - 1, 1);
+      const lastEnd = new Date(yyyy, mm, 0); // day 0 of next month = last of prev
+      const fmt = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      return { from: fmt(last), to: fmt(lastEnd), label: 'Last Month' };
+    }
+    if (period === 'this-year') return { from: `${yyyy}-01-01`, to: null, label: 'This Year' };
+    return { from: null, to: null, label: 'All Time' };
+  })();
+
+  // ── Build tech roster ─────────────────────────────────────────────────
+  const initials = (name) => (name || '?')
+    .split(' ').filter(Boolean).slice(0, 2).map(p => p[0]).join('').toUpperCase() || '?';
+  const roster = (() => {
+    const list = [{
+      userId:  user?.id || null,
+      name:    user?.name || 'You',
+      isOwner: true,
+      initials: initials(user?.name || 'You'),
+    }];
+    for (const t of teamMembers || []) {
+      if (t.status === 'active' && t.userId) {
+        list.push({
+          userId:   t.userId,
+          name:     t.name || 'Tech',
+          isOwner:  false,
+          initials: initials(t.name),
+        });
+      }
+    }
+    return list;
+  })();
+
+  // ── Per-tech metrics ──────────────────────────────────────────────────
+  const metrics = roster.map(tech => {
+    const matched = (invoices || []).filter(inv => {
+      if (inv.techUserId !== tech.userId) return false;
+      const ymd = inv.createdAt || '';
+      if (periodBounds.from && ymd && ymd < periodBounds.from) return false;
+      if (periodBounds.to   && ymd && ymd > periodBounds.to)   return false;
+      return true;
+    });
+    let invoiced = 0, paid = 0, jobs = 0;
+    let dtpSum = 0, dtpCount = 0;
+    for (const inv of matched) {
+      const calc = calcInvoice(inv, user?.state);
+      invoiced += calc.total;
+      paid     += calc.paid;
+      if (inv.status === 'paid') {
+        jobs += 1;
+        if (inv.paidAt && inv.createdAt) {
+          const delta = (new Date(inv.paidAt + 'T12:00:00') - new Date(inv.createdAt + 'T12:00:00')) / 86400000;
+          if (delta >= 0) { dtpSum += delta; dtpCount += 1; }
+        }
+      }
+    }
+    return {
+      ...tech,
+      invoiced,
+      paid,
+      jobs,
+      invoiceCount: matched.length,
+      avgTicket:    matched.length > 0 ? invoiced / matched.length : 0,
+      daysToPay:    dtpCount > 0 ? dtpSum / dtpCount : null,
+    };
+  }).sort((a, b) => b.invoiced - a.invoiced);
+
+  const teamTotal = metrics.reduce((s, m) => s + m.invoiced, 0);
+  const hasAnyData = metrics.some(m => m.invoiceCount > 0);
+
+  // Hide entirely if there's no team AND no invoice activity at all — keeps
+  // brand-new accounts from seeing a sad empty widget on first login.
+  if (roster.length === 1 && !hasAnyData) return null;
+
+  const PERIODS = [
+    { id: 'this-month', label: 'This Month' },
+    { id: 'last-month', label: 'Last Month' },
+    { id: 'this-year',  label: 'This Year' },
+    { id: 'all-time',   label: 'All Time' },
+  ];
+
+  return (
+    <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: '18px 20px', marginBottom: 22, boxShadow: C.shadow1 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14, gap: 10, flexWrap: 'wrap' }}>
+        <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, fontWeight: 800, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+          Tech Performance
+        </div>
+        <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+          {PERIODS.map(p => (
+            <button
+              key={p.id}
+              onClick={() => setPeriod(p.id)}
+              style={{
+                background: period === p.id ? C.orange : 'transparent',
+                color:      period === p.id ? '#fff'  : C.muted,
+                border:    `1px solid ${period === p.id ? C.orange : C.border2}`,
+                padding: '5px 12px', borderRadius: 50,
+                fontFamily: "'Inter', sans-serif",
+                fontSize: 12, fontWeight: 700, letterSpacing: '0.04em',
+                cursor: 'pointer', WebkitTapHighlightColor: 'transparent',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {p.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Empty state for the period — happens when the owner is alone or
+          nobody invoiced this period. We still show the roster so they
+          remember who their crew is. */}
+      {!hasAnyData && (
+        <div style={{ padding: '14px 0', fontSize: 14, color: C.dim, fontStyle: 'italic', textAlign: 'center' }}>
+          No invoices in {periodBounds.label.toLowerCase()} yet.
+        </div>
+      )}
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {metrics.map((m, idx) => {
+          const pctOfTeam = teamTotal > 0 ? (m.invoiced / teamTotal) * 100 : 0;
+          const isTopEarner = idx === 0 && m.invoiced > 0 && metrics.length > 1;
+          return (
+            <div
+              key={m.userId || `idx-${idx}`}
+              style={{
+                background: C.raised,
+                border: `1px solid ${isTopEarner ? C.orange + '55' : C.border}`,
+                borderRadius: 10,
+                padding: '12px 14px',
+                display: 'grid',
+                gridTemplateColumns: isTablet ? '1fr' : '180px 1fr auto',
+                gap: 14,
+                alignItems: 'center',
+              }}
+            >
+              {/* Tech identity */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
+                <div style={{
+                  width: 38, height: 38, borderRadius: '50%',
+                  background: m.isOwner ? C.orange : C.success,
+                  color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontFamily: "'Inter', sans-serif", fontWeight: 800, fontSize: 14, letterSpacing: '0.04em',
+                  flexShrink: 0,
+                }}>
+                  {m.initials}
+                </div>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, fontWeight: 700, color: C.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {m.name}
+                  </div>
+                  <div style={{ fontSize: 11, color: C.muted, marginTop: 1, fontWeight: 600, letterSpacing: '0.04em' }}>
+                    {m.isOwner ? 'OWNER' : 'TECH'}
+                    {isTopEarner && <span style={{ color: C.orange, marginLeft: 8 }}>★ Top earner</span>}
+                  </div>
+                </div>
+              </div>
+
+              {/* Stat columns */}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: isTablet ? 'repeat(4, 1fr)' : 'repeat(4, 1fr)',
+                gap: 10,
+                fontFamily: "'Inter', sans-serif",
+              }}>
+                <Stat label="Invoiced"   value={fmtMoney(m.invoiced)}   color={m.invoiced > 0 ? C.text : C.dim} />
+                <Stat label="Paid"       value={fmtMoney(m.paid)}       color={m.paid >= m.invoiced && m.paid > 0 ? C.success : (m.paid > 0 ? C.warn : C.dim)} />
+                <Stat label="Jobs"       value={String(m.jobs)}                          color={C.text} />
+                <Stat label="Avg Ticket" value={m.avgTicket > 0 ? fmtMoney(m.avgTicket) : '—'} color={C.text} />
+              </div>
+
+              {/* Share-of-team-revenue bar — only meaningful with 2+ techs */}
+              {!isTablet && metrics.length > 1 && (
+                <div style={{ width: 110, textAlign: 'right' }}>
+                  <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 14, fontWeight: 800, color: C.orange, fontVariantNumeric: 'tabular-nums' }}>
+                    {pctOfTeam.toFixed(0)}%
+                  </div>
+                  <div style={{ fontSize: 10, color: C.muted, fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: 5 }}>of team</div>
+                  <div style={{ height: 4, background: C.border, borderRadius: 2, overflow: 'hidden' }}>
+                    <div style={{ width: `${pctOfTeam}%`, height: '100%', background: C.orange, transition: 'width 0.3s' }} />
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Hint to add more techs if it's just the owner. Surfaces the path
+          to Settings → Team since the seat-buying flow lives there. */}
+      {roster.length === 1 && (
+        <div style={{ marginTop: 12, padding: '10px 14px', background: C.orangeLo, border: `1px solid ${C.orangeMd}`, borderRadius: 8, fontSize: 13, color: C.muted, lineHeight: 1.5 }}>
+          You're the only tech right now. <button onClick={() => nav && nav('settings')} style={{ background: 'none', border: 'none', color: C.orange, fontWeight: 700, cursor: 'pointer', padding: 0, fontSize: 13 }}>Add a tech ($19.99/mo)</button> to see side-by-side performance.
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Compact stat used by TechPerformanceWidget. Inline because it's only used here.
+function Stat({ label, value, color }) {
+  return (
+    <div style={{ minWidth: 0 }}>
+      <div style={{ fontSize: 10, fontWeight: 700, color: '#9ca3af', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 2 }}>{label}</div>
+      <div style={{ fontSize: 15, fontWeight: 800, color, fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{value}</div>
+    </div>
+  );
+}
+
+function Dashboard({ user, nav, invoices = [], plans = [], onScheduleFromPlan, teamMembers = [] }) {
   const { isTablet } = useBreakpoint();
   const firstName = user.name?.split(' ')[0] || 'Contractor';
 
@@ -1253,6 +1483,19 @@ function Dashboard({ user, nav, invoices = [], plans = [], onScheduleFromPlan })
           })}
         </div>
       </div>
+
+      {/* ── Tech Performance ────────────────────────────────────────────────
+          Per-tech revenue breakdown with a period selector. Owner shows up
+          as a "tech" too since they often do work themselves. Sorted by
+          revenue so the highest earner sits at the top. Hidden if there are
+          no invoices and no team members — keeps the dashboard from feeling
+          empty for fresh accounts. */}
+      <TechPerformanceWidget
+        user={user}
+        invoices={invoices}
+        teamMembers={teamMembers}
+        nav={nav}
+      />
 
       {/* Body — stacks fully on tablet */}
       <div style={{ display: 'grid', gridTemplateColumns: isTablet ? '1fr' : '1fr 290px', gap: 14 }}>
@@ -7274,7 +7517,7 @@ function TradevoiceApp() {
   };
 
   const content = {
-    dashboard: <Dashboard    user={user} nav={navigateTo} invoices={sharedInvoices} plans={plans} onScheduleFromPlan={handleScheduleFromPlan} />,
+    dashboard: <Dashboard    user={user} nav={navigateTo} invoices={sharedInvoices} plans={plans} onScheduleFromPlan={handleScheduleFromPlan} teamMembers={teamMembers} />,
     invoice:   <VoiceInvoice user={user} logo={logo} payments={payments} taxRates={taxRates} teamMembers={teamMembers} sharedInvoices={sharedInvoices} setSharedInvoices={setSharedInvoices} persistInvoice={persistInvoice} removeInvoice={removeInvoice} handleUnInvoice={handleUnInvoice} pendingInvoiceId={pendingInvoiceId} clearPendingInvoice={() => setPendingInvoiceId(null)} pendingMonthFilter={pendingMonthFilter} clearPendingMonthFilter={() => setPendingMonthFilter(null)} />,
     billing:   <Billing      user={user} payments={payments} />,
     quotes:    <Quotes       user={user} logo={logo} taxRates={taxRates} onConvertToInvoice={handleConvertToInvoice} />,
