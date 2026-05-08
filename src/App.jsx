@@ -5747,9 +5747,14 @@ function Quotes({ user, logo, taxRates, onConvertToInvoice }) {
     return () => { cancelled = true; };
   }, []);
 
+  // Effective owner for quote rows: tech writes under their owner's id
+  // (RLS in migration 0016 enforces that owner_id matches the tech's
+  // team_members.owner_id). Owners write under their own id.
+  const ownerForRow = user?.effectiveOwnerId || user?.id;
+
   const saveQuote = async (q) => {
     try {
-      const saved = await apiUpsertQuote(user.id, q);
+      const saved = await apiUpsertQuote(ownerForRow, q);
       setQuotes(prev => {
         const exists = prev.find(x => x.id === saved.id || (q.id && x.id === q.id));
         return exists
@@ -5780,7 +5785,7 @@ function Quotes({ user, logo, taxRates, onConvertToInvoice }) {
   const sendQuote = async (q) => {
     if (!q || q.status !== 'draft') return;
     try {
-      const saved = await apiUpsertQuote(user.id, {
+      const saved = await apiUpsertQuote(ownerForRow, {
         ...q,
         status: 'sent',
         sentAt: new Date().toISOString().split('T')[0],
@@ -5795,7 +5800,7 @@ function Quotes({ user, logo, taxRates, onConvertToInvoice }) {
   const convertToInvoice = async (q) => {
     const client = clients.find(c => c.id === q.clientId);
     try {
-      const updated = await apiUpsertQuote(user.id, { ...q, status: 'invoiced' });
+      const updated = await apiUpsertQuote(ownerForRow, { ...q, status: 'invoiced' });
       setQuotes(prev => prev.map(x => x.id === updated.id ? updated : x));
     } catch (e) {
       console.error('mark quote invoiced failed', e);
@@ -5829,7 +5834,7 @@ function Quotes({ user, logo, taxRates, onConvertToInvoice }) {
   // NewClientModal doesn't care about the return value.
   const addClient = async (c) => {
     try {
-      const created = await apiAddClient(user.id, c);
+      const created = await apiAddClient(ownerForRow, c);
       setClients(prev => [...prev, created].sort((a, b) => a.name.localeCompare(b.name)));
       setNewClient(false);
       return created;
@@ -6114,7 +6119,8 @@ function Clients({ user, nav, invoices = [] }) {
     if (!newClient.name.trim() || saving) return;
     setSaving(true);
     try {
-      const created = await apiAddClient(user.id, newClient);
+      // Tech writes under their owner's id (RLS migration 0016 enforces this).
+      const created = await apiAddClient(user?.effectiveOwnerId || user?.id, newClient);
       setClients(prev => [...prev, created].sort((a, b) => a.name.localeCompare(b.name)));
       setNewClient({ name: '', company: '', email: '', phone: '' });
       setShowAdd(false);
@@ -7407,8 +7413,17 @@ function TradevoiceApp() {
   }, [user?.id]);
 
   // Persist an invoice to Supabase and merge the saved row back into local state.
+  // For techs: the owner_id passed to upsertInvoice is the tech's effective
+  // owner (read in data/auth.js from team_members). Tech invoices also auto-
+  // get tech_user_id = the tech's own id so attribution is correct without
+  // the tech having to pick themselves from the dropdown.
   const persistInvoice = async (inv) => {
-    const saved = await apiUpsertInvoice(user.id, inv);
+    const ownerForRow = user?.effectiveOwnerId || user?.id;
+    const isTech      = user?.role === 'tech';
+    const stamped = isTech && !inv.techUserId
+      ? { ...inv, techUserId: user.id, techName: user.name || inv.techName || '' }
+      : inv;
+    const saved = await apiUpsertInvoice(ownerForRow, stamped);
     setSharedInvoices(prev => {
       const exists = prev.find(x => x.id === saved.id || (inv.id && x.id === inv.id));
       return exists
@@ -7463,7 +7478,7 @@ function TradevoiceApp() {
       }
 
       if (sourceQuote && sourceQuote.status === 'invoiced') {
-        await apiUpsertQuote(user.id, { ...sourceQuote, status: 'accepted' });
+        await apiUpsertQuote(user?.effectiveOwnerId || user?.id, { ...sourceQuote, status: 'accepted' });
         restored = sourceQuote.number;
       }
     } catch (e) {

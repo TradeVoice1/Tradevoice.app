@@ -81,7 +81,25 @@ export async function getProfile(userId, authEmail) {
     .maybeSingle();
   if (error) throw error;
   if (!data) return null;
-  return { ...dbToProfile(data), email: authEmail ?? '' };
+
+  // For techs: look up the owner they belong to so the rest of the app
+  // can write rows under the owner's owner_id (RLS enforces this via
+  // migration 0016). Owners get effectiveOwnerId = their own id.
+  let effectiveOwnerId = userId;
+  if (data.role === 'tech') {
+    const { data: tm } = await supabase
+      .from('team_members')
+      .select('owner_id, name, perms')
+      .eq('user_id', userId)
+      .eq('status', 'active')
+      .maybeSingle();
+    if (tm?.owner_id) effectiveOwnerId = tm.owner_id;
+  }
+  return {
+    ...dbToProfile(data),
+    email: authEmail ?? '',
+    effectiveOwnerId,
+  };
 }
 
 export async function upsertProfile(userId, patch) {
