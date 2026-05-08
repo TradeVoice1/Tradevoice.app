@@ -72,6 +72,15 @@ import carpetCleaning  from './carpet-cleaning.js';
 import restoration     from './restoration.js';
 import chimney         from './chimney.js';
 import pestControl     from './pest-control.js';
+// Service trades batch 2 + extras.
+import snowRemoval        from './snow-removal.js';
+import junkRemoval        from './junk-removal.js';
+import handyman           from './handyman.js';
+import applianceRepair    from './appliance-repair.js';
+import commercialCleaning from './commercial-cleaning.js';
+import gutterCleaning     from './gutter-cleaning.js';
+import mobileAuto         from './mobile-auto.js';
+import wellPump           from './well-pump.js';
 
 // ── TRADE_CONFIG — keys must match what's stored on user.trades / quote.trade ──
 export const TRADE_CONFIG = {
@@ -123,6 +132,14 @@ export const TRADE_CONFIG = {
   Restoration:      restoration,
   Chimney:          chimney,
   PestControl:      pestControl,
+  SnowRemoval:        snowRemoval,
+  JunkRemoval:        junkRemoval,
+  Handyman:           handyman,
+  ApplianceRepair:    applianceRepair,
+  CommercialCleaning: commercialCleaning,
+  GutterCleaning:     gutterCleaning,
+  MobileAuto:         mobileAuto,
+  WellPump:           wellPump,
   bundle,
 };
 
