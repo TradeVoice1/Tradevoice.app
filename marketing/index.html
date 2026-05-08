@@ -780,13 +780,26 @@
   <div class="container">
     <span class="section-tag">We built this for you</span>
     <h2>Every trade, one tool</h2>
-    <p class="sub">Tradevoice knows your trade. Quotes, labor rates, and materials are pre-built for how you work.</p>
+    <p class="sub">Tradevoice knows your trade. Quotes, labor rates, and materials pre-built for how you work — across <strong>56+ trades</strong> from plumbing and electrical to landscaping, restoration, and chimney sweep.</p>
     <div class="trade-tabs">
       <button class="trade-tab active" onclick="selectTrade('plumber',this)"> Plumber</button>
       <button class="trade-tab" onclick="selectTrade('electrician',this)"> Electrician</button>
       <button class="trade-tab" onclick="selectTrade('hvac',this)"> HVAC</button>
       <button class="trade-tab" onclick="selectTrade('roofer',this)"> Roofer</button>
       <button class="trade-tab" onclick="selectTrade('specialty',this)"> Specialty</button>
+    </div>
+    <!-- Trade catalog overflow — clicking the showcase tabs above flips to
+         specific deep-dives, but we surface the full list here so a
+         contractor in a less-common trade (Locksmith, Tree Service, Pool,
+         etc.) sees their work is supported. -->
+    <div style="text-align:center; margin: 30px auto 24px; max-width: 920px; padding: 22px 24px; background: var(--green-light); border-radius: 14px; border: 1px solid var(--green-mist);">
+      <div style="font-size: 12px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--green-dark); margin-bottom: 12px;">Full trade catalog</div>
+      <div style="font-size: 14px; color: var(--text); line-height: 1.9;">
+        Plumber · Electrician · HVAC · Roofer · Carpenter · Painter · Drywall · Flooring · Tile · Concrete · Mason · Insulation · Siding · Gutters · Solar · Stucco · Garage Door · Fence · Deck/Patio · Foundation · Waterproofing · Excavation · Demolition · Sheet Metal · Glass / Window · Septic · Pool / Spa · Welder · Locksmith · Asphalt · Refrigeration · Fire Protection · Asbestos / Mold · Boiler · Low Voltage · Security / Alarm · Audio / Video · Well / Pump · Landscaping · Lawn Care · Tree Service · Cleaning · Pressure Washing · Window Cleaning · Carpet Cleaning · Restoration · Chimney Sweep · Pest Control · Snow Removal · Junk Removal · Handyman · Appliance Repair · Commercial Cleaning · Gutter Cleaning · Mobile Auto Detailing · Multi-Trade
+      </div>
+      <div style="font-size: 12px; color: var(--muted); margin-top: 12px; font-style: italic;">
+        Each trade ships with industry-standard line items (NEC, ASHRAE, ASPE, NRCA, IICRC, etc.) so the bid you send looks like you've been doing this 20 years.
+      </div>
     </div>
     <!-- ── Plumber ── -->
     <div id="trade-plumber" class="trade-content active">
@@ -1430,7 +1443,7 @@
         <tr><td>Starting price / mo</td><td class="tv-col"><strong>$49.99</strong></td><td>$69</td><td>$79</td><td>$9.99</td></tr>
 
         <!-- Quotes / Invoicing differentiators -->
-        <tr><td>Trade-specific quote sheets (Plumber, HVAC…)</td><td class="tv-col"><span class="check-y">✓</span></td><td><span class="check-n">—</span></td><td><span class="check-n">—</span></td><td><span class="check-n">—</span></td></tr>
+        <tr><td>Trade-specific quote sheets (56+ trades)</td><td class="tv-col"><span class="check-y">✓</span></td><td><span class="check-n">—</span></td><td><span class="check-n">—</span></td><td><span class="check-n">—</span></td></tr>
         <tr><td>Multi-trade combined quote (per-trade subtotals)</td><td class="tv-col"><span class="check-y">✓</span></td><td><span class="check-n">—</span></td><td><span class="check-n">—</span></td><td><span class="check-n">—</span></td></tr>
         <tr><td>Quote → Invoice in one tap</td><td class="tv-col"><span class="check-y">✓</span></td><td><span class="check-y">✓</span></td><td><span class="check-y">✓</span></td><td><span class="check-y">✓</span></td></tr>
 
