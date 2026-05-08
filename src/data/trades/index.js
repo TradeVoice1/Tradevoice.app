@@ -46,6 +46,21 @@ import waterproofing from './waterproofing.js';
 import excavation    from './excavation.js';
 import demolition    from './demolition.js';
 import sheetMetal    from './sheet-metal.js';
+// Construction batch 3 — heavy / specialty.
+import glass          from './glass.js';
+import septic         from './septic.js';
+import pool           from './pool.js';
+import welder         from './welder.js';
+import locksmith      from './locksmith.js';
+import asphalt        from './asphalt.js';
+import refrigeration  from './refrigeration.js';
+import fireProtection from './fire-protection.js';
+import asbestosMold   from './asbestos-mold.js';
+import boiler         from './boiler.js';
+// Low-voltage trio.
+import lowVoltage     from './low-voltage.js';
+import security       from './security.js';
+import audioVideo     from './audio-video.js';
 
 // ── TRADE_CONFIG — keys must match what's stored on user.trades / quote.trade ──
 export const TRADE_CONFIG = {
@@ -74,6 +89,19 @@ export const TRADE_CONFIG = {
   Excavation:    excavation,
   Demolition:    demolition,
   SheetMetal:    sheetMetal,
+  Glass:           glass,
+  Septic:          septic,
+  Pool:            pool,
+  Welder:          welder,
+  Locksmith:       locksmith,
+  Asphalt:         asphalt,
+  Refrigeration:   refrigeration,
+  FireProtection:  fireProtection,
+  AsbestosMold:    asbestosMold,
+  Boiler:          boiler,
+  LowVoltage:      lowVoltage,
+  Security:        security,
+  AudioVideo:      audioVideo,
   bundle,
 };
 
