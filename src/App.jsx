@@ -587,7 +587,27 @@ function SignupScreen({ onComplete, onBack }) {
     { id: 'pro',  name: 'Pro',  price: '$99.99', trades: 'Up to 3 trades', desc: 'Growing contractor, multiple trades', popular: true },
     { id: 'all',  name: 'All Trades', price: '$149.99', trades: 'All 5 trades', desc: 'Full-service multi-trade contractor' },
   ];
-  const TRADES_LIST = ['Plumber','Electrician','HVAC','Roofing','Specialty'];
+  // Trade picker state — at 56+ trades the old "render every chip" pattern
+  // doesn't fit anymore. We show category tabs (Construction / Service /
+  // Multi-Trade) plus a search input that filters within the active tab.
+  const [tradeSearch, setTradeSearch] = useState('');
+  const [tradeCat,    setTradeCat]    = useState('Construction');
+  // Group all trades by category for the picker. The category comes from
+  // each trade's own config, so adding a new trade slots into the right
+  // bucket automatically.
+  const tradesByCategory = ALL_TRADES.reduce((acc, key) => {
+    const cat = TRADE_CONFIG[key].category || 'Other';
+    (acc[cat] = acc[cat] || []).push(key);
+    return acc;
+  }, {});
+  const categoryNames = Object.keys(tradesByCategory).sort();
+  // Filter the active category by search term — match label or key.
+  const visibleTradesForCat = (tradesByCategory[tradeCat] || []).filter(key => {
+    if (!tradeSearch.trim()) return true;
+    const q = tradeSearch.toLowerCase();
+    return (TRADE_CONFIG[key].label || key).toLowerCase().includes(q)
+        || key.toLowerCase().includes(q);
+  });
 
   const steps = ['Account', 'Company', 'Plan'];
   const canNext = [
@@ -634,13 +654,83 @@ function SignupScreen({ onComplete, onBack }) {
           <div><label style={s.label}>Company name *</label><input value={company} onChange={e => setCompany(e.target.value)} placeholder="Burke's Mechanical" style={{ ...s.input, width: '100%', padding: '12px 14px', boxSizing: 'border-box', fontSize: 16 }}/></div>
           <div><label style={s.label}>Phone</label><input type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="(512) 555-0000" style={{ ...s.input, width: '100%', padding: '12px 14px', boxSizing: 'border-box', fontSize: 16 }}/></div>
           <div>
-            <label style={s.label}>Your trade(s) *</label>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-              {TRADES_LIST.map(t => (
-                <button key={t} onClick={() => setTrades(prev => prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t])} style={{ ...s.btn, padding: '10px 12px', fontSize: 14, background: trades.includes(t) ? C.orange : C.raised, border: `2px solid ${trades.includes(t) ? C.orange : C.border2}`, color: trades.includes(t) ? '#fff' : C.muted, borderRadius: 8, textAlign: 'left' }}>
-                  {t}
-                </button>
-              ))}
+            <label style={s.label}>Your trade(s) <span style={{ color: C.errorBold }}>*</span></label>
+            <div style={{ fontSize: 12, color: C.dim, marginBottom: 8 }}>
+              Pick every trade you do. We'll preload quote sheets, materials, and labor rates for each.
+            </div>
+
+            {/* Category tabs — pill row, scrolls horizontally on narrow screens */}
+            <div style={{ display: 'flex', gap: 6, marginBottom: 8, overflowX: 'auto', paddingBottom: 4, WebkitOverflowScrolling: 'touch' }}>
+              {categoryNames.map(cat => {
+                const active = cat === tradeCat;
+                const count = (tradesByCategory[cat] || []).length;
+                return (
+                  <button
+                    key={cat}
+                    onClick={() => { setTradeCat(cat); setTradeSearch(''); }}
+                    style={{
+                      ...s.btn, padding: '7px 14px', fontSize: 13, minHeight: 36, flexShrink: 0,
+                      background: active ? C.orange : C.raised,
+                      border: `1.5px solid ${active ? C.orange : C.border2}`,
+                      color: active ? '#fff' : C.muted, borderRadius: 50, fontWeight: 700,
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {cat} <span style={{ opacity: 0.7, marginLeft: 3 }}>({count})</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Search input — filters within the active category */}
+            <input
+              value={tradeSearch}
+              onChange={e => setTradeSearch(e.target.value)}
+              placeholder={`Search ${tradeCat.toLowerCase()} trades…`}
+              style={{ ...s.input, width: '100%', padding: '10px 12px', boxSizing: 'border-box', fontSize: 14, marginBottom: 10 }}
+            />
+
+            {/* Selected-count summary */}
+            {trades.length > 0 && (
+              <div style={{ fontSize: 12, color: C.muted, marginBottom: 8 }}>
+                <strong style={{ color: C.text }}>{trades.length}</strong> selected:
+                {' '}{trades.slice(0, 4).map(t => TRADE_CONFIG[t]?.label || t).join(', ')}
+                {trades.length > 4 && <> + {trades.length - 4} more</>}
+              </div>
+            )}
+
+            {/* Trade chip grid — wraps as needed, scrolls vertically when long */}
+            <div style={{
+              display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6,
+              maxHeight: 280, overflowY: 'auto', padding: 2,
+              border: `1px solid ${C.border}`, borderRadius: 8, background: C.surface,
+            }}>
+              {visibleTradesForCat.length === 0 && (
+                <div style={{ padding: 14, fontSize: 13, color: C.dim, gridColumn: '1 / -1', textAlign: 'center' }}>
+                  No trades match "{tradeSearch}". Try a different search.
+                </div>
+              )}
+              {visibleTradesForCat.map(key => {
+                const cfg = TRADE_CONFIG[key];
+                const selected = trades.includes(key);
+                return (
+                  <button
+                    key={key}
+                    onClick={() => setTrades(prev => prev.includes(key) ? prev.filter(x => x !== key) : [...prev, key])}
+                    style={{
+                      ...s.btn, padding: '9px 11px', fontSize: 13, minHeight: 42,
+                      background: selected ? cfg.color : C.raised,
+                      border: `2px solid ${selected ? cfg.color : C.border2}`,
+                      color: selected ? '#fff' : C.muted,
+                      borderRadius: 8, textAlign: 'left',
+                      fontWeight: 600,
+                      whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                    }}
+                  >
+                    {cfg.label || key}
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
