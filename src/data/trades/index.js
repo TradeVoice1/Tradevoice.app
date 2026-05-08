@@ -61,6 +61,17 @@ import boiler         from './boiler.js';
 import lowVoltage     from './low-voltage.js';
 import security       from './security.js';
 import audioVideo     from './audio-video.js';
+// Service trades batch 1.
+import landscaping     from './landscaping.js';
+import lawnCare        from './lawn-care.js';
+import treeService     from './tree-service.js';
+import cleaning        from './cleaning.js';
+import pressureWashing from './pressure-washing.js';
+import windowCleaning  from './window-cleaning.js';
+import carpetCleaning  from './carpet-cleaning.js';
+import restoration     from './restoration.js';
+import chimney         from './chimney.js';
+import pestControl     from './pest-control.js';
 
 // ── TRADE_CONFIG — keys must match what's stored on user.trades / quote.trade ──
 export const TRADE_CONFIG = {
@@ -102,6 +113,16 @@ export const TRADE_CONFIG = {
   LowVoltage:      lowVoltage,
   Security:        security,
   AudioVideo:      audioVideo,
+  Landscaping:      landscaping,
+  LawnCare:         lawnCare,
+  TreeService:      treeService,
+  Cleaning:         cleaning,
+  PressureWashing:  pressureWashing,
+  WindowCleaning:   windowCleaning,
+  CarpetCleaning:   carpetCleaning,
+  Restoration:      restoration,
+  Chimney:          chimney,
+  PestControl:      pestControl,
   bundle,
 };
 
