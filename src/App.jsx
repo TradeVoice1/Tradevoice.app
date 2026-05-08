@@ -6,6 +6,7 @@ const ScheduleScreen       = lazy(() => import("./ScheduleScreen"));
 const JobsScreen           = lazy(() => import("./JobsScreen"));
 const PlansScreen          = lazy(() => import("./PlansScreen"));
 const InvoicePaymentPage   = lazy(() => import("./InvoicePaymentPage").then(m => ({ default: m.InvoicePaymentPage })));
+const QuoteCustomerPage    = lazy(() => import("./QuoteCustomerPage").then(m => ({ default: m.QuoteCustomerPage })));
 const MarketingScreen      = lazy(() => import("./MarketingScreen"));
 const PrivacyPolicyScreen  = lazy(() => import("./LegalScreens").then(m => ({ default: m.PrivacyPolicyScreen })));
 const TermsScreen          = lazy(() => import("./LegalScreens").then(m => ({ default: m.TermsScreen })));
@@ -3249,6 +3250,125 @@ function ShareInvoiceModal({ invoice, onClose, onSend }) {
   );
 }
 
+// ── Share Quote Modal ──────────────────────────────────────────────────────
+// Surfaces the /q/<share_token> URL and gives the contractor three quick
+// ways to deliver it: copy, text, email. Mirrors ShareInvoiceModal but
+// produces a quote URL and bumps draft → sent on first open.
+function ShareQuoteModal({ quote, onClose, onSend }) {
+  const url = `https://app.thetradevoice.com/q/${quote.shareToken}`;
+  const [copied, setCopied] = useState('');
+  const stamped = useRef(false);
+
+  // Auto-bump status the first time this modal opens for a draft so the
+  // contractor's quote list reflects "sent" without an extra click.
+  useEffect(() => {
+    if (!stamped.current && quote.status === 'draft' && onSend) {
+      stamped.current = true;
+      onSend(quote);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const copy = (text, key) => {
+    navigator.clipboard?.writeText(text);
+    setCopied(key);
+    setTimeout(() => setCopied(''), 1500);
+  };
+
+  // Roll a quick total for the email body so the customer sees the number
+  // without opening the link first. Same shape as InvoiceShare.
+  const total = (quote.labor||[]).reduce((s,r)=>s+(r.hrs||0)*(r.rate||0),0)
+              + (quote.materials||[]).reduce((s,r)=>s+(r.qty||0)*(r.cost||0),0)
+              + (quote.equipment||[]).reduce((s,r)=>s+(r.qty||0)*(r.rate||0),0);
+
+  // The customer email/phone live on the linked client record, but the
+  // quote itself doesn't store them denormalized like invoices do — so we
+  // accept best-effort fields off the quote and the contractor can paste
+  // into their messaging app if needed.
+  const customerName  = quote.clientName  || '';
+  const customerEmail = quote.clientEmail || '';
+  const customerPhone = quote.clientPhone || '';
+
+  const subject = encodeURIComponent(`Quote ${quote.number} — ${quote.title || 'Project quote'}`);
+  const body    = encodeURIComponent(
+    `Hi ${customerName || ''},\n\n` +
+    `Here's your quote: ${url}\n\n` +
+    `Total: ${fmtMoney(total)}\n\n` +
+    `Tap the link to review and accept.\n\n` +
+    `Thanks!`
+  );
+  const smsBody = encodeURIComponent(`Quote ${quote.number}: ${url}`);
+
+  const phoneClean = (customerPhone || '').replace(/\D/g, '');
+  const smsHref    = phoneClean ? `sms:${phoneClean}?body=${smsBody}` : `sms:?body=${smsBody}`;
+  const mailHref   = customerEmail
+    ? `mailto:${customerEmail}?subject=${subject}&body=${body}`
+    : `mailto:?subject=${subject}&body=${body}`;
+
+  return (
+    <div onClick={onClose} style={{
+      position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.5)', zIndex: 1000,
+      display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
+    }}>
+      <div onClick={e => e.stopPropagation()} style={{
+        background: '#fff', borderRadius: 14, width: '100%', maxWidth: 500,
+        boxShadow: '0 20px 60px rgba(0,0,0,0.25)', overflow: 'hidden',
+      }}>
+        <div style={{ padding: '20px 24px', background: C.orange, color: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', opacity: 0.85 }}>{quote.status === 'draft' ? 'Sending Quote' : 'Quote Link'}</div>
+            <div style={{ fontSize: 19, fontWeight: 700, marginTop: 2 }}>{quote.number}</div>
+          </div>
+          <button onClick={onClose} style={{ width: 44, height: 44, borderRadius: '50%', background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', fontSize: 22, cursor: 'pointer' }}>×</button>
+        </div>
+
+        <div style={{ padding: '20px 24px' }}>
+          <div style={{ fontSize: 13, color: C.muted, lineHeight: 1.55, marginBottom: 14 }}>
+            Send this link to <strong style={{ color: C.text }}>{customerName || 'your customer'}</strong>. They'll see a clean read-only quote and an "Accept Quote" button. The status flips to <em>Accepted</em> here the moment they tap it.
+          </div>
+
+          <div style={{ ...s.label, marginBottom: 6 }}>Public Link</div>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+            <input readOnly value={url} onFocus={e => e.target.select()}
+              style={{ flex: 1, padding: '12px 14px', minHeight: 48, fontSize: 14, border: `1px solid ${C.border}`, borderRadius: 8, background: C.raised, color: C.text, fontFamily: 'ui-monospace, monospace', boxSizing: 'border-box' }} />
+            <button onClick={() => copy(url, 'url')} style={{
+              padding: '0 18px', minHeight: 48, border: `1.5px solid ${copied === 'url' ? C.success : C.border2}`,
+              borderRadius: 8, background: copied === 'url' ? '#f0fdf4' : '#fff',
+              color: copied === 'url' ? C.success : C.muted, fontSize: 14, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap',
+            }}>{copied === 'url' ? '✓ Copied' : 'Copy'}</button>
+          </div>
+
+          <div style={{ ...s.label, marginBottom: 6 }}>Send Via</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 14 }}>
+            <a href={smsHref} style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              padding: '14px', minHeight: 50, borderRadius: 8, textDecoration: 'none',
+              background: C.orange, color: '#fff', fontSize: 14, fontWeight: 700,
+              boxShadow: '0 1px 2px rgba(234, 88, 12, 0.25)',
+            }}>📱 Text {customerName ? customerName.split(' ')[0] : 'Customer'}</a>
+            <a href={mailHref} style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              padding: '14px', minHeight: 50, borderRadius: 8, textDecoration: 'none',
+              background: '#fff', color: C.orange, fontSize: 14, fontWeight: 700,
+              border: `1.5px solid ${C.orange}88`,
+            }}>✉️ Email Customer</a>
+          </div>
+
+          <div style={{ fontSize: 12, color: C.dim, lineHeight: 1.5, marginBottom: 4 }}>
+            <strong style={{ color: C.muted }}>Tip:</strong> the customer doesn't need an account. They open the link, review the quote, and tap Accept — you'll see the status update here in real time.
+          </div>
+        </div>
+
+        <div style={{ padding: '14px 24px', borderTop: `1px solid ${C.border}`, display: 'flex', gap: 10 }}>
+          <button onClick={onClose} style={{
+            flex: 1, padding: '14px', minHeight: 50, border: 'none', borderRadius: 8,
+            background: C.orange, color: '#fff', fontSize: 15, fontWeight: 700, cursor: 'pointer',
+          }}>Done</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Invoice Shell ──────────────────────────────────────────────────────────────
 function VoiceInvoice({ user, logo, payments, teamMembers = [], sharedInvoices, setSharedInvoices, persistInvoice, removeInvoice, handleUnInvoice, pendingInvoiceId, clearPendingInvoice, pendingMonthFilter, clearPendingMonthFilter }) {
   const invoices    = sharedInvoices || [];
@@ -3642,7 +3762,7 @@ const fmt = n => '$' + Number(n || 0).toLocaleString('en-US', { minimumFractionD
 // ══════════════════════════════════════════════════════════════════════════════
 // QUOTE DOCUMENT (read-only, print-ready, trade-aware)
 // ══════════════════════════════════════════════════════════════════════════════
-function QuoteDocument({ quote, client, user, logo, onRevise, onBack, onConvertToInvoice, onDelete }) {
+function QuoteDocument({ quote, client, user, logo, onRevise, onBack, onConvertToInvoice, onDelete, onSend }) {
   const { isTablet } = useBreakpoint();
   const calc      = calcQuote(quote, user?.state);
   const locked    = quote.status === 'accepted' || quote.status === 'invoiced';
@@ -3654,9 +3774,16 @@ function QuoteDocument({ quote, client, user, logo, onRevise, onBack, onConvertT
     ? `linear-gradient(90deg, ${user.accentColor}, ${user.accentColor}cc)`
     : tradeConf.stripe;
 
-  const copyLink = () => {
-    navigator.clipboard?.writeText(`[Quote ${quote.number} shared link]`);
-    alert(`Link for ${quote.number} copied to clipboard`);
+  // Real share modal — pops the public /q/<token> URL with copy, text,
+  // email shortcuts. Replaces the four old placeholder alert() buttons.
+  const [showShare, setShowShare] = useState(false);
+  // Best-effort customer fields for the modal (quote doesn't denormalize
+  // these the way invoices do; we hand it whatever the linked client has).
+  const quoteForShare = {
+    ...quote,
+    clientName:  client?.name  || quote.clientName  || '',
+    clientEmail: client?.email || quote.clientEmail || '',
+    clientPhone: client?.phone || quote.clientPhone || '',
   };
 
   // For bundle: group line items by trade. Untagged rows fall back to the
@@ -3705,9 +3832,15 @@ function QuoteDocument({ quote, client, user, logo, onRevise, onBack, onConvertT
           </span>
         </div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          {!locked && <Btn variant="primary" size="sm" style={{ flex: isTablet ? 1 : undefined }} onClick={() => alert('Opening email client…')}>Email Quote</Btn>}
-          <Btn variant="ghost" size="sm" style={{ flex: isTablet ? 1 : undefined }} onClick={copyLink}>Copy Link</Btn>
-          <Btn variant="ghost" size="sm" style={{ flex: isTablet ? 1 : undefined }} onClick={() => alert('Opening share sheet…')}>Share</Btn>
+          {/* Send — opens ShareQuoteModal with the public /q/<token> link.
+              First open auto-bumps draft → sent. For non-draft quotes the
+              same button is labeled "Share Link" since the quote's already
+              been sent at least once. */}
+          {!locked && (
+            <Btn variant="primary" size="sm" style={{ flex: isTablet ? 1 : undefined }} onClick={() => setShowShare(true)}>
+              {quote.status === 'draft' ? 'Send Quote' : 'Share Link'}
+            </Btn>
+          )}
           {!locked && quote.status !== 'draft' && <Btn variant="flat" size="sm" style={{ flex: isTablet ? 1 : undefined }} onClick={onRevise}>Revise</Btn>}
           {/* Convert-to-Invoice — shown on every quote that isn't already invoiced. Highlighted to stand out. */}
           {quote.status !== 'invoiced' && (
@@ -3715,10 +3848,9 @@ function QuoteDocument({ quote, client, user, logo, onRevise, onBack, onConvertT
               Convert to Invoice →
             </Btn>
           )}
-          {quote.status === 'draft' && <>
-            <Btn variant="flat"    size="sm" style={{ flex: isTablet ? 1 : undefined }} onClick={onRevise}>Edit</Btn>
-            <Btn variant="primary" size="sm" style={{ flex: isTablet ? 1 : undefined }} onClick={() => alert('Sending quote…')}>Send Quote</Btn>
-          </>}
+          {quote.status === 'draft' && (
+            <Btn variant="flat" size="sm" style={{ flex: isTablet ? 1 : undefined }} onClick={onRevise}>Edit</Btn>
+          )}
           {/* Hard delete — kept off invoiced quotes so the user has to un-invoice first
               (otherwise the orphaned invoice's "Converted from" reference would dangle). */}
           {onDelete && quote.status !== 'invoiced' && (
@@ -3728,6 +3860,14 @@ function QuoteDocument({ quote, client, user, logo, onRevise, onBack, onConvertT
           )}
         </div>
       </div>
+
+      {showShare && (
+        <ShareQuoteModal
+          quote={quoteForShare}
+          onClose={() => setShowShare(false)}
+          onSend={onSend}
+        />
+      )}
 
       {quote.revisionNumber > 1 && (
         <div style={{ marginBottom: 14, padding: '10px 16px', background: '#fffbeb', border: `1px solid ${C.warn}33`, borderRadius: 3, fontSize: 17, color: C.warn }}>
@@ -5633,6 +5773,24 @@ function Quotes({ user, logo, taxRates, onConvertToInvoice }) {
     setView('editor');
   };
 
+  // Auto-bumps a draft quote to 'sent' the first time the user opens the
+  // share modal. Mirrors VoiceInvoice.sendInvoice. Idempotent — calling on
+  // a non-draft quote no-ops, so reopening the share modal is safe.
+  const sendQuote = async (q) => {
+    if (!q || q.status !== 'draft') return;
+    try {
+      const saved = await apiUpsertQuote(user.id, {
+        ...q,
+        status: 'sent',
+        sentAt: new Date().toISOString().split('T')[0],
+      });
+      setQuotes(prev => prev.map(x => x.id === saved.id ? saved : x));
+    } catch (e) {
+      console.error('sendQuote failed', e);
+      // Non-fatal — the share modal still works; the user can resend later.
+    }
+  };
+
   const convertToInvoice = async (q) => {
     const client = clients.find(c => c.id === q.clientId);
     try {
@@ -5708,6 +5866,7 @@ function Quotes({ user, logo, taxRates, onConvertToInvoice }) {
           onRevise={() => startRevision(active)}
           onConvertToInvoice={() => convertToInvoice(active)}
           onDelete={() => deleteQuoteFlow(active)}
+          onSend={sendQuote}
         />
       )}
       {showNewClient && <NewClientModal onSave={addClient} onClose={() => setNewClient(false)} />}
@@ -6997,13 +7156,18 @@ const NAV = [
 ];
 const BOTTOM_H = 68;
 
-// Top-level routing — picks between the customer-facing public invoice page
-// (no auth required) and the main authenticated app. Done here instead of
-// inside Tradevoice() so the hook order stays stable in either branch.
+// Top-level routing — picks between the customer-facing public invoice page,
+// the customer-facing public quote page (both no-auth), and the main
+// authenticated app. Done here instead of inside Tradevoice() so the hook
+// order stays stable in either branch.
 export default function Tradevoice() {
+  const path = typeof window !== 'undefined' ? window.location.pathname : '';
   const publicInvoiceToken = (() => {
-    if (typeof window === 'undefined') return null;
-    const m = window.location.pathname.match(/^\/i\/([0-9a-f-]{36})/i);
+    const m = path.match(/^\/i\/([0-9a-f-]{36})/i);
+    return m ? m[1] : null;
+  })();
+  const publicQuoteToken = (() => {
+    const m = path.match(/^\/q\/([0-9a-f-]{36})/i);
     return m ? m[1] : null;
   })();
 
@@ -7011,6 +7175,13 @@ export default function Tradevoice() {
     return (
       <Suspense fallback={<div style={{ minHeight: '100vh', background: C.bg }} />}>
         <InvoicePaymentPage token={publicInvoiceToken} />
+      </Suspense>
+    );
+  }
+  if (publicQuoteToken) {
+    return (
+      <Suspense fallback={<div style={{ minHeight: '100vh', background: C.bg }} />}>
+        <QuoteCustomerPage token={publicQuoteToken} />
       </Suspense>
     );
   }

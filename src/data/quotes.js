@@ -22,6 +22,8 @@ const dbToQuote = (r) => ({
   expiresAt:      r.expires_at       ?? '',
   revisionOf:     r.revision_of      ?? null,
   revisionNumber: r.revision_number  ?? 1,
+  // Public sharable link token (migration 0014). Mirrors invoices.
+  shareToken:     r.share_token      ?? null,
 });
 
 const quoteToDb = (q) => ({
@@ -85,4 +87,48 @@ export async function upsertQuote(ownerId, q) {
 export async function deleteQuote(id) {
   const { error } = await supabase.from('quotes').delete().eq('id', id);
   if (error) throw error;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Public-link helpers — used by the customer-facing /q/<token> page.
+// All three RPCs are security definer with anon grant, so no auth is needed.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Look up a quote by its share_token. Returns { quote, profile } or null.
+export async function getPublicQuote(shareToken) {
+  if (!shareToken) return null;
+  const { data, error } = await supabase.rpc('get_public_quote', { p_token: shareToken });
+  if (error) throw error;
+  if (!data) return null;
+  return {
+    quote: dbToQuote(data.quote),
+    profile: data.profile
+      ? {
+          name:        data.profile.name        || '',
+          company:     data.profile.company     || '',
+          phone:       data.profile.phone       || '',
+          tagline:     data.profile.tagline     || '',
+          license:     data.profile.license     || '',
+          accentColor: data.profile.accent_color || '',
+          logoUrl:     data.profile.logo_url    || null,
+        }
+      : null,
+  };
+}
+
+// Customer taps "Accept Quote" on the public page → flips status to accepted.
+// Idempotent on the DB side so a duplicate tap is harmless.
+export async function acceptPublicQuote(shareToken) {
+  const { data, error } = await supabase.rpc('accept_public_quote', { p_token: shareToken });
+  if (error) throw error;
+  return data;
+}
+
+// Fire-and-forget on first load of /q/<token> so the contractor sees that
+// the customer opened the link. We don't surface errors — the page renders
+// fine either way.
+export async function markPublicQuoteViewed(shareToken) {
+  try {
+    await supabase.rpc('mark_public_quote_viewed', { p_token: shareToken });
+  } catch (_) { /* swallow — non-fatal */ }
 }
