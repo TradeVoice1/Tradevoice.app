@@ -33,6 +33,14 @@ const dbToProfile = (row) => row && ({
   // account can accept charges (driven by the account.updated webhook).
   stripe_account_id:              row.stripe_account_id              ?? null,
   stripe_account_charges_enabled: row.stripe_account_charges_enabled ?? false,
+  // Stripe Subscription (migration 0015). Tradevoice → contractor billing.
+  // Null until they add a card; status reflects Stripe's own lexicon
+  // (trialing | active | past_due | canceled | unpaid | incomplete).
+  stripe_customer_id:             row.stripe_customer_id             ?? null,
+  stripe_subscription_id:         row.stripe_subscription_id         ?? null,
+  stripe_payment_method_id:       row.stripe_payment_method_id       ?? null,
+  trial_ends_at:                  row.trial_ends_at                  ?? null,
+  subscription_status:             row.subscription_status            ?? 'trialing',
   createdAt:        row.created_at        ?? null,    // when the profile row was inserted (≈ signup time) — used for trial countdown
 });
 

@@ -7,6 +7,7 @@ const JobsScreen           = lazy(() => import("./JobsScreen"));
 const PlansScreen          = lazy(() => import("./PlansScreen"));
 const InvoicePaymentPage   = lazy(() => import("./InvoicePaymentPage").then(m => ({ default: m.InvoicePaymentPage })));
 const QuoteCustomerPage    = lazy(() => import("./QuoteCustomerPage").then(m => ({ default: m.QuoteCustomerPage })));
+import { BillingPaymentModal } from "./BillingPaymentModal";
 const MarketingScreen      = lazy(() => import("./MarketingScreen"));
 const PrivacyPolicyScreen  = lazy(() => import("./LegalScreens").then(m => ({ default: m.PrivacyPolicyScreen })));
 const TermsScreen          = lazy(() => import("./LegalScreens").then(m => ({ default: m.TermsScreen })));
@@ -5893,11 +5894,31 @@ const PAYMENT_CONFIG = {
   cash:    { name: 'Cash',        abbr: '$',   type: 'toggle',   placeholder: null,               hint: 'Shown on invoice as accepted payment option' },
 };
 
-function Billing({ user, payments }) {
+function Billing({ user, setUser, payments }) {
   const { isTablet } = useBreakpoint();
   const tradeCount   = user.trades?.length || 1;
   const currentPrice = getPrice(tradeCount);
   const planName     = PLANS.find(p => p.trades === tradeCount)?.name || 'Starter';
+
+  // ── Subscription state ──
+  const subStatus = user?.subscription_status || 'trialing';
+  const hasCard   = !!user?.stripe_payment_method_id;
+  const subId     = user?.stripe_subscription_id || null;
+  // Trial countdown: prefer the explicit trial_ends_at from Stripe; fall
+  // back to "createdAt + 28 days" if the user hasn't started a subscription
+  // yet (so we still show a countdown during the implicit trial period).
+  const trialEnd  = user?.trial_ends_at
+    ? new Date(user.trial_ends_at)
+    : (user?.createdAt ? new Date(new Date(user.createdAt).getTime() + 28 * 86400000) : null);
+  const daysLeft  = trialEnd
+    ? Math.max(0, Math.ceil((trialEnd - new Date()) / 86400000))
+    : null;
+
+  const [showCard, setShowCard] = useState(false);
+
+  const handleSaved = (patch) => {
+    if (setUser) setUser(prev => prev ? { ...prev, ...patch } : prev);
+  };
 
   // Show only connected/configured methods
   const connected = Object.entries(PAYMENT_CONFIG).filter(([key]) => {
@@ -5910,7 +5931,86 @@ function Billing({ user, payments }) {
 
   return (
     <div>
-      <SectionHead icon="" title="Billing" sub="Payment setup and billing history" />
+      <SectionHead icon="" title="Billing" sub="Subscription, payment setup, and history" />
+
+      {/* ── Tradevoice Subscription ───────────────────────────────────────
+          The user's subscription with US (different from the customer-pay
+          methods below, which is what their clients use). Drives whether
+          the trial countdown turns urgent and whether the past-due banner
+          shows in the rest of the app. */}
+      <div style={{ marginBottom: 24 }}>
+        <div style={{ fontSize: 15, fontWeight: 800, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12, fontFamily: "'Inter', sans-serif" }}>Tradevoice Subscription</div>
+
+        <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, padding: '18px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 14, flexWrap: 'wrap' }}>
+          <div style={{ flex: 1, minWidth: 220 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6, flexWrap: 'wrap' }}>
+              <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 22, fontWeight: 900, color: C.text }}>
+                {planName} — ${currentPrice}<span style={{ fontSize: 15, fontWeight: 500, color: C.muted }}>/mo</span>
+              </div>
+              {/* Status pill */}
+              {subStatus === 'active' && <span style={{ fontSize: 12, fontWeight: 700, background: '#f0fdf4', color: C.success, padding: '3px 10px', borderRadius: 12 }}>Active</span>}
+              {subStatus === 'trialing' && hasCard && <span style={{ fontSize: 12, fontWeight: 700, background: '#eff6ff', color: '#1d4ed8', padding: '3px 10px', borderRadius: 12 }}>Trialing</span>}
+              {subStatus === 'trialing' && !hasCard && <span style={{ fontSize: 12, fontWeight: 700, background: '#fef9c3', color: C.warn, padding: '3px 10px', borderRadius: 12 }}>Trial — No card</span>}
+              {subStatus === 'past_due' && <span style={{ fontSize: 12, fontWeight: 700, background: '#fef2f2', color: C.errorBold, padding: '3px 10px', borderRadius: 12 }}>Past due</span>}
+              {subStatus === 'canceled' && <span style={{ fontSize: 12, fontWeight: 700, background: '#f3f4f6', color: C.muted, padding: '3px 10px', borderRadius: 12 }}>Canceled</span>}
+            </div>
+            {/* Status sub-line */}
+            <div style={{ fontSize: 14, color: C.muted, lineHeight: 1.55 }}>
+              {!hasCard && subStatus === 'trialing' && (
+                <>
+                  {daysLeft !== null
+                    ? <>Trial ends in <strong style={{ color: daysLeft <= 7 ? C.errorBold : C.text }}>{daysLeft} day{daysLeft === 1 ? '' : 's'}</strong>. Add a card to continue uninterrupted.</>
+                    : <>You're on the 28-day free trial. Add a card to continue uninterrupted.</>
+                  }
+                </>
+              )}
+              {hasCard && subStatus === 'trialing' && (
+                <>Trial active. Auto-renews on <strong style={{ color: C.text }}>{trialEnd ? trialEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}</strong>.</>
+              )}
+              {subStatus === 'active' && <>Renews monthly. Next charge: <strong style={{ color: C.text }}>{trialEnd ? trialEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'next cycle'}</strong>.</>}
+              {subStatus === 'past_due' && <span style={{ color: C.errorBold }}>Last payment failed. Update your card to keep your account active.</span>}
+              {subStatus === 'canceled' && <>Subscription is canceled. Add a payment method to reactivate.</>}
+            </div>
+          </div>
+          {/* CTA button — varies by state */}
+          {!hasCard || subStatus === 'past_due' || subStatus === 'canceled' ? (
+            <button
+              onClick={() => setShowCard(true)}
+              style={{
+                ...s.btn,
+                background: subStatus === 'past_due' ? C.errorBold : C.orange,
+                color: '#fff', border: 'none',
+                padding: '12px 22px', fontSize: 15, fontWeight: 800, minHeight: 46,
+                boxShadow: '0 1px 2px rgba(45, 106, 79, 0.25)',
+                flexShrink: 0,
+              }}
+            >
+              {subStatus === 'past_due' ? 'Update Card' : (subStatus === 'canceled' ? 'Reactivate' : 'Add Payment Method')}
+            </button>
+          ) : (
+            <button
+              onClick={() => setShowCard(true)}
+              style={{
+                ...s.btn,
+                background: C.raised, color: C.muted,
+                border: `1.5px solid ${C.border2}`,
+                padding: '10px 18px', fontSize: 14, fontWeight: 700, minHeight: 42,
+                flexShrink: 0,
+              }}
+            >
+              Update Card
+            </button>
+          )}
+        </div>
+      </div>
+      {showCard && (
+        <BillingPaymentModal
+          user={user}
+          plan={user?.plan || 'pro'}
+          onClose={() => setShowCard(false)}
+          onSaved={handleSaved}
+        />
+      )}
 
       {/* Payment methods */}
       <div style={{ marginBottom: 24 }}>
@@ -7690,7 +7790,7 @@ function TradevoiceApp() {
   const content = {
     dashboard: <Dashboard    user={user} nav={navigateTo} invoices={sharedInvoices} plans={plans} onScheduleFromPlan={handleScheduleFromPlan} teamMembers={teamMembers} />,
     invoice:   <VoiceInvoice user={user} logo={logo} payments={payments} taxRates={taxRates} teamMembers={teamMembers} sharedInvoices={sharedInvoices} setSharedInvoices={setSharedInvoices} persistInvoice={persistInvoice} removeInvoice={removeInvoice} handleUnInvoice={handleUnInvoice} pendingInvoiceId={pendingInvoiceId} clearPendingInvoice={() => setPendingInvoiceId(null)} pendingMonthFilter={pendingMonthFilter} clearPendingMonthFilter={() => setPendingMonthFilter(null)} />,
-    billing:   <Billing      user={user} payments={payments} />,
+    billing:   <Billing      user={user} setUser={setUser} payments={payments} />,
     quotes:    <Quotes       user={user} logo={logo} taxRates={taxRates} onConvertToInvoice={handleConvertToInvoice} />,
     schedule:  <ScheduleScreen user={user} team={teamMembers} onCreateInvoice={handleJobToInvoice} plans={plans} setPlans={setPlans} pendingJobDraft={pendingJobDraft} clearPendingJobDraft={() => setPendingJobDraft(null)} timeOff={timeOff} />,
     jobs:      <JobsScreen   user={user} team={teamMembers} onCreateInvoice={handleJobToInvoice} />,
@@ -7708,14 +7808,34 @@ function TradevoiceApp() {
 
   // Free-trial countdown — 28-day trial starting at profile.createdAt.
   // If we don't have a createdAt (older accounts), we just say "Free trial".
+  // Subscription-aware status pill. Reads the real Stripe state when present
+  // (trial_ends_at + subscription_status from migration 0015) and falls back
+  // to the simple "createdAt + 28 days" countdown for accounts that haven't
+  // attached a subscription yet. Tapping the pill jumps straight to
+  // Settings → Billing where they can add/update a card.
   const trialInfo = (() => {
-    if (!user.createdAt) return { label: 'Free Trial', expired: false };
-    const start = new Date(user.createdAt);
-    const days = Math.floor((Date.now() - start.getTime()) / 86400000);
-    const left = 28 - days;
-    if (left > 0) return { label: `${left} day${left === 1 ? '' : 's'} left in trial`, expired: false };
-    return { label: 'Trial ended — add card', expired: true };
+    const status   = user?.subscription_status;
+    const hasCard  = !!user?.stripe_payment_method_id;
+    const trialEnd = user?.trial_ends_at
+      ? new Date(user.trial_ends_at)
+      : (user?.createdAt ? new Date(new Date(user.createdAt).getTime() + 28 * 86400000) : null);
+    const left = trialEnd ? Math.ceil((trialEnd - Date.now()) / 86400000) : null;
+
+    if (status === 'active')   return { label: 'Subscription Active',   tone: 'success' };
+    if (status === 'past_due') return { label: 'Past Due — Update Card', tone: 'error'   };
+    if (status === 'canceled') return { label: 'Canceled — Reactivate',  tone: 'error'   };
+    // Trialing (default)
+    if (left == null) return { label: hasCard ? 'Trial — Card on file' : 'Free Trial', tone: 'accent' };
+    if (left <= 0)    return { label: 'Trial Ended — Add Card', tone: 'error' };
+    if (left <= 7)    return { label: `${left} day${left === 1 ? '' : 's'} left — add card`, tone: 'warn' };
+    return { label: `${left} day${left === 1 ? '' : 's'} left in trial`, tone: 'accent' };
   })();
+  const trialColors = {
+    success: { bg: `linear-gradient(135deg, ${C.success} 0%, #166534 100%)`, shadow: '0 2px 6px rgba(21, 128, 61, 0.3)' },
+    accent:  { bg: `linear-gradient(135deg, ${C.accent} 0%, #c2410c 100%)`,  shadow: '0 2px 6px rgba(234, 88, 12, 0.3)'  },
+    warn:    { bg: `linear-gradient(135deg, ${C.warn} 0%, #b45309 100%)`,    shadow: '0 2px 6px rgba(217, 119, 6, 0.3)'  },
+    error:   { bg: `linear-gradient(135deg, ${C.errorBold} 0%, ${C.error} 100%)`, shadow: '0 2px 6px rgba(185, 28, 28, 0.35)' },
+  }[trialInfo.tone] || { bg: `linear-gradient(135deg, ${C.accent} 0%, #c2410c 100%)`, shadow: '0 2px 6px rgba(234, 88, 12, 0.3)' };
 
   const TopBar = (
     <div style={{
@@ -7730,24 +7850,25 @@ function TradevoiceApp() {
         <Logo size={isTablet ? 40 : 44} />
       </div>
 
-      {/* Trial countdown pill — bolder, gradient-filled */}
+      {/* Subscription status pill — tappable, jumps to Settings → Billing */}
       <div style={{ position: 'absolute', top: 0, right: 70, height: TOP_H, display: 'flex', alignItems: 'center' }}>
-        <span style={{
-          fontFamily: "'Inter', sans-serif",
-          fontSize: 11, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase',
-          padding: '7px 14px', borderRadius: 20,
-          background: trialInfo.expired
-            ? `linear-gradient(135deg, ${C.errorBold} 0%, ${C.error} 100%)`
-            : `linear-gradient(135deg, ${C.accent} 0%, #c2410c 100%)`,
-          color: '#ffffff',
-          border: 'none',
-          boxShadow: trialInfo.expired
-            ? '0 2px 6px rgba(185, 28, 28, 0.35)'
-            : '0 2px 6px rgba(234, 88, 12, 0.3)',
-          whiteSpace: 'nowrap',
-        }}>
+        <button
+          onClick={() => setSection('billing')}
+          style={{
+            fontFamily: "'Inter', sans-serif",
+            fontSize: 11, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase',
+            padding: '7px 14px', borderRadius: 20,
+            background: trialColors.bg,
+            color: '#ffffff',
+            border: 'none',
+            boxShadow: trialColors.shadow,
+            whiteSpace: 'nowrap',
+            cursor: 'pointer',
+            WebkitTapHighlightColor: 'transparent',
+          }}
+        >
           {trialInfo.label}
-        </span>
+        </button>
       </div>
 
       {/* Settings/profile button — pinned to top right.

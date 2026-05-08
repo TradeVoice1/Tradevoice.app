@@ -93,6 +93,54 @@ export default async function handler(req, res) {
         }
         break;
       }
+
+      // ── Subscription events (migration 0015) ─────────────────────────────
+      // Tradevoice → contractor billing. Each event maps to an
+      // update_subscription_status RPC call so the user's profile reflects
+      // their real Stripe subscription state.
+      case 'customer.subscription.created':
+      case 'customer.subscription.updated':
+      case 'customer.subscription.deleted': {
+        const sub = event.data.object;
+        const trialEnd = sub.trial_end ? new Date(sub.trial_end * 1000).toISOString() : null;
+        await supabase.rpc('update_subscription_status', {
+          p_customer_id:     sub.customer,
+          p_subscription_id: sub.id,
+          p_status:          event.type === 'customer.subscription.deleted' ? 'canceled' : sub.status,
+          p_trial_ends_at:   trialEnd,
+        });
+        console.log('[stripe webhook] subscription', event.type, sub.customer, sub.status);
+        break;
+      }
+      case 'invoice.payment_failed': {
+        // Stripe will retry per the dunning settings on the platform; we
+        // just flip the status so the in-app banner can warn the contractor.
+        const inv = event.data.object;
+        if (inv.customer) {
+          await supabase.rpc('update_subscription_status', {
+            p_customer_id:     inv.customer,
+            p_subscription_id: inv.subscription || null,
+            p_status:          'past_due',
+            p_trial_ends_at:   null,
+          });
+        }
+        console.warn('[stripe webhook] subscription invoice payment failed:', inv.customer, inv.id);
+        break;
+      }
+      case 'invoice.payment_succeeded': {
+        // Renewal succeeded — make sure status is 'active'. (Stripe will
+        // also fire customer.subscription.updated separately.)
+        const inv = event.data.object;
+        if (inv.customer && inv.subscription) {
+          await supabase.rpc('update_subscription_status', {
+            p_customer_id:     inv.customer,
+            p_subscription_id: inv.subscription,
+            p_status:          'active',
+            p_trial_ends_at:   null,
+          });
+        }
+        break;
+      }
       default:
         // No-op for events we don't subscribe to. Log so we know if Stripe
         // ever sends something unexpected from the dashboard config.
