@@ -5,6 +5,35 @@ to pick up cold. Update this as we go.
 
 ---
 
+## ✅ Recently shipped (overnight session 2026-05-08)
+
+**Trade catalog expanded from 5 → 56 trades.**
+
+- Refactored `TRADE_CONFIG` into `src/data/trades/` — one file per trade
+- Built out 51 new trades across Construction (38) + Service (18)
+- Each trade documents its industry-standard reference (NEC, ASHRAE, ASPE,
+  NRCA, IICRC, etc.) and ships with a curated material/equipment library
+  (12-16 items typical, prices BLANK so contractor fills in their own)
+- Default labor rates from BLS occupational wage data
+- Distinct color + gradient stripe per trade so the document accent reads
+  the same way across the app
+- SignupScreen trade picker rebuilt: category tabs (Construction / Service /
+  Multi-Trade), search box, scrollable chip grid, selected-count summary
+- Marketing site updated with the full trade list + comparison-table row
+  bumped to "56+ trades"
+
+**Open follow-ups:**
+- Per-trade scope-of-work template language could be tightened with full
+  example specs per trade (currently each trade has a starter placeholder)
+- Pricing tier strategy decision pending: at 56 trades, "All Trades" $149
+  may be undersold. See chat — three pricing options proposed: bump All
+  Trades to $199-249, add 4th tier (Construction vs Service split), or
+  switch to per-user like Jobber. No code change yet — user to decide.
+- AI material price lookup (the Lowe's/Home Depot search idea) was
+  explicitly deferred to focus on the trade catalog first.
+
+---
+
 ## 1. Card-on-file at signup (Stripe SetupIntent) — 🔴 HIGH PRIORITY
 
 **Why deferred:** Needs Stripe platform account, serverless endpoints, env vars,
