@@ -1,0 +1,40 @@
+// Solar — residential & commercial PV system installation, battery storage,
+// inverters, panel upgrades to support solar. Reference: NEC Article 690 (Solar PV),
+// IBC structural attachment requirements, IRC chapter 32 utilities.
+// Labor rate per BLS 47-2231 ($110/hr typical for licensed solar installer).
+
+export default {
+  color:            '#eab308',
+  stripe:           'linear-gradient(90deg, #ca8a04, #facc15)',
+  label:            'Solar',
+  docLabel:         'Solar Services',
+  category:         'Construction',
+  defaultLaborRate: 110,
+  laborTitle:       'Solar Labor',
+  licenseNote:      'Licensed Solar Installer (NABCEP Certified)',
+  scopePlaceholder: 'Describe the solar scope — system size (kW), panel make/model, inverter type (string, microinverter, hybrid), battery storage if applicable, mounting (roof, ground), interconnection method, expected production, permits/utility coordination, and warranty coverage.',
+  matLibrary: [
+    { id: 'som1',  desc: 'Solar Panel 400W Mono (Each)',            qty: 1, unit: 'ea',  cost: 0 },
+    { id: 'som2',  desc: 'Solar Panel 450W Mono (Each)',            qty: 1, unit: 'ea',  cost: 0 },
+    { id: 'som3',  desc: 'Microinverter (Each)',                    qty: 1, unit: 'ea',  cost: 0 },
+    { id: 'som4',  desc: 'String Inverter 7.6kW',                   qty: 1, unit: 'ea',  cost: 0 },
+    { id: 'som5',  desc: 'Hybrid Inverter w/ Battery Capability',    qty: 1, unit: 'ea',  cost: 0 },
+    { id: 'som6',  desc: 'LiFePO4 Battery 10kWh',                   qty: 1, unit: 'ea',  cost: 0 },
+    { id: 'som7',  desc: 'Roof Mount Rail Kit (Per Panel)',          qty: 1, unit: 'ea',  cost: 0 },
+    { id: 'som8',  desc: 'Flashing / Roof Penetration Kit',          qty: 1, unit: 'ea',  cost: 0 },
+    { id: 'som9',  desc: 'PV Wire 10AWG Black (Per Ft)',             qty: 1, unit: 'ft',  cost: 0 },
+    { id: 'som10', desc: 'DC Combiner Box',                          qty: 1, unit: 'ea',  cost: 0 },
+    { id: 'som11', desc: 'AC Disconnect Switch',                     qty: 1, unit: 'ea',  cost: 0 },
+    { id: 'som12', desc: 'Rapid Shutdown Module',                    qty: 1, unit: 'ea',  cost: 0 },
+    { id: 'som13', desc: 'EMT Conduit & Fittings (Run)',             qty: 1, unit: 'lot', cost: 0 },
+    { id: 'som14', desc: 'Misc Solar BoS / Hardware',                qty: 1, unit: 'lot', cost: 0 },
+  ],
+  equipLibrary: [
+    { id: 'soe1', desc: 'Roof Lift / Material Hoist',         qty: 1, unit: 'day', rate: 0 },
+    { id: 'soe2', desc: 'Fall Protection Harness Kit',         qty: 1, unit: 'day', rate: 0 },
+    { id: 'soe3', desc: 'IV Curve Tracer / Solar Analyzer',    qty: 1, unit: 'day', rate: 0 },
+    { id: 'soe4', desc: 'Crimping Tool (MC4 Connectors)',       qty: 1, unit: 'day', rate: 0 },
+    { id: 'soe5', desc: 'Drone for Roof Inspection',            qty: 1, unit: 'day', rate: 0 },
+    { id: 'soe6', desc: 'Lift / Boom Rental',                   qty: 1, unit: 'day', rate: 0 },
+  ],
+};

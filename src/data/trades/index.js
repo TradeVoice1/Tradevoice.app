@@ -35,6 +35,17 @@ import mason       from './mason.js';
 import insulation  from './insulation.js';
 import siding      from './siding.js';
 import gutters     from './gutters.js';
+// Construction batch 2 — exterior + heavy.
+import solar         from './solar.js';
+import stucco        from './stucco.js';
+import garageDoor    from './garage-door.js';
+import fence         from './fence.js';
+import deck          from './deck.js';
+import foundation    from './foundation.js';
+import waterproofing from './waterproofing.js';
+import excavation    from './excavation.js';
+import demolition    from './demolition.js';
+import sheetMetal    from './sheet-metal.js';
 
 // ── TRADE_CONFIG — keys must match what's stored on user.trades / quote.trade ──
 export const TRADE_CONFIG = {
@@ -53,6 +64,16 @@ export const TRADE_CONFIG = {
   Insulation:  insulation,
   Siding:      siding,
   Gutters:     gutters,
+  Solar:         solar,
+  Stucco:        stucco,
+  GarageDoor:    garageDoor,
+  Fence:         fence,
+  Deck:          deck,
+  Foundation:    foundation,
+  Waterproofing: waterproofing,
+  Excavation:    excavation,
+  Demolition:    demolition,
+  SheetMetal:    sheetMetal,
   bundle,
 };
 
