@@ -24,6 +24,17 @@ import hvac        from './hvac.js';
 import roofing     from './roofing.js';
 import specialty   from './specialty.js';
 import bundle      from './bundle.js';
+// Construction batch 1 — core build-out trades.
+import carpenter   from './carpenter.js';
+import painter     from './painter.js';
+import drywall     from './drywall.js';
+import flooring    from './flooring.js';
+import tile        from './tile.js';
+import concrete    from './concrete.js';
+import mason       from './mason.js';
+import insulation  from './insulation.js';
+import siding      from './siding.js';
+import gutters     from './gutters.js';
 
 // ── TRADE_CONFIG — keys must match what's stored on user.trades / quote.trade ──
 export const TRADE_CONFIG = {
@@ -32,6 +43,16 @@ export const TRADE_CONFIG = {
   HVAC:        hvac,
   Roofing:     roofing,
   Specialty:   specialty,
+  Carpenter:   carpenter,
+  Painter:     painter,
+  Drywall:     drywall,
+  Flooring:    flooring,
+  Tile:        tile,
+  Concrete:    concrete,
+  Mason:       mason,
+  Insulation:  insulation,
+  Siding:      siding,
+  Gutters:     gutters,
   bundle,
 };
 
