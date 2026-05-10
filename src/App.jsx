@@ -556,11 +556,25 @@ function LoginScreen({ onLogin, onSignup, onForgot }) {
             Continue with Google
           </button>
 
-          <div style={{ textAlign: 'center', fontSize: 12, color: C.muted, marginBottom: 8 }}>
-            New to Tradevoice?{' '}
-            <button onClick={onSignup} style={{ background: 'none', border: 'none', padding: 0, color: C.orange, fontWeight: 700, cursor: 'pointer', fontSize: 12, fontFamily: "'Inter', sans-serif" }}>
-              Create an account →
-            </button>
+          {/* Private-preview gate: the signup form still mounts but the
+              email-allowlist in handleSignupComplete rejects anyone not on
+              the early-access list. Surface that here so users aren't
+              confused when their submission bounces. The "Create an
+              account" link still works for allowlisted emails. */}
+          <div style={{ textAlign: 'center', fontSize: 12, color: C.muted, marginBottom: 8, lineHeight: 1.6 }}>
+            <div style={{ background: '#fef3c7', border: `1px solid ${C.warn}55`, borderRadius: 6, padding: '8px 12px', marginBottom: 8, color: C.warn, fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+              Private Preview · Invite Only
+            </div>
+            Not invited yet?{' '}
+            <a href="mailto:hello@thetradevoice.com?subject=Early%20Access%20Request%20—%20Tradevoice" style={{ color: C.orange, fontWeight: 700, textDecoration: 'none' }}>
+              Request access →
+            </a>
+            <div style={{ marginTop: 6, fontSize: 11, color: C.dim }}>
+              Already invited?{' '}
+              <button onClick={onSignup} style={{ background: 'none', border: 'none', padding: 0, color: C.orange, fontWeight: 700, cursor: 'pointer', fontSize: 11, fontFamily: "'Inter', sans-serif", textDecoration: 'underline' }}>
+                Create your account
+              </button>
+            </div>
           </div>
         </>
       )}
@@ -7322,7 +7336,33 @@ function TradevoiceApp() {
     return 'login';
   });
 
+  // ── Early-access lockdown ───────────────────────────────────────────────
+  // While Tradevoice is in private preview, only emails on this allowlist
+  // can complete signup. Override via Vercel env var VITE_EARLY_ACCESS_EMAILS
+  // (comma-separated) without touching code; the default below covers the
+  // founder's test account so dev/test flows aren't blocked.
+  //
+  // Tech accounts go through a DIFFERENT path (createTechAccount → admin
+  // signUp from Settings → Team), which bypasses this gate intentionally —
+  // techs are provisioned by an already-signed-in owner, so the lockdown
+  // doesn't apply to them.
+  const EARLY_ACCESS_EMAILS = (import.meta.env.VITE_EARLY_ACCESS_EMAILS || 'mattparnellburkes@yahoo.com')
+    .split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
+
   const handleSignupComplete = async (data) => {
+    // Server-side gate (well, client-side here — but the same check would
+    // run on a Vercel function if/when we add one). Until Tradevoice is
+    // publicly launched, only allowlisted emails can sign up.
+    const emailOk = EARLY_ACCESS_EMAILS.includes(String(data.email || '').trim().toLowerCase());
+    if (!emailOk) {
+      alert(
+        "Tradevoice is currently in private preview.\n\n" +
+        "We're rolling out access in waves. To request early access, " +
+        "email hello@thetradevoice.com and we'll get back to you shortly."
+      );
+      return;
+    }
+
     try {
       const { user: authUser, session } = await signUp(data.email, data.password);
       // If email confirmation is required, session is null — the user has to verify before signing in.
