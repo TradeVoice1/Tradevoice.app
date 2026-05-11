@@ -6944,6 +6944,104 @@ function Settings({ user, setUser, logo, onLogoChange, showProfileModal, setShow
           <GhostBtn size="sm">Sign Out</GhostBtn>
         </div>
       </div>
+
+      {/* ── Developer tools — only visible for allowlisted dev emails ──
+          Hidden in production for everyone except the founder's test
+          account(s). Used to seed realistic data so the whole app can be
+          clicked through without manually building it up first. */}
+      <DeveloperPanel user={user} />
+    </div>
+  );
+}
+
+
+// ─── Developer panel ─────────────────────────────────────────────────────────
+// Visible only when user.email is on the early-access list. Currently exposes
+// a single "Seed Demo Data" button. Place future internal dev tools here.
+function DeveloperPanel({ user }) {
+  const DEV_EMAILS = (import.meta.env.VITE_EARLY_ACCESS_EMAILS || 'mattparnellburkes@yahoo.com')
+    .split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
+  const isDev = DEV_EMAILS.includes(String(user?.email || '').trim().toLowerCase());
+  if (!isDev) return null;
+
+  const [busy,     setBusy]     = useState(false);
+  const [progress, setProgress] = useState('');
+  const [result,   setResult]   = useState(null);
+
+  const handleSeed = async () => {
+    const ok = window.confirm(
+      'Seed demo data?\n\n' +
+      'This will add to the existing data in your account:\n' +
+      '  • Fill in your profile (company, license, branding, payment handles)\n' +
+      '  • 8 clients\n' +
+      '  • 3 team members (pending invites)\n' +
+      '  • 4 maintenance plans\n' +
+      '  • 2 time-off windows\n' +
+      '  • 12 scheduled jobs (past + upcoming)\n' +
+      '  • 8 quotes (every status)\n' +
+      '  • 14 invoices (past 4 months, every status)\n\n' +
+      'Re-running will compound the data. You can delete individual rows later.\n\n' +
+      'Continue?'
+    );
+    if (!ok) return;
+    setBusy(true);
+    setProgress('Starting seed…');
+    setResult(null);
+    try {
+      const mod = await import('./lib/seedDevData');
+      const r = await mod.seedDevData({
+        userId:    user.id,
+        userName:  user.name,
+        userEmail: user.email,
+        onProgress: (msg) => setProgress(msg),
+      });
+      setResult(r);
+      setProgress('Seed complete. Refresh the app or navigate around to see the new data.');
+    } catch (e) {
+      console.error('[seed] failed:', e);
+      setProgress('Seed failed — check console: ' + (e?.message || 'unknown error'));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div style={{ marginTop: 32, marginBottom: 28, padding: '18px 22px', background: '#fef9c3', border: `1px solid ${C.warn}55`, borderRadius: 10 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', color: C.warn, marginBottom: 4 }}>Developer Tools · Private Preview Only</div>
+          <div style={{ fontSize: 16, fontWeight: 700, color: C.text, marginBottom: 2 }}>Seed Demo Data</div>
+          <div style={{ fontSize: 14, color: C.muted, lineHeight: 1.5 }}>
+            Populates your account with clients, team, jobs, quotes, and invoices so you can click through every screen with realistic data. Visible only to allowlisted accounts.
+          </div>
+        </div>
+        <button
+          onClick={handleSeed}
+          disabled={busy}
+          style={{
+            ...s.btn,
+            background: busy ? C.dim : C.warn,
+            color: '#fff', border: 'none',
+            padding: '12px 22px', fontSize: 15, fontWeight: 800, minHeight: 46,
+            boxShadow: '0 1px 3px rgba(217, 119, 6, 0.3)',
+            flexShrink: 0,
+            cursor: busy ? 'wait' : 'pointer',
+            opacity: busy ? 0.7 : 1,
+          }}
+        >
+          {busy ? 'Seeding…' : 'Seed Demo Data'}
+        </button>
+      </div>
+      {progress && (
+        <div style={{ marginTop: 12, padding: '10px 14px', background: '#fff', border: `1px solid ${C.border2}`, borderRadius: 6, fontSize: 13, color: C.muted, fontFamily: 'ui-monospace, monospace' }}>
+          {progress}
+        </div>
+      )}
+      {result && (
+        <div style={{ marginTop: 8, fontSize: 13, color: C.success, fontWeight: 600 }}>
+          ✓ Created: {result.clients} clients · {result.techs} techs · {result.plans} plans · {result.jobs} jobs · {result.quotes} quotes · {result.invoices} invoices
+        </div>
+      )}
     </div>
   );
 }
