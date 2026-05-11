@@ -39,7 +39,7 @@ returns json
 language plpgsql
 security definer
 set search_path = public
-as $$
+as $sc1$
 declare
   inv record;
   prof record;
@@ -78,7 +78,7 @@ begin
     'contractor_company',         coalesce(prof.company, prof.name)
   );
 end;
-$$;
+$sc1$;
 
 grant execute on function public.get_public_invoice_for_payment(uuid) to anon, authenticated;
 
@@ -96,7 +96,7 @@ returns json
 language plpgsql
 security definer
 set search_path = public
-as $$
+as $sc2$
 declare
   inv record;
   new_payments jsonb;
@@ -143,7 +143,7 @@ begin
 
   return json_build_object('ok', true, 'duplicate', false);
 end;
-$$;
+$sc2$;
 
 grant execute on function public.mark_invoice_paid_via_stripe(uuid, numeric, text, text) to service_role;
 
@@ -159,7 +159,7 @@ returns json
 language plpgsql
 security definer
 set search_path = public
-as $$
+as $sc3$
 declare
   inv record;
   prof record;
@@ -181,5 +181,5 @@ begin
     'profile', case when prof is null then null else row_to_json(prof) end
   );
 end;
-$$;
+$sc3$;
 

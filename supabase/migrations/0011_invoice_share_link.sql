@@ -26,7 +26,7 @@ returns json
 language plpgsql
 security definer
 set search_path = public
-as $$
+as $inv1$
 declare
   inv record;
   prof record;
@@ -48,7 +48,7 @@ begin
     'profile', case when prof is null then null else row_to_json(prof) end
   );
 end;
-$$;
+$inv1$;
 
 -- Allow anonymous + authenticated users to call the public lookup.
 grant execute on function public.get_public_invoice(uuid) to anon, authenticated;

@@ -30,7 +30,7 @@ returns json
 language plpgsql
 security definer
 set search_path = public
-as $$
+as $q1$
 declare
   q record;
   prof record;
@@ -51,7 +51,7 @@ begin
     'profile', case when prof is null then null else row_to_json(prof) end
   );
 end;
-$$;
+$q1$;
 
 grant execute on function public.get_public_quote(uuid) to anon, authenticated;
 
@@ -65,7 +65,7 @@ returns json
 language plpgsql
 security definer
 set search_path = public
-as $$
+as $q2$
 declare
   q record;
 begin
@@ -86,7 +86,7 @@ begin
 
   return json_build_object('ok', true, 'status', 'accepted', 'no_change', false);
 end;
-$$;
+$q2$;
 
 grant execute on function public.accept_public_quote(uuid) to anon, authenticated;
 
@@ -99,7 +99,7 @@ returns json
 language plpgsql
 security definer
 set search_path = public
-as $$
+as $q3$
 declare
   q record;
 begin
@@ -117,6 +117,6 @@ begin
   end if;
   return json_build_object('ok', true, 'status', q.status, 'no_change', true);
 end;
-$$;
+$q3$;
 
 grant execute on function public.mark_public_quote_viewed(uuid) to anon, authenticated;

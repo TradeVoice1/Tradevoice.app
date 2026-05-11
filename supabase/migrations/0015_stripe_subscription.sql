@@ -51,7 +51,7 @@ returns json
 language plpgsql
 security definer
 set search_path = public
-as $$
+as $sub1$
 declare
   rows_updated int;
 begin
@@ -68,6 +68,6 @@ begin
 
   return json_build_object('ok', true, 'rows_updated', rows_updated);
 end;
-$$;
+$sub1$;
 
 grant execute on function public.update_subscription_status(text, text, text, timestamptz) to service_role;

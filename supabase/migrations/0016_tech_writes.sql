@@ -22,13 +22,13 @@ language sql
 stable
 security definer
 set search_path = public
-as $$
+as $tw1$
   select owner_id
     from public.team_members
    where user_id = auth.uid()
      and status = 'active'
    limit 1
-$$;
+$tw1$;
 
 grant execute on function public.tradevoice_my_owner_id() to authenticated;
 
