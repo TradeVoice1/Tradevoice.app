@@ -17,6 +17,12 @@ const dbToPlan = (r) => ({
   lastServicedAt:     r.last_serviced_at ?? null,
   nextDueAt:          r.next_due_at ?? null,
   createdAt:          r.created_at ?? null,
+  // Service contract billing (migration 0017)
+  billingAmount:      r.billing_amount   != null ? Number(r.billing_amount) : null,
+  billingInterval:    r.billing_interval ?? 'month',
+  billingCurrency:    r.billing_currency ?? 'usd',
+  stripePriceId:      r.stripe_price_id  ?? null,
+  customerBenefits:   r.customer_benefits ?? '',
 });
 
 const planToDb = (p) => ({
@@ -32,6 +38,12 @@ const planToDb = (p) => ({
   started_at:            p.startedAt         || null,
   last_serviced_at:      p.lastServicedAt    || null,
   next_due_at:           p.nextDueAt         || null,
+  // Service contract billing
+  billing_amount:        p.billingAmount     != null && p.billingAmount !== '' ? Number(p.billingAmount) : null,
+  billing_interval:      p.billingInterval   || 'month',
+  billing_currency:      p.billingCurrency   || 'usd',
+  stripe_price_id:       p.stripePriceId     || null,
+  customer_benefits:     p.customerBenefits  ?? null,
 });
 
 export async function listPlans() {

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { listClients } from "./data/clients";
+import { listPlanSubscriptions, calcMrr, calcArr, countByStatus } from "./data/planSubscriptions";
 import { useEscapeClose } from "./lib/useEscapeClose";
 
 // Small palette aligned with the rest of the app (avoid importing C from App.jsx
@@ -63,6 +64,14 @@ function PlanModal({ initial, clients, team, trades, onClose, onSave }) {
   const [defaultTechUserId, setTech]      = useState(initial?.defaultTechUserId || '');
   const [startedAt,        setStartedAt]  = useState(initial?.startedAt       || today());
   const [notes,            setNotes]      = useState(initial?.notes           || '');
+  // ── Service contract billing (migration 0017) ──
+  // Optional: if filled in, this plan becomes a recurring revenue product
+  // the contractor can enroll customers into (Phase 1 = manual enrollment
+  // tracking, Phase 2 = real Stripe Connect subscriptions auto-billing the
+  // customer monthly/yearly).
+  const [billingAmount,    setBillingAmount]   = useState(initial?.billingAmount != null ? String(initial.billingAmount) : '');
+  const [billingInterval,  setBillingInterval] = useState(initial?.billingInterval || 'month');
+  const [customerBenefits, setCustomerBenefits]= useState(initial?.customerBenefits || '');
   const [saving,           setSaving]     = useState(false);
 
   // When user picks a known client from the dropdown, snapshot their name.
@@ -93,6 +102,11 @@ function PlanModal({ initial, clients, team, trades, onClose, onSave }) {
         nextDueAt,
         notes: notes.trim() || null,
         active: initial?.active !== false,
+        // Service contract billing — null if left blank (this plan is
+        // service-only, not a paid contract product).
+        billingAmount:    billingAmount === '' ? null : Number(billingAmount),
+        billingInterval:  billingInterval || 'month',
+        customerBenefits: customerBenefits.trim() || null,
       });
       onClose();
     } catch (e) {
@@ -186,6 +200,57 @@ function PlanModal({ initial, clients, team, trades, onClose, onSave }) {
 
           <label style={s.label}>Notes (optional)</label>
           <textarea style={{ ...s.input, minHeight: 80, resize: 'vertical', fontFamily: 'inherit' }} value={notes} onChange={e => setNotes(e.target.value)} placeholder="Equipment notes, gate codes, special instructions..." />
+
+          {/* ── Service contract billing (optional) ──
+              Leave blank if this plan is service-only (you schedule visits
+              but bill per visit via invoices). Fill in to make it a
+              recurring revenue product the customer pays monthly/yearly. */}
+          <div style={{ marginTop: 22, padding: '14px 16px', background: '#f0fdf4', border: `1px solid ${C.green}33`, borderRadius: 10 }}>
+            <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.green, marginBottom: 4 }}>Service Contract Pricing (Optional)</div>
+            <div style={{ fontSize: 13, color: C.muted, lineHeight: 1.5, marginBottom: 10 }}>
+              Leave blank for service-only plans (bill per visit). Fill in to make this a recurring revenue product — customers subscribe at this rate.
+            </div>
+            <div style={s.row2}>
+              <div>
+                <label style={s.label}>Subscription Price</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ fontSize: 16, color: C.muted, fontWeight: 700 }}>$</span>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    placeholder="25.00"
+                    style={s.input}
+                    value={billingAmount}
+                    onChange={e => setBillingAmount(e.target.value)}
+                  />
+                </div>
+              </div>
+              <div>
+                <label style={s.label}>Billing Interval</label>
+                <select style={s.select} value={billingInterval} onChange={e => setBillingInterval(e.target.value)}>
+                  <option value="month">Per Month</option>
+                  <option value="year">Per Year</option>
+                </select>
+              </div>
+            </div>
+            <label style={s.label}>What's included (shown to customers)</label>
+            <textarea
+              style={{ ...s.input, minHeight: 70, resize: 'vertical', fontFamily: 'inherit' }}
+              value={customerBenefits}
+              onChange={e => setCustomerBenefits(e.target.value)}
+              placeholder="e.g. 2 tune-ups per year · 10% off all repairs · Priority scheduling · Free filter changes"
+            />
+            {billingAmount && Number(billingAmount) > 0 && (
+              <div style={{ marginTop: 10, padding: '8px 12px', background: '#fff', border: `1px solid ${C.green}44`, borderRadius: 6, fontSize: 12, color: C.muted, lineHeight: 1.5 }}>
+                <strong style={{ color: C.green }}>Recurring revenue preview:</strong>{' '}
+                10 customers × ${Number(billingAmount).toFixed(2)}/{billingInterval === 'year' ? 'yr' : 'mo'} ={' '}
+                <strong style={{ color: C.green }}>
+                  ${(Number(billingAmount) * 10).toFixed(2)}/{billingInterval === 'year' ? 'yr' : 'mo'}
+                </strong>
+              </div>
+            )}
+          </div>
         </div>
 
         <div style={s.footer}>
@@ -202,10 +267,16 @@ function PlanModal({ initial, clients, team, trades, onClose, onSave }) {
 // ────────────────────────────────────────────────────────────────────────────
 // PLAN ROW
 // ────────────────────────────────────────────────────────────────────────────
-function PlanRow({ plan, onEdit, onSchedule, onTogglePause, onDelete }) {
+function PlanRow({ plan, subs = [], onEdit, onSchedule, onTogglePause, onDelete }) {
   const dueIn = plan.nextDueAt ? daysBetween(today(), plan.nextDueAt) : null;
   const overdue = dueIn !== null && dueIn < 0;
   const dueSoon = dueIn !== null && dueIn >= 0 && dueIn <= 14;
+  // Service-contract awareness — show pricing + active-sub count when set
+  const isContract     = plan.billingAmount != null && plan.billingAmount > 0;
+  const activeSubCount = subs.filter(s => s.planId === plan.id && s.status === 'active').length;
+  const planMrr = isContract
+    ? activeSubCount * (plan.billingInterval === 'year' ? plan.billingAmount / 12 : plan.billingAmount)
+    : 0;
 
   const statusPill = !plan.active
     ? { label: 'Paused',  bg: '#f1f5f9',     fg: C.muted }
@@ -229,6 +300,16 @@ function PlanRow({ plan, onEdit, onSchedule, onTogglePause, onDelete }) {
             display: 'inline-block', fontSize: 10, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase',
             padding: '3px 8px', borderRadius: 4, background: statusPill.bg, color: statusPill.fg, whiteSpace: 'nowrap',
           }}>{statusPill.label}</span>
+          {/* Contract pricing badge — appears only when this plan has
+              billing terms set, so service-only plans don't see clutter. */}
+          {isContract && (
+            <span style={{
+              display: 'inline-block', fontSize: 10, fontWeight: 800, letterSpacing: '0.06em', textTransform: 'uppercase',
+              padding: '3px 8px', borderRadius: 4, background: C.green, color: '#fff', whiteSpace: 'nowrap',
+            }}>
+              ${Number(plan.billingAmount).toFixed(2)}/{plan.billingInterval === 'year' ? 'yr' : 'mo'}
+            </span>
+          )}
         </div>
         <div style={{ fontSize: 13, color: C.muted, marginBottom: 2 }}>
           {plan.clientName || 'Unknown client'} · {plan.trade} · {frequencyLabel(plan.frequencyMonths)}
@@ -236,6 +317,15 @@ function PlanRow({ plan, onEdit, onSchedule, onTogglePause, onDelete }) {
         <div style={{ fontSize: 12, color: C.dim }}>
           Last serviced {formatDate(plan.lastServicedAt)} · Next due {formatDate(plan.nextDueAt)}
         </div>
+        {/* Subscriber stats — only on contract plans */}
+        {isContract && (
+          <div style={{ fontSize: 12, color: C.muted, marginTop: 4 }}>
+            <strong style={{ color: C.green }}>{activeSubCount}</strong> active subscriber{activeSubCount === 1 ? '' : 's'}
+            {planMrr > 0 && (
+              <> · <strong style={{ color: C.green }}>${planMrr.toFixed(2)}/mo</strong> recurring</>
+            )}
+          </div>
+        )}
       </div>
 
       {/* All actions sized to 44px min — iPad-friendly tap targets. */}
@@ -269,23 +359,39 @@ export default function PlansScreen({
   plans = [], persistPlan, removePlan,
   onScheduleFromPlan,
 }) {
-  const [clients,  setClients]  = useState([]);
-  const [loading,  setLoading]  = useState(true);
-  const [editing,  setEditing]  = useState(null);
-  const [showNew,  setShowNew]  = useState(false);
-  const [filter,   setFilter]   = useState('all'); // all | due | active | paused
+  const [clients,       setClients]        = useState([]);
+  const [subscriptions, setSubscriptions]  = useState([]);
+  const [loading,       setLoading]        = useState(true);
+  const [editing,       setEditing]        = useState(null);
+  const [showNew,       setShowNew]        = useState(false);
+  const [filter,        setFilter]         = useState('all'); // all | due | active | paused
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const c = await listClients();
-        if (!cancelled) setClients(c);
-      } catch (e) { console.error('clients load', e); }
+        // Subscriptions table may not exist yet (migration 0017 might not
+        // have been run). Fail soft so the rest of the Plans screen still
+        // works without recurring-revenue data.
+        const [c, subs] = await Promise.all([
+          listClients(),
+          listPlanSubscriptions().catch(() => []),
+        ]);
+        if (!cancelled) {
+          setClients(c);
+          setSubscriptions(subs);
+        }
+      } catch (e) { console.error('plans load', e); }
       finally { if (!cancelled) setLoading(false); }
     })();
     return () => { cancelled = true; };
   }, []);
+
+  // ── Recurring revenue summary (computed from plan_subscriptions) ──
+  const mrr  = useMemo(() => calcMrr(subscriptions),  [subscriptions]);
+  const arr  = useMemo(() => calcArr(subscriptions),  [subscriptions]);
+  const subCounts = useMemo(() => countByStatus(subscriptions), [subscriptions]);
+  const hasContractPlans = useMemo(() => plans.some(p => p.billingAmount != null && p.billingAmount > 0), [plans]);
 
   const trades = user?.trades?.length ? user.trades : ['Plumber','HVAC','Electrician','Roofing','Specialty'];
 
@@ -345,6 +451,58 @@ export default function PlansScreen({
         }}>+ New Plan</button>
       </div>
 
+      {/* ── Recurring Revenue Summary ──
+          Only renders if any plan has billing terms set OR any
+          subscriptions exist. Hides on accounts that only use plans for
+          scheduling (no paid contracts), so the screen stays clean for
+          those users. */}
+      {(hasContractPlans || subscriptions.length > 0) && (
+        <div style={{ marginBottom: 20, padding: '18px 22px', background: `linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%)`, border: `1px solid ${C.green}33`, borderRadius: 14 }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 14 }}>
+            <div style={{ flex: 1, minWidth: 200 }}>
+              <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.green, marginBottom: 6 }}>
+                Recurring Revenue · Service Contracts
+              </div>
+              <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: C.muted, letterSpacing: '0.06em', textTransform: 'uppercase' }}>MRR</div>
+                  <div style={{ fontFamily: 'Inter, system-ui, sans-serif', fontSize: 30, fontWeight: 900, color: C.green, lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>
+                    ${mrr.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </div>
+                  <div style={{ fontSize: 11, color: C.dim, marginTop: 2 }}>per month</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: C.muted, letterSpacing: '0.06em', textTransform: 'uppercase' }}>ARR</div>
+                  <div style={{ fontFamily: 'Inter, system-ui, sans-serif', fontSize: 22, fontWeight: 800, color: C.text, lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>
+                    ${arr.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                  </div>
+                  <div style={{ fontSize: 11, color: C.dim, marginTop: 2 }}>annualized</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: C.muted, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Active Subs</div>
+                  <div style={{ fontFamily: 'Inter, system-ui, sans-serif', fontSize: 22, fontWeight: 800, color: C.text, lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>
+                    {subCounts.active}
+                  </div>
+                  <div style={{ fontSize: 11, color: C.dim, marginTop: 2 }}>customers</div>
+                </div>
+                {subCounts.past_due > 0 && (
+                  <div>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: C.error, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Past Due</div>
+                    <div style={{ fontFamily: 'Inter, system-ui, sans-serif', fontSize: 22, fontWeight: 800, color: C.error, lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>
+                      {subCounts.past_due}
+                    </div>
+                    <div style={{ fontSize: 11, color: C.dim, marginTop: 2 }}>need attention</div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+          <div style={{ marginTop: 12, fontSize: 12, color: C.muted, lineHeight: 1.5 }}>
+            <strong style={{ color: C.green }}>Phase 1:</strong> Track enrollments manually. <strong style={{ color: C.muted }}>Phase 2 (after Stripe Connect setup):</strong> Stripe auto-bills your customers each {hasContractPlans ? 'period' : 'month/year'}.
+          </div>
+        </div>
+      )}
+
       {/* Filter chips */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
         {[
@@ -383,6 +541,7 @@ export default function PlansScreen({
         <PlanRow
           key={plan.id}
           plan={plan}
+          subs={subscriptions}
           onEdit={p => setEditing(p)}
           onSchedule={handleSchedule}
           onTogglePause={handleTogglePause}
