@@ -20,6 +20,10 @@ const dbToSub = (r) => ({
   currentPeriodEnd:      r.current_period_end ?? null,
   canceledAt:            r.canceled_at      ?? null,
   stripeSubscriptionId:  r.stripe_subscription_id ?? null,
+  stripeCheckoutSessionId: r.stripe_checkout_session_id ?? null,
+  stripeCustomerId:      r.stripe_customer_id ?? null,
+  pendingEmail:          r.pending_email    ?? null,
+  pendingName:           r.pending_name     ?? null,
   notes:                 r.notes            ?? '',
   createdAt:             r.created_at       ?? null,
 });
@@ -120,9 +124,48 @@ export function calcArr(subs) {
 
 // Subscriber count by status — used by the dashboard widget.
 export function countByStatus(subs) {
-  const c = { active: 0, past_due: 0, canceled: 0, paused: 0 };
+  const c = { active: 0, past_due: 0, canceled: 0, paused: 0, incomplete: 0, trialing: 0 };
   for (const s of (subs || [])) {
     if (c[s.status] != null) c[s.status] += 1;
   }
   return c;
+}
+
+// ── Stripe-wired enrollment (Phase 2) ────────────────────────────────────
+//
+// Server-side endpoint creates the Stripe Product/Price on the contractor's
+// connected account (if needed), inserts a pending plan_subscriptions row,
+// and returns a Stripe Checkout Session URL. Webhook flips the row to
+// 'active' once the customer enters their card.
+export async function startEnrollmentCheckout({ ownerId, planId, clientId, customerEmail, customerName, returnUrl }) {
+  const resp = await fetch('/api/stripe/plan-checkout', {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ownerId, planId, clientId, customerEmail, customerName, returnUrl }),
+  });
+  const body = await resp.json().catch(() => ({}));
+  if (!resp.ok) {
+    const err = new Error(body.detail || body.error || 'Could not start enrollment.');
+    err.code = body.error;
+    throw err;
+  }
+  return body; // { checkoutUrl, sessionId, pendingSubId, stripePriceId, stripeProductId }
+}
+
+// Cancel a subscription on the contractor's Connect account. `immediate`
+// defaults to false (cancel at period end so the customer keeps coverage
+// they already paid for). Webhook will reconcile final state.
+export async function cancelEnrollmentSubscription({ ownerId, planSubscriptionId, immediate = false }) {
+  const resp = await fetch('/api/stripe/plan-cancel-subscription', {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ownerId, planSubscriptionId, immediate }),
+  });
+  const body = await resp.json().catch(() => ({}));
+  if (!resp.ok) {
+    const err = new Error(body.detail || body.error || 'Could not cancel subscription.');
+    err.code = body.error;
+    throw err;
+  }
+  return body;
 }

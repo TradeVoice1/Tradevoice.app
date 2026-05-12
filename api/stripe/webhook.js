@@ -1,10 +1,21 @@
 // POST /api/stripe/webhook
 //
-// Receives Stripe events. The four we care about:
-//   - payment_intent.succeeded         → mark the invoice paid
-//   - payment_intent.payment_failed    → log the failure (no status change)
-//   - account.updated                  → keep stripe_account_charges_enabled fresh
-//   - account.application.deauthorized → clear the connected account ID
+// Receives Stripe events from two "directions":
+//
+//   1. PLATFORM events (no event.account) — Tradevoice's own Stripe account
+//      events. These cover the contractor's subscription to Tradevoice
+//      itself (migration 0015) and account-level events from Connect OAuth.
+//
+//   2. CONNECT events (event.account = acct_...) — fired on behalf of each
+//      contractor's connected Stripe account. These cover invoice payments
+//      to the contractor (migration 0013) AND, as of Phase 2 of service
+//      contracts (migration 0018), recurring subscription billing the
+//      contractor charges their customers.
+//
+// Both flow through the SAME webhook endpoint URL — Stripe sends Connect
+// events to whichever webhook the platform has subscribed to with the
+// "Listen to events on Connected accounts" toggle enabled. We branch
+// inside the handler based on event.account presence.
 //
 // IMPORTANT: Vercel serverless functions parse JSON by default, but Stripe
 // signature verification needs the RAW body. Disable parsing via the config
@@ -45,6 +56,10 @@ export default async function handler(req, res) {
   }
 
   const supabase = getServiceClient();
+  // Branching signal: presence of event.account means Stripe fired this on
+  // behalf of a connected account (a contractor). Absence means it's a
+  // platform-level event on Tradevoice's own account.
+  const isConnectEvent = !!event.account;
 
   try {
     switch (event.type) {
@@ -94,44 +109,86 @@ export default async function handler(req, res) {
         break;
       }
 
-      // ── Subscription events (migration 0015) ─────────────────────────────
-      // Tradevoice → contractor billing. Each event maps to an
-      // update_subscription_status RPC call so the user's profile reflects
-      // their real Stripe subscription state.
+      // ── Subscription events ──────────────────────────────────────────────
+      // Branch by event.account:
+      //   - Platform events  → contractor's subscription TO TRADEVOICE
+      //                        (migration 0015 — profiles.subscription_status)
+      //   - Connect events   → contractor's customer's subscription to a
+      //                        SERVICE CONTRACT (migration 0018 —
+      //                        plan_subscriptions.status)
       case 'customer.subscription.created':
       case 'customer.subscription.updated':
       case 'customer.subscription.deleted': {
         const sub = event.data.object;
-        const trialEnd = sub.trial_end ? new Date(sub.trial_end * 1000).toISOString() : null;
-        await supabase.rpc('update_subscription_status', {
-          p_customer_id:     sub.customer,
-          p_subscription_id: sub.id,
-          p_status:          event.type === 'customer.subscription.deleted' ? 'canceled' : sub.status,
-          p_trial_ends_at:   trialEnd,
-        });
-        console.log('[stripe webhook] subscription', event.type, sub.customer, sub.status);
+        if (isConnectEvent) {
+          // Service contract sub. Use the dedicated RPC.
+          const periodEnd = sub.current_period_end
+            ? new Date(sub.current_period_end * 1000).toISOString()
+            : null;
+          const canceledAt = event.type === 'customer.subscription.deleted'
+            ? new Date().toISOString()
+            : (sub.canceled_at ? new Date(sub.canceled_at * 1000).toISOString() : null);
+          const effectiveStatus = event.type === 'customer.subscription.deleted'
+            ? 'canceled'
+            : sub.status;
+          await supabase.rpc('update_plan_subscription_status', {
+            p_subscription_id:    sub.id,
+            p_status:             effectiveStatus,
+            p_current_period_end: periodEnd,
+            p_canceled_at:        canceledAt,
+          });
+          console.log('[stripe webhook] (connect) plan sub', event.type, sub.id, sub.status);
+        } else {
+          // Platform subscription (Tradevoice's own customer).
+          const trialEnd = sub.trial_end ? new Date(sub.trial_end * 1000).toISOString() : null;
+          await supabase.rpc('update_subscription_status', {
+            p_customer_id:     sub.customer,
+            p_subscription_id: sub.id,
+            p_status:          event.type === 'customer.subscription.deleted' ? 'canceled' : sub.status,
+            p_trial_ends_at:   trialEnd,
+          });
+          console.log('[stripe webhook] subscription', event.type, sub.customer, sub.status);
+        }
         break;
       }
       case 'invoice.payment_failed': {
-        // Stripe will retry per the dunning settings on the platform; we
-        // just flip the status so the in-app banner can warn the contractor.
         const inv = event.data.object;
-        if (inv.customer) {
+        if (isConnectEvent && inv.subscription) {
+          // Service contract renewal failed — flip plan_subscriptions row to past_due.
+          await supabase.rpc('update_plan_subscription_status', {
+            p_subscription_id:    inv.subscription,
+            p_status:             'past_due',
+            p_current_period_end: null,
+            p_canceled_at:        null,
+          });
+          console.warn('[stripe webhook] (connect) plan sub invoice failed:', inv.subscription, inv.id);
+        } else if (inv.customer) {
+          // Platform: contractor's subscription to Tradevoice is past due.
           await supabase.rpc('update_subscription_status', {
             p_customer_id:     inv.customer,
             p_subscription_id: inv.subscription || null,
             p_status:          'past_due',
             p_trial_ends_at:   null,
           });
+          console.warn('[stripe webhook] subscription invoice payment failed:', inv.customer, inv.id);
         }
-        console.warn('[stripe webhook] subscription invoice payment failed:', inv.customer, inv.id);
         break;
       }
       case 'invoice.payment_succeeded': {
-        // Renewal succeeded — make sure status is 'active'. (Stripe will
-        // also fire customer.subscription.updated separately.)
         const inv = event.data.object;
-        if (inv.customer && inv.subscription) {
+        if (isConnectEvent && inv.subscription) {
+          // Service contract renewal succeeded — confirm active + advance period.
+          const periodEnd = inv.lines?.data?.[0]?.period?.end
+            ? new Date(inv.lines.data[0].period.end * 1000).toISOString()
+            : null;
+          await supabase.rpc('update_plan_subscription_status', {
+            p_subscription_id:    inv.subscription,
+            p_status:             'active',
+            p_current_period_end: periodEnd,
+            p_canceled_at:        null,
+          });
+        } else if (inv.customer && inv.subscription) {
+          // Renewal succeeded on Tradevoice's own customer subscription.
           await supabase.rpc('update_subscription_status', {
             p_customer_id:     inv.customer,
             p_subscription_id: inv.subscription,
@@ -139,6 +196,45 @@ export default async function handler(req, res) {
             p_trial_ends_at:   null,
           });
         }
+        break;
+      }
+
+      // ── Service contract enrollment completed (migration 0018) ───────────
+      // Customer just finished entering their card on the Stripe-hosted
+      // Checkout page. Promote the pending plan_subscriptions row from
+      // 'incomplete' to whatever Stripe says (usually 'active' or 'trialing').
+      case 'checkout.session.completed': {
+        if (!isConnectEvent) {
+          // Platform-side checkout sessions aren't currently used; ignore.
+          break;
+        }
+        const session = event.data.object;
+        if (session.mode !== 'subscription' || !session.subscription) break;
+        // Fetch the subscription on the connected account to get its
+        // current_period_end (the session payload only has the subscription
+        // id, not its period state).
+        let periodEnd = null;
+        let subStatus = 'active';
+        try {
+          const sub = await stripe.subscriptions.retrieve(
+            session.subscription,
+            { stripeAccount: event.account }
+          );
+          periodEnd = sub.current_period_end
+            ? new Date(sub.current_period_end * 1000).toISOString()
+            : null;
+          subStatus = sub.status || 'active';
+        } catch (e) {
+          console.warn('[stripe webhook] could not retrieve sub for session:', session.id, e?.message);
+        }
+        await supabase.rpc('link_plan_subscription_from_checkout', {
+          p_session_id:         session.id,
+          p_subscription_id:    session.subscription,
+          p_customer_id:        session.customer || null,
+          p_status:             subStatus,
+          p_current_period_end: periodEnd,
+        });
+        console.log('[stripe webhook] (connect) checkout.session.completed linked', session.id, session.subscription);
         break;
       }
       default:
