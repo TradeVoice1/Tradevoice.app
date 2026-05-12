@@ -914,13 +914,15 @@ function WeekView({ weekDays, jobs, techs, onJobClick, filterTech, onReschedule,
                     const isBeingDragged = drag && drag.job.id === job.id;
                     // Techs don't get drag handles — view-only schedule for them.
                     const draggable = !isTech;
-                    // Overdue treatment: scheduled jobs whose date is in the past get a
-                    // light-red wash with a red left bar. Without overriding the text
-                    // colors here, the white-on-color labels become invisible against
-                    // the pink. We swap to dark-red text so it stays readable.
-                    const isOverdue = job.status === 'scheduled' && new Date(job.date) < new Date(new Date().toDateString());
-                    const titleColor  = isOverdue ? '#991b1b' : '#fff';
-                    const subtleColor = isOverdue ? '#b91c1c' : 'rgba(255,255,255,.8)';
+                    // Status treatments stack from most-urgent to least:
+                    //   overdue  → light-red wash + red left bar  + dark-red text
+                    //   in-prog  → light-amber wash + amber left bar + dark-amber text
+                    // Both swap the white-on-color labels for darker text so they
+                    // stay legible against the pale background.
+                    const isOverdue    = job.status === 'scheduled'   && new Date(job.date) < new Date(new Date().toDateString());
+                    const isInProgress = job.status === 'in-progress';
+                    const titleColor  = isOverdue ? '#991b1b' : isInProgress ? '#92400e' : '#fff';
+                    const subtleColor = isOverdue ? '#b91c1c' : isInProgress ? '#b45309' : 'rgba(255,255,255,.8)';
                     return (
                       <div
                         key={job.id}
@@ -930,7 +932,8 @@ function WeekView({ weekDays, jobs, techs, onJobClick, filterTech, onReschedule,
                           top: 2,
                           height: job.duration * 56 - 4,
                           opacity: isBeingDragged ? 0.25 : (job.status === 'cancelled' ? 0.35 : job.status === 'completed' ? 0.6 : 1),
-                          ...(isOverdue ? { background: '#fef2f2', borderLeft: '3px solid #dc2626' } : {}),
+                          ...(isOverdue    ? { background: '#fef2f2', borderLeft: '3px solid #dc2626' } : {}),
+                          ...(isInProgress ? { background: '#fffbeb', borderLeft: '3px solid #d97706' } : {}),
                           ...(draggable ? dragProps(job).style : {}),
                         }}
                         onClick={wrapClick(() => onJobClick(job))}
@@ -1000,16 +1003,24 @@ function DayView({ date, jobs, techs, onJobClick, filterTech }) {
             <div key={`c-${hour}`} style={s.cell}>
               {hourJobs.map(job => {
                 const tech = getTech(job.techUserId);
-                // See WeekView: when the overdue treatment kicks in we swap text
-                // colors to dark red so the labels survive on the pink wash.
-                const isOverdue = job.status === 'scheduled' && new Date(job.date) < new Date(new Date().toDateString());
-                const titleColor  = isOverdue ? '#991b1b' : '#fff';
-                const subtleColor = isOverdue ? '#b91c1c' : 'rgba(255,255,255,.85)';
-                const dimColor    = isOverdue ? '#b91c1c' : 'rgba(255,255,255,.7)';
-                const chipBg      = isOverdue ? 'rgba(185, 28, 28, 0.12)' : 'rgba(255,255,255,.15)';
-                const initialsBg  = isOverdue ? 'rgba(185, 28, 28, 0.15)' : 'rgba(255,255,255,.25)';
+                // See WeekView: when overdue or in-progress treatments kick in
+                // we swap text colors to dark red / dark amber so the labels
+                // survive on the pale wash.
+                const isOverdue    = job.status === 'scheduled'   && new Date(job.date) < new Date(new Date().toDateString());
+                const isInProgress = job.status === 'in-progress';
+                const titleColor  = isOverdue ? '#991b1b' : isInProgress ? '#92400e' : '#fff';
+                const subtleColor = isOverdue ? '#b91c1c' : isInProgress ? '#b45309' : 'rgba(255,255,255,.85)';
+                const dimColor    = isOverdue ? '#b91c1c' : isInProgress ? '#b45309' : 'rgba(255,255,255,.7)';
+                const chipBg      = isOverdue ? 'rgba(185, 28, 28, 0.12)' : isInProgress ? 'rgba(180, 83, 9, 0.12)'  : 'rgba(255,255,255,.15)';
+                const initialsBg  = isOverdue ? 'rgba(185, 28, 28, 0.15)' : isInProgress ? 'rgba(180, 83, 9, 0.15)'  : 'rgba(255,255,255,.25)';
                 return (
-                  <div key={job.id} style={{ ...s.jobBlock(getTechColor(job.techUserId)), top: 4, height: job.duration * 72 - 8, opacity: job.status === 'cancelled' ? 0.35 : job.status === 'completed' ? 0.6 : 1, ...(isOverdue ? { background: '#fef2f2', borderLeft: '3px solid #dc2626' } : {}) }} onClick={() => onJobClick(job)}>
+                  <div key={job.id} style={{
+                    ...s.jobBlock(getTechColor(job.techUserId)),
+                    top: 4, height: job.duration * 72 - 8,
+                    opacity: job.status === 'cancelled' ? 0.35 : job.status === 'completed' ? 0.6 : 1,
+                    ...(isOverdue    ? { background: '#fef2f2', borderLeft: '3px solid #dc2626' } : {}),
+                    ...(isInProgress ? { background: '#fffbeb', borderLeft: '3px solid #d97706' } : {}),
+                  }} onClick={() => onJobClick(job)}>
                     <div>
                       <div style={{ fontSize: 14, fontWeight: 800, color: titleColor, marginBottom: 2 }}>{job.title}</div>
                       <div style={{ fontSize: 12, fontWeight: 600, color: subtleColor }}>{job.clientName} · {job.address.split(',')[0]}</div>
@@ -1062,11 +1073,24 @@ function MonthView({ date, jobs, techs, onJobClick, filterTech, onDayClick }) {
         return (
           <div key={i} style={s.cell(isCurrentMonth, isToday)} onClick={() => isCurrentMonth && onDayClick(cellDate)}>
             <div style={s.dayNum(isToday)}>{isCurrentMonth ? dayNum : ''}</div>
-            {dayJobs.slice(0, 3).map(job => (
-              <div key={job.id} style={s.jobDot(getTechColor(job.techUserId))} onClick={e => { e.stopPropagation(); onJobClick(job); }}>
-                {job.title}
-              </div>
-            ))}
+            {dayJobs.slice(0, 3).map(job => {
+              // Mirror WeekView/DayView so status reads the same way at every
+              // zoom level: overdue=red wash, in-progress=amber wash, completed
+              // and cancelled stay tech-colored but with fading opacity.
+              const isOverdue    = job.status === 'scheduled' && new Date(job.date) < new Date(new Date().toDateString());
+              const isInProgress = job.status === 'in-progress';
+              const dotStyle = isOverdue
+                ? { ...s.jobDot('#fef2f2'), color: '#991b1b', borderLeft: '2px solid #dc2626' }
+                : isInProgress
+                ? { ...s.jobDot('#fffbeb'), color: '#92400e', borderLeft: '2px solid #d97706' }
+                : { ...s.jobDot(getTechColor(job.techUserId)),
+                    opacity: job.status === 'cancelled' ? 0.35 : job.status === 'completed' ? 0.6 : 1 };
+              return (
+                <div key={job.id} style={dotStyle} onClick={e => { e.stopPropagation(); onJobClick(job); }}>
+                  {job.title}
+                </div>
+              );
+            })}
             {dayJobs.length > 3 && <div style={{ fontSize: 11, color: '#aaa', marginTop: 2 }}>+{dayJobs.length - 3} more</div>}
           </div>
         );
