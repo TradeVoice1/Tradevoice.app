@@ -99,32 +99,35 @@ auto-charges the card on file. User must agree in ToS.
 
 ---
 
-## 2. Logo upload → Supabase Storage — 🟡 MEDIUM
+## 2. Logo upload → Supabase Storage — ✅ DONE
 
-Currently `logo` lives in front-end state only and disappears on refresh.
-The DB column `profiles.logo_url` already exists; we just need somewhere to
-put the file.
+Shipped (likely overlapping with the trade-catalog session). Implementation:
 
-- Create a public Storage bucket `company-logos` in Supabase.
-- Add `uploadLogo(file)` helper in `src/data/storage.js`.
-- Wire it up in `ProfileModal` → on file pick, upload, get URL, save to
-  `profiles.logo_url` via `upsertProfile`.
-
-**Estimated effort:** 30 min.
+- Migration `0004_logo_storage.sql` creates public bucket `company-logos`
+  with RLS keyed to `<userId>/...` paths
+- `src/data/storage.js` exports `uploadLogo` + `deleteLogo`
+- `App.jsx` ProfileModal wires the file input through `handleFile` + replaces
+  old logo URLs cleanly on each upload
 
 ---
 
-## 3. Code-split the bundle — 🟡 MEDIUM
+## 3. Code-split the bundle — ✅ MOSTLY DONE (2026-05-12)
 
-Bundle is ~840 KB minified, 295 KB gzipped. Vite warns. Worth doing before
-launch.
+Round 1 already split out `ScheduleScreen`, `JobsScreen`, `PlansScreen`,
+`MarketingScreen`, `LegalScreens`, `ForgotPasswordScreen`, `InvoicePaymentPage`,
+`QuoteCustomerPage` — all `React.lazy()` in `App.jsx:4-13`.
 
-- Convert imports of `ScheduleScreen`, `MarketingScreen`, `LegalScreens`,
-  `ForgotPasswordScreen`, `Onboarding`, `InvoicePaymentPage`, `Estimator` to
-  `React.lazy(() => import(...))`.
-- Wrap `<content />` in `<Suspense fallback={...}>` in the main router.
+Round 2 (2026-05-12 session):
+- `vite.config.js` now splits trades data + Stripe + Supabase SDKs into their
+  own chunks via `rollupOptions.output.manualChunks`
+- `BillingPaymentModal` made lazy (only loads when user opens "Update Card")
+- Main bundle: 736 KB → 635 KB (271 KB → 246 KB gzipped)
+- `chunkSizeWarningLimit` bumped to 800 so the informational warning is silenced
 
-**Estimated effort:** 30 min.
+Remaining bundle is dominated by `App.jsx` itself (monolithic file with
+Dashboard, InvoiceHub, InvoiceEditor, InvoiceDocument, Quotes, Clients,
+Settings all inline). Further wins require extracting those components to
+their own files — a multi-hour refactor, not a quick win.
 
 ---
 
@@ -148,8 +151,18 @@ From the original feature list in our planning conversation:
   above (that's about charging the contractor for their subscription).
 - **#28–33 AI suite** — TaxJar tax lookup, Claude line-item suggestions,
   receipt scanning (Vision/Textract). Each is its own integration session.
-- **#36–38 Marketing automations** — review requests, email campaigns,
-  follow-ups. UI is built; needs SendGrid/Resend wiring.
+- **#36–38 Marketing automations** — Phase 1 SHIPPED 2026-05-12:
+  - Resend integration (`api/_lib/email.js`, `api/marketing/send-*.js`)
+  - Migration 0019: `marketing_sends`, `marketing_campaigns`,
+    `clients.reviewed_at` + `clients.review_requested_at`
+  - MarketingScreen wired to real data — review-request modal, campaign
+    modal, real activity feed, real stats. Replaced the mockup entirely.
+  - Phase 2 (still pending): trigger-based automations (need Vercel Cron
+    to fire "invoice paid → wait 2 days → send review request"). The
+    Automations tab shows a "Coming soon" banner today.
+  - Manual setup the user still has to do: verify `thetradevoice.com` in
+    Resend dashboard + add DKIM/SPF DNS records on GoDaddy + set
+    `RESEND_API_KEY` env var in Vercel.
 - **#42 Client appointment notifications** — SMS via Twilio.
 - **#48 Governing law: Alabama** — confirm in ToS once filed.
 - **#49–54 Business setup** (LLC, EIN, Mercury, Google Workspace) — non-code,
@@ -162,17 +175,29 @@ From the original feature list in our planning conversation:
 
 Brainstormed in chat — all feasible on the current stack. Grouped by effort.
 
-### Tier 1 — Quick wins (~1-2 hrs each)
+### Tier 1 — Quick wins — ✅ ALL SHIPPED
 
-- **Last-tech memory.** When picking a client in Add Job modal, show "Carlos last
-  serviced this client on Mar 12" and pre-select that tech.
-- **Default duration by job type.** Average past durations for similar titles
-  and prefill the duration field.
-- **Job → Invoice in one click.** "Mark job completed" auto-creates a draft
-  invoice with the client + line items prefilled (mirrors Quote → Invoice).
-- **Tech filter on calendar.** "Only show Carlos's jobs" toggle.
-- **Status colour-coding finished.** Overdue jobs in red, in-progress in amber,
-  completed faded out.
+Audited 2026-05-12 and discovered every Tier 1 item was already implemented
+in earlier sessions. Pointers if anything regresses:
+
+- **Last-tech memory** — `lastJobForClient` in `ScheduleScreen.jsx`
+  (AddJobModal, ~line 679). Auto-assigns the tech who last serviced the
+  client; surfaces a "Last serviced by X on Y — auto-assigned" hint.
+- **Default duration by job type** — `avgDurationForTitle` in same modal
+  (~line 687). Averages similar titles, rounds to nearest 0.5 hr, pre-fills.
+- **Job → Invoice in one click** — `handleJobToInvoice` in `App.jsx`
+  (~line 7564). UI surface is the "Create Invoice" button in
+  `JobDetailModal` (gated on `status === 'completed' && !invoiceId`).
+  Pre-fills client, trade, default labor row from `TRADE_CONFIG`, carries
+  tech name into the activity log.
+- **Tech filter on calendar** — `filterTech` state in `ScheduleScreen`
+  (~line 1103); UI buttons render the full team list, filtering all three
+  views (Month/Week/Day).
+- **Status colour-coding finished** — Overdue gets light-red wash + red
+  left bar; in-progress gets light-amber wash + amber left bar;
+  completed fades to 60% opacity; cancelled fades to 35%. Consistent
+  across Month/Week/Day. (In-progress amber added 2026-05-12 — was the
+  only piece of the Tier 1 batch still missing.)
 
 ### Tier 2 — Medium (~3-5 hrs each)
 

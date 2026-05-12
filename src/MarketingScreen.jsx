@@ -1,4 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
+import { listClients } from "./data/clients";
+import {
+  listCampaigns, listRecentSends,
+  sendReviewRequests, sendCampaign, setClientReviewed,
+} from "./data/marketing";
 
 // ─── CONSTANTS ───────────────────────────────────────────────────────────────
 const C = {
@@ -7,28 +12,64 @@ const C = {
   greenBorder: '#a7d9be',
 };
 
-// ─── SAMPLE DATA ─────────────────────────────────────────────────────────────
-const SAMPLE_CLIENTS = [];
-const SAMPLE_CAMPAIGNS = [];
-// Default automation library — these are templates the user enables/disables, not fake activity.
-const SAMPLE_AUTOMATIONS = [
-  { id: 1, name: 'Review Request', trigger: 'Job marked complete', delay: '1 day after', status: 'paused', sent: 0, converted: 0 },
-  { id: 2, name: 'Quote Follow-up', trigger: 'Quote sent, not accepted', delay: '3 days after', status: 'paused', sent: 0, converted: 0 },
-  { id: 3, name: 'Annual Maintenance Reminder', trigger: '1 year after last job', delay: '12 months after', status: 'paused', sent: 0, converted: 0 },
-  { id: 4, name: 'Thank You + Referral Ask', trigger: 'Invoice paid', delay: '2 days after', status: 'paused', sent: 0, converted: 0 },
+// Static automation library — these are templates the user can read about
+// today, but toggling them is INERT in Phase 1. Real triggers need a
+// scheduled background job (Vercel Cron) which is a Phase 2 task.
+const AUTOMATIONS_PREVIEW = [
+  { id: 1, name: 'Review Request',              trigger: 'Job marked complete',     delay: '1 day after' },
+  { id: 2, name: 'Quote Follow-up',             trigger: 'Quote sent, not accepted', delay: '3 days after' },
+  { id: 3, name: 'Annual Maintenance Reminder', trigger: '1 year after last job',    delay: '12 months after' },
+  { id: 4, name: 'Thank You + Referral Ask',    trigger: 'Invoice paid',             delay: '2 days after' },
 ];
 
+// Lightweight "time ago" helper — keeps the activity feed readable without
+// pulling in date-fns.
+function timeAgo(iso) {
+  if (!iso) return '';
+  const diff = (Date.now() - new Date(iso).getTime()) / 1000;
+  if (diff < 60)        return 'just now';
+  if (diff < 3600)      return `${Math.floor(diff / 60)} min ago`;
+  if (diff < 86400)     return `${Math.floor(diff / 3600)} hour${Math.floor(diff / 3600) === 1 ? '' : 's'} ago`;
+  if (diff < 86400 * 7) return `${Math.floor(diff / 86400)} day${Math.floor(diff / 86400) === 1 ? '' : 's'} ago`;
+  return new Date(iso).toLocaleDateString();
+}
+
+const TRADE_OPTIONS = ['All', 'Plumber', 'HVAC', 'Electrician', 'Roofing', 'Specialty'];
+
 // ─── REVIEW REQUEST MODAL ─────────────────────────────────────────────────────
-function ReviewRequestModal({ clients, onClose, onSend }) {
-  const [selected, setSelected] = useState([]);
-  const [sent, setSent] = useState(false);
-  const unreviewedClients = clients.filter(c => !c.reviewed);
+function ReviewRequestModal({ clients, ownerId, reviewLink, onClose, onSent }) {
+  const [selected, setSelected]     = useState([]);
+  const [sending,  setSending]      = useState(false);
+  const [result,   setResult]       = useState(null);  // { sentCount, failedCount }
+  const [error,    setError]        = useState('');
+
+  // Show clients that don't yet have a review marked. Sort with the
+  // most-recent jobs first so the contractor sees their freshest work
+  // (best chance of a glowing review while it's fresh in memory).
+  const eligible = useMemo(
+    () => (clients || []).filter(c => !c.reviewedAt && c.email),
+    [clients]
+  );
 
   const toggleSelect = (id) => setSelected(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id]);
 
-  const handleSend = () => {
-    setSent(true);
-    setTimeout(() => { onSend(selected); onClose(); }, 1500);
+  const handleSend = async () => {
+    if (sending || selected.length === 0) return;
+    setSending(true);
+    setError('');
+    try {
+      const r = await sendReviewRequests({
+        ownerId,
+        clientIds: selected,
+        reviewLink: reviewLink || null,
+      });
+      setResult(r);
+      if (onSent) await onSent();
+    } catch (e) {
+      setError(e?.message || 'Could not send review requests.');
+    } finally {
+      setSending(false);
+    }
   };
 
   const s = {
@@ -39,18 +80,27 @@ function ReviewRequestModal({ clients, onClose, onSend }) {
     clientRow: (sel) => ({ display: 'flex', alignItems: 'center', gap: 12, padding: '12px', borderRadius: 8, border: `1px solid ${sel ? C.greenBorder : '#e8e8e8'}`, background: sel ? C.greenLight : '#fff', cursor: 'pointer', marginBottom: 8 }),
     checkbox: (sel) => ({ width: 18, height: 18, borderRadius: 4, border: `2px solid ${sel ? C.green : '#ddd'}`, background: sel ? C.green : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }),
     footer: { padding: '16px 24px', borderTop: '1px solid #f0f0f0', display: 'flex', gap: 10, position: 'sticky', bottom: 0, background: '#fff' },
-    btn: (primary) => ({ flex: 1, padding: '12px', borderRadius: 8, border: primary ? 'none' : '1px solid #ddd', background: primary ? C.green : '#fff', color: primary ? '#fff' : '#666', fontSize: 14, fontWeight: 600, cursor: 'pointer' }),
+    btn: (primary, disabled) => ({ flex: 1, padding: '12px', borderRadius: 8, border: primary ? 'none' : '1px solid #ddd', background: primary ? C.green : '#fff', color: primary ? '#fff' : '#666', fontSize: 14, fontWeight: 600, cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.5 : 1 }),
   };
 
-  if (sent) return (
-    <div style={s.overlay}>
-      <div style={{ ...s.modal, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 40, textAlign: 'center' }}>
-        <div style={{ fontSize: 48, marginBottom: 16 }}>⭐</div>
-        <div style={{ fontSize: 20, fontWeight: 800, color: '#111', marginBottom: 8 }}>Review requests sent!</div>
-        <div style={{ fontSize: 15, color: '#666' }}>Sent to {selected.length} client{selected.length !== 1 ? 's' : ''}. We'll notify you when they leave a review.</div>
+  if (result) {
+    return (
+      <div style={s.overlay}>
+        <div style={{ ...s.modal, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 40, textAlign: 'center' }}>
+          <div style={{ fontSize: 48, marginBottom: 16 }}>⭐</div>
+          <div style={{ fontSize: 20, fontWeight: 800, color: '#111', marginBottom: 8 }}>
+            {result.sentCount} review request{result.sentCount === 1 ? '' : 's'} sent
+          </div>
+          {result.failedCount > 0 && (
+            <div style={{ fontSize: 13, color: '#b91c1c', marginBottom: 12 }}>
+              {result.failedCount} couldn't be sent (check the client's email address)
+            </div>
+          )}
+          <button style={{ ...s.btn(true, false), flex: 'none', minWidth: 160 }} onClick={onClose}>Done</button>
+        </div>
       </div>
-    </div>
-  );
+    );
+  }
 
   return (
     <div style={s.overlay} onClick={onClose}>
@@ -61,32 +111,56 @@ function ReviewRequestModal({ clients, onClose, onSend }) {
         </div>
         <div style={s.body}>
           <div style={{ fontSize: 14, color: '#666', marginBottom: 16, lineHeight: 1.6 }}>
-            Select clients to send a Google review request. Only clients who haven't reviewed yet are shown.
+            Select clients to email. Only clients with an email address who haven't been marked reviewed are shown.
           </div>
-          <div style={{ background: '#f7f7f5', borderRadius: 8, padding: '12px 16px', marginBottom: 16, fontSize: 14, color: '#555', lineHeight: 1.6 }}>
-            <strong>Preview message:</strong> "Hi [Name], thank you for choosing us! If you had a great experience, we'd really appreciate a Google review — it helps other homeowners find us. [Link]"
+          <div style={{ background: '#f7f7f5', borderRadius: 8, padding: '12px 16px', marginBottom: 16, fontSize: 13, color: '#555', lineHeight: 1.6 }}>
+            <strong>Preview:</strong> "Hi [FirstName], thanks for choosing {`{your company}`}. If you had a great experience, would you take 30 seconds to leave a Google review? It really helps."
+            {!reviewLink && (
+              <div style={{ marginTop: 8, color: '#b45309', fontSize: 12 }}>
+                ⚠ No Google review link set in Settings yet — the email will go without one. Add yours in Settings → Profile.
+              </div>
+            )}
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
-            <span style={{ fontSize: 13, fontWeight: 600, color: '#333' }}>{unreviewedClients.length} clients without a review</span>
-            <button style={{ background: 'none', border: 'none', color: C.green, fontSize: 13, fontWeight: 600, cursor: 'pointer' }} onClick={() => setSelected(unreviewedClients.map(c => c.id))}>Select All</button>
+            <span style={{ fontSize: 13, fontWeight: 600, color: '#333' }}>
+              {eligible.length} client{eligible.length === 1 ? '' : 's'} eligible
+            </span>
+            {eligible.length > 0 && (
+              <button style={{ background: 'none', border: 'none', color: C.green, fontSize: 13, fontWeight: 600, cursor: 'pointer' }} onClick={() => setSelected(eligible.map(c => c.id))}>
+                Select all
+              </button>
+            )}
           </div>
-          {unreviewedClients.map(client => {
+          {eligible.length === 0 && (
+            <div style={{ padding: '20px', textAlign: 'center', color: '#888', fontSize: 14, background: '#fafafa', borderRadius: 8 }}>
+              Every client with an email on file has been reviewed (or doesn't have an email).
+            </div>
+          )}
+          {eligible.map(client => {
             const sel = selected.includes(client.id);
             return (
               <div key={client.id} style={s.clientRow(sel)} onClick={() => toggleSelect(client.id)}>
                 <div style={s.checkbox(sel)}>{sel && <span style={{ color: '#fff', fontSize: 12 }}>✓</span>}</div>
-                <div style={{ flex: 1 }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 14, fontWeight: 600, color: '#111' }}>{client.name}</div>
-                  <div style={{ fontSize: 12, color: '#888' }}>{client.email} · Last job: {client.lastJob}</div>
+                  <div style={{ fontSize: 12, color: '#888', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {client.email}
+                    {client.reviewRequestedAt && <> · last asked {timeAgo(client.reviewRequestedAt)}</>}
+                  </div>
                 </div>
               </div>
             );
           })}
+          {error && (
+            <div style={{ marginTop: 14, padding: '10px 14px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, fontSize: 13, color: '#b91c1c', lineHeight: 1.5 }}>
+              {error}
+            </div>
+          )}
         </div>
         <div style={s.footer}>
-          <button style={s.btn(false)} onClick={onClose}>Cancel</button>
-          <button style={s.btn(true)} onClick={handleSend} disabled={selected.length === 0}>
-            Send to {selected.length} Client{selected.length !== 1 ? 's' : ''} →
+          <button style={s.btn(false, false)} onClick={onClose} disabled={sending}>Cancel</button>
+          <button style={s.btn(true, !selected.length || sending)} onClick={handleSend} disabled={!selected.length || sending}>
+            {sending ? 'Sending…' : `Send to ${selected.length} Client${selected.length !== 1 ? 's' : ''} →`}
           </button>
         </div>
       </div>
@@ -95,16 +169,19 @@ function ReviewRequestModal({ clients, onClose, onSend }) {
 }
 
 // ─── NEW CAMPAIGN MODAL ───────────────────────────────────────────────────────
-function NewCampaignModal({ onClose, onSave }) {
+function NewCampaignModal({ ownerId, onClose, onSent }) {
   const [step, setStep] = useState(1);
-  const [form, setForm] = useState({ name: '', trade: 'All', subject: '', message: '', schedule: 'now' });
+  const [form, setForm] = useState({ name: '', trade: 'All', subject: '', message: '' });
+  const [sending, setSending] = useState(false);
+  const [error,   setError]   = useState('');
+  const [result,  setResult]  = useState(null);
   const update = (k, v) => setForm(p => ({ ...p, [k]: v }));
 
   const TEMPLATES = [
-    { id: 1, name: 'Spring AC Tune-Up', trade: 'HVAC', subject: "Time for your spring AC tune-up!", message: "Hi [Name],\n\nSpring is here and it's the perfect time to make sure your AC is ready for summer. We're offering a special spring tune-up service — catch problems early before the heat kicks in.\n\nCall or reply to this email to schedule your appointment.\n\nThanks,\n[Your Company]" },
-    { id: 2, name: 'Annual Plumbing Check', trade: 'Plumber', subject: "Is your plumbing ready for the year ahead?", message: "Hi [Name],\n\nIt's been a year since we last serviced your plumbing. A quick annual checkup can catch small problems before they become big ones.\n\nReply or call us to schedule — we'll get you taken care of.\n\n[Your Company]" },
-    { id: 3, name: 'Roof Storm Check', trade: 'Roofing', subject: "Has recent storm weather affected your roof?", message: "Hi [Name],\n\nRecent storms in the area can cause roof damage that isn't always visible from the ground. We're offering free post-storm inspections this month.\n\nDon't wait until a small issue becomes a big leak. Call or reply to book your free inspection.\n\n[Your Company]" },
-    { id: 4, name: 'Referral Request', trade: 'All', subject: "Know someone who needs a great contractor?", message: "Hi [Name],\n\nWe loved working with you and hope you've been happy with our work. If you know anyone who needs a reliable contractor, we'd really appreciate the referral.\n\nAs a thank you, we'll give you $25 off your next service for every referral that books with us.\n\nThanks so much,\n[Your Company]" },
+    { id: 1, name: 'Spring AC Tune-Up',     trade: 'HVAC',     subject: "Time for your spring AC tune-up!",                message: "Hi [FirstName],\n\nSpring is here and it's the perfect time to make sure your AC is ready for summer. We're offering a special spring tune-up service — catch problems early before the heat kicks in.\n\nReply or call to schedule your appointment.\n\nThanks,\n[Company]" },
+    { id: 2, name: 'Annual Plumbing Check', trade: 'Plumber',  subject: "Is your plumbing ready for the year ahead?",      message: "Hi [FirstName],\n\nIt's been a while since we last serviced your plumbing. A quick annual checkup can catch small problems before they become big ones.\n\nReply or call to schedule — we'll take care of you.\n\n[Company]" },
+    { id: 3, name: 'Roof Storm Check',      trade: 'Roofing',  subject: "Has recent storm weather affected your roof?",    message: "Hi [FirstName],\n\nRecent storms in the area can cause roof damage that isn't always visible from the ground. We're offering free post-storm inspections this month.\n\nDon't wait until a small issue becomes a big leak. Reply or call to book your free inspection.\n\n[Company]" },
+    { id: 4, name: 'Referral Request',      trade: 'All',      subject: "Know someone who needs a great contractor?",      message: "Hi [FirstName],\n\nWe loved working with you. If you know anyone who needs a reliable contractor, we'd really appreciate the referral.\n\nAs a thank you, we'll give you $25 off your next service for every referral that books with us.\n\nThanks so much,\n[Company]" },
   ];
 
   const s = {
@@ -118,8 +195,52 @@ function NewCampaignModal({ onClose, onSave }) {
     textarea: { width: '100%', padding: '11px 14px', fontSize: 14, border: '1px solid #ddd', borderRadius: 8, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box', height: 160, resize: 'vertical', lineHeight: 1.7 },
     templateCard: (active) => ({ padding: '14px', border: `1px solid ${active ? C.green : '#e8e8e8'}`, borderRadius: 10, cursor: 'pointer', marginBottom: 10, background: active ? C.greenLight : '#fff' }),
     footer: { padding: '16px 24px', borderTop: '1px solid #f0f0f0', display: 'flex', gap: 10, position: 'sticky', bottom: 0, background: '#fff' },
-    btn: (primary) => ({ flex: 1, padding: '12px', borderRadius: 8, border: primary ? 'none' : '1px solid #ddd', background: primary ? C.green : '#fff', color: primary ? '#fff' : '#666', fontSize: 14, fontWeight: 600, cursor: 'pointer' }),
+    btn: (primary, disabled) => ({ flex: 1, padding: '12px', borderRadius: 8, border: primary ? 'none' : '1px solid #ddd', background: primary ? C.green : '#fff', color: primary ? '#fff' : '#666', fontSize: 14, fontWeight: 600, cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.5 : 1 }),
   };
+
+  const handleSend = async () => {
+    if (sending) return;
+    setSending(true);
+    setError('');
+    try {
+      const r = await sendCampaign({
+        ownerId,
+        name: form.name || form.subject || 'Untitled campaign',
+        tradeFilter: form.trade,
+        subject: form.subject,
+        message: form.message,
+      });
+      setResult(r);
+      if (onSent) await onSent();
+    } catch (e) {
+      setError(e?.message || 'Could not send campaign.');
+    } finally {
+      setSending(false);
+    }
+  };
+
+  if (result) {
+    return (
+      <div style={s.overlay}>
+        <div style={{ ...s.modal, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 40, textAlign: 'center' }}>
+          <div style={{ fontSize: 48, marginBottom: 16 }}>📧</div>
+          <div style={{ fontSize: 20, fontWeight: 800, color: '#111', marginBottom: 8 }}>
+            Campaign sent
+          </div>
+          <div style={{ fontSize: 15, color: '#666', marginBottom: 12 }}>
+            Delivered to {result.sentCount} client{result.sentCount === 1 ? '' : 's'}
+            {result.failedCount > 0 && <span style={{ color: '#b91c1c' }}> · {result.failedCount} failed</span>}.
+          </div>
+          {result.sentCount === 0 && result.detail === 'no_matching_clients' && (
+            <div style={{ fontSize: 13, color: '#b45309', marginBottom: 12, padding: '10px 14px', background: '#fef9c3', borderRadius: 8 }}>
+              No clients matched the "{form.trade}" filter. Try "All Clients" or add jobs first.
+            </div>
+          )}
+          <button style={{ ...s.btn(true, false), flex: 'none', minWidth: 160 }} onClick={onClose}>Done</button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={s.overlay} onClick={onClose}>
@@ -154,38 +275,41 @@ function NewCampaignModal({ onClose, onSave }) {
             <input style={s.input} value={form.name === 'custom' ? '' : form.name} onChange={e => update('name', e.target.value)} placeholder="e.g. Spring HVAC Special" />
             <label style={s.label}>Send To</label>
             <select style={s.select} value={form.trade} onChange={e => update('trade', e.target.value)}>
-              <option value="All">All Clients</option>
-              <option value="Plumber">Plumbing Clients Only</option>
-              <option value="HVAC">HVAC Clients Only</option>
-              <option value="Electrician">Electrical Clients Only</option>
-              <option value="Roofing">Roofing Clients Only</option>
+              {TRADE_OPTIONS.map(t => (
+                <option key={t} value={t}>{t === 'All' ? 'All Clients' : `${t} Clients Only`}</option>
+              ))}
             </select>
             <label style={s.label}>Email Subject</label>
             <input style={s.input} value={form.subject} onChange={e => update('subject', e.target.value)} placeholder="Subject line..." />
             <label style={s.label}>Message</label>
-            <textarea style={s.textarea} value={form.message} onChange={e => update('message', e.target.value)} placeholder="Write your message here. Use [Name] to personalize." />
-            <div style={{ fontSize: 12, color: '#aaa', marginTop: 6 }}>Use [Name] to insert the client's first name automatically.</div>
-            <label style={s.label}>Schedule</label>
-            <select style={s.select} value={form.schedule} onChange={e => update('schedule', e.target.value)}>
-              <option value="now">Send immediately</option>
-              <option value="tomorrow">Tomorrow morning (8 AM)</option>
-              <option value="monday">Next Monday (8 AM)</option>
-            </select>
+            <textarea style={s.textarea} value={form.message} onChange={e => update('message', e.target.value)} placeholder="Write your message here. Use [FirstName] and [Company] to personalize." />
+            <div style={{ fontSize: 12, color: '#aaa', marginTop: 6 }}>
+              Tokens: <code>[FirstName]</code> · <code>[Name]</code> · <code>[Company]</code>
+            </div>
+            {error && (
+              <div style={{ marginTop: 14, padding: '10px 14px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, fontSize: 13, color: '#b91c1c', lineHeight: 1.5 }}>
+                {error}
+              </div>
+            )}
           </div>
         )}
 
         <div style={s.footer}>
           {step === 2 ? (
             <>
-              <button style={s.btn(false)} onClick={() => setStep(1)}>← Back</button>
-              <button style={s.btn(true)} onClick={() => { onSave(form); onClose(); }}>
-                {form.schedule === 'now' ? 'Send Campaign' : 'Schedule Campaign'}
+              <button style={s.btn(false, sending)} onClick={() => setStep(1)} disabled={sending}>← Back</button>
+              <button
+                style={s.btn(true, sending || !form.subject || !form.message)}
+                onClick={handleSend}
+                disabled={sending || !form.subject || !form.message}
+              >
+                {sending ? 'Sending…' : 'Send Campaign'}
               </button>
             </>
           ) : (
             <>
-              <button style={s.btn(false)} onClick={onClose}>Cancel</button>
-              <button style={s.btn(true)} onClick={() => setStep(2)} disabled={!form.name}>Continue →</button>
+              <button style={s.btn(false, false)} onClick={onClose}>Cancel</button>
+              <button style={s.btn(true, !form.name)} onClick={() => setStep(2)} disabled={!form.name}>Continue →</button>
             </>
           )}
         </div>
@@ -194,31 +318,82 @@ function NewCampaignModal({ onClose, onSave }) {
   );
 }
 
+// ─── ACTIVITY FEED ITEM ICON ──────────────────────────────────────────────────
+function iconForSendType(type, status) {
+  if (status === 'failed') return { icon: '⚠', color: '#dc2626' };
+  switch (type) {
+    case 'review_request': return { icon: '⭐', color: '#f59e0b' };
+    case 'campaign':       return { icon: '📧', color: C.green };
+    case 'automation':     return { icon: '⚡', color: '#8b5cf6' };
+    case 'reminder':       return { icon: '🔔', color: '#3b82f6' };
+    default:               return { icon: '📨', color: '#6b7280' };
+  }
+}
+
 // ─── MAIN MARKETING SCREEN ────────────────────────────────────────────────────
-export default function MarketingScreen() {
-  const [tab, setTab] = useState('overview'); // overview | reviews | campaigns | automations | clients
-  const [clients, setClients] = useState(SAMPLE_CLIENTS);
-  const [campaigns, setCampaigns] = useState(SAMPLE_CAMPAIGNS);
-  const [automations, setAutomations] = useState(SAMPLE_AUTOMATIONS);
-  const [showReviewModal, setShowReviewModal] = useState(false);
+//
+// Receives `user` (the owner profile) and `clients` (real list from
+// Supabase) as props. Falls back to safe empty arrays if the route is
+// hit before App.jsx finishes hydrating.
+//
+// Loads campaigns + recent sends on mount via the marketing data layer.
+// All sends go through /api/marketing/* endpoints which use the
+// Resend integration on the server.
+export default function MarketingScreen({ user }) {
+  const ownerId    = user?.id;
+  const reviewLink = user?.reviewLink || user?.googleReviewLink || null;
+
+  const [tab, setTab]                 = useState('overview'); // overview | reviews | campaigns | automations | clients
+  const [clients,   setClients]       = useState([]);
+  const [campaigns, setCampaigns]     = useState([]);
+  const [recentSends, setRecentSends] = useState([]);
+  const [loading, setLoading]         = useState(true);
+  const [showReviewModal, setShowReviewModal]     = useState(false);
   const [showCampaignModal, setShowCampaignModal] = useState(false);
 
-  const totalReviews = clients.filter(c => c.reviewed).length;
-  const totalClients = clients.length;
-  const pendingReviews = totalClients - totalReviews;
-  const activeAutomations = automations.filter(a => a.status === 'active').length;
+  // Hydrate clients + campaign list + send log on mount (and whenever a send
+  // completes — refreshAll() is passed into the modals' onSent prop). All
+  // three are scoped to the signed-in owner via RLS, so a single fetch
+  // per screen entry is fine — no cross-component state sharing needed.
+  const refreshAll = async () => {
+    if (!ownerId) {
+      setLoading(false);
+      return;
+    }
+    try {
+      const [cl, c, s] = await Promise.all([
+        listClients().catch(() => []),
+        listCampaigns().catch(() => []),
+        listRecentSends(50).catch(() => []),
+      ]);
+      setClients(cl);
+      setCampaigns(c);
+      setRecentSends(s);
+    } catch (e) {
+      console.error('marketing load', e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { refreshAll(); }, [ownerId]);
+
+  // Derived counts. Use real clients + sends — no more hardcoded stubs.
+  const totalClients   = clients.length;
+  const reviewedCount  = clients.filter(c => c.reviewedAt).length;
+  const pendingReviews = totalClients - reviewedCount;
   const totalCampaignsSent = campaigns.filter(c => c.status === 'sent').length;
 
-  const handleReviewSend = (ids) => {
-    setClients(prev => prev.map(c => ids.includes(c.id) ? { ...c, reviewed: true } : c));
-  };
-
-  const handleSaveCampaign = (form) => {
-    setCampaigns(prev => [...prev, { id: Date.now(), name: form.name, status: form.schedule === 'now' ? 'sent' : 'scheduled', sent: form.schedule === 'now' ? SAMPLE_CLIENTS.length : 0, opened: 0, clicked: 0, date: new Date().toLocaleDateString(), trade: form.trade }]);
-  };
-
-  const toggleAutomation = (id) => {
-    setAutomations(prev => prev.map(a => a.id === id ? { ...a, status: a.status === 'active' ? 'paused' : 'active' } : a));
+  const handleToggleReviewed = async (client) => {
+    const next = !client.reviewedAt;
+    // Optimistic — flip locally, then persist. Revert on failure.
+    setClients(prev => prev.map(c => c.id === client.id ? { ...c, reviewedAt: next ? new Date().toISOString() : null } : c));
+    try {
+      await setClientReviewed(client.id, next);
+    } catch (e) {
+      alert(e?.message || 'Could not update review status.');
+      setClients(prev => prev.map(c => c.id === client.id ? client : c));
+    }
   };
 
   const s = {
@@ -226,7 +401,7 @@ export default function MarketingScreen() {
     header: { background: '#fff', borderBottom: '1px solid #e8e8e8', padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
     title: { fontSize: 20, fontWeight: 800, color: '#111' },
     tabs: { background: '#fff', borderBottom: '1px solid #e8e8e8', padding: '0 20px', display: 'flex', gap: 0, overflowX: 'auto' },
-    tab: (active) => ({ padding: '12px 16px', fontSize: 13, fontWeight: active ? 700 : 400, color: active ? C.green : '#888', borderBottom: `2px solid ${active ? C.green : 'transparent'}`, cursor: 'pointer', whiteSpace: 'nowrap', background: 'none', border: 'none', borderBottom: `2px solid ${active ? C.green : 'transparent'}` }),
+    tab: (active) => ({ padding: '12px 16px', fontSize: 13, fontWeight: active ? 700 : 400, color: active ? C.green : '#888', cursor: 'pointer', whiteSpace: 'nowrap', background: 'none', border: 'none', borderBottom: `2px solid ${active ? C.green : 'transparent'}` }),
     body: { padding: '24px 20px', maxWidth: 900, margin: '0 auto' },
     statGrid: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 },
     statCard: { background: '#fff', borderRadius: 12, border: '1px solid #e8e8e8', padding: '20px', textAlign: 'center' },
@@ -235,20 +410,56 @@ export default function MarketingScreen() {
     card: { background: '#fff', borderRadius: 12, border: '1px solid #e8e8e8', overflow: 'hidden', marginBottom: 20 },
     cardHeader: { padding: '16px 20px', borderBottom: '1px solid #f0f0f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
     cardTitle: { fontSize: 15, fontWeight: 700, color: '#111' },
-    addBtn: { padding: '8px 14px', background: C.green, color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer' },
     tableHead: { display: 'grid', padding: '10px 20px', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.1em', color: '#aaa', background: '#fafafa', borderBottom: '1px solid #f0f0f0' },
     tableRow: { display: 'grid', padding: '14px 20px', borderBottom: '1px solid #f8f8f8', alignItems: 'center' },
     badge: (color, bg) => ({ display: 'inline-block', padding: '3px 10px', borderRadius: 20, fontSize: 12, fontWeight: 700, color, background: bg }),
-    toggleBtn: (active) => ({ padding: '6px 12px', borderRadius: 20, border: 'none', background: active ? '#dcfce7' : '#f3f4f6', color: active ? '#166534' : '#6b7280', fontSize: 12, fontWeight: 600, cursor: 'pointer' }),
-    emptyState: { padding: '40px 20px', textAlign: 'center', color: '#aaa' },
+    emptyState: { padding: '40px 20px', textAlign: 'center', color: '#888', fontSize: 14, background: '#fff' },
+  };
+
+  // ── Guard: signed-out / not-yet-loaded ────────────────────────────────────
+  if (!ownerId) {
+    return (
+      <div style={s.wrap}>
+        <div style={s.header}><div style={s.title}>Marketing</div></div>
+        <div style={s.body}>
+          <div style={s.emptyState}>Sign in to view marketing tools.</div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Activity feed entry rendering ─────────────────────────────────────────
+  const renderActivityRow = (entry, i) => {
+    const meta = iconForSendType(entry.type, entry.status);
+    const verb = entry.type === 'review_request' ? 'Review request' :
+                 entry.type === 'campaign'       ? 'Campaign' :
+                 entry.type === 'automation'     ? 'Automation' : 'Email';
+    const target = entry.recipientName || entry.recipientEmail;
+    const failNote = entry.status === 'failed' ? ' — failed' : '';
+    return (
+      <div key={entry.id || i} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 20px', borderBottom: '1px solid #f8f8f8' }}>
+        <div style={{ width: 36, height: 36, borderRadius: '50%', background: `${meta.color}20`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>{meta.icon}</div>
+        <div style={{ flex: 1, fontSize: 14, color: '#333', minWidth: 0 }}>
+          <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {verb} sent to <strong>{target}</strong>{failNote}
+          </div>
+          {entry.subject && (
+            <div style={{ fontSize: 12, color: '#888', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {entry.subject}
+            </div>
+          )}
+        </div>
+        <div style={{ fontSize: 12, color: '#aaa', whiteSpace: 'nowrap' }}>{timeAgo(entry.createdAt)}</div>
+      </div>
+    );
   };
 
   const renderOverview = () => (
     <>
       <div style={s.statGrid}>
         <div style={s.statCard}>
-          <div style={s.statNum}>{totalReviews}</div>
-          <div style={s.statLabel}>Google Reviews</div>
+          <div style={s.statNum}>{reviewedCount}</div>
+          <div style={s.statLabel}>Reviews Logged</div>
         </div>
         <div style={s.statCard}>
           <div style={{ ...s.statNum, color: pendingReviews > 0 ? '#f59e0b' : '#10b981' }}>{pendingReviews}</div>
@@ -259,17 +470,17 @@ export default function MarketingScreen() {
           <div style={s.statLabel}>Campaigns Sent</div>
         </div>
         <div style={s.statCard}>
-          <div style={{ ...s.statNum, color: C.green }}>{activeAutomations}</div>
-          <div style={s.statLabel}>Active Automations</div>
+          <div style={{ ...s.statNum, color: C.green }}>{recentSends.length}</div>
+          <div style={s.statLabel}>Recent Sends (30d)</div>
         </div>
       </div>
 
       {/* Quick Actions */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16, marginBottom: 24 }}>
         {[
-          { icon: '⭐', title: 'Request Reviews', desc: `${pendingReviews} clients haven't reviewed yet`, action: () => setShowReviewModal(true), btnText: 'Send Requests' },
-          { icon: '📧', title: 'New Campaign', desc: 'Send a promotion to your clients', action: () => setShowCampaignModal(true), btnText: 'Create Campaign' },
-          { icon: '⚡', title: 'Automations', desc: `${activeAutomations} automations running`, action: () => setTab('automations'), btnText: 'Manage' },
+          { icon: '⭐', title: 'Request Reviews', desc: pendingReviews > 0 ? `${pendingReviews} clients haven't reviewed yet` : 'Ask happy customers for Google reviews', action: () => setShowReviewModal(true), btnText: 'Send Requests' },
+          { icon: '📧', title: 'New Campaign',    desc: 'Send a promotion to your clients',                                                                                              action: () => setShowCampaignModal(true), btnText: 'Create Campaign' },
+          { icon: '⚡', title: 'Automations',     desc: 'Trigger-based sends (coming soon)',                                                                                              action: () => setTab('automations'), btnText: 'View' },
         ].map((item, i) => (
           <div key={i} style={{ background: '#fff', borderRadius: 12, border: '1px solid #e8e8e8', padding: '20px' }}>
             <div style={{ fontSize: 28, marginBottom: 10 }}>{item.icon}</div>
@@ -280,66 +491,78 @@ export default function MarketingScreen() {
         ))}
       </div>
 
-      {/* Recent Activity */}
+      {/* Recent Activity — REAL DATA from marketing_sends. */}
       <div style={s.card}>
         <div style={s.cardHeader}><span style={s.cardTitle}>Recent Activity</span></div>
-        {[
-          { icon: '⭐', text: 'John Miller left a 5-star Google review', time: '2 hours ago', color: '#f59e0b' },
-          { icon: '📧', text: 'Spring AC Tune-Up campaign sent to 45 clients', time: '3 days ago', color: C.green },
-          { icon: '💬', text: 'Review request sent to 5 clients', time: '1 week ago', color: '#3b82f6' },
-          { icon: '⚡', text: 'Annual Maintenance Reminder automation sent to 3 clients', time: '2 weeks ago', color: '#8b5cf6' },
-        ].map((item, i) => (
-          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 20px', borderBottom: '1px solid #f8f8f8' }}>
-            <div style={{ width: 36, height: 36, borderRadius: '50%', background: `${item.color}20`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>{item.icon}</div>
-            <div style={{ flex: 1, fontSize: 14, color: '#333' }}>{item.text}</div>
-            <div style={{ fontSize: 12, color: '#aaa', whiteSpace: 'nowrap' }}>{item.time}</div>
-          </div>
-        ))}
+        {loading && <div style={s.emptyState}>Loading activity…</div>}
+        {!loading && recentSends.length === 0 && (
+          <div style={s.emptyState}>Nothing sent yet. Try a review request or campaign above.</div>
+        )}
+        {!loading && recentSends.slice(0, 6).map(renderActivityRow)}
       </div>
     </>
   );
 
-  const renderReviews = () => (
-    <>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
-        <div style={{ background: C.greenLight, border: `1px solid ${C.greenBorder}`, borderRadius: 12, padding: '20px', display: 'flex', alignItems: 'center', gap: 16 }}>
-          <div style={{ fontSize: 40 }}>⭐</div>
-          <div>
-            <div style={{ fontSize: 32, fontWeight: 900, color: C.green }}>{totalReviews}</div>
-            <div style={{ fontSize: 14, color: C.green }}>Google Reviews</div>
-          </div>
-        </div>
-        <div style={{ background: '#fff', border: '1px solid #e8e8e8', borderRadius: 12, padding: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div>
-            <div style={{ fontSize: 32, fontWeight: 900, color: '#f59e0b' }}>{pendingReviews}</div>
-            <div style={{ fontSize: 14, color: '#888' }}>Clients without a review</div>
-          </div>
-          <button style={{ padding: '10px 16px', background: C.green, color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer' }} onClick={() => setShowReviewModal(true)}>
-            Request Reviews
-          </button>
-        </div>
-      </div>
-      <div style={s.card}>
-        <div style={{ ...s.tableHead, gridTemplateColumns: '1fr 1.5fr 1fr 80px' }}>
-          <span>Client</span><span>Last Job</span><span>Trade</span><span>Review</span>
-        </div>
-        {clients.map(client => (
-          <div key={client.id} style={{ ...s.tableRow, gridTemplateColumns: '1fr 1.5fr 1fr 80px' }}>
+  const renderReviews = () => {
+    const reviewedList = clients.filter(c => c.reviewedAt);
+    const pendingList  = clients.filter(c => !c.reviewedAt);
+    return (
+      <>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
+          <div style={{ background: C.greenLight, border: `1px solid ${C.greenBorder}`, borderRadius: 12, padding: '20px', display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ fontSize: 40 }}>⭐</div>
             <div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: '#111' }}>{client.name}</div>
-              <div style={{ fontSize: 12, color: '#aaa' }}>{client.email}</div>
+              <div style={{ fontSize: 32, fontWeight: 900, color: C.green }}>{reviewedList.length}</div>
+              <div style={{ fontSize: 14, color: C.green }}>Reviews logged</div>
             </div>
-            <div style={{ fontSize: 14, color: '#555' }}>{client.lastJob}</div>
-            <div style={{ fontSize: 13, color: '#666' }}>{client.trade}</div>
-            <div>{client.reviewed
-              ? <span style={s.badge('#166534', '#dcfce7')}>⭐ Done</span>
-              : <span style={s.badge('#b45309', '#fef9c3')}>Pending</span>
-            }</div>
           </div>
-        ))}
-      </div>
-    </>
-  );
+          <div style={{ background: '#fff', border: '1px solid #e8e8e8', borderRadius: 12, padding: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div>
+              <div style={{ fontSize: 32, fontWeight: 900, color: '#f59e0b' }}>{pendingList.length}</div>
+              <div style={{ fontSize: 14, color: '#888' }}>Pending</div>
+            </div>
+            <button style={{ padding: '10px 16px', background: C.green, color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer' }} onClick={() => setShowReviewModal(true)}>
+              Request Reviews
+            </button>
+          </div>
+        </div>
+        <div style={s.card}>
+          <div style={{ ...s.tableHead, gridTemplateColumns: '1.5fr 1.5fr 120px 120px' }}>
+            <span>Client</span><span>Email</span><span>Last Asked</span><span>Status</span>
+          </div>
+          {clients.length === 0 && (
+            <div style={s.emptyState}>No clients yet. Add clients in the Clients screen to start asking for reviews.</div>
+          )}
+          {clients.map(c => (
+            <div key={c.id} style={{ ...s.tableRow, gridTemplateColumns: '1.5fr 1.5fr 120px 120px' }}>
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: '#111' }}>{c.name}</div>
+                <div style={{ fontSize: 12, color: '#aaa' }}>{c.company || c.phone}</div>
+              </div>
+              <div style={{ fontSize: 13, color: '#555', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {c.email || <span style={{ color: '#aaa' }}>—</span>}
+              </div>
+              <div style={{ fontSize: 12, color: '#888' }}>
+                {c.reviewRequestedAt ? timeAgo(c.reviewRequestedAt) : '—'}
+              </div>
+              <div>
+                <button
+                  onClick={() => handleToggleReviewed(c)}
+                  style={{
+                    border: 'none', cursor: 'pointer',
+                    ...s.badge(c.reviewedAt ? '#166534' : '#b45309', c.reviewedAt ? '#dcfce7' : '#fef9c3'),
+                  }}
+                  title={c.reviewedAt ? 'Click to unmark' : 'Click to mark as reviewed'}
+                >
+                  {c.reviewedAt ? '⭐ Done' : 'Mark done'}
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </>
+    );
+  };
 
   const renderCampaigns = () => (
     <>
@@ -349,23 +572,30 @@ export default function MarketingScreen() {
         </button>
       </div>
       <div style={s.card}>
-        <div style={{ ...s.tableHead, gridTemplateColumns: '2fr 1fr 80px 80px 80px 80px' }}>
-          <span>Campaign</span><span>Date</span><span>Sent</span><span>Opened</span><span>Clicked</span><span>Status</span>
+        <div style={{ ...s.tableHead, gridTemplateColumns: '2fr 1fr 80px 1fr 100px' }}>
+          <span>Campaign</span><span>Date</span><span>Sent</span><span>Trade</span><span>Status</span>
         </div>
-        {campaigns.map(c => (
-          <div key={c.id} style={{ ...s.tableRow, gridTemplateColumns: '2fr 1fr 80px 80px 80px 80px' }}>
+        {loading && <div style={s.emptyState}>Loading campaigns…</div>}
+        {!loading && campaigns.length === 0 && (
+          <div style={s.emptyState}>No campaigns yet. Click <strong>+ New Campaign</strong> above to send your first one.</div>
+        )}
+        {!loading && campaigns.map(c => (
+          <div key={c.id} style={{ ...s.tableRow, gridTemplateColumns: '2fr 1fr 80px 1fr 100px' }}>
             <div>
               <div style={{ fontSize: 14, fontWeight: 600, color: '#111' }}>{c.name}</div>
-              <div style={{ fontSize: 12, color: '#aaa' }}>{c.trade}</div>
+              <div style={{ fontSize: 12, color: '#aaa', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.subject}</div>
             </div>
-            <div style={{ fontSize: 13, color: '#666' }}>{c.date}</div>
-            <div style={{ fontSize: 14, fontWeight: 600, color: '#333' }}>{c.sent}</div>
-            <div style={{ fontSize: 14, color: '#555' }}>{c.opened > 0 ? `${Math.round(c.opened/c.sent*100)}%` : '—'}</div>
-            <div style={{ fontSize: 14, color: '#555' }}>{c.clicked > 0 ? `${Math.round(c.clicked/c.sent*100)}%` : '—'}</div>
+            <div style={{ fontSize: 13, color: '#666' }}>
+              {c.sentAt ? new Date(c.sentAt).toLocaleDateString() : new Date(c.createdAt).toLocaleDateString()}
+            </div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: '#333' }}>{c.sentCount}</div>
+            <div style={{ fontSize: 13, color: '#666' }}>{c.tradeFilter || 'All'}</div>
             <div>
-              {c.status === 'sent' && <span style={s.badge('#166534', '#dcfce7')}>Sent</span>}
-              {c.status === 'draft' && <span style={s.badge('#6b7280', '#f3f4f6')}>Draft</span>}
-              {c.status === 'scheduled' && <span style={s.badge('#1d4ed8', '#eff6ff')}>Scheduled</span>}
+              {c.status === 'sent'     && <span style={s.badge('#166534', '#dcfce7')}>Sent</span>}
+              {c.status === 'draft'    && <span style={s.badge('#6b7280', '#f3f4f6')}>Draft</span>}
+              {c.status === 'sending'  && <span style={s.badge('#1d4ed8', '#eff6ff')}>Sending…</span>}
+              {c.status === 'failed'   && <span style={s.badge('#b91c1c', '#fef2f2')}>Failed</span>}
+              {c.status === 'scheduled'&& <span style={s.badge('#1d4ed8', '#eff6ff')}>Scheduled</span>}
             </div>
           </div>
         ))}
@@ -375,30 +605,23 @@ export default function MarketingScreen() {
 
   const renderAutomations = () => (
     <>
-      <div style={{ background: C.greenLight, border: `1px solid ${C.greenBorder}`, borderRadius: 10, padding: '14px 18px', marginBottom: 20, fontSize: 14, color: '#2d6a4f', lineHeight: 1.6 }}>
-        ⚡ Automations run in the background automatically. Once turned on, they send messages to your clients without you having to do anything.
+      <div style={{ background: '#fef9c3', border: '1px solid #fde68a', borderRadius: 10, padding: '14px 18px', marginBottom: 20, fontSize: 14, color: '#854d0e', lineHeight: 1.6 }}>
+        ⏳ <strong>Coming soon.</strong> Trigger-based automations (e.g. "invoice paid → wait 2 days → send review request") need a scheduled background job. We'll add this once Vercel Cron is wired. For now, use <strong>Request Reviews</strong> or <strong>New Campaign</strong> for manual sends.
       </div>
       <div style={s.card}>
-        {automations.map(auto => (
+        {AUTOMATIONS_PREVIEW.map(auto => (
           <div key={auto.id} style={{ padding: '18px 20px', borderBottom: '1px solid #f5f5f5', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
             <div style={{ flex: 1 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
                 <span style={{ fontSize: 15, fontWeight: 700, color: '#111' }}>{auto.name}</span>
-                <span style={s.badge(auto.status === 'active' ? '#166534' : '#6b7280', auto.status === 'active' ? '#dcfce7' : '#f3f4f6')}>
-                  {auto.status}
-                </span>
+                <span style={s.badge('#6b7280', '#f3f4f6')}>paused</span>
               </div>
-              <div style={{ fontSize: 13, color: '#888', marginBottom: 8 }}>
+              <div style={{ fontSize: 13, color: '#888' }}>
                 Trigger: <strong style={{ color: '#555' }}>{auto.trigger}</strong> · Sends: <strong style={{ color: '#555' }}>{auto.delay}</strong>
               </div>
-              <div style={{ display: 'flex', gap: 20 }}>
-                <div style={{ fontSize: 13 }}><span style={{ color: '#aaa' }}>Sent: </span><strong style={{ color: '#333' }}>{auto.sent}</strong></div>
-                <div style={{ fontSize: 13 }}><span style={{ color: '#aaa' }}>Responded: </span><strong style={{ color: C.green }}>{auto.converted}</strong></div>
-                {auto.sent > 0 && <div style={{ fontSize: 13 }}><span style={{ color: '#aaa' }}>Rate: </span><strong style={{ color: '#333' }}>{Math.round(auto.converted/auto.sent*100)}%</strong></div>}
-              </div>
             </div>
-            <button style={s.toggleBtn(auto.status === 'active')} onClick={() => toggleAutomation(auto.id)}>
-              {auto.status === 'active' ? 'Turn Off' : 'Turn On'}
+            <button disabled style={{ padding: '6px 12px', borderRadius: 20, border: 'none', background: '#f3f4f6', color: '#9ca3af', fontSize: 12, fontWeight: 600, cursor: 'not-allowed' }}>
+              Not yet
             </button>
           </div>
         ))}
@@ -410,27 +633,27 @@ export default function MarketingScreen() {
     <div style={s.card}>
       <div style={s.cardHeader}>
         <span style={s.cardTitle}>All Clients — {clients.length}</span>
-        <div style={{ fontSize: 13, color: '#888' }}>Total revenue: ${clients.reduce((s, c) => s + c.totalSpent, 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}</div>
       </div>
-      <div style={{ ...s.tableHead, gridTemplateColumns: '1.5fr 1.5fr 1fr 1fr 80px' }}>
-        <span>Client</span><span>Contact</span><span>Last Job</span><span>Total Spent</span><span>Review</span>
+      <div style={{ ...s.tableHead, gridTemplateColumns: '1.5fr 1.5fr 1fr 100px' }}>
+        <span>Client</span><span>Email</span><span>Phone</span><span>Reviewed</span>
       </div>
-      {clients.map(client => (
-        <div key={client.id} style={{ ...s.tableRow, gridTemplateColumns: '1.5fr 1.5fr 1fr 1fr 80px' }}>
+      {clients.length === 0 && (
+        <div style={s.emptyState}>No clients yet. Add some in the Clients screen.</div>
+      )}
+      {clients.map(c => (
+        <div key={c.id} style={{ ...s.tableRow, gridTemplateColumns: '1.5fr 1.5fr 1fr 100px' }}>
           <div>
-            <div style={{ fontSize: 14, fontWeight: 600, color: '#111' }}>{client.name}</div>
-            <div style={{ fontSize: 12, color: '#aaa' }}>{client.trade}</div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: '#111' }}>{c.name}</div>
+            <div style={{ fontSize: 12, color: '#aaa' }}>{c.company || '—'}</div>
           </div>
+          <div style={{ fontSize: 13, color: '#555', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.email || '—'}</div>
+          <div style={{ fontSize: 13, color: '#666' }}>{c.phone || '—'}</div>
           <div>
-            <div style={{ fontSize: 13, color: '#555' }}>{client.email}</div>
-            <div style={{ fontSize: 12, color: '#aaa' }}>{client.phone}</div>
+            {c.reviewedAt
+              ? <span style={s.badge('#166534', '#dcfce7')}>⭐</span>
+              : <span style={{ ...s.badge('#b45309', '#fef9c3'), cursor: 'pointer' }} onClick={() => setShowReviewModal(true)}>Ask</span>
+            }
           </div>
-          <div style={{ fontSize: 13, color: '#666' }}>{client.lastJob}</div>
-          <div style={{ fontSize: 14, fontWeight: 600, color: '#111' }}>${client.totalSpent.toLocaleString('en-US', { minimumFractionDigits: 2 })}</div>
-          <div>{client.reviewed
-            ? <span style={s.badge('#166534', '#dcfce7')}>⭐</span>
-            : <span style={{ ...s.badge('#b45309', '#fef9c3'), cursor: 'pointer' }} onClick={() => setShowReviewModal(true)}>Ask</span>
-          }</div>
         </div>
       ))}
     </div>
@@ -440,31 +663,45 @@ export default function MarketingScreen() {
     <div style={s.wrap}>
       <div style={s.header}>
         <div style={s.title}>Marketing</div>
-        <div style={{ fontSize: 13, color: '#888' }}>Grow your business with reviews, campaigns & automations</div>
+        <div style={{ fontSize: 13, color: '#888' }}>Grow your business with reviews & campaigns</div>
       </div>
 
       <div style={s.tabs}>
         {[
-          { id: 'overview', label: 'Overview' },
-          { id: 'reviews', label: `Reviews (${totalReviews})` },
-          { id: 'campaigns', label: 'Campaigns' },
+          { id: 'overview',    label: 'Overview' },
+          { id: 'reviews',     label: `Reviews (${reviewedCount})` },
+          { id: 'campaigns',   label: 'Campaigns' },
           { id: 'automations', label: 'Automations' },
-          { id: 'clients', label: `Clients (${totalClients})` },
+          { id: 'clients',     label: `Clients (${totalClients})` },
         ].map(t => (
           <button key={t.id} style={s.tab(tab === t.id)} onClick={() => setTab(t.id)}>{t.label}</button>
         ))}
       </div>
 
       <div style={s.body}>
-        {tab === 'overview' && renderOverview()}
-        {tab === 'reviews' && renderReviews()}
-        {tab === 'campaigns' && renderCampaigns()}
+        {tab === 'overview'    && renderOverview()}
+        {tab === 'reviews'     && renderReviews()}
+        {tab === 'campaigns'   && renderCampaigns()}
         {tab === 'automations' && renderAutomations()}
-        {tab === 'clients' && renderClients()}
+        {tab === 'clients'     && renderClients()}
       </div>
 
-      {showReviewModal && <ReviewRequestModal clients={clients} onClose={() => setShowReviewModal(false)} onSend={handleReviewSend} />}
-      {showCampaignModal && <NewCampaignModal onClose={() => setShowCampaignModal(false)} onSave={handleSaveCampaign} />}
+      {showReviewModal && (
+        <ReviewRequestModal
+          clients={clients}
+          ownerId={ownerId}
+          reviewLink={reviewLink}
+          onClose={() => setShowReviewModal(false)}
+          onSent={refreshAll}
+        />
+      )}
+      {showCampaignModal && (
+        <NewCampaignModal
+          ownerId={ownerId}
+          onClose={() => setShowCampaignModal(false)}
+          onSent={refreshAll}
+        />
+      )}
     </div>
   );
 }

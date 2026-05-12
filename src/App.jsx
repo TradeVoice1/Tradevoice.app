@@ -7,7 +7,9 @@ const JobsScreen           = lazy(() => import("./JobsScreen"));
 const PlansScreen          = lazy(() => import("./PlansScreen"));
 const InvoicePaymentPage   = lazy(() => import("./InvoicePaymentPage").then(m => ({ default: m.InvoicePaymentPage })));
 const QuoteCustomerPage    = lazy(() => import("./QuoteCustomerPage").then(m => ({ default: m.QuoteCustomerPage })));
-import { BillingPaymentModal } from "./BillingPaymentModal";
+// Lazy — only mounted when the user opens the "Update Card" modal. Keeps
+// the Stripe Elements + setup-intent client code out of the initial bundle.
+const BillingPaymentModal = lazy(() => import("./BillingPaymentModal").then(m => ({ default: m.BillingPaymentModal })));
 const MarketingScreen      = lazy(() => import("./MarketingScreen"));
 const PrivacyPolicyScreen  = lazy(() => import("./LegalScreens").then(m => ({ default: m.PrivacyPolicyScreen })));
 const TermsScreen          = lazy(() => import("./LegalScreens").then(m => ({ default: m.TermsScreen })));
@@ -5235,6 +5237,9 @@ function ProfileModal({ profile, onSave, onClose }) {
   const [license,      setLicense]     = useState(profile.license      || '');
   const [accentColor,  setAccentColor] = useState(profile.accentColor  || '');
   const [defaultTerms, setDefaultTerms]= useState(profile.defaultTerms || 'Quote valid for 30 days. 50% deposit required to schedule. Balance due upon completion.');
+  // Google Business Profile review URL — appended to review-request emails
+  // from the Marketing screen so the customer can leave a review in one click.
+  const [reviewLink,   setReviewLink]  = useState(profile.reviewLink   || '');
   const fileRef = useRef(null);
 
   const PRESET_COLORS = [
@@ -5282,7 +5287,7 @@ function ProfileModal({ profile, onSave, onClose }) {
 
   const handleSave = () => {
     const finalColor = colorMode === 'trade' ? '' : colorMode === 'custom' ? accentColor : colorMode;
-    onSave({ ...profile, name, company, email, phone, state, logo, tagline, license, accentColor: finalColor, defaultTerms });
+    onSave({ ...profile, name, company, email, phone, state, logo, tagline, license, accentColor: finalColor, defaultTerms, reviewLink: reviewLink.trim() });
   };
 
   const F = ({ label, children, hint }) => (
@@ -5404,6 +5409,11 @@ function ProfileModal({ profile, onSave, onClose }) {
           <F label="Default Quote Terms" hint="Pre-fills on every new quote — edit per quote as needed">
             <textarea value={defaultTerms} onChange={e => setDefaultTerms(e.target.value)} rows={4}
               style={{ ...s.input, width: '100%', padding: '12px 14px', boxSizing: 'border-box', resize: 'vertical', lineHeight: 1.65, fontSize: 15 }} />
+          </F>
+
+          {/* Google review link — appended to Marketing → Review Request emails. */}
+          <F label="Google Review Link" hint="Get this from your Google Business Profile → 'Get more reviews' → Share. Used in Marketing review-request emails.">
+            {I(reviewLink, setReviewLink, 'https://g.page/r/...', 'url')}
           </F>
 
         </div>
@@ -5708,12 +5718,14 @@ function Billing({ user, setUser, payments }) {
         </div>
       </div>
       {showCard && (
-        <BillingPaymentModal
-          user={user}
-          plan={user?.plan || 'pro'}
-          onClose={() => setShowCard(false)}
-          onSaved={handleSaved}
-        />
+        <Suspense fallback={null}>
+          <BillingPaymentModal
+            user={user}
+            plan={user?.plan || 'pro'}
+            onClose={() => setShowCard(false)}
+            onSaved={handleSaved}
+          />
+        </Suspense>
       )}
 
       {/* Payment methods */}
@@ -6599,6 +6611,7 @@ function Settings({ user, setUser, logo, onLogoChange, showProfileModal, setShow
                 accentColor:  p.accentColor,
                 defaultTerms: p.defaultTerms,
                 logoUrl:      p.logo,             // persist the Storage URL on the profile row
+                reviewLink:   p.reviewLink,       // Google Business Profile review URL
               });
               if (setUser) setUser(prev => ({ ...prev, ...saved }));
             } catch (e) {
@@ -7634,7 +7647,7 @@ function TradevoiceApp() {
     jobs:      <JobsScreen   user={user} team={teamMembers} onCreateInvoice={handleJobToInvoice} />,
     plans:     <PlansScreen  user={user} team={teamMembers} plans={plans} persistPlan={persistPlan} removePlan={removePlan} onScheduleFromPlan={handleScheduleFromPlan} />,
     clients:   <Clients      user={user} nav={setSection} invoices={sharedInvoices} />,
-    marketing: <MarketingScreen />,
+    marketing: <MarketingScreen user={user} />,
     settings:  <Settings     user={user} setUser={setUser} logo={logo} onLogoChange={setLogo} showProfileModal={showProfileModal} setShowProfileModal={setShowProfileModal} payments={payments} setPayments={setPaymentsPersist} taxRates={taxRates} setTaxRates={setTaxRatesPersist} teamMembers={teamMembers} setTeamMembers={setTeamMembers} persistTeamMember={persistTeamMember} removeTeamMember={removeTeamMember} createTechAccount={createTechAccountHandler} timeOff={timeOff} persistTimeOff={persistTimeOff} removeTimeOff={removeTimeOff} />,
     privacy:   <PrivacyPolicyScreen onBack={() => setSection('settings')} />,
     terms:     <TermsScreen onBack={() => setSection('settings')} />,

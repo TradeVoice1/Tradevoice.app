@@ -4,12 +4,22 @@
 import { supabase } from "../supabase";
 
 const dbToClient = (r) => ({
-  id:      r.id,
-  name:    r.name    ?? '',
-  company: r.company ?? '',
-  email:   r.email   ?? '',
-  phone:   r.phone   ?? '',
-  address: r.address ?? '',
+  id:                 r.id,
+  name:               r.name    ?? '',
+  company:            r.company ?? '',
+  email:              r.email   ?? '',
+  phone:              r.phone   ?? '',
+  address:            r.address ?? '',
+  // Marketing review tracking (migration 0019). Null until the contractor
+  // either asks for or marks a review.
+  reviewedAt:         r.reviewed_at         ?? null,
+  reviewRequestedAt:  r.review_requested_at ?? null,
+  // Unsubscribe state (migration 0020). unsubscribedAt is set when the
+  // client clicks the unsubscribe link OR Apple Mail's one-click button
+  // (Phase 2 — RFC 8058). The token is the public-facing identifier the
+  // unsubscribe URL carries.
+  unsubscribedAt:     r.unsubscribed_at     ?? null,
+  unsubscribeToken:   r.unsubscribe_token   ?? null,
 });
 
 const clientToDb = (c) => ({

@@ -26,6 +26,7 @@ const dbToProfile = (row) => row && ({
   companyCode:      row.company_code      ?? '',
   acceptedTermsAt:  row.accepted_terms_at ?? null,
   logoUrl:          row.logo_url          ?? null,
+  reviewLink:       row.review_link       ?? '',
   payments:         row.payments          ?? {},
   taxRates:         row.tax_rates         ?? {},
   // Stripe Connect (migration 0013). Null until the contractor finishes the
@@ -61,6 +62,7 @@ const profileToDb = (p) => ({
   company_code:       p.companyCode       ?? null,
   accepted_terms_at:  p.acceptedTermsAt   ?? null,
   logo_url:           p.logoUrl           ?? null,
+  review_link:        p.reviewLink        ?? null,
   payments:           p.payments,
   tax_rates:          p.taxRates,
 });
