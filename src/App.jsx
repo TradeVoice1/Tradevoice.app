@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, lazy, Suspense } from "react";
+import { useState, useRef, useEffect, lazy, Suspense, Fragment } from "react";
 // Heavy screens are code-split — they load on demand the first time the user
 // visits them. The auth bundle stays small so first paint is fast.
 const ForgotPasswordScreen = lazy(() => import("./ForgotPassword").then(m => ({ default: m.ForgotPasswordScreen })));
@@ -2475,6 +2475,20 @@ function InvoiceEditor({ initial, user, teamMembers = [], existingInvoices = [],
   const [equipment, setEquipment] = useState(initial?.equipment || []);
   const [tab,       setTab]       = useState('labor');
   const [selMat,    setSelMat]    = useState(null);
+  // ── Job-detail tracking (migration 0023) ──
+  // All optional — empty for residential one-off work, mostly used by commercial /
+  // property-management work where AP needs PO numbers + job-site differentiation.
+  const [poNumber,        setPoNumber]        = useState(initial?.poNumber        || '');
+  const [workOrderNumber, setWorkOrderNumber] = useState(initial?.workOrderNumber || '');
+  const [jobAddress,      setJobAddress]      = useState(initial?.jobAddress      || '');
+  // jobAddressSameAsBilling: defaults true when the invoice has no separate
+  // job address (most cases). Unchecking exposes the dedicated job-address field.
+  const [jobAddressSame,  setJobAddressSame]  = useState(!initial?.jobAddress);
+  const [requestedBy,     setRequestedBy]     = useState(initial?.requestedBy     || '');
+  const [approvedBy,      setApprovedBy]      = useState(initial?.approvedBy      || '');
+  const [salespersonId,   setSalespersonId]   = useState(initial?.salespersonUserId || null);
+  const [servicePeriodStart, setServicePeriodStart] = useState(initial?.servicePeriodStart || '');
+  const [servicePeriodEnd,   setServicePeriodEnd]   = useState(initial?.servicePeriodEnd   || '');
 
   const handleTermsChange = (newTerms) => {
     setTerms(newTerms);
@@ -2506,11 +2520,15 @@ function InvoiceEditor({ initial, user, teamMembers = [], existingInvoices = [],
     }
 
     const activity = initial?.activity || [{ date: createdAt, type:'created', note:'Invoice created' }];
-    // Resolve tech name from the picked id — owner, team member, or null.
-    const techMember = teamMembers.find(t => (t.userId || t.id) === techUserId);
-    const techName   = techUserId === user?.id
-      ? (user?.name || '')
-      : (techMember?.name || '');
+    // Resolve tech + salesperson names from picked ids — owner, team member, or null.
+    const resolveName = (id) => {
+      if (!id) return '';
+      if (id === user?.id) return user?.name || '';
+      const m = teamMembers.find(t => (t.userId || t.id) === id);
+      return m?.name || '';
+    };
+    const techName        = resolveName(techUserId);
+    const salespersonName = resolveName(salespersonId);
     const inv = {
       ...(initial||{}), id: initial?.id || uid2(),
       number, title: title.trim(),
@@ -2521,6 +2539,18 @@ function InvoiceEditor({ initial, user, teamMembers = [], existingInvoices = [],
       payments: initial?.payments || [],
       activity,
       status: asDraft ? 'draft' : (initial?.status || 'draft'),
+      // Job-detail fields (migration 0023). jobAddress goes null when the
+      // "same as billing" checkbox is set — so the printable doc collapses
+      // the redundant block instead of showing the same address twice.
+      poNumber:           poNumber.trim()         || '',
+      workOrderNumber:    workOrderNumber.trim()  || '',
+      jobAddress:         jobAddressSame ? '' : jobAddress.trim(),
+      requestedBy:        requestedBy.trim()      || '',
+      approvedBy:         approvedBy.trim()       || '',
+      salespersonUserId:  salespersonId           || null,
+      salespersonName,
+      servicePeriodStart: servicePeriodStart      || '',
+      servicePeriodEnd:   servicePeriodEnd        || '',
     };
 
     setSaving(true);
@@ -2650,6 +2680,77 @@ function InvoiceEditor({ initial, user, teamMembers = [], existingInvoices = [],
             </select>
           </div>
           )}
+        </div>
+      </div>
+
+      {/* ── Job Details (migration 0023) ──
+          PO #, work order, site address, requested/approved by, salesperson,
+          service period. All optional — empty for residential one-off work,
+          critical for commercial / property-management invoicing where AP
+          won't pay without these fields. */}
+      <div style={{ background:C.surface, border:`1px solid ${C.border}`, borderRadius:4, padding:'20px 22px', marginBottom:16 }}>
+        <div style={{ fontSize:15, fontWeight:800, color:C.muted, letterSpacing:'0.1em', textTransform:'uppercase', marginBottom:14, fontFamily:"'Inter', sans-serif" }}>Job Details</div>
+
+        {/* PO + Work Order + Service Period */}
+        <div style={{ display:'grid', gridTemplateColumns:isTablet?'1fr':'1fr 1fr 1fr 1fr', gap:12 }}>
+          <div>
+            <label style={s.label}>PO Number</label>
+            <input value={poNumber} onChange={e=>setPoNumber(e.target.value)} placeholder="e.g. PO-29481"
+              style={{ ...s.input, width:'100%', padding:'11px 12px', boxSizing:'border-box', fontSize:17, minHeight:48 }} />
+          </div>
+          <div>
+            <label style={s.label}>Work Order #</label>
+            <input value={workOrderNumber} onChange={e=>setWorkOrderNumber(e.target.value)} placeholder="e.g. WO-1042"
+              style={{ ...s.input, width:'100%', padding:'11px 12px', boxSizing:'border-box', fontSize:17, minHeight:48 }} />
+          </div>
+          <div>
+            <label style={s.label}>Service Period Start</label>
+            <input type="date" value={servicePeriodStart} onChange={e=>setServicePeriodStart(e.target.value)}
+              style={{ ...s.input, width:'100%', padding:'11px 12px', boxSizing:'border-box', fontSize:17, minHeight:48 }} />
+          </div>
+          <div>
+            <label style={s.label}>Service Period End</label>
+            <input type="date" value={servicePeriodEnd} onChange={e=>setServicePeriodEnd(e.target.value)}
+              style={{ ...s.input, width:'100%', padding:'11px 12px', boxSizing:'border-box', fontSize:17, minHeight:48 }} />
+          </div>
+        </div>
+
+        {/* Job site address — toggleable */}
+        <div style={{ marginTop:14 }}>
+          <label style={{ ...s.label, display:'flex', alignItems:'center', gap:10, cursor:'pointer' }}>
+            <input type="checkbox" checked={jobAddressSame} onChange={e=>setJobAddressSame(e.target.checked)}
+              style={{ width:18, height:18, cursor:'pointer' }} />
+            <span>Job site is same as billing address</span>
+          </label>
+          {!jobAddressSame && (
+            <input value={jobAddress} onChange={e=>setJobAddress(e.target.value)} placeholder="2847 Magnolia Dr, Suite B, Houston TX"
+              style={{ ...s.input, width:'100%', padding:'11px 12px', boxSizing:'border-box', fontSize:17, minHeight:48, marginTop:8 }} />
+          )}
+        </div>
+
+        {/* Requested by / Approved by / Salesperson */}
+        <div style={{ display:'grid', gridTemplateColumns:isTablet?'1fr':'1fr 1fr 1fr', gap:12, marginTop:14 }}>
+          <div>
+            <label style={s.label}>Service Requested By</label>
+            <input value={requestedBy} onChange={e=>setRequestedBy(e.target.value)} placeholder="Property manager, foreman, owner"
+              style={{ ...s.input, width:'100%', padding:'11px 12px', boxSizing:'border-box', fontSize:17, minHeight:48 }} />
+          </div>
+          <div>
+            <label style={s.label}>Approved By</label>
+            <input value={approvedBy} onChange={e=>setApprovedBy(e.target.value)} placeholder="Signatory who authorized the work"
+              style={{ ...s.input, width:'100%', padding:'11px 12px', boxSizing:'border-box', fontSize:17, minHeight:48 }} />
+          </div>
+          <div>
+            <label style={s.label}>Salesperson</label>
+            <select value={salespersonId || ''} onChange={e=>setSalespersonId(e.target.value || null)}
+              style={{ ...s.input, width:'100%', padding:'11px 12px', boxSizing:'border-box', fontSize:16, minHeight:48, cursor:'pointer', fontWeight:600 }}>
+              <option value="">— None —</option>
+              <option value={user?.id}>{user?.name || 'You (owner)'}</option>
+              {teamMembers.map(t => (
+                <option key={t.id} value={t.userId || t.id}>{t.name || 'Team member'}</option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 
@@ -2947,11 +3048,18 @@ function InvoiceDocument({ invoice, user, logo, payments, onEdit, onBack, onReco
                 ['Date',   invoice.createdAt || '—'],
                 ['Due',    invoice.dueAt     || 'Net 30'],
                 ['Status', (INV_STATUS[invoice.status]?.label || 'Draft').toUpperCase()],
+                // Optional metadata — only render rows that are populated so
+                // residential one-off invoices stay clean and commercial
+                // invoices surface what AP needs.
+                ...(invoice.poNumber         ? [['PO #', invoice.poNumber]] : []),
+                ...(invoice.workOrderNumber  ? [['Work Order #', invoice.workOrderNumber]] : []),
+                ...((invoice.servicePeriodStart || invoice.servicePeriodEnd)
+                    ? [['Service Period', `${invoice.servicePeriodStart || '?'} → ${invoice.servicePeriodEnd || '?'}`]] : []),
               ].map(([label, val]) => (
-                <>
-                  <span key={label+'-l'} style={{ fontSize:16, fontWeight:800, textTransform:'uppercase', letterSpacing:'0.09em', color:'#bbb', paddingTop:2, whiteSpace:'nowrap' }}>{label}</span>
-                  <span key={label+'-v'} style={{ fontSize:17, fontWeight:600, color: invoice.status==='paid' ? C.success : invoice.status==='overdue' ? C.error : '#222' }}>{val}</span>
-                </>
+                <Fragment key={label}>
+                  <span style={{ fontSize:16, fontWeight:800, textTransform:'uppercase', letterSpacing:'0.09em', color:'#bbb', paddingTop:2, whiteSpace:'nowrap' }}>{label}</span>
+                  <span style={{ fontSize:17, fontWeight:600, color: invoice.status==='paid' ? C.success : invoice.status==='overdue' ? C.error : '#222' }}>{val}</span>
+                </Fragment>
               ))}
             </div>
           </div>
@@ -2965,19 +3073,31 @@ function InvoiceDocument({ invoice, user, logo, payments, onEdit, onBack, onReco
             {invoice.clientAddress && <div style={{ fontSize:17, color:'#777', marginTop:2, lineHeight:1.8 }}>{invoice.clientAddress}</div>}
             {invoice.clientEmail && <div style={{ fontSize:17, color:'#777' }}>{invoice.clientEmail}</div>}
             {invoice.clientPhone && <div style={{ fontSize:17, color:'#777' }}>{invoice.clientPhone}</div>}
+            {/* Job site block — only when the work was at an address that
+                differs from billing (typical for commercial property mgmt). */}
+            {invoice.jobAddress && (
+              <div style={{ marginTop: 14, paddingTop: 12, borderTop: '1px dashed #ddd' }}>
+                <div style={{ fontSize:14, fontWeight:900, textTransform:'uppercase', letterSpacing:'0.12em', color:'#bbb', marginBottom:4, fontFamily:"'Inter', sans-serif" }}>Job Site</div>
+                <div style={{ fontSize:16, color:'#444', lineHeight:1.6 }}>{invoice.jobAddress}</div>
+              </div>
+            )}
           </div>
           <div>
             <div style={{ fontSize:16, fontWeight:900, textTransform:'uppercase', letterSpacing:'0.12em', color:'#bbb', marginBottom:6, fontFamily:"'Inter', sans-serif" }}>Job</div>
             <div style={{ fontSize:20, fontWeight:700, color:'#111', lineHeight:1.4 }}>{invoice.title}</div>
-            {/* Tech attribution — who performed the work. Only render if set,
-                so old invoices created before this column existed don't get
-                an awkward "by —" empty line. */}
-            {invoice.techName && (
-              <div style={{ marginTop: 8, fontSize: 15, color: '#666', display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#bbb' }}>Performed by</span>
-                <span style={{ fontWeight: 700, color: '#222' }}>{invoice.techName}</span>
+            {/* People rows — each only renders when set, so old invoices
+                created before these columns existed stay clean. */}
+            {[
+              ['Performed by',   invoice.techName],
+              ['Sold by',        invoice.salespersonName],
+              ['Requested by',   invoice.requestedBy],
+              ['Approved by',    invoice.approvedBy],
+            ].filter(([_, v]) => v && String(v).trim()).map(([label, val]) => (
+              <div key={label} style={{ marginTop: 8, fontSize: 15, color: '#666', display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                <span style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#bbb' }}>{label}</span>
+                <span style={{ fontWeight: 700, color: '#222' }}>{val}</span>
               </div>
-            )}
+            ))}
           </div>
         </div>
 
@@ -3571,6 +3691,10 @@ function VoiceInvoice({ user, logo, payments, teamMembers = [], sharedInvoices, 
       await persistInvoice({
         ...inv,
         status: 'sent',
+        // Stamp sent_at (migration 0023) so the list view can show "Sent
+        // Mar 12" without parsing the activity log jsonb. Preserve existing
+        // value on re-shares — first-send timestamp is what matters.
+        sentAt: inv.sentAt || new Date().toISOString(),
         activity: [...(inv.activity || []), {
           date: today(),
           type: 'sent',

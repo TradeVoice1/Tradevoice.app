@@ -37,6 +37,18 @@ const dbToInvoice = (r) => ({
   // Public-link share token (migration 0011). One unguessable UUID per
   // invoice; powers the /i/<token> public viewer.
   shareToken:     r.share_token    ?? null,
+  // ── Tracking + job-detail fields (migration 0023) ──────────────────────
+  poNumber:           r.po_number             ?? '',
+  workOrderNumber:    r.work_order_number     ?? '',
+  jobAddress:         r.job_address           ?? '',
+  requestedBy:        r.requested_by          ?? '',
+  approvedBy:         r.approved_by           ?? '',
+  salespersonUserId:  r.salesperson_user_id   ?? null,
+  salespersonName:    r.salesperson_name      ?? '',
+  sentAt:             r.sent_at               ?? null,
+  viewedAt:           r.viewed_at             ?? null,
+  servicePeriodStart: r.service_period_start  ?? '',
+  servicePeriodEnd:   r.service_period_end    ?? '',
 });
 
 // Translate the front-end invoice shape into the DB column names. We do NOT include
@@ -68,6 +80,19 @@ const invoiceToDb = (inv) => ({
   tech_user_id:    inv.techUserId    || null,
   tech_name:       inv.techName      ?? null,
   source_quote_id: inv.sourceQuoteId || null,
+  // ── Tracking + job-detail fields (migration 0023). Empty strings coerce
+  // to null so Postgres doesn't store unhelpful '' values for dates etc.
+  po_number:            inv.poNumber           || null,
+  work_order_number:    inv.workOrderNumber    || null,
+  job_address:          inv.jobAddress         || null,
+  requested_by:         inv.requestedBy        || null,
+  approved_by:          inv.approvedBy         || null,
+  salesperson_user_id:  inv.salespersonUserId  || null,
+  salesperson_name:     inv.salespersonName    || null,
+  sent_at:              inv.sentAt             || null,
+  viewed_at:            inv.viewedAt           || null,
+  service_period_start: inv.servicePeriodStart || null,
+  service_period_end:   inv.servicePeriodEnd   || null,
 });
 
 export async function listInvoices() {

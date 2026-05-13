@@ -5,6 +5,10 @@ import { supabase } from "../supabase";
 
 const dbToClient = (r) => ({
   id:                 r.id,
+  // Human-readable per-owner sequential ID (migration 0023). Auto-assigned
+  // by trigger on insert as CUST-0001, CUST-0002, etc. The contractor uses
+  // this on POs, in conversation, and on QuickBooks exports.
+  customerNumber:     r.customer_number ?? '',
   name:               r.name    ?? '',
   company:            r.company ?? '',
   email:              r.email   ?? '',
