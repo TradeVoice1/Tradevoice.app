@@ -27,6 +27,14 @@ const dbToProfile = (row) => row && ({
   acceptedTermsAt:  row.accepted_terms_at ?? null,
   logoUrl:          row.logo_url          ?? null,
   reviewLink:       row.review_link       ?? '',
+  // Certificate of Insurance — commercial AP departments require this on
+  // invoices before processing payment (migration 0024).
+  coiCarrier:           row.coi_carrier              ?? '',
+  coiPolicyNumber:      row.coi_policy_number        ?? '',
+  coiExpiresAt:         row.coi_expires_at           ?? '',
+  // Default late-fee policy text — pre-fills new invoices; can be
+  // overridden per invoice. "1.5% per month after Net 30" style.
+  defaultLateFeePolicy: row.default_late_fee_policy  ?? '',
   payments:         row.payments          ?? {},
   taxRates:         row.tax_rates         ?? {},
   // Stripe Connect (migration 0013). Null until the contractor finishes the
@@ -63,6 +71,10 @@ const profileToDb = (p) => ({
   accepted_terms_at:  p.acceptedTermsAt   ?? null,
   logo_url:           p.logoUrl           ?? null,
   review_link:        p.reviewLink        ?? null,
+  coi_carrier:              p.coiCarrier              ?? null,
+  coi_policy_number:        p.coiPolicyNumber         ?? null,
+  coi_expires_at:           p.coiExpiresAt            || null,
+  default_late_fee_policy:  p.defaultLateFeePolicy    ?? null,
   payments:           p.payments,
   tax_rates:          p.taxRates,
 });

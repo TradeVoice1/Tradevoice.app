@@ -7,8 +7,106 @@
 // (Venmo / Zelle / Check / Cash / etc. as configured by the contractor).
 
 import React, { useState, useEffect } from "react";
-import { getPublicInvoice } from "./data/invoices";
+import { getPublicInvoice, signPublicInvoice } from "./data/invoices";
 import { StripePayPanel } from "./StripePayPanel";
+
+// ── Customer e-signature block ──
+// Typed-name acknowledgement (CAN-SPAM-style soft signature; not a drawn
+// canvas — kept deliberately simple for Ship 2). The customer types their
+// name + agrees the work as described was completed; server stamps a
+// server-side timestamp + (where available) the source IP. The UI flips
+// to a success state once captured, persists across reloads via the
+// invoice's customer_signed_at field already returned by getPublicInvoice.
+function CustomerSignBlock({ token, invoice, onSigned, accent }) {
+  const alreadySigned = !!invoice.customerSignedAt;
+  const [name,     setName]    = useState(invoice.customerSignedName || invoice.clientName || '');
+  const [agreed,   setAgreed]  = useState(alreadySigned);
+  const [busy,     setBusy]    = useState(false);
+  const [error,    setError]   = useState('');
+  // Show post-submit confirmation if signature was captured in this session.
+  const [justSignedAt, setJustSignedAt] = useState(null);
+
+  const signedDisplayAt = invoice.customerSignedAt || justSignedAt;
+
+  const handleSubmit = async () => {
+    if (busy) return;
+    setError('');
+    if (!name.trim()) { setError('Type your full name.'); return; }
+    if (!agreed)      { setError('Check the box to confirm.'); return; }
+    setBusy(true);
+    try {
+      const r = await signPublicInvoice(token, name);
+      setJustSignedAt(r.signed_at);
+      if (onSigned) onSigned({ name: r.name, signedAt: r.signed_at });
+    } catch (e) {
+      setError(e?.message || 'Could not record signature.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div style={{ padding: '20px 32px', borderTop: `1.5px solid ${C.border}`, background: '#fff' }}>
+      <div style={{ fontSize: 12, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#aaa', marginBottom: 10 }}>
+        Acknowledge Receipt
+      </div>
+      {signedDisplayAt ? (
+        <div style={{ padding: '14px 16px', background: C.greenLo, border: `1px solid ${C.green}33`, borderRadius: 8 }}>
+          <div style={{ fontSize: 14, color: C.green, fontWeight: 700, marginBottom: 4 }}>
+            ✓ Signed by {invoice.customerSignedName || name}
+          </div>
+          <div style={{ fontSize: 12, color: C.muted }}>
+            {new Date(signedDisplayAt).toLocaleString()}
+          </div>
+        </div>
+      ) : (
+        <>
+          <div style={{ fontSize: 14, color: '#555', lineHeight: 1.6, marginBottom: 12 }}>
+            Confirm that the work described above was completed. This sign-off doesn't replace payment — it documents acceptance of the work for both parties.
+          </div>
+          <input
+            type="text"
+            placeholder="Type your full name"
+            value={name}
+            onChange={e => setName(e.target.value)}
+            style={{
+              width: '100%', padding: '12px 14px', fontSize: 16, minHeight: 44,
+              border: `1px solid ${C.border2}`, borderRadius: 8, outline: 'none',
+              fontFamily: 'inherit', boxSizing: 'border-box', marginBottom: 10,
+            }}
+          />
+          <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer', fontSize: 14, color: '#555', lineHeight: 1.5 }}>
+            <input
+              type="checkbox"
+              checked={agreed}
+              onChange={e => setAgreed(e.target.checked)}
+              style={{ width: 18, height: 18, marginTop: 2, cursor: 'pointer' }}
+            />
+            <span>I confirm the work described on this invoice was completed and acknowledge receipt.</span>
+          </label>
+          {error && (
+            <div style={{ marginTop: 10, padding: '8px 12px', background: C.errorLo, border: `1px solid ${C.error}33`, borderRadius: 6, fontSize: 13, color: C.errorBold }}>
+              {error}
+            </div>
+          )}
+          <button
+            onClick={handleSubmit}
+            disabled={busy}
+            style={{
+              marginTop: 12, padding: '12px 22px', minHeight: 44,
+              background: accent || C.green, color: '#fff', border: 'none',
+              borderRadius: 8, fontSize: 15, fontWeight: 700,
+              cursor: busy ? 'wait' : 'pointer', opacity: busy ? 0.5 : 1,
+              fontFamily: 'inherit',
+            }}
+          >
+            {busy ? 'Recording…' : 'Sign + Acknowledge'}
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
 
 const C = {
   bg:        '#f3f6f4',
@@ -288,11 +386,56 @@ export function InvoicePaymentPage({ token }) {
             );
           })()}
 
+          {/* Customer signature block — Ship 2 (migration 0024).
+              Only render when the invoice is in a signable state. Once
+              signed, the block flips to a confirmation card and survives
+              page reloads via the invoice's customer_signed_at field. */}
+          {['sent','viewed','partial','overdue'].includes(inv.status) && (
+            <CustomerSignBlock
+              token={token}
+              invoice={inv}
+              accent={accent}
+              onSigned={({ name, signedAt }) => {
+                // Optimistically reflect the signed state so the block flips
+                // immediately (without re-fetching the invoice). The next
+                // reload will hydrate from the DB anyway.
+                setData(prev => prev ? ({
+                  ...prev,
+                  invoice: { ...prev.invoice, customerSignedName: name, customerSignedAt: signedAt },
+                }) : prev);
+              }}
+            />
+          )}
+
           {/* Notes */}
           {inv.notes && (
             <div style={{ padding: '16px 32px 22px', borderTop: `1.5px solid ${C.border}`, background: '#fafafa' }}>
               <div style={{ fontSize: 12, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#aaa', marginBottom: 5 }}>Notes</div>
               <div style={{ fontSize: 14, color: '#666', lineHeight: 1.6 }}>{inv.notes}</div>
+            </div>
+          )}
+
+          {/* Late-fee terms + COI footer block — Ship 2. Only renders the
+              parts that are populated. Mirrors the in-app InvoiceDocument
+              treatment so the printed/public copies stay in sync. */}
+          {(inv.lateFeeTerms || profile?.coiCarrier) && (
+            <div style={{ padding: '14px 32px', background: '#fafafa', borderTop: '1px solid #eee', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18 }}>
+              {inv.lateFeeTerms && (
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#aaa', marginBottom: 4 }}>Payment Terms</div>
+                  <div style={{ fontSize: 13, color: '#666', lineHeight: 1.6 }}>{inv.lateFeeTerms}</div>
+                </div>
+              )}
+              {profile?.coiCarrier && (
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#aaa', marginBottom: 4 }}>Insurance</div>
+                  <div style={{ fontSize: 13, color: '#666', lineHeight: 1.6 }}>
+                    {profile.coiCarrier}
+                    {profile.coiPolicyNumber && <> · Policy {profile.coiPolicyNumber}</>}
+                    {profile.coiExpiresAt && <> · Exp {profile.coiExpiresAt}</>}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

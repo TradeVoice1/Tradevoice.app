@@ -49,6 +49,15 @@ const dbToInvoice = (r) => ({
   viewedAt:           r.viewed_at             ?? null,
   servicePeriodStart: r.service_period_start  ?? '',
   servicePeriodEnd:   r.service_period_end    ?? '',
+  // ── Ship 2 — invoice maturity fields (migration 0024) ─────────────────
+  permitNumber:       r.permit_number         ?? '',
+  discountAmount:     r.discount_amount != null ? Number(r.discount_amount) : 0,
+  discountLabel:      r.discount_label        ?? '',
+  lateFeeTerms:       r.late_fee_terms        ?? '',
+  techSignedName:     r.tech_signed_name      ?? '',
+  techSignedAt:       r.tech_signed_at        ?? null,
+  customerSignedName: r.customer_signed_name  ?? '',
+  customerSignedAt:   r.customer_signed_at    ?? null,
 });
 
 // Translate the front-end invoice shape into the DB column names. We do NOT include
@@ -93,6 +102,16 @@ const invoiceToDb = (inv) => ({
   viewed_at:            inv.viewedAt           || null,
   service_period_start: inv.servicePeriodStart || null,
   service_period_end:   inv.servicePeriodEnd   || null,
+  // Ship 2 (migration 0024) — note we DO NOT round-trip customer_signed_*
+  // fields here. Those are written exclusively via the sign_public_invoice
+  // RPC from the anonymous public invoice page. The owner editor reads
+  // them but never writes — keeps the signature audit trail honest.
+  permit_number:        inv.permitNumber       || null,
+  discount_amount:      inv.discountAmount != null && inv.discountAmount !== '' ? Number(inv.discountAmount) : 0,
+  discount_label:       inv.discountLabel      || null,
+  late_fee_terms:       inv.lateFeeTerms       || null,
+  tech_signed_name:     inv.techSignedName     || null,
+  tech_signed_at:       inv.techSignedAt       || null,
 });
 
 export async function listInvoices() {
@@ -141,6 +160,27 @@ export async function deleteInvoice(id) {
   if (error) throw error;
 }
 
+// Public e-signature — called by the customer-facing /i/<token> page when
+// the customer types their name + acknowledges receipt. Anon-callable via
+// the sign_public_invoice RPC (migration 0024). Returns the server-stamped
+// timestamp so the UI can switch into a "signed" success state.
+export async function signPublicInvoice(shareToken, signerName) {
+  if (!shareToken) throw new Error('Missing share token.');
+  if (!signerName || !signerName.trim()) throw new Error('Type your name to sign.');
+  const { data, error } = await supabase.rpc('sign_public_invoice', {
+    p_token: shareToken,
+    p_name:  signerName.trim(),
+    p_ip:    null,   // browser can't reliably know its own public IP — server logs the source already
+  });
+  if (error) throw error;
+  if (!data?.ok) {
+    const err = new Error(data?.error || 'Could not record signature.');
+    err.code = data?.error;
+    throw err;
+  }
+  return data; // { ok, signed_at, name }
+}
+
 // Public lookup by share_token — used by the customer-facing /i/<token> page.
 // Goes through a security-definer RPC so RLS still locks SELECT for normal
 // queries; only this function (and only via the unguessable token) returns
@@ -171,6 +211,13 @@ export async function getPublicInvoice(shareToken) {
           // vs the existing handle-based payment instructions.
           stripeAccountId:      data.profile.stripe_account_id || null,
           stripeChargesEnabled: !!data.profile.stripe_account_charges_enabled,
+          // Ship 2 — COI + late fee policy (migration 0024). Used by the
+          // public InvoicePaymentPage to render the same insurance/terms
+          // footer the in-app InvoiceDocument shows.
+          coiCarrier:           data.profile.coi_carrier         || '',
+          coiPolicyNumber:      data.profile.coi_policy_number   || '',
+          coiExpiresAt:         data.profile.coi_expires_at      || '',
+          defaultLateFeePolicy: data.profile.default_late_fee_policy || '',
         }
       : null,
   };

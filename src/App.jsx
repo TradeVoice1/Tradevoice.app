@@ -1921,13 +1921,21 @@ const calcInvoice = (inv, userState, customTaxRates) => {
   const stateTax = getStateTax(userState, customTaxRates);
   // Use invoice's tax field, but apply to correct base based on state rules
   const taxRate = inv.tax != null ? inv.tax : stateTax.matTax;
-  const taxableBase = matsT + equipT + mkAmt + (stateTax.laborTax > 0 ? laborT : 0);
-  const txAmt  = taxableBase*(taxRate/100);
-  const sub    = laborT + matsT + equipT;
-  const total  = sub + mkAmt + txAmt;
-  const paid   = (inv.payments||[]).reduce((s,p)=>s+p.amount,0);
-  const balance = Math.max(0, total - paid);
-  return { laborT, matsT, equipT, sub, mkAmt, txAmt, total, paid, balance };
+  // Discount (Ship 2 / migration 0024) — first-class line so the contractor
+  // doesn't have to use "negative markup" as a hack. Applied to the
+  // pre-tax base before tax recomputes (standard contractor convention:
+  // discount the work, then tax the discounted amount). Clamped to the
+  // sum of taxable base so a too-large discount can't push tax negative.
+  const discountIn  = Number(inv.discountAmount) || 0;
+  const sub         = laborT + matsT + equipT;
+  const discount    = Math.max(0, Math.min(discountIn, sub + mkAmt));
+  const taxableBase = Math.max(0,
+    matsT + equipT + mkAmt + (stateTax.laborTax > 0 ? laborT : 0) - discount);
+  const txAmt       = taxableBase * (taxRate / 100);
+  const total       = Math.max(0, sub + mkAmt - discount + txAmt);
+  const paid        = (inv.payments||[]).reduce((s,p)=>s+p.amount,0);
+  const balance     = Math.max(0, total - paid);
+  return { laborT, matsT, equipT, sub, mkAmt, discount, txAmt, total, paid, balance };
 };
 
 // A/R Aging buckets — mirrors QuickBooks
@@ -2489,6 +2497,18 @@ function InvoiceEditor({ initial, user, teamMembers = [], existingInvoices = [],
   const [salespersonId,   setSalespersonId]   = useState(initial?.salespersonUserId || null);
   const [servicePeriodStart, setServicePeriodStart] = useState(initial?.servicePeriodStart || '');
   const [servicePeriodEnd,   setServicePeriodEnd]   = useState(initial?.servicePeriodEnd   || '');
+  // ── Ship 2 — invoice maturity fields (migration 0024) ──
+  const [permitNumber,   setPermitNumber]   = useState(initial?.permitNumber   || '');
+  const [discountAmount, setDiscountAmount] = useState(initial?.discountAmount ?? 0);
+  const [discountLabel,  setDiscountLabel]  = useState(initial?.discountLabel  || '');
+  // Late-fee terms — falls back to the profile-level default for new
+  // invoices so the contractor writes it once and reuses everywhere.
+  const [lateFeeTerms,   setLateFeeTerms]   = useState(
+    initial?.lateFeeTerms ?? user?.defaultLateFeePolicy ?? ''
+  );
+  // Tech sign-off — checkbox flips signed_at + name in one tap.
+  const [techSignedName, setTechSignedName] = useState(initial?.techSignedName || '');
+  const [techSignedAt,   setTechSignedAt]   = useState(initial?.techSignedAt   || null);
 
   const handleTermsChange = (newTerms) => {
     setTerms(newTerms);
@@ -2551,6 +2571,13 @@ function InvoiceEditor({ initial, user, teamMembers = [], existingInvoices = [],
       salespersonName,
       servicePeriodStart: servicePeriodStart      || '',
       servicePeriodEnd:   servicePeriodEnd        || '',
+      // Ship 2 (migration 0024)
+      permitNumber:       permitNumber.trim()     || '',
+      discountAmount:     Number(discountAmount)  || 0,
+      discountLabel:      discountLabel.trim()    || '',
+      lateFeeTerms:       lateFeeTerms.trim()     || '',
+      techSignedName:     techSignedName.trim()   || '',
+      techSignedAt:       techSignedAt            || null,
     };
 
     setSaving(true);
@@ -2752,6 +2779,69 @@ function InvoiceEditor({ initial, user, teamMembers = [], existingInvoices = [],
             </select>
           </div>
         </div>
+
+        {/* Permit + Discount (Ship 2) */}
+        <div style={{ display:'grid', gridTemplateColumns:isTablet?'1fr':'1fr 1fr 1fr', gap:12, marginTop:14 }}>
+          <div>
+            <label style={s.label}>Permit Number</label>
+            <input value={permitNumber} onChange={e=>setPermitNumber(e.target.value)} placeholder="e.g. BP-2026-08471"
+              style={{ ...s.input, width:'100%', padding:'11px 12px', boxSizing:'border-box', fontSize:17, minHeight:48 }} />
+          </div>
+          <div>
+            <label style={s.label}>Discount Amount ($)</label>
+            <input type="number" min="0" step="0.01" value={discountAmount} onChange={e=>setDiscountAmount(e.target.value)} placeholder="0.00"
+              style={{ ...s.input, width:'100%', padding:'11px 12px', boxSizing:'border-box', fontSize:17, minHeight:48 }} />
+          </div>
+          <div>
+            <label style={s.label}>Discount Label</label>
+            <input value={discountLabel} onChange={e=>setDiscountLabel(e.target.value)} placeholder="Repeat-customer 10%"
+              style={{ ...s.input, width:'100%', padding:'11px 12px', boxSizing:'border-box', fontSize:17, minHeight:48 }} />
+          </div>
+        </div>
+
+        {/* Late-fee terms — pre-filled from profile default, editable per invoice */}
+        <div style={{ marginTop:14 }}>
+          <label style={s.label}>Late Fee Terms (printed on invoice)</label>
+          <input value={lateFeeTerms} onChange={e=>setLateFeeTerms(e.target.value)} placeholder="1.5% per month after Net 30"
+            style={{ ...s.input, width:'100%', padding:'11px 12px', boxSizing:'border-box', fontSize:16, minHeight:48 }} />
+          <div style={{ fontSize:13, color:C.dim, marginTop:4 }}>
+            Default comes from Settings → Profile. Edit here to override on this invoice only.
+          </div>
+        </div>
+
+        {/* Tech sign-off — one-tap stamp by the person doing the work. */}
+        <div style={{ marginTop:14, padding:'12px 14px', background:C.raised, borderRadius:6, border:`1px solid ${C.border}` }}>
+          <label style={{ display:'flex', alignItems:'center', gap:10, cursor:'pointer' }}>
+            <input
+              type="checkbox"
+              checked={!!techSignedAt}
+              onChange={e => {
+                if (e.target.checked) {
+                  setTechSignedAt(new Date().toISOString());
+                  if (!techSignedName) {
+                    setTechSignedName(user?.name || '');
+                  }
+                } else {
+                  setTechSignedAt(null);
+                  setTechSignedName('');
+                }
+              }}
+              style={{ width:18, height:18, cursor:'pointer' }}
+            />
+            <span style={{ fontSize:15, fontWeight:600, color:C.text }}>
+              I performed this work and these line items are accurate
+            </span>
+          </label>
+          {techSignedAt && (
+            <div style={{ marginTop:10, display:'grid', gridTemplateColumns:isTablet?'1fr':'1fr 1fr', gap:10, alignItems:'center' }}>
+              <input value={techSignedName} onChange={e=>setTechSignedName(e.target.value)} placeholder="Type your full name"
+                style={{ ...s.input, width:'100%', padding:'10px 12px', boxSizing:'border-box', fontSize:16, minHeight:44 }} />
+              <div style={{ fontSize:13, color:C.muted, fontWeight:600 }}>
+                Signed {new Date(techSignedAt).toLocaleString()}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Line items + summary side by side */}
@@ -2900,6 +2990,14 @@ function InvoiceEditor({ initial, user, teamMembers = [], existingInvoices = [],
               <span style={{ fontSize:17, color:C.muted }}>Markup ({markup}%) <span style={{ fontSize:13, color:C.dim }}>mat+equip</span></span>
               <span style={{ fontSize:18, color:C.muted }}>{fmtMoney(calc.mkAmt)}</span>
             </div>
+            {calc.discount > 0 && (
+              <div style={{ display:'flex', justifyContent:'space-between', padding:'9px 0', borderBottom:`1px solid ${C.border}` }}>
+                <span style={{ fontSize:17, color:C.green, fontWeight:600 }}>
+                  Discount{discountLabel ? <span style={{ fontSize:13, color:C.dim, marginLeft:6 }}>{discountLabel}</span> : null}
+                </span>
+                <span style={{ fontSize:18, color:C.green, fontWeight:700 }}>−{fmtMoney(calc.discount)}</span>
+              </div>
+            )}
             <div style={{ display:'flex', justifyContent:'space-between', padding:'9px 0', borderBottom:`1px solid ${C.border}` }}>
               <span style={{ fontSize:17, color:C.muted }}>
                 Tax ({taxRate}%)
@@ -3053,6 +3151,7 @@ function InvoiceDocument({ invoice, user, logo, payments, onEdit, onBack, onReco
                 // invoices surface what AP needs.
                 ...(invoice.poNumber         ? [['PO #', invoice.poNumber]] : []),
                 ...(invoice.workOrderNumber  ? [['Work Order #', invoice.workOrderNumber]] : []),
+                ...(invoice.permitNumber     ? [['Permit #', invoice.permitNumber]] : []),
                 ...((invoice.servicePeriodStart || invoice.servicePeriodEnd)
                     ? [['Service Period', `${invoice.servicePeriodStart || '?'} → ${invoice.servicePeriodEnd || '?'}`]] : []),
               ].map(([label, val]) => (
@@ -3245,9 +3344,17 @@ function InvoiceDocument({ invoice, user, logo, payments, onEdit, onBack, onReco
                   <div style={{ height:8 }} />
                 </div>
               )}
-              {[['Subtotal', fmtMoney(calc.sub)], [`Markup (${invoice.markup}%) — mat+equip`, fmtMoney(calc.mkAmt)], [`Tax (${invoice.tax}%)`, fmtMoney(calc.txAmt)]].map(([label,val])=>(
-                <div key={label} style={{ display:'flex', justifyContent:'space-between', padding:'10px 16px', fontSize:17, color:'#777', borderBottom:'1px solid #e8e8e8' }}>
-                  <span>{label}</span><span style={{ fontWeight:600, color:'#444' }}>{val}</span>
+              {[
+                ['Subtotal',                           fmtMoney(calc.sub),  '#777', '#444'],
+                [`Markup (${invoice.markup}%) — mat+equip`, fmtMoney(calc.mkAmt), '#777', '#444'],
+                ...(calc.discount > 0
+                  ? [[`Discount${invoice.discountLabel ? ` — ${invoice.discountLabel}` : ''}`,
+                       '−' + fmtMoney(calc.discount), '#15803d', '#15803d']]
+                  : []),
+                [`Tax (${invoice.tax}%)`,              fmtMoney(calc.txAmt), '#777', '#444'],
+              ].map(([label, val, labelColor, valColor]) => (
+                <div key={label} style={{ display:'flex', justifyContent:'space-between', padding:'10px 16px', fontSize:17, color:labelColor, borderBottom:'1px solid #e8e8e8' }}>
+                  <span>{label}</span><span style={{ fontWeight:600, color:valColor }}>{val}</span>
                 </div>
               ))}
               <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'14px 16px', background:C.orange }}>
@@ -3263,6 +3370,61 @@ function InvoiceDocument({ invoice, user, logo, payments, onEdit, onBack, onReco
           <div style={{ padding:isTablet?'14px 18px 20px':'18px 44px 28px', background:'#f9f9f9', borderTop:'1.5px solid #eee' }}>
             <div style={{ fontSize:14, fontWeight:900, textTransform:'uppercase', letterSpacing:'0.1em', color:'#aaa', marginBottom:5, fontFamily:"'Inter', sans-serif" }}>Notes</div>
             <div style={{ fontSize:17, color:'#666', lineHeight:1.75 }}>{invoice.notes}</div>
+          </div>
+        )}
+
+        {/* ── Signatures (Ship 2) ──
+            Two side-by-side blocks: tech sign-off (filled in the editor)
+            + customer e-sign (filled on the public invoice page). Each only
+            renders when populated — empty signatures stay invisible so
+            residential receipts don't grow a "blank line" footer. */}
+        {(invoice.techSignedAt || invoice.customerSignedAt) && (
+          <div style={{ padding: isTablet ? '16px 18px' : '20px 44px', borderTop: '1.5px solid #eee', background: '#fff', display: 'grid', gridTemplateColumns: isTablet ? '1fr' : '1fr 1fr', gap: 24 }}>
+            {invoice.techSignedAt && (
+              <div>
+                <div style={{ fontSize:13, fontWeight:900, textTransform:'uppercase', letterSpacing:'0.12em', color:'#aaa', marginBottom:8, fontFamily:"'Inter', sans-serif" }}>Performed By — Sign-off</div>
+                <div style={{ fontFamily:"'Caveat', 'Inter', cursive", fontSize:24, color:'#222', lineHeight:1, marginBottom:6, borderBottom:'1px solid #ccc', paddingBottom:4 }}>
+                  {invoice.techSignedName || invoice.techName || '—'}
+                </div>
+                <div style={{ fontSize:13, color:'#777' }}>{new Date(invoice.techSignedAt).toLocaleString()}</div>
+              </div>
+            )}
+            {invoice.customerSignedAt && (
+              <div>
+                <div style={{ fontSize:13, fontWeight:900, textTransform:'uppercase', letterSpacing:'0.12em', color:'#aaa', marginBottom:8, fontFamily:"'Inter', sans-serif" }}>Customer Acknowledgement</div>
+                <div style={{ fontFamily:"'Caveat', 'Inter', cursive", fontSize:24, color:'#222', lineHeight:1, marginBottom:6, borderBottom:'1px solid #ccc', paddingBottom:4 }}>
+                  {invoice.customerSignedName || '—'}
+                </div>
+                <div style={{ fontSize:13, color:'#777' }}>Signed {new Date(invoice.customerSignedAt).toLocaleString()}</div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── Terms footer (Ship 2): late-fee policy + COI ──
+            Only renders the parts that are set — keeps residential invoices
+            clean and lets commercial ones surface what AP needs to process
+            payment. Pulled from invoice override first, then profile default. */}
+        {(invoice.lateFeeTerms || user?.defaultLateFeePolicy || user?.coiCarrier) && (
+          <div style={{ padding: isTablet ? '14px 18px' : '16px 44px', background: '#fafafa', borderTop: '1px solid #eee', display: 'grid', gridTemplateColumns: isTablet ? '1fr' : '1fr 1fr', gap: 18 }}>
+            {(invoice.lateFeeTerms || user?.defaultLateFeePolicy) && (
+              <div>
+                <div style={{ fontSize:12, fontWeight:900, textTransform:'uppercase', letterSpacing:'0.12em', color:'#aaa', marginBottom:4, fontFamily:"'Inter', sans-serif" }}>Payment Terms</div>
+                <div style={{ fontSize:14, color:'#666', lineHeight:1.6 }}>
+                  {invoice.lateFeeTerms || user.defaultLateFeePolicy}
+                </div>
+              </div>
+            )}
+            {user?.coiCarrier && (
+              <div>
+                <div style={{ fontSize:12, fontWeight:900, textTransform:'uppercase', letterSpacing:'0.12em', color:'#aaa', marginBottom:4, fontFamily:"'Inter', sans-serif" }}>Insurance</div>
+                <div style={{ fontSize:14, color:'#666', lineHeight:1.6 }}>
+                  {user.coiCarrier}
+                  {user.coiPolicyNumber && <> · Policy {user.coiPolicyNumber}</>}
+                  {user.coiExpiresAt && <> · Exp {user.coiExpiresAt}</>}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -5364,6 +5526,11 @@ function ProfileModal({ profile, onSave, onClose }) {
   // Google Business Profile review URL — appended to review-request emails
   // from the Marketing screen so the customer can leave a review in one click.
   const [reviewLink,   setReviewLink]  = useState(profile.reviewLink   || '');
+  // ── Ship 2 — COI + late fee policy (migration 0024) ──
+  const [coiCarrier,           setCoiCarrier]           = useState(profile.coiCarrier           || '');
+  const [coiPolicyNumber,      setCoiPolicyNumber]      = useState(profile.coiPolicyNumber      || '');
+  const [coiExpiresAt,         setCoiExpiresAt]         = useState(profile.coiExpiresAt         || '');
+  const [defaultLateFeePolicy, setDefaultLateFeePolicy] = useState(profile.defaultLateFeePolicy || '');
   const fileRef = useRef(null);
 
   const PRESET_COLORS = [
@@ -5411,7 +5578,17 @@ function ProfileModal({ profile, onSave, onClose }) {
 
   const handleSave = () => {
     const finalColor = colorMode === 'trade' ? '' : colorMode === 'custom' ? accentColor : colorMode;
-    onSave({ ...profile, name, company, email, phone, state, logo, tagline, license, accentColor: finalColor, defaultTerms, reviewLink: reviewLink.trim() });
+    onSave({
+      ...profile,
+      name, company, email, phone, state, logo, tagline, license,
+      accentColor: finalColor, defaultTerms,
+      reviewLink: reviewLink.trim(),
+      // Ship 2 — COI + default late fee policy
+      coiCarrier:           coiCarrier.trim(),
+      coiPolicyNumber:      coiPolicyNumber.trim(),
+      coiExpiresAt:         coiExpiresAt || '',
+      defaultLateFeePolicy: defaultLateFeePolicy.trim(),
+    });
   };
 
   const F = ({ label, children, hint }) => (
@@ -5538,6 +5715,28 @@ function ProfileModal({ profile, onSave, onClose }) {
           {/* Google review link — appended to Marketing → Review Request emails. */}
           <F label="Google Review Link" hint="Get this from your Google Business Profile → 'Get more reviews' → Share. Used in Marketing review-request emails.">
             {I(reviewLink, setReviewLink, 'https://g.page/r/...', 'url')}
+          </F>
+
+          {/* ── Certificate of Insurance (Ship 2) ──
+              Commercial AP departments won't process payment without this on
+              the invoice. All three optional; renders the COI footer block
+              on every printed invoice when set. */}
+          <F label="Insurance Carrier" hint="Your general liability carrier — printed on the invoice footer for commercial AP">
+            {I(coiCarrier, setCoiCarrier, 'e.g. Liberty Mutual')}
+          </F>
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 200px', gap:12 }}>
+            <F label="Policy Number">
+              {I(coiPolicyNumber, setCoiPolicyNumber, 'e.g. GL-29481-A')}
+            </F>
+            <F label="Policy Expires">
+              {I(coiExpiresAt, setCoiExpiresAt, '', 'date')}
+            </F>
+          </div>
+
+          {/* Default late-fee policy — pre-fills new invoices; can be
+              overridden per invoice from the editor. */}
+          <F label="Default Late Fee Policy" hint="Pre-fills the late-fee line on every new invoice. Editable per invoice if you cut a customer slack.">
+            {I(defaultLateFeePolicy, setDefaultLateFeePolicy, '1.5% per month after Net 30')}
           </F>
 
         </div>
@@ -6736,6 +6935,11 @@ function Settings({ user, setUser, logo, onLogoChange, showProfileModal, setShow
                 defaultTerms: p.defaultTerms,
                 logoUrl:      p.logo,             // persist the Storage URL on the profile row
                 reviewLink:   p.reviewLink,       // Google Business Profile review URL
+                // Ship 2 — COI + late fee policy (migration 0024)
+                coiCarrier:           p.coiCarrier,
+                coiPolicyNumber:      p.coiPolicyNumber,
+                coiExpiresAt:         p.coiExpiresAt,
+                defaultLateFeePolicy: p.defaultLateFeePolicy,
               });
               if (setUser) setUser(prev => ({ ...prev, ...saved }));
             } catch (e) {
