@@ -10,6 +10,10 @@ const QuoteCustomerPage    = lazy(() => import("./QuoteCustomerPage").then(m => 
 // Lazy — only mounted when the user opens the "Update Card" modal. Keeps
 // the Stripe Elements + setup-intent client code out of the initial bundle.
 const BillingPaymentModal = lazy(() => import("./BillingPaymentModal").then(m => ({ default: m.BillingPaymentModal })));
+// Settings → Rate Library. Big panel with drag-drop + preview modal —
+// lazy-loaded so the main bundle isn't bloated for tech-mode users who
+// never open Settings.
+const RateLibraryPanel = lazy(() => import("./RateLibraryPanel"));
 const MarketingScreen      = lazy(() => import("./MarketingScreen"));
 const PrivacyPolicyScreen  = lazy(() => import("./LegalScreens").then(m => ({ default: m.PrivacyPolicyScreen })));
 const TermsScreen          = lazy(() => import("./LegalScreens").then(m => ({ default: m.TermsScreen })));
@@ -23,6 +27,7 @@ import { listPlans,    upsertPlan       as apiUpsertPlan, deletePlan       as ap
 import { listTimeOff,  upsertTimeOff    as apiUpsertTimeOff, deleteTimeOff as apiDeleteTimeOff } from "./data/timeOff";
 import { TRADE_CONFIG, ALL_TRADES, TRADE_CATEGORIES, getTradeConfig, isMultiTradeUser } from "./data/trades";
 import { uploadLogo, deleteLogo } from "./data/storage";
+import { listRateLibrary } from "./data/rateLibrary";
 import { invoicesToQbCsv, downloadCsv } from "./lib/qbExport";
 import { useBreakpoint } from "./lib/useBreakpoint";
 
@@ -4763,16 +4768,75 @@ function QuoteEditor({ initial, clients, existingQuotes = [], user, onSave, onAd
   const tradeConf = getTradeConfig(trade, user?.trades);
   const isBundle  = trade === 'bundle';
 
-  // Quick-add libraries — swap when trade changes
+  // Quick-add libraries — swap when trade changes. Initial state is the
+  // trade's hardcoded defaults; the useEffect below also folds in the
+  // owner's persistent rate library items (migration 0025), so things
+  // they imported via Settings → Rate Library or saved via Quick Add
+  // appear right alongside the starter content.
   const [matLibrary,  setMatLibrary]  = useState(() => tradeConf.matLibrary.map(i => ({ ...i })));
   const [equipLibrary,setEquipLibrary]= useState(() => tradeConf.equipLibrary.map(i => ({ ...i })));
 
-  // When trade changes, reset libraries to that trade's defaults
+  // ── Persistent rate library hydration ──
+  // Owner-scoped, fetched once on mount. We keep the data in a ref-like
+  // state (`persistedLib`) so trade changes can re-merge without a fresh
+  // fetch. Items are de-duped against trade defaults by description
+  // (case-insensitive) — user's persisted item wins.
+  const [persistedLib, setPersistedLib] = useState({ materials: [], equipment: [] });
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const rows = await listRateLibrary();
+        if (cancelled) return;
+        const toMat = rows.filter(r => r.kind === 'material').map(r => ({
+          id:   r.id,
+          desc: r.description,
+          qty:  r.qty != null ? r.qty : 1,
+          unit: r.unit || 'ea',
+          cost: r.cost != null ? r.cost : 0,
+        }));
+        const toEq = rows.filter(r => r.kind === 'equipment').map(r => ({
+          id:   r.id,
+          desc: r.description,
+          qty:  r.qty != null ? r.qty : 1,
+          unit: r.unit || 'day',
+          rate: r.rate != null ? r.rate : 0,
+        }));
+        setPersistedLib({ materials: toMat, equipment: toEq });
+      } catch (e) {
+        // Soft-fail — migration 0025 may not be applied locally, or RLS
+        // may block. The editor still works with trade defaults only.
+        console.warn('rate library hydrate failed', e?.message);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  // Merge helper — persistent items first (user's own), then trade
+  // defaults that don't duplicate descriptions.
+  const mergeLib = (persistedRows, tradeRows) => {
+    const seen = new Set(persistedRows.map(r => (r.desc || '').toLowerCase().trim()));
+    const dedupedDefaults = tradeRows.filter(r => !seen.has((r.desc || '').toLowerCase().trim()));
+    return [...persistedRows, ...dedupedDefaults];
+  };
+
+  // Re-merge whenever persistedLib lands or trade changes (trade change
+  // handler below also resets the local state via setMatLibrary/Equip).
+  useEffect(() => {
+    setMatLibrary(mergeLib(persistedLib.materials,  tradeConf.matLibrary.map(i => ({ ...i }))));
+    setEquipLibrary(mergeLib(persistedLib.equipment, tradeConf.equipLibrary.map(i => ({ ...i }))));
+    // Intentionally NOT including tradeConf in deps — it changes by reference
+    // every render. The `trade` string is the stable dependency we want.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [persistedLib, trade]);
+
+  // When trade changes, reset libraries to that trade's defaults — the
+  // mergeLib effect above will then re-fold in the persistent items.
   const handleTradeChange = (newTrade) => {
     setTrade(newTrade);
     const conf = getTradeConfig(newTrade, user?.trades);
-    setMatLibrary(conf.matLibrary.map(i => ({ ...i })));
-    setEquipLibrary(conf.equipLibrary.map(i => ({ ...i })));
+    setMatLibrary(mergeLib(persistedLib.materials,  conf.matLibrary.map(i => ({ ...i }))));
+    setEquipLibrary(mergeLib(persistedLib.equipment, conf.equipLibrary.map(i => ({ ...i }))));
   };
 
   const isRevision = !!initial?.id;
@@ -7236,6 +7300,16 @@ function Settings({ user, setUser, logo, onLogoChange, showProfileModal, setShow
           onAdd={persistTimeOff}
           onRemove={removeTimeOff}
         />
+      )}
+
+      {/* ── Rate Library (owner only) ───────────────────────────────────────
+          Persistent library of labor / material / equipment items. Drop a
+          rate sheet PDF and Claude auto-populates; the items then show up
+          in the quote/invoice editor's Quick Add menu. */}
+      {user?.role === 'owner' && (
+        <Suspense fallback={<div style={{ padding: '16px 0', color: C.dim, fontSize: 14 }}>Loading rate library…</div>}>
+          <RateLibraryPanel user={user} />
+        </Suspense>
       )}
 
       <div style={{ marginBottom: 28 }}>
