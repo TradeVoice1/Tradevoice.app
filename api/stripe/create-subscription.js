@@ -27,7 +27,10 @@
 // without code changes:
 //   STRIPE_PRICE_SOLO        = price_...   (Solo: 1 trade)
 //   STRIPE_PRICE_PRO         = price_...   (Pro: up to 3 trades)
-//   STRIPE_PRICE_ALL_TRADES  = price_...   (All Trades: all 56)
+//   STRIPE_PRICE_ELITE       = price_...   (Elite: all 56 trades — renamed
+//                                          from STRIPE_PRICE_ALL_TRADES on
+//                                          2026-05-14; falls back to the
+//                                          old name if still set)
 //   STRIPE_PRICE_TECH_SEAT   = price_...   ($19.99/mo per extra tech)
 
 import { stripe } from "../_lib/stripe.js";
@@ -36,7 +39,11 @@ import { getServiceClient } from "../_lib/supabase.js";
 const PLAN_TO_PRICE = {
   solo: process.env.STRIPE_PRICE_SOLO,
   pro:  process.env.STRIPE_PRICE_PRO,
-  all:  process.env.STRIPE_PRICE_ALL_TRADES,
+  // Slug stays 'all' for back-end stability — the user-facing name is "Elite"
+  // (renamed 2026-05-14). New env var is STRIPE_PRICE_ELITE; we fall back to
+  // the old STRIPE_PRICE_ALL_TRADES so anyone who already set that doesn't
+  // get bitten by the rename.
+  all:  process.env.STRIPE_PRICE_ELITE || process.env.STRIPE_PRICE_ALL_TRADES,
 };
 
 export default async function handler(req, res) {
@@ -62,7 +69,9 @@ async function handleCreate(req, res) {
 
   const priceId = PLAN_TO_PRICE[plan] || PLAN_TO_PRICE.solo;
   if (!priceId) {
-    return res.status(500).json({ error: 'stripe_not_configured', detail: `No price ID for plan "${plan}". Set STRIPE_PRICE_${(plan||'solo').toUpperCase()} in Vercel env.` });
+    // Hint the right env var name — note plan slug 'all' maps to ELITE.
+    const envHint = plan === 'all' ? 'STRIPE_PRICE_ELITE' : `STRIPE_PRICE_${(plan||'solo').toUpperCase()}`;
+    return res.status(500).json({ error: 'stripe_not_configured', detail: `No price ID for plan "${plan}". Set ${envHint} in Vercel env.` });
   }
 
   const supabase = getServiceClient();

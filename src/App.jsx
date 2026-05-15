@@ -604,9 +604,12 @@ function SignupScreen({ onComplete, onBack }) {
   const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   const PLANS_SU = [
-    { id: 'solo', name: 'Solo', price: '$49.99', trades: '1 trade', desc: 'Just you — one trade, full power' },
-    { id: 'pro',  name: 'Pro',  price: '$99.99', trades: 'Up to 3 trades', desc: 'Growing contractor, multiple trades', popular: true },
-    { id: 'all',  name: 'All Trades', price: '$149.99', trades: 'All 5 trades', desc: 'Full-service multi-trade contractor' },
+    { id: 'solo', name: 'Solo',  price: '$49.99',  trades: '1 trade',        desc: 'Just you — one trade, full power' },
+    { id: 'pro',  name: 'Pro',   price: '$99.99',  trades: 'Up to 3 trades', desc: 'Growing contractor, multiple trades', popular: true },
+    // Slug stays 'all' as the internal plan identifier — user-facing name
+    // changed 2026-05-14 from "All Trades" to "Elite" (signals premium tier
+    // better, and the "all 56 trades" detail moved into the description).
+    { id: 'all',  name: 'Elite', price: '$149.99', trades: 'All 56 trades',  desc: 'Full-service multi-trade contractor — every trade included' },
   ];
   // Trade picker state — at 56+ trades the old "render every chip" pattern
   // doesn't fit anymore. We show category tabs (Construction / Service /
@@ -5980,9 +5983,12 @@ function Quotes({ user, logo, taxRates, onConvertToInvoice }) {
 // BILLING
 // ══════════════════════════════════════════════════════════════════════════════
 const PLANS = [
-  { name: 'Solo',       trades: 1, price: 49.99,  desc: '1 trade — invoicing, quotes, payments', badge: null        },
-  { name: 'Pro',        trades: 2, price: 99.99,  desc: 'Up to 3 trades — everything in Solo',   badge: 'POPULAR'   },
-  { name: 'All Trades', trades: 5, price: 149.99, desc: 'All 5 trades — full access',             badge: 'BEST VALUE'},
+  { name: 'Solo',  trades: 1,  price: 49.99,  desc: '1 trade — invoicing, quotes, payments',       badge: null         },
+  { name: 'Pro',   trades: 3,  price: 99.99,  desc: 'Up to 3 trades — everything in Solo',         badge: 'POPULAR'    },
+  // Display tier name "Elite" (renamed from "All Trades" 2026-05-14). Slug
+  // is still 'all' on the back-end; this PLANS table only drives the
+  // Settings billing UI.
+  { name: 'Elite', trades: 56, price: 149.99, desc: 'All 56 trades — full access',                  badge: 'BEST VALUE' },
 ];
 // Payment method config — Stripe/PayPal are real integrations, others are display-only handles
 const PAYMENT_CONFIG = {
