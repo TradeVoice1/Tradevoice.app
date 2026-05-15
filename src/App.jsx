@@ -624,9 +624,35 @@ function LoginScreen({ onLogin, onSignup, onForgot }) {
 }
 
 // ── SIGN UP (owner creating company account) ──────────────────────────────────
+// Four-step onboarding wizard:
+//   0 - Account     (name, email, password — skipped for users who arrived
+//                    via Google OAuth and are already authenticated)
+//   1 - Company     (company name, phone, trades, states)
+//   2 - Plan        (Solo/Pro/Elite × Monthly/Yearly toggle, ToS accept)
+//   3 - Payment     (Stripe Elements card capture, "Start 28-day trial"
+//                    button — the only path from here lands the user in
+//                    the app with an active trialing subscription and a
+//                    card on file for auto-renewal)
+//
+// The signup auth user is created on entry to Step 3 (for email/password
+// flow), not at the end. This is what unlocks the SetupIntent flow which
+// requires a userId. Bailing on Step 3 leaves an orphaned auth account
+// the user can resume from later — signing back in detects the empty
+// profile and reopens this screen at Step 1.
 function SignupScreen({ onComplete, onBack }) {
   const { isTablet } = useBreakpoint();
-  const [step, setStep]       = useState(0); // 0=account, 1=company, 2=plan
+  // Refs to the Stripe.js instance + Elements instance + the DOM node the
+  // PaymentElement mounts into. Live across Step 2 → Step 3 transitions.
+  const stripeRef     = useRef(null);
+  const elementsRef   = useRef(null);
+  const cardMountRef  = useRef(null);
+  // Set once we have an auth user — either freshly created via signUp in
+  // initPayment() OR detected on mount because the user arrived via
+  // Google OAuth and is already signed in.
+  const authUserIdRef = useRef(null);
+  const [isExistingAuthUser, setIsExistingAuthUser] = useState(false);
+
+  const [step, setStep]       = useState(0); // 0=account, 1=company, 2=plan, 3=payment
   const [name, setName]       = useState('');
   const [email, setEmail]     = useState('');
   const [password, setPass]   = useState('');
@@ -640,6 +666,46 @@ function SignupScreen({ onComplete, onBack }) {
   // visible behind a toggle).
   const [billingPeriod, setBillingPeriod] = useState('monthly');
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+
+  // ── Payment-step lifecycle ──────────────────────────────────────────────
+  // idle      → not yet on Step 3, no Stripe call made
+  // loading   → user just landed on Step 3; signing them up (if needed),
+  //             creating Stripe Customer + SetupIntent, mounting Elements
+  // ready     → Elements mounted; user can enter card + submit
+  // submitting→ "Start trial" clicked; confirming card + creating sub
+  // success   → trial subscription created; profile saved
+  // error     → recoverable failure with a message in paymentError
+  const [paymentPhase, setPaymentPhase] = useState('idle');
+  const [paymentError, setPaymentError] = useState('');
+
+  // ── Existing-session detection (Google OAuth users) ─────────────────────
+  // If the page mounted with an active Supabase session, the user
+  // already authenticated via Google and we should skip Step 0 (Account).
+  // We also use this to know NOT to call signUp() in initPayment.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const session = await getSessionUser();
+        if (cancelled || !session) return;
+        authUserIdRef.current = session.id;
+        setIsExistingAuthUser(true);
+        setEmail(session.email || '');
+        // Google's user_metadata typically includes full_name + email.
+        const meta = session.user_metadata || {};
+        if (meta.full_name)  setName(meta.full_name);
+        else if (meta.name)  setName(meta.name);
+        else if (session.email) setName(session.email.split('@')[0]);
+        // Jump past the Account step — the user can't change their email
+        // here (Supabase already owns it) and there's no password to set.
+        setStep(prev => prev === 0 ? 1 : prev);
+      } catch (e) {
+        // Ignore — falling through to email/password flow is fine.
+        console.warn('SignupScreen: no existing session', e?.message);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   // Plan tier metadata — kept cadence-agnostic so the toggle just swaps
   // which price column we read. monthlyPrice / yearlyPrice are the
@@ -682,21 +748,146 @@ function SignupScreen({ onComplete, onBack }) {
         || key.toLowerCase().includes(q);
   });
 
-  const steps = ['Account', 'Company', 'Plan'];
+  const steps = ['Account', 'Company', 'Plan', 'Payment'];
   const canNext = [
-    () => name.trim() && email.trim() && password.length >= 6,
+    () => isExistingAuthUser || (name.trim() && email.trim() && password.length >= 6),
     () => company.trim() && trades.length > 0,
     () => plan !== '' && acceptedTerms,
+    () => paymentPhase === 'ready' && !paymentError,
   ];
 
-  const finish = () => {
-    // Submit the composed slug so the back-end's PLAN_TO_PRICE map picks
-    // the right cadence — 'pro' for monthly, 'pro_yearly' for annual.
-    onComplete({
-      name, email, password, company, phone, trades, states,
-      plan: composedPlanSlug(),
-      acceptedTermsAt: new Date().toISOString(),
-    });
+  // ── initPayment: ensure auth user exists + load SetupIntent + mount Elements
+  // Fires when the user advances to Step 3 (useEffect below). For email/
+  // password flow it's where the actual signUp happens; for Google flow
+  // we already have an auth user and skip straight to SetupIntent + UI.
+  const initPayment = async () => {
+    setPaymentError('');
+    setPaymentPhase('loading');
+    try {
+      let userId = authUserIdRef.current;
+      // For email/password flow: create the Supabase auth user now. We
+      // delay until Step 3 so users browsing the plan picker don't leave
+      // orphaned accounts if they bail before payment.
+      if (!userId) {
+        const { user: authUser, session } = await signUp(email.trim(), password);
+        if (!session) {
+          // "Confirm email" is enabled in Supabase. Tell the user, then
+          // bounce them back to Step 0 so the flow doesn't dead-end.
+          throw new Error("Check your inbox and confirm your email — then sign in to finish setup.");
+        }
+        userId = authUser.id;
+        authUserIdRef.current = userId;
+      }
+
+      // Create Stripe Customer (if not yet) + SetupIntent. The server
+      // saves stripe_customer_id back on the profile row.
+      const r = await fetch('/api/stripe/setup-intent', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ userId, email: email.trim(), name: name || company }),
+      });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.detail || j.error || 'Could not start payment setup.');
+
+      // Lazy-load Stripe.js + mount the PaymentElement. Matches the
+      // pattern in BillingPaymentModal so we get the same look.
+      const { loadStripe } = await import('@stripe/stripe-js');
+      const stripe = await loadStripe(j.publishableKey);
+      if (!stripe) throw new Error('Stripe.js failed to initialize.');
+
+      const elements = stripe.elements({
+        clientSecret: j.clientSecret,
+        appearance: {
+          theme: 'stripe',
+          variables: {
+            colorPrimary: C.orange,
+            colorText:    C.text,
+            borderRadius: '8px',
+            fontFamily:   'system-ui, -apple-system, sans-serif',
+          },
+        },
+      });
+      const paymentElement = elements.create('payment', { layout: 'tabs' });
+
+      stripeRef.current   = stripe;
+      elementsRef.current = elements;
+      setPaymentPhase('ready');
+      requestAnimationFrame(() => {
+        if (cardMountRef.current) paymentElement.mount(cardMountRef.current);
+      });
+    } catch (e) {
+      setPaymentError(e?.message || 'Could not start payment setup.');
+      setPaymentPhase('error');
+    }
+  };
+
+  // When the user transitions to Step 3 for the first time, kick off the
+  // payment init. Subsequent re-renders skip (paymentPhase !== 'idle').
+  useEffect(() => {
+    if (step === 3 && paymentPhase === 'idle') initPayment();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step]);
+
+  // ── startTrial: the final submit — confirms card, creates subscription,
+  // saves profile, then hands off to App.jsx setUser via onComplete.
+  const startTrial = async () => {
+    if (paymentPhase === 'submitting') return;
+    setPaymentError('');
+    setPaymentPhase('submitting');
+    try {
+      // 1. Confirm the SetupIntent — attaches the PM to the customer.
+      const stripe = stripeRef.current;
+      const elements = elementsRef.current;
+      if (!stripe || !elements) throw new Error('Card form is not ready yet.');
+      const { error: stripeError, setupIntent } = await stripe.confirmSetup({
+        elements,
+        confirmParams: { return_url: window.location.href },
+        redirect: 'if_required',
+      });
+      if (stripeError) throw new Error(stripeError.message || 'Could not save card.');
+      const pmId = typeof setupIntent?.payment_method === 'string'
+        ? setupIntent.payment_method
+        : setupIntent?.payment_method?.id;
+      if (!pmId) throw new Error('Setup completed but no payment method was returned.');
+
+      // 2. Create the trialing subscription on the right Price ID.
+      const subResp = await fetch('/api/stripe/create-subscription', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({
+          userId:          authUserIdRef.current,
+          plan:            composedPlanSlug(),
+          paymentMethodId: pmId,
+        }),
+      });
+      const subJson = await subResp.json();
+      if (!subResp.ok) throw new Error(subJson.detail || subJson.error || 'Could not create subscription.');
+
+      // 3. Persist the rest of the profile (company, trades, etc.). The
+      // handle_new_user trigger created a blank row; we fill it now that
+      // the user's actually committed (card on file).
+      const profile = await upsertProfile(authUserIdRef.current, {
+        name, company, phone, trades, states,
+        plan:            composedPlanSlug(),
+        role:            'owner',
+        companyCode:     'TV-' + Math.random().toString(36).slice(2, 8).toUpperCase(),
+        acceptedTermsAt: new Date().toISOString(),
+      });
+
+      setPaymentPhase('success');
+
+      // Hand off to App.jsx which clears authScreen and sets the user state.
+      onComplete({
+        ...profile,
+        email: profile.email || email.trim(),
+        stripe_subscription_id: subJson.subscriptionId,
+        subscription_status:    subJson.status,
+        trial_ends_at:          subJson.trialEndsAt,
+      });
+    } catch (e) {
+      setPaymentError(e?.message || 'Could not start your trial. Try again.');
+      setPaymentPhase('ready');
+    }
   };
 
   return (
@@ -714,10 +905,16 @@ function SignupScreen({ onComplete, onBack }) {
       </div>
 
       <div style={{ fontSize: 22, fontWeight: 700, color: C.text, marginBottom: 4, fontFamily: "'Inter', sans-serif", letterSpacing: '-0.02em' }}>
-        {step === 0 ? 'Create your account' : step === 1 ? 'Your company' : 'Choose your plan'}
+        {step === 0 ? 'Create your account' :
+         step === 1 ? 'Your company' :
+         step === 2 ? 'Choose your plan' :
+                      'Add your card'}
       </div>
       <div style={{ fontSize: 14, color: C.muted, marginBottom: 22 }}>
-        {step === 0 ? 'Free 28-day trial — no card required' : step === 1 ? 'Tell us about your business' : 'All plans include every feature'}
+        {step === 0 ? '28-day free trial · cancel anytime' :
+         step === 1 ? 'Tell us about your business' :
+         step === 2 ? 'All plans include every feature' :
+                      "We won't charge until your trial ends"}
       </div>
 
       {step === 0 && (
@@ -925,12 +1122,88 @@ function SignupScreen({ onComplete, onBack }) {
         </div>
       )}
 
+      {step === 3 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          {/* Plan summary recap so the user remembers what they're starting */}
+          <div style={{ padding: '14px 16px', background: C.orangeLo, border: `1px solid ${C.orange}33`, borderRadius: 10 }}>
+            <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: C.orange, marginBottom: 4 }}>
+              Starting your 28-day trial
+            </div>
+            {(() => {
+              const p = PLANS_SU.find(x => x.id === plan);
+              if (!p) return null;
+              const price  = billingPeriod === 'yearly' ? p.yearlyPrice : p.monthlyPrice;
+              const period = billingPeriod === 'yearly' ? '/yr' : '/mo';
+              return (
+                <div style={{ fontSize: 14, color: C.text, lineHeight: 1.5 }}>
+                  <strong>{p.name}</strong> · {fmt(price)}{period} after trial · {p.trades}
+                </div>
+              );
+            })()}
+            <div style={{ fontSize: 12, color: C.muted, marginTop: 6, lineHeight: 1.5 }}>
+              No charge today. We'll auto-charge the card you add below when the trial ends. Cancel anytime from Settings.
+            </div>
+          </div>
+
+          {/* Stripe Elements mount target. Loading state shows while the
+              SetupIntent + Elements lazy-load complete. */}
+          <div>
+            <div style={{ fontSize: 12, fontWeight: 800, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 8 }}>
+              Card on file
+            </div>
+            <div ref={cardMountRef} style={{ minHeight: 180, padding: paymentPhase === 'loading' ? '20px 14px' : 0 }}>
+              {paymentPhase === 'loading' && (
+                <div style={{ textAlign: 'center', color: C.dim, fontSize: 13, padding: '36px 0' }}>
+                  Loading secure card form…
+                </div>
+              )}
+            </div>
+            <div style={{ fontSize: 11, color: C.dim, marginTop: 6, textAlign: 'center' }}>
+              Card processed securely by Stripe. Your details never touch Tradevoice's servers.
+            </div>
+          </div>
+
+          {paymentError && (
+            <div style={{ padding: '10px 14px', background: '#fef2f2', border: `1px solid ${C.error}55`, borderRadius: 8, fontSize: 13, color: C.errorBold, lineHeight: 1.5 }}>
+              {paymentError}
+            </div>
+          )}
+
+          {paymentPhase === 'success' && (
+            <div style={{ padding: '12px 14px', background: C.orangeLo, border: `1px solid ${C.success}66`, borderRadius: 8, fontSize: 13, color: C.success, fontWeight: 700, textAlign: 'center' }}>
+              ✓ Trial started. Welcome to Tradevoice.
+            </div>
+          )}
+        </div>
+      )}
+
       <div style={{ display: 'flex', gap: 10, marginTop: 22 }}>
-        <button onClick={step === 0 ? onBack : () => setStep(s => s - 1)} style={{ ...s.btn, background: 'transparent', border: `1.5px solid ${C.border2}`, color: C.muted, padding: '13px 20px', fontSize: 15, borderRadius: 50, flex: '0 0 auto' }}>
-          {step === 0 ? 'Sign in' : '← Back'}
-        </button>
-        <button onClick={step < 2 ? () => setStep(s => s + 1) : finish} disabled={!canNext[step]()} style={{ ...s.btn, flex: 1, background: canNext[step]() ? C.orange : C.border2, color: '#fff', padding: '13px', fontSize: 15, borderRadius: 50, border: 'none', opacity: canNext[step]() ? 1 : 0.5 }}>
-          {step < 2 ? 'Continue →' : 'Start Free Trial'}
+        {/* Back button: hidden for Google users on Step 1 (no Account
+            step to return to). On Step 3 it still steps back to Plan in
+            case the user wants to switch tier — payment phase resets so
+            re-entering Step 3 re-runs the SetupIntent / Elements mount
+            (idempotent on the server; Stripe just reuses the Customer). */}
+        {!(step === 1 && isExistingAuthUser) && (
+          <button
+            onClick={step === 0 ? onBack : () => {
+              if (step === 3) setPaymentPhase('idle'); // re-init Elements next entry
+              setStep(s => s - 1);
+            }}
+            disabled={paymentPhase === 'submitting'}
+            style={{ ...s.btn, background: 'transparent', border: `1.5px solid ${C.border2}`, color: C.muted, padding: '13px 20px', fontSize: 15, borderRadius: 50, flex: '0 0 auto' }}
+          >
+            {step === 0 ? 'Sign in' : '← Back'}
+          </button>
+        )}
+        <button
+          onClick={step < 3 ? () => setStep(s => s + 1) : startTrial}
+          disabled={!canNext[step]() || paymentPhase === 'submitting' || paymentPhase === 'success'}
+          style={{ ...s.btn, flex: 1, background: canNext[step]() ? C.orange : C.border2, color: '#fff', padding: '13px', fontSize: 15, borderRadius: 50, border: 'none', opacity: (canNext[step]() && paymentPhase !== 'submitting' && paymentPhase !== 'success') ? 1 : 0.5 }}
+        >
+          {step < 3 ? 'Continue →' :
+           paymentPhase === 'submitting' ? 'Starting trial…' :
+           paymentPhase === 'success'    ? 'Done ✓' :
+                                           'Start 28-Day Trial'}
         </button>
       </div>
     </AuthShell>
@@ -7634,6 +7907,14 @@ function TradevoiceApp() {
       }
     }, 5000);
 
+    // A profile is "complete" enough to skip the signup wizard once
+    // the contractor has accepted terms AND has at least one trade
+    // configured. Google OAuth users land here with a blank trigger-
+    // created row — those values are both empty until they finish
+    // SignupScreen Step 1 (Company) + Step 2 (Plan + ToS).
+    const profileIsComplete = (p) =>
+      !!p && !!p.acceptedTermsAt && Array.isArray(p.trades) && p.trades.length > 0;
+
     // Shared allowlist enforcement for any auth event (boot session
     // restore + every subsequent sign-in). Catches Google OAuth users
     // who weren't invited — completing the OAuth dance bypasses the
@@ -7658,14 +7939,35 @@ function TradevoiceApp() {
       return false;
     };
 
+    // After auth + allowlist + profile-fetch, route based on whether
+    // the profile is fully filled in. Two paths:
+    //   - Complete: setUser → app renders Dashboard
+    //   - Incomplete (almost always a fresh Google sign-in): keep
+    //     user=null so the auth-screen guard renders SignupScreen.
+    //     SignupScreen detects the active session on mount, skips
+    //     Step 0 (Account) and lets the user finish company+plan+card.
+    const routeAuthed = async (sessionUser) => {
+      const profile = await getProfile(sessionUser.id, sessionUser.email);
+      if (cancelled) return;
+      if (!profileIsComplete(profile)) {
+        // Don't setUser — keep them in the auth-screen branch so the
+        // wizard is what renders. SignupScreen reads the session on
+        // mount and picks up where Google left off.
+        setAuthScreen('signup');
+        setUser(null);
+        return;
+      }
+      setUser(profile);
+      setAuthScreen(null);
+    };
+
     (async () => {
       try {
         const sessionUser = await getSessionUser();
         if (cancelled) return;
         if (sessionUser) {
           if (!(await enforceAllowlist(sessionUser))) return;
-          const profile = await getProfile(sessionUser.id, sessionUser.email);
-          if (!cancelled) setUser(profile ?? { id: sessionUser.id, email: sessionUser.email, role: 'owner', trades: [], states: [] });
+          await routeAuthed(sessionUser);
         }
       } catch (e) {
         // Network or RLS error during boot — log and continue showing login screen
@@ -7685,9 +7987,7 @@ function TradevoiceApp() {
       if (!sessionUser) { setUser(null); return; }
       if (!(await enforceAllowlist(sessionUser))) return;
       try {
-        const profile = await getProfile(sessionUser.id, sessionUser.email);
-        if (cancelled) return;
-        setUser(profile ?? { id: sessionUser.id, email: sessionUser.email, role: 'owner', trades: [], states: [] });
+        await routeAuthed(sessionUser);
       } catch (e) {
         console.error('profile fetch failed', e);
       }
@@ -8006,45 +8306,18 @@ function TradevoiceApp() {
   const EARLY_ACCESS_EMAILS = (import.meta.env.VITE_EARLY_ACCESS_EMAILS || 'mattparnellburkes@yahoo.com')
     .split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
 
-  const handleSignupComplete = async (data) => {
-    // Server-side gate (well, client-side here — but the same check would
-    // run on a Vercel function if/when we add one). Until Tradevoice is
-    // publicly launched, only allowlisted emails can sign up.
-    const emailOk = EARLY_ACCESS_EMAILS.includes(String(data.email || '').trim().toLowerCase());
-    if (!emailOk) {
-      alert(
-        "Tradevoice is currently in private preview.\n\n" +
-        "We're rolling out access in waves. To request early access, " +
-        "email hello@thetradevoice.com and we'll get back to you shortly."
-      );
-      return;
-    }
-
-    try {
-      const { user: authUser, session } = await signUp(data.email, data.password);
-      // If email confirmation is required, session is null — the user has to verify before signing in.
-      if (!session) {
-        alert('Account created. Check your email to confirm, then sign in.');
-        setAuthScreen('login');
-        return;
-      }
-      // Auth row created; trigger inserted a blank profiles row. Now fill it in.
-      const profile = await upsertProfile(authUser.id, {
-        name:            data.name,
-        company:         data.company,
-        phone:           data.phone,
-        trades:          data.trades,
-        states:          data.states,
-        plan:            data.plan,
-        role:            'owner',
-        companyCode:     'TV-' + Math.random().toString(36).slice(2, 8).toUpperCase(),
-        acceptedTermsAt: data.acceptedTermsAt ?? new Date().toISOString(),
-      });
-      setUser(profile);
-      setAuthScreen(null);
-    } catch (e) {
-      alert(e?.message || 'Could not create your account. Try again.');
-    }
+  // SignupScreen now owns the whole orchestration (signup → SetupIntent →
+  // confirm card → create subscription → upsertProfile) and hands us back
+  // the fully-hydrated profile when it's done. We just clear the auth
+  // screen + plant the user in state and the app routes to Dashboard.
+  //
+  // Allowlist enforcement moved to enforceAllowlist (called in onAuthChange
+  // earlier) so it now catches both Google OAuth users AND email/password
+  // users — wherever the auth session originated.
+  const handleSignupComplete = (profile) => {
+    if (!profile) return;
+    setUser(profile);
+    setAuthScreen(null);
   };
 
   // First-load auth check — show a small loader while we ask Supabase if there's a session.
