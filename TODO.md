@@ -5,6 +5,36 @@ to pick up cold. Update this as we go.
 
 ---
 
+## 🚨 Wire the $19.99 tech-seat add-on to Stripe (deferred 2026-05-14)
+
+The UI already advertises `$19.99/mo per seat` for additional team members
+(SignupScreen footnote, Dashboard tech-performance widget CTA, Settings →
+Team "Buy a Tech Seat" button) — but `api/stripe/create-subscription.js`
+only creates a subscription with the base plan's single price item. There's
+no per-seat line being added or counted.
+
+To wire it up:
+1. Stripe Price `STRIPE_PRICE_TECH_SEAT` already exists (created
+   2026-05-14 during the live-mode setup). Set as env var.
+2. When the contractor clicks "Create Tech Account" (`BuyTechSeatModal`),
+   after the team_member insert, call a new `/api/stripe/add-tech-seat`
+   endpoint that calls
+   `stripe.subscriptions.update(sub_id, { items: [...existing, { price: STRIPE_PRICE_TECH_SEAT, quantity: 1 }] })`.
+   Or — cleaner — store ONE subscription item for the seat add-on with
+   `quantity: N` where N is the active tech count; increment / decrement
+   the quantity on add / remove.
+3. On `team_member` delete (Settings → Team → remove), call the same
+   endpoint to decrement quantity.
+4. Update `webhook.js` invoice handlers to surface the seat line items
+   separately in receipts (optional polish).
+
+Function-count math: this adds one more `/api/stripe/*` endpoint. Stripe
+folder is at 9 today + 1 new = 10. Marketing 1 + library 1 + this = 12
+exactly. Still under the Hobby cap without consolidation, but tight.
+Worth doing alongside the Vercel Pro upgrade noted below.
+
+---
+
 ## 🚨 Vercel Pro upgrade (deferred 2026-05-14)
 
 The Rate Library push (commit `cfaa3c7`) hit Vercel Hobby's **12 serverless
