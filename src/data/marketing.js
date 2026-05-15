@@ -57,11 +57,15 @@ export async function listRecentSends(limit = 25) {
 
 // ── API wrappers ──────────────────────────────────────────────────────────
 
+// Both flows hit the same /api/marketing/send endpoint with a `type`
+// discriminator. We consolidated two endpoints into one to stay under
+// Vercel Hobby's 12-function cap; the server-side dispatcher in send.js
+// keeps the implementations separate. Behavior unchanged.
 export async function sendReviewRequests({ ownerId, clientIds, reviewLink, customMessage }) {
-  const resp = await fetch('/api/marketing/send-review-request', {
+  const resp = await fetch('/api/marketing/send', {
     method:  'POST',
     headers: { 'Content-Type': 'application/json' },
-    body:    JSON.stringify({ ownerId, clientIds, reviewLink, customMessage }),
+    body:    JSON.stringify({ type: 'review_request', ownerId, clientIds, reviewLink, customMessage }),
   });
   const body = await resp.json().catch(() => ({}));
   if (!resp.ok) {
@@ -73,10 +77,10 @@ export async function sendReviewRequests({ ownerId, clientIds, reviewLink, custo
 }
 
 export async function sendCampaign({ ownerId, name, tradeFilter, subject, message }) {
-  const resp = await fetch('/api/marketing/send-campaign', {
+  const resp = await fetch('/api/marketing/send', {
     method:  'POST',
     headers: { 'Content-Type': 'application/json' },
-    body:    JSON.stringify({ ownerId, name, tradeFilter, subject, message }),
+    body:    JSON.stringify({ type: 'campaign', ownerId, name, tradeFilter, subject, message }),
   });
   const body = await resp.json().catch(() => ({}));
   if (!resp.ok) {

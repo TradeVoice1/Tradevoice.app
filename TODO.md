@@ -5,6 +5,34 @@ to pick up cold. Update this as we go.
 
 ---
 
+## 🚨 Vercel Pro upgrade (deferred 2026-05-14)
+
+The Rate Library push (commit `cfaa3c7`) hit Vercel Hobby's **12 serverless
+function limit per deployment** — adding `api/library/parse-rate-table.js`
+pushed us to 13 and the deploy ERRORed at upload (build itself was clean).
+Worked around tonight by consolidating `send-review-request.js` +
+`send-campaign.js` into a single `api/marketing/send.js` with a `type`
+discriminator — back to 12 functions.
+
+**Why upgrade ($20/mo per seat):**
+- Removes the function cap entirely
+- Unlocks **Vercel Cron** — required for two pending features:
+  - Recurring jobs auto-generation (plans → jobs when `nextDueAt` arrives)
+  - Marketing automations Phase 2 (trigger-based: "invoice paid → 2d → review request")
+- Longer function timeouts (300s vs 60s) — useful if Claude PDF parsing ever
+  needs more than 10s on a big rate sheet
+- Better build performance + more concurrent function executions
+- Pays for itself the first time we ship a cron-backed feature
+
+**When to do it:** before either of the cron-dependent features above. After
+the LLC is filed + business bank account is set up, billing under the LLC.
+
+**After upgrade:** can optionally re-split `api/marketing/send.js` back into
+two files if we want cleaner separation — but the consolidated version works
+fine indefinitely, so this is purely aesthetic.
+
+---
+
 ## ✅ Recently shipped (overnight session 2026-05-08)
 
 **Trade catalog expanded from 5 → 56 trades.**
