@@ -426,15 +426,17 @@ const StatCard = ({ icon, label, value, color = C.orange, delta, sub }) => (
 // AUTH SCREENS — Login / Sign Up / Join Company
 // ══════════════════════════════════════════════════════════════════════════════
 
-function AuthShell({ children }) {
+// maxWidth defaults to 420 (single-column mobile-first layout — right for
+// form-heavy account / company / payment screens). Pass a larger value
+// when the content benefits from desktop space (Plan picker uses 920 so
+// the three tier cards sit side-by-side on a laptop instead of stacking).
+function AuthShell({ children, maxWidth = 420 }) {
   return (
     <div style={{ minHeight: '100vh', background: C.bg, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px 16px', fontFamily: "'Inter', sans-serif" }}>
       {/* Big logo on the auth screens — first impression for new sign-ups
-          and a clear brand anchor for returning logins. Was size=38 (tiny).
-          size=80 renders ~176px tall, capped at 640px wide so it still
-          fits comfortably on tablets and phones. */}
+          and a clear brand anchor for returning logins. */}
       <div style={{ marginBottom: 36 }}><Logo size={80} /></div>
-      <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: '32px 28px', width: '100%', maxWidth: 420 }}>
+      <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: '32px 28px', width: '100%', maxWidth, transition: 'max-width 0.25s ease' }}>
         {children}
       </div>
     </div>
@@ -891,9 +893,9 @@ function SignupScreen({ onComplete, onBack }) {
   };
 
   return (
-    <AuthShell>
+    <AuthShell maxWidth={step === 2 && !isTablet ? 920 : 480}>
       {/* Step indicator */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 24 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 24, maxWidth: 480, marginLeft: 'auto', marginRight: 'auto' }}>
         {steps.map((lbl, i) => (
           <div key={lbl} style={{ display: 'flex', alignItems: 'center', gap: 8, flex: i < steps.length - 1 ? 1 : 0 }}>
             <div style={{ width: 28, height: 28, borderRadius: '50%', background: i <= step ? C.orange : C.raised, border: `2px solid ${i <= step ? C.orange : C.border2}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: i <= step ? '#fff' : C.dim, flexShrink: 0 }}>
@@ -1045,28 +1047,94 @@ function SignupScreen({ onComplete, onBack }) {
             </div>
           </div>
 
-          {PLANS_SU.map(p => {
-            const price   = billingPeriod === 'yearly' ? p.yearlyPrice : p.monthlyPrice;
-            const periodLabel = billingPeriod === 'yearly' ? '/yr' : '/mo';
-            // Yearly savings vs paying that plan monthly for 12 months.
-            const yearlySaving = (p.monthlyPrice * 12) - p.yearlyPrice;
-            return (
-              <button key={p.id} onClick={() => setPlan(p.id)} style={{ ...s.btn, padding: '14px 16px', background: plan === p.id ? C.orangeLo : C.surface, border: `2px solid ${plan === p.id ? C.orange : C.border}`, borderRadius: 10, textAlign: 'left', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                  <div style={{ fontWeight: 800, fontSize: 15, color: plan === p.id ? C.orange : C.text }}>{p.name} {p.popular && <span style={{ fontSize: 11, background: C.orange, color: '#fff', padding: '2px 8px', borderRadius: 10, marginLeft: 6 }}>Popular</span>}</div>
-                  <div style={{ fontSize: 13, color: C.muted, marginTop: 2 }}>{p.trades} · {p.desc}</div>
+          {/* On desktop (laptop+), stack the three tier cards side-by-
+              side so they're easy to compare. On tablet/mobile, single
+              column — the cards stay readable inside the narrower
+              AuthShell and the modal isn't overwhelming on phones. */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: isTablet ? '1fr' : 'repeat(3, 1fr)',
+            gap: isTablet ? 10 : 14,
+            alignItems: 'stretch',
+          }}>
+            {PLANS_SU.map(p => {
+              const price        = billingPeriod === 'yearly' ? p.yearlyPrice : p.monthlyPrice;
+              const periodLabel  = billingPeriod === 'yearly' ? '/yr' : '/mo';
+              const yearlySaving = (p.monthlyPrice * 12) - p.yearlyPrice;
+              const selected     = plan === p.id;
+              return (
+                <button
+                  key={p.id}
+                  onClick={() => setPlan(p.id)}
+                  style={{
+                    ...s.btn,
+                    padding: isTablet ? '14px 16px' : '20px 18px',
+                    background: selected ? C.orangeLo : C.surface,
+                    border: `2px solid ${selected ? C.orange : C.border}`,
+                    borderRadius: 12,
+                    textAlign: 'left',
+                    display: 'flex',
+                    flexDirection: isTablet ? 'row' : 'column',
+                    justifyContent: isTablet ? 'space-between' : 'flex-start',
+                    alignItems: isTablet ? 'center' : 'stretch',
+                    gap: isTablet ? 12 : 10,
+                    position: 'relative',
+                    cursor: 'pointer',
+                    minHeight: isTablet ? 0 : 200,
+                  }}
+                >
+                  {/* Popular badge — top-right corner on desktop card */}
+                  {p.popular && !isTablet && (
+                    <span style={{ position: 'absolute', top: -10, right: 14, fontSize: 10, fontWeight: 900, letterSpacing: '0.08em', textTransform: 'uppercase', background: C.orange, color: '#fff', padding: '4px 10px', borderRadius: 12 }}>
+                      Popular
+                    </span>
+                  )}
+
+                  {/* Header — name (with inline Popular on tablet) */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ fontWeight: 800, fontSize: isTablet ? 15 : 18, color: selected ? C.orange : C.text }}>{p.name}</span>
+                    {p.popular && isTablet && (
+                      <span style={{ fontSize: 11, background: C.orange, color: '#fff', padding: '2px 8px', borderRadius: 10 }}>Popular</span>
+                    )}
+                  </div>
+
+                  {/* Price block — large + centered on desktop, inline on tablet */}
+                  <div style={{
+                    fontFamily: "'Inter', sans-serif",
+                    fontWeight: 900,
+                    color: selected ? C.orange : C.text,
+                    fontSize: isTablet ? 18 : 28,
+                    whiteSpace: 'nowrap',
+                    order: isTablet ? 2 : 0,
+                    marginLeft: isTablet ? 'auto' : 0,
+                    marginTop: isTablet ? 0 : 4,
+                    lineHeight: 1.1,
+                  }}>
+                    {fmt(price)}<span style={{ fontSize: isTablet ? 12 : 14, fontWeight: 500, color: selected ? C.orange : C.muted }}>{periodLabel}</span>
+                  </div>
+
+                  {/* Description — trades + tagline */}
+                  <div style={{ fontSize: 13, color: C.muted, lineHeight: 1.5, order: isTablet ? 1 : 0, flex: isTablet ? 1 : 'none' }}>
+                    <div style={{ fontWeight: 700, color: C.text, marginBottom: isTablet ? 0 : 4 }}>{p.trades}</div>
+                    {!isTablet && <div>{p.desc}</div>}
+                    {isTablet && <div style={{ fontSize: 13, color: C.muted, marginTop: 2 }}>{p.desc}</div>}
+                  </div>
+
+                  {/* Yearly savings callout */}
                   {billingPeriod === 'yearly' && (
-                    <div style={{ fontSize: 12, color: C.success, marginTop: 4, fontWeight: 700 }}>
+                    <div style={{ fontSize: 12, color: C.success, fontWeight: 700, marginTop: isTablet ? 0 : 'auto', order: isTablet ? 3 : 0 }}>
                       Save {fmt(yearlySaving)}/yr vs monthly
                     </div>
                   )}
-                </div>
-                <div style={{ fontSize: 18, fontWeight: 900, color: plan === p.id ? C.orange : C.text, fontFamily: "'Inter', sans-serif", whiteSpace: 'nowrap' }}>
-                  {fmt(price)}<span style={{ fontSize: 12, fontWeight: 400 }}>{periodLabel}</span>
-                </div>
-              </button>
-            );
-          })}
+                </button>
+              );
+            })}
+          </div>
+          {/* Everything below the plan grid stays in a constrained
+              column even on desktop — the wide layout is just for the
+              card comparison; the tagline, payment-methods preview,
+              and ToS checkbox feel awkward when they stretch wide. */}
+          <div style={{ width: '100%', maxWidth: 480, marginLeft: 'auto', marginRight: 'auto' }}>
           <div style={{ fontSize: 13, color: C.dim, marginTop: 4, textAlign: 'center' }}>28-day free trial · No credit card needed · Cancel anytime</div>
           <div style={{ fontSize: 13, color: C.muted, textAlign: 'center', marginTop: 8 }}>
             Need team members? Add techs for <strong style={{ color: C.orange }}>$19.99/mo each</strong> after sign-up in Settings → Team{plan === 'all' ? ' (first 2 free on Elite)' : ''}. 28-day free trial on all plans.
@@ -1119,6 +1187,7 @@ function SignupScreen({ onComplete, onBack }) {
               <a href="https://thetradevoice.com/privacy" target="_blank" rel="noopener noreferrer" style={{ color: C.orange, fontWeight: 700, textDecoration: 'underline' }} onClick={e => e.stopPropagation()}>Privacy Policy</a>.
             </span>
           </label>
+          </div> {/* end constrained-column wrapper for Step 2 below-grid */}
         </div>
       )}
 
@@ -1177,7 +1246,7 @@ function SignupScreen({ onComplete, onBack }) {
         </div>
       )}
 
-      <div style={{ display: 'flex', gap: 10, marginTop: 22 }}>
+      <div style={{ display: 'flex', gap: 10, marginTop: 22, width: '100%', maxWidth: 480, marginLeft: 'auto', marginRight: 'auto' }}>
         {/* Back button: hidden for Google users on Step 1 (no Account
             step to return to). On Step 3 it still steps back to Plan in
             case the user wants to switch tier — payment phase resets so
