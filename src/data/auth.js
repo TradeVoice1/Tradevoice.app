@@ -174,6 +174,40 @@ export async function signUp(email, password) {
   return { user: data.user, session: data.session };
 }
 
+// ── Google OAuth sign-in ─────────────────────────────────────────────────────
+// Hands the browser off to Google's authorization screen. Supabase's
+// signInWithOAuth helper builds the right URL, kicks off the redirect,
+// and on return exchanges the code for a session automatically.
+//
+// Setup required (one-time, in dashboards — not code):
+//   1. Google Cloud Console → APIs & Services → Credentials → create
+//      OAuth 2.0 Client ID (Web application). Authorized redirect URI
+//      must be the Supabase callback:
+//        https://<project>.supabase.co/auth/v1/callback
+//   2. Supabase Dashboard → Authentication → Providers → Google → enable.
+//      Paste the Google Client ID + Client Secret.
+//
+// After auth, Supabase redirects to redirectTo (defaults to the app
+// origin), the onAuthChange listener picks up the new session, and the
+// allowlist gate in App.jsx enforces private-preview by signing out any
+// non-allowlisted Google user.
+export async function signInWithGoogle({ redirectTo } = {}) {
+  const target = redirectTo || (typeof window !== 'undefined' ? window.location.origin : undefined);
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: target,
+      // Pre-select an account if the user is already signed into multiple.
+      // Helps the "I want to use my work Gmail" UX without forcing it.
+      queryParams: { access_type: 'offline', prompt: 'select_account' },
+    },
+  });
+  if (error) throw error;
+  // signInWithOAuth doesn't return a session synchronously — it triggers
+  // a full-page redirect to Google. The session comes back through the
+  // onAuthChange listener after Google's callback hits Supabase.
+}
+
 export async function signOut() {
   const { error } = await supabase.auth.signOut();
   if (error) throw error;

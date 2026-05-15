@@ -17,7 +17,7 @@ const RateLibraryPanel = lazy(() => import("./RateLibraryPanel"));
 const MarketingScreen      = lazy(() => import("./MarketingScreen"));
 const PrivacyPolicyScreen  = lazy(() => import("./LegalScreens").then(m => ({ default: m.PrivacyPolicyScreen })));
 const TermsScreen          = lazy(() => import("./LegalScreens").then(m => ({ default: m.TermsScreen })));
-import { signIn, signUp, signOut, getProfile, upsertProfile, getSessionUser, onAuthChange, techSignIn, techChangePassword } from "./data/auth";
+import { signIn, signUp, signOut, getProfile, upsertProfile, getSessionUser, onAuthChange, techSignIn, techChangePassword, signInWithGoogle } from "./data/auth";
 import { listClients, addClient as apiAddClient, updateClient as apiUpdateClient, deleteClient as apiDeleteClient } from "./data/clients";
 import { listInvoices, upsertInvoice as apiUpsertInvoice, deleteInvoice as apiDeleteInvoice } from "./data/invoices";
 import { listQuotes,   upsertQuote   as apiUpsertQuote,   deleteQuote   as apiDeleteQuote   } from "./data/quotes";
@@ -451,6 +451,26 @@ function LoginScreen({ onLogin, onSignup, onForgot }) {
   const [password, setPassword] = useState('');
   const [error,    setError]    = useState('');
   const [loading,  setLoading]  = useState(false);
+  const [googleBusy, setGoogleBusy] = useState(false);
+
+  // Google OAuth handler — kicks off the Supabase signInWithOAuth redirect.
+  // We never get a synchronous callback here; the user gets shipped off to
+  // Google, then bounces back via Supabase's callback URL. The app's
+  // onAuthChange listener picks up the new session and the allowlist gate
+  // in App.jsx decides whether to keep them signed in or sign them out.
+  const handleGoogleSignIn = async () => {
+    if (googleBusy) return;
+    setError('');
+    setGoogleBusy(true);
+    try {
+      await signInWithGoogle();
+      // No-op after success — browser is redirecting to Google. We won't
+      // resolve here in normal flow.
+    } catch (e) {
+      setError(e?.message || 'Could not start Google sign-in.');
+      setGoogleBusy(false);
+    }
+  };
 
   const handleLogin = async () => {
     if (mode === 'owner') {
@@ -557,10 +577,24 @@ function LoginScreen({ onLogin, onSignup, onForgot }) {
             <div style={{ flex: 1, height: 1, background: C.border }} />
           </div>
 
-          {/* Google sign in */}
-          <button style={{ ...s.btn, width: '100%', background: C.surface, border: `1.5px solid ${C.border2}`, color: C.text, padding: '11px', minHeight: 48, fontSize: 14, borderRadius: 50, marginBottom: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+          {/* Google sign in — onClick redirects to Google via Supabase OAuth.
+              See handleGoogleSignIn above. Session lands back through the
+              auth-change listener in App.jsx, which also runs the
+              private-preview allowlist check (kicks out non-invited Gmail). */}
+          <button
+            onClick={handleGoogleSignIn}
+            disabled={googleBusy || loading}
+            style={{
+              ...s.btn, width: '100%',
+              background: C.surface, border: `1.5px solid ${C.border2}`, color: C.text,
+              padding: '11px', minHeight: 48, fontSize: 14, borderRadius: 50,
+              marginBottom: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+              cursor: googleBusy ? 'wait' : 'pointer',
+              opacity: (googleBusy || loading) ? 0.6 : 1,
+            }}
+          >
             <svg width="16" height="16" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/></svg>
-            Continue with Google
+            {googleBusy ? 'Redirecting to Google…' : 'Continue with Google'}
           </button>
 
           {/* Private-preview gate: the signup form still mounts but the
@@ -7600,11 +7634,36 @@ function TradevoiceApp() {
       }
     }, 5000);
 
+    // Shared allowlist enforcement for any auth event (boot session
+    // restore + every subsequent sign-in). Catches Google OAuth users
+    // who weren't invited — completing the OAuth dance bypasses the
+    // signup-form check (which only runs in handleSignupComplete).
+    // Tech accounts use synthetic emails ending in @tradevoice.app and
+    // are exempt from the human allowlist by design.
+    const enforceAllowlist = async (sessionUser) => {
+      if (!sessionUser?.email) return true; // weird edge case — let it through, profile fetch will fail if real
+      const email = String(sessionUser.email).trim().toLowerCase();
+      if (email.endsWith('@tradevoice.app')) return true;  // tech synthetic email
+      if (EARLY_ACCESS_EMAILS.includes(email)) return true;
+      // Non-invited human signed in (almost certainly via Google OAuth).
+      // Sign them out and tell them why. They might have created a
+      // profile row via Supabase's handle_new_user trigger — that's
+      // cosmetic; without a session they can't do anything.
+      try { await signOut(); } catch (_) {}
+      alert(
+        "Tradevoice is currently in private preview.\n\n" +
+        "We're rolling out access in waves. To request access for " +
+        email + ", email hello@thetradevoice.com and we'll get back to you."
+      );
+      return false;
+    };
+
     (async () => {
       try {
         const sessionUser = await getSessionUser();
         if (cancelled) return;
         if (sessionUser) {
+          if (!(await enforceAllowlist(sessionUser))) return;
           const profile = await getProfile(sessionUser.id, sessionUser.email);
           if (!cancelled) setUser(profile ?? { id: sessionUser.id, email: sessionUser.email, role: 'owner', trades: [], states: [] });
         }
@@ -7624,6 +7683,7 @@ function TradevoiceApp() {
       // (and worse, race two profile fetches into the same setUser).
       if (cancelled) return;
       if (!sessionUser) { setUser(null); return; }
+      if (!(await enforceAllowlist(sessionUser))) return;
       try {
         const profile = await getProfile(sessionUser.id, sessionUser.email);
         if (cancelled) return;
