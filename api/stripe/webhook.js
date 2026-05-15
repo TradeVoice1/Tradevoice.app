@@ -12,10 +12,19 @@
 //      contracts (migration 0018), recurring subscription billing the
 //      contractor charges their customers.
 //
-// Both flow through the SAME webhook endpoint URL — Stripe sends Connect
-// events to whichever webhook the platform has subscribed to with the
-// "Listen to events on Connected accounts" toggle enabled. We branch
-// inside the handler based on event.account presence.
+// Both flow through the SAME webhook endpoint URL. In Stripe's older v1
+// webhook UI you could set up one destination with a "listen on Connected
+// accounts too" checkbox. The new Workbench v2 UI splits these into TWO
+// separate destinations (one per scope) — same URL, different signing
+// secrets. We accept both signing secrets via env vars and try each in
+// turn when verifying the incoming signature.
+//   STRIPE_WEBHOOK_SECRET_PLATFORM — Your account scope destination
+//   STRIPE_WEBHOOK_SECRET_CONNECT  — Connected accounts scope destination
+//   STRIPE_WEBHOOK_SECRET          — legacy single-secret fallback (kept
+//                                    for backward compat; safe to remove
+//                                    once the new two-secret env is set)
+// Then branch inside the handler on event.account presence to route each
+// event to the right RPC.
 //
 // IMPORTANT: Vercel serverless functions parse JSON by default, but Stripe
 // signature verification needs the RAW body. Disable parsing via the config
@@ -40,18 +49,38 @@ export default async function handler(req, res) {
     return res.status(405).end();
   }
 
-  const sig    = req.headers['stripe-signature'];
-  const secret = process.env.STRIPE_WEBHOOK_SECRET;
-  if (!sig || !secret) {
-    return res.status(400).json({ error: 'missing_signature_or_secret' });
+  const sig = req.headers['stripe-signature'];
+  if (!sig) {
+    return res.status(400).json({ error: 'missing_signature' });
   }
 
-  let event;
-  try {
-    const buf = await rawBody(req);
-    event = stripe.webhooks.constructEvent(buf, sig, secret);
-  } catch (e) {
-    console.error('[stripe webhook] signature verification failed:', e?.message);
+  // Try each configured secret in turn — Stripe's Workbench v2 UI splits
+  // platform-scope and connect-scope into two destinations with their own
+  // signing secrets, so the same code path has to verify against either.
+  // filter(Boolean) drops any env var that wasn't set; the legacy single
+  // STRIPE_WEBHOOK_SECRET is included last so older setups still work.
+  const secrets = [
+    process.env.STRIPE_WEBHOOK_SECRET_PLATFORM,
+    process.env.STRIPE_WEBHOOK_SECRET_CONNECT,
+    process.env.STRIPE_WEBHOOK_SECRET,
+  ].filter(Boolean);
+  if (secrets.length === 0) {
+    return res.status(400).json({ error: 'no_webhook_secrets_configured' });
+  }
+
+  const buf = await rawBody(req);
+  let event = null;
+  let lastError = null;
+  for (const secret of secrets) {
+    try {
+      event = stripe.webhooks.constructEvent(buf, sig, secret);
+      break;
+    } catch (e) {
+      lastError = e;
+    }
+  }
+  if (!event) {
+    console.error('[stripe webhook] signature verification failed against all configured secrets:', lastError?.message);
     return res.status(400).json({ error: 'invalid_signature' });
   }
 
