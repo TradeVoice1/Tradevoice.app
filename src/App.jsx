@@ -685,34 +685,26 @@ function SignupShell({ children, isTablet, step, steps }) {
         height: '100vh',
         boxSizing: 'border-box',
       }}>
-        {/* Wordmark — serif to echo the marketing site's Playfair
-            Display treatment. We skip the <Logo /> image here because
-            the asset has a white background baked in (designed for
-            light surfaces); on this dark-green gradient it would
-            render as a big white block. The marketing site uses the
-            same pure-text wordmark in its hero for the same reason. */}
-        <div style={{ marginBottom: 44, display: 'flex', alignItems: 'baseline', gap: 10 }}>
-          <div style={{
-            fontFamily: "'Playfair Display', Georgia, serif",
-            fontSize: 30,
-            fontWeight: 900,
-            letterSpacing: '-0.01em',
-            lineHeight: 1,
-            color: '#fff',
-          }}>
-            Tradevoice
-          </div>
-          <div style={{
-            fontSize: 11,
-            fontWeight: 700,
-            letterSpacing: '0.18em',
-            textTransform: 'uppercase',
-            color: '#b7dfca',
-            paddingLeft: 12,
-            borderLeft: '1px solid rgba(255,255,255,0.25)',
-          }}>
-            For pros
-          </div>
+        {/* Brand lockup — the full Tradevoice logo asset (lion + wordmark
+            + "from first estimate to final payment" tagline) on a clean
+            white card. The logo file has its white background baked in;
+            framing it in an intentional white pill makes that read as
+            a design choice on the dark-green hero rather than overflow.
+            Logo size is constrained so the maxWidth fits inside the
+            460px brand panel (panel padding ≈ 110px → 350px usable). */}
+        <div style={{
+          marginBottom: 36,
+          background: '#fff',
+          borderRadius: 14,
+          padding: '14px 18px',
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          boxShadow: '0 6px 20px rgba(0,0,0,0.18)',
+          alignSelf: 'flex-start',
+          maxWidth: '100%',
+        }}>
+          <Logo size={36} />
         </div>
 
         {/* Eyebrow + headline + sub for the current step. Updates as the
