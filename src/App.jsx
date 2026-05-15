@@ -428,15 +428,18 @@ const StatCard = ({ icon, label, value, color = C.orange, delta, sub }) => (
 
 // maxWidth defaults to 420 (single-column mobile-first layout — right for
 // form-heavy account / company / payment screens). Pass a larger value
-// when the content benefits from desktop space (Plan picker uses 920 so
-// the three tier cards sit side-by-side on a laptop instead of stacking).
+// when the content benefits from desktop space (Plan picker uses 1280 so
+// the three tier cards spread across a laptop screen instead of stacking).
+// Inner padding scales up at wider maxWidth values so the content doesn't
+// hug the card edges on big layouts.
 function AuthShell({ children, maxWidth = 420 }) {
+  const wide = maxWidth >= 900;
   return (
     <div style={{ minHeight: '100vh', background: C.bg, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px 16px', fontFamily: "'Inter', sans-serif" }}>
       {/* Big logo on the auth screens — first impression for new sign-ups
           and a clear brand anchor for returning logins. */}
       <div style={{ marginBottom: 36 }}><Logo size={80} /></div>
-      <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: '32px 28px', width: '100%', maxWidth, transition: 'max-width 0.25s ease' }}>
+      <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: wide ? '40px 48px' : '32px 28px', width: '100%', maxWidth, transition: 'max-width 0.25s ease, padding 0.25s ease' }}>
         {children}
       </div>
     </div>
@@ -893,9 +896,9 @@ function SignupScreen({ onComplete, onBack }) {
   };
 
   return (
-    <AuthShell maxWidth={step === 2 && !isTablet ? 920 : 480}>
+    <AuthShell maxWidth={step === 2 && !isTablet ? 1280 : 480}>
       {/* Step indicator */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 24, maxWidth: 480, marginLeft: 'auto', marginRight: 'auto' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 24, maxWidth: 560, marginLeft: 'auto', marginRight: 'auto' }}>
         {steps.map((lbl, i) => (
           <div key={lbl} style={{ display: 'flex', alignItems: 'center', gap: 8, flex: i < steps.length - 1 ? 1 : 0 }}>
             <div style={{ width: 28, height: 28, borderRadius: '50%', background: i <= step ? C.orange : C.raised, border: `2px solid ${i <= step ? C.orange : C.border2}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: i <= step ? '#fff' : C.dim, flexShrink: 0 }}>
@@ -1050,11 +1053,15 @@ function SignupScreen({ onComplete, onBack }) {
           {/* On desktop (laptop+), stack the three tier cards side-by-
               side so they're easy to compare. On tablet/mobile, single
               column — the cards stay readable inside the narrower
-              AuthShell and the modal isn't overwhelming on phones. */}
+              AuthShell and the modal isn't overwhelming on phones.
+
+              Desktop cards intentionally get generous padding + a tall
+              minHeight so they feel like a real plan-comparison page
+              rather than a phone modal stretched wide. */}
           <div style={{
             display: 'grid',
             gridTemplateColumns: isTablet ? '1fr' : 'repeat(3, 1fr)',
-            gap: isTablet ? 10 : 14,
+            gap: isTablet ? 10 : 24,
             alignItems: 'stretch',
           }}>
             {PLANS_SU.map(p => {
@@ -1068,31 +1075,31 @@ function SignupScreen({ onComplete, onBack }) {
                   onClick={() => setPlan(p.id)}
                   style={{
                     ...s.btn,
-                    padding: isTablet ? '14px 16px' : '20px 18px',
+                    padding: isTablet ? '14px 16px' : '32px 28px',
                     background: selected ? C.orangeLo : C.surface,
                     border: `2px solid ${selected ? C.orange : C.border}`,
-                    borderRadius: 12,
+                    borderRadius: 14,
                     textAlign: 'left',
                     display: 'flex',
                     flexDirection: isTablet ? 'row' : 'column',
                     justifyContent: isTablet ? 'space-between' : 'flex-start',
                     alignItems: isTablet ? 'center' : 'stretch',
-                    gap: isTablet ? 12 : 10,
+                    gap: isTablet ? 12 : 14,
                     position: 'relative',
                     cursor: 'pointer',
-                    minHeight: isTablet ? 0 : 200,
+                    minHeight: isTablet ? 0 : 280,
                   }}
                 >
                   {/* Popular badge — top-right corner on desktop card */}
                   {p.popular && !isTablet && (
-                    <span style={{ position: 'absolute', top: -10, right: 14, fontSize: 10, fontWeight: 900, letterSpacing: '0.08em', textTransform: 'uppercase', background: C.orange, color: '#fff', padding: '4px 10px', borderRadius: 12 }}>
+                    <span style={{ position: 'absolute', top: -10, right: 18, fontSize: 10, fontWeight: 900, letterSpacing: '0.08em', textTransform: 'uppercase', background: C.orange, color: '#fff', padding: '4px 10px', borderRadius: 12 }}>
                       Popular
                     </span>
                   )}
 
                   {/* Header — name (with inline Popular on tablet) */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ fontWeight: 800, fontSize: isTablet ? 15 : 18, color: selected ? C.orange : C.text }}>{p.name}</span>
+                    <span style={{ fontWeight: 800, fontSize: isTablet ? 15 : 22, color: selected ? C.orange : C.text }}>{p.name}</span>
                     {p.popular && isTablet && (
                       <span style={{ fontSize: 11, background: C.orange, color: '#fff', padding: '2px 8px', borderRadius: 10 }}>Popular</span>
                     )}
@@ -1103,26 +1110,26 @@ function SignupScreen({ onComplete, onBack }) {
                     fontFamily: "'Inter', sans-serif",
                     fontWeight: 900,
                     color: selected ? C.orange : C.text,
-                    fontSize: isTablet ? 18 : 28,
+                    fontSize: isTablet ? 18 : 36,
                     whiteSpace: 'nowrap',
                     order: isTablet ? 2 : 0,
                     marginLeft: isTablet ? 'auto' : 0,
-                    marginTop: isTablet ? 0 : 4,
+                    marginTop: isTablet ? 0 : 6,
                     lineHeight: 1.1,
                   }}>
-                    {fmt(price)}<span style={{ fontSize: isTablet ? 12 : 14, fontWeight: 500, color: selected ? C.orange : C.muted }}>{periodLabel}</span>
+                    {fmt(price)}<span style={{ fontSize: isTablet ? 12 : 16, fontWeight: 500, color: selected ? C.orange : C.muted }}>{periodLabel}</span>
                   </div>
 
                   {/* Description — trades + tagline */}
-                  <div style={{ fontSize: 13, color: C.muted, lineHeight: 1.5, order: isTablet ? 1 : 0, flex: isTablet ? 1 : 'none' }}>
-                    <div style={{ fontWeight: 700, color: C.text, marginBottom: isTablet ? 0 : 4 }}>{p.trades}</div>
+                  <div style={{ fontSize: isTablet ? 13 : 14, color: C.muted, lineHeight: 1.55, order: isTablet ? 1 : 0, flex: isTablet ? 1 : 'none' }}>
+                    <div style={{ fontWeight: 700, color: C.text, marginBottom: isTablet ? 0 : 6, fontSize: isTablet ? 13 : 15 }}>{p.trades}</div>
                     {!isTablet && <div>{p.desc}</div>}
                     {isTablet && <div style={{ fontSize: 13, color: C.muted, marginTop: 2 }}>{p.desc}</div>}
                   </div>
 
                   {/* Yearly savings callout */}
                   {billingPeriod === 'yearly' && (
-                    <div style={{ fontSize: 12, color: C.success, fontWeight: 700, marginTop: isTablet ? 0 : 'auto', order: isTablet ? 3 : 0 }}>
+                    <div style={{ fontSize: isTablet ? 12 : 13, color: C.success, fontWeight: 700, marginTop: isTablet ? 0 : 'auto', order: isTablet ? 3 : 0 }}>
                       Save {fmt(yearlySaving)}/yr vs monthly
                     </div>
                   )}
@@ -1133,8 +1140,11 @@ function SignupScreen({ onComplete, onBack }) {
           {/* Everything below the plan grid stays in a constrained
               column even on desktop — the wide layout is just for the
               card comparison; the tagline, payment-methods preview,
-              and ToS checkbox feel awkward when they stretch wide. */}
-          <div style={{ width: '100%', maxWidth: 480, marginLeft: 'auto', marginRight: 'auto' }}>
+              and ToS checkbox feel awkward when they stretch wide.
+              On desktop we let it breathe a bit wider (640) since the
+              shell itself is 1280 — 480 felt cramped underneath the
+              wide card row. */}
+          <div style={{ width: '100%', maxWidth: isTablet ? 480 : 640, marginLeft: 'auto', marginRight: 'auto' }}>
           <div style={{ fontSize: 13, color: C.dim, marginTop: 4, textAlign: 'center' }}>28-day free trial · No credit card needed · Cancel anytime</div>
           <div style={{ fontSize: 13, color: C.muted, textAlign: 'center', marginTop: 8 }}>
             Need team members? Add techs for <strong style={{ color: C.orange }}>$19.99/mo each</strong> after sign-up in Settings → Team{plan === 'all' ? ' (first 2 free on Elite)' : ''}. 28-day free trial on all plans.
@@ -1246,7 +1256,7 @@ function SignupScreen({ onComplete, onBack }) {
         </div>
       )}
 
-      <div style={{ display: 'flex', gap: 10, marginTop: 22, width: '100%', maxWidth: 480, marginLeft: 'auto', marginRight: 'auto' }}>
+      <div style={{ display: 'flex', gap: 10, marginTop: 22, width: '100%', maxWidth: (step === 2 && !isTablet) ? 640 : 480, marginLeft: 'auto', marginRight: 'auto' }}>
         {/* Back button: hidden for Google users on Step 1 (no Account
             step to return to). On Step 3 it still steps back to Plan in
             case the user wants to switch tier — payment phase resets so
