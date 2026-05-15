@@ -672,7 +672,7 @@ function SignupShell({ children, isTablet, step, steps }) {
   const sc = stepCopy[step] || stepCopy[0];
 
   return (
-    <div style={{ minHeight: '100vh', display: 'grid', gridTemplateColumns: '460px 1fr', background: '#f5f0eb', fontFamily: "'Inter', sans-serif" }}>
+    <div style={{ minHeight: '100vh', display: 'grid', gridTemplateColumns: '520px 1fr', background: '#f5f0eb', fontFamily: "'Inter', sans-serif" }}>
       {/* LEFT — green marketing hero panel ────────────────────────────── */}
       <aside style={{
         background: 'linear-gradient(160deg, #1b4332 0%, #2d6a4f 60%, #40916c 100%)',
@@ -690,21 +690,24 @@ function SignupShell({ children, isTablet, step, steps }) {
             white card. The logo file has its white background baked in;
             framing it in an intentional white pill makes that read as
             a design choice on the dark-green hero rather than overflow.
-            Logo size is constrained so the maxWidth fits inside the
-            460px brand panel (panel padding ≈ 110px → 350px usable). */}
+            Logo size constrained so the maxWidth fits inside the
+            520px brand panel (panel padding ≈ 110px → ~410px usable;
+            card padding ≈ 28px → image cap ≈ 380px; size=48 keeps
+            image at maxWidth 384, hugging the white card edges so the
+            lockup feels prominent without overrunning the panel). */}
         <div style={{
           marginBottom: 36,
           background: '#fff',
-          borderRadius: 14,
-          padding: '14px 18px',
+          borderRadius: 16,
+          padding: '16px 14px',
           display: 'inline-flex',
           alignItems: 'center',
           justifyContent: 'center',
-          boxShadow: '0 6px 20px rgba(0,0,0,0.18)',
+          boxShadow: '0 10px 28px rgba(0,0,0,0.22)',
           alignSelf: 'flex-start',
           maxWidth: '100%',
         }}>
-          <Logo size={36} />
+          <Logo size={48} />
         </div>
 
         {/* Eyebrow + headline + sub for the current step. Updates as the
