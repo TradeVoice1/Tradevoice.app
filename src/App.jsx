@@ -601,18 +601,31 @@ function SignupScreen({ onComplete, onBack }) {
   const [trades, setTrades]   = useState([]);
   const [states, setStates]   = useState(['Texas']);
   const [plan, setPlan]       = useState('pro');
+  // 'monthly' | 'yearly'. Yearly = 20% off the monthly × 12 (sticker
+  // shock is real, so we default to monthly — yearly is the upsell
+  // visible behind a toggle).
+  const [billingPeriod, setBillingPeriod] = useState('monthly');
   const [acceptedTerms, setAcceptedTerms] = useState(false);
 
+  // Plan tier metadata — kept cadence-agnostic so the toggle just swaps
+  // which price column we read. monthlyPrice / yearlyPrice are the
+  // sticker amounts shown on the card; the back-end create-subscription
+  // endpoint maps the composed slug ('solo' vs 'solo_yearly') to the
+  // right Stripe Price ID via PLAN_TO_PRICE.
   const PLANS_SU = [
-    { id: 'solo', name: 'Solo',  price: '$49.99',  trades: '1 trade',        desc: 'Just you — one trade, full power' },
-    { id: 'pro',  name: 'Pro',   price: '$99.99',  trades: 'Up to 3 trades', desc: 'Growing contractor, multiple trades', popular: true },
-    // Slug stays 'all' as the internal plan identifier — user-facing name
-    // changed 2026-05-14 from "All Trades" to "Elite" (signals premium tier
-    // better). Elite includes 2 tech seats by default; additional techs
-    // are still $19.99/mo. Price bumped to $199.99 alongside the seat
-    // bundle 2026-05-14.
-    { id: 'all',  name: 'Elite', price: '$199.99', trades: 'All 56 trades',  desc: 'Full-service multi-trade contractor — every trade + 2 tech seats included' },
+    { id: 'solo', name: 'Solo',  monthlyPrice: 49.99,  yearlyPrice: 479.99,   trades: '1 trade',        desc: 'Just you — one trade, full power' },
+    { id: 'pro',  name: 'Pro',   monthlyPrice: 99.99,  yearlyPrice: 959.99,   trades: 'Up to 3 trades', desc: 'Growing contractor, multiple trades', popular: true },
+    { id: 'all',  name: 'Elite', monthlyPrice: 199.99, yearlyPrice: 1919.99,  trades: 'All 56 trades',  desc: 'Full-service multi-trade contractor — every trade + 2 tech seats included' },
   ];
+
+  // Returns the slug the back-end expects — bare for monthly, suffixed
+  // with '_yearly' for annual. Used at submit time.
+  const composedPlanSlug = () =>
+    billingPeriod === 'yearly' ? `${plan}_yearly` : plan;
+
+  // Formatter for the per-card price block. Shows either "$49.99/mo" or
+  // "$479.99/yr · save $119.89" — keeps the yearly upsell legible.
+  const fmt = (n) => '$' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   // Trade picker state — at 56+ trades the old "render every chip" pattern
   // doesn't fit anymore. We show category tabs (Construction / Service /
   // Multi-Trade) plus a search input that filters within the active tab.
@@ -643,7 +656,13 @@ function SignupScreen({ onComplete, onBack }) {
   ];
 
   const finish = () => {
-    onComplete({ name, email, password, company, phone, trades, states, plan, acceptedTermsAt: new Date().toISOString() });
+    // Submit the composed slug so the back-end's PLAN_TO_PRICE map picks
+    // the right cadence — 'pro' for monthly, 'pro_yearly' for annual.
+    onComplete({
+      name, email, password, company, phone, trades, states,
+      plan: composedPlanSlug(),
+      acceptedTermsAt: new Date().toISOString(),
+    });
   };
 
   return (
@@ -764,18 +783,62 @@ function SignupScreen({ onComplete, onBack }) {
 
       {step === 2 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {PLANS_SU.map(p => (
-            <button key={p.id} onClick={() => setPlan(p.id)} style={{ ...s.btn, padding: '14px 16px', background: plan === p.id ? C.orangeLo : C.surface, border: `2px solid ${plan === p.id ? C.orange : C.border}`, borderRadius: 10, textAlign: 'left', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <div style={{ fontWeight: 800, fontSize: 15, color: plan === p.id ? C.orange : C.text }}>{p.name} {p.popular && <span style={{ fontSize: 11, background: C.orange, color: '#fff', padding: '2px 8px', borderRadius: 10, marginLeft: 6 }}>Popular</span>}</div>
-                <div style={{ fontSize: 13, color: C.muted, marginTop: 2 }}>{p.trades} · {p.desc}</div>
-              </div>
-              <div style={{ fontSize: 18, fontWeight: 900, color: plan === p.id ? C.orange : C.text, fontFamily: "'Inter', sans-serif" }}>{p.price}<span style={{ fontSize: 12, fontWeight: 400 }}>/mo</span></div>
-            </button>
-          ))}
+          {/* ── Monthly / Yearly toggle ──
+              Annual prepay is 20% off — about 2.4 months free. The toggle
+              swaps the price column on the cards below; the chosen plan
+              slug ('pro' vs 'pro_yearly') gets composed at submit time. */}
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 4 }}>
+            <div style={{ display: 'inline-flex', background: C.raised, border: `1px solid ${C.border2}`, borderRadius: 999, padding: 3 }}>
+              {[
+                { id: 'monthly', label: 'Monthly' },
+                { id: 'yearly',  label: 'Yearly · save 20%' },
+              ].map(opt => {
+                const active = billingPeriod === opt.id;
+                return (
+                  <button
+                    key={opt.id}
+                    onClick={() => setBillingPeriod(opt.id)}
+                    style={{
+                      padding: '8px 16px', borderRadius: 999,
+                      border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700,
+                      background: active ? C.orange : 'transparent',
+                      color:      active ? '#fff'    : C.muted,
+                      fontFamily: 'inherit',
+                      transition: 'background 0.15s, color 0.15s',
+                    }}
+                  >
+                    {opt.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {PLANS_SU.map(p => {
+            const price   = billingPeriod === 'yearly' ? p.yearlyPrice : p.monthlyPrice;
+            const periodLabel = billingPeriod === 'yearly' ? '/yr' : '/mo';
+            // Yearly savings vs paying that plan monthly for 12 months.
+            const yearlySaving = (p.monthlyPrice * 12) - p.yearlyPrice;
+            return (
+              <button key={p.id} onClick={() => setPlan(p.id)} style={{ ...s.btn, padding: '14px 16px', background: plan === p.id ? C.orangeLo : C.surface, border: `2px solid ${plan === p.id ? C.orange : C.border}`, borderRadius: 10, textAlign: 'left', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <div style={{ fontWeight: 800, fontSize: 15, color: plan === p.id ? C.orange : C.text }}>{p.name} {p.popular && <span style={{ fontSize: 11, background: C.orange, color: '#fff', padding: '2px 8px', borderRadius: 10, marginLeft: 6 }}>Popular</span>}</div>
+                  <div style={{ fontSize: 13, color: C.muted, marginTop: 2 }}>{p.trades} · {p.desc}</div>
+                  {billingPeriod === 'yearly' && (
+                    <div style={{ fontSize: 12, color: C.success, marginTop: 4, fontWeight: 700 }}>
+                      Save {fmt(yearlySaving)}/yr vs monthly
+                    </div>
+                  )}
+                </div>
+                <div style={{ fontSize: 18, fontWeight: 900, color: plan === p.id ? C.orange : C.text, fontFamily: "'Inter', sans-serif", whiteSpace: 'nowrap' }}>
+                  {fmt(price)}<span style={{ fontSize: 12, fontWeight: 400 }}>{periodLabel}</span>
+                </div>
+              </button>
+            );
+          })}
           <div style={{ fontSize: 13, color: C.dim, marginTop: 4, textAlign: 'center' }}>28-day free trial · No credit card needed · Cancel anytime</div>
           <div style={{ fontSize: 13, color: C.muted, textAlign: 'center', marginTop: 8 }}>
-            Need team members? Add techs for <strong style={{ color: C.orange }}>$19.99/mo each</strong> after sign-up in Settings → Team. 28-day free trial on all plans.
+            Need team members? Add techs for <strong style={{ color: C.orange }}>$19.99/mo each</strong> after sign-up in Settings → Team{plan === 'all' ? ' (first 2 free on Elite)' : ''}. 28-day free trial on all plans.
           </div>
 
           {/* ── Payment methods preview ──
@@ -6158,7 +6221,9 @@ function Billing({ user, setUser, payments }) {
           {['Mar 20, 2026','Feb 20, 2026','Jan 20, 2026'].map((date, i, arr) => (
             <div key={date} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 18px', borderBottom: i < arr.length - 1 ? `1px solid ${C.border}` : 'none', gap: 12, flexWrap: 'wrap' }}>
               <div>
-                <div style={{ fontSize: 19, color: C.text, fontWeight: 500 }}>{planName} — Monthly</div>
+                <div style={{ fontSize: 19, color: C.text, fontWeight: 500 }}>
+                  {planName} — {user?.plan?.endsWith('_yearly') ? 'Annual' : 'Monthly'}
+                </div>
                 <div style={{ fontSize: 17, color: C.muted, marginTop: 2 }}>{date}</div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>

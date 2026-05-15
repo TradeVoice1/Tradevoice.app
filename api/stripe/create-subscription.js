@@ -25,37 +25,57 @@
 //
 // Plan → Price ID mapping is held in env vars so we can swap test/live
 // without code changes:
-//   STRIPE_PRICE_SOLO        = price_...   (Solo: 1 trade)
-//   STRIPE_PRICE_PRO         = price_...   (Pro: up to 3 trades)
-//   STRIPE_PRICE_ELITE       = price_...   (Elite: all 56 trades — renamed
-//                                          from STRIPE_PRICE_ALL_TRADES on
-//                                          2026-05-14; falls back to the
-//                                          old name if still set)
-//   STRIPE_PRICE_TECH_SEAT   = price_...   ($19.99/mo per extra tech)
+//   STRIPE_PRICE_SOLO          = price_...   (Solo monthly)
+//   STRIPE_PRICE_PRO           = price_...   (Pro monthly)
+//   STRIPE_PRICE_ELITE         = price_...   (Elite monthly — renamed from
+//                                            STRIPE_PRICE_ALL_TRADES on
+//                                            2026-05-14; fallback retained)
+//   STRIPE_PRICE_TECH_SEAT     = price_...   ($19.99/mo per extra tech)
+//   STRIPE_PRICE_SOLO_YEARLY   = price_...   (Solo annual, 20% off)
+//   STRIPE_PRICE_PRO_YEARLY    = price_...   (Pro annual, 20% off)
+//   STRIPE_PRICE_ELITE_YEARLY  = price_...   (Elite annual, 20% off)
 
 import { stripe } from "../_lib/stripe.js";
 import { getServiceClient } from "../_lib/supabase.js";
 
+// Slug → Stripe Price ID. Six plans: 3 base × monthly/yearly. The base slug
+// ('solo' / 'pro' / 'all') stays consistent across cadences so reporting,
+// included-seats math, and feature-gating doesn't need to special-case it;
+// only the price ID differs. 'all' is the back-end identifier for the
+// Elite tier (renamed 2026-05-14; the env var fallback covers old setups).
 const PLAN_TO_PRICE = {
-  solo: process.env.STRIPE_PRICE_SOLO,
-  pro:  process.env.STRIPE_PRICE_PRO,
-  // Slug stays 'all' for back-end stability — the user-facing name is "Elite"
-  // (renamed 2026-05-14). New env var is STRIPE_PRICE_ELITE; we fall back to
-  // the old STRIPE_PRICE_ALL_TRADES so anyone who already set that doesn't
-  // get bitten by the rename.
-  all:  process.env.STRIPE_PRICE_ELITE || process.env.STRIPE_PRICE_ALL_TRADES,
+  solo:        process.env.STRIPE_PRICE_SOLO,
+  pro:         process.env.STRIPE_PRICE_PRO,
+  all:         process.env.STRIPE_PRICE_ELITE || process.env.STRIPE_PRICE_ALL_TRADES,
+  solo_yearly: process.env.STRIPE_PRICE_SOLO_YEARLY,
+  pro_yearly:  process.env.STRIPE_PRICE_PRO_YEARLY,
+  all_yearly:  process.env.STRIPE_PRICE_ELITE_YEARLY,
 };
 
 // Plan-included tech seats. The contractor doesn't pay the $19.99/seat fee
 // for the first N techs on these plans — they're bundled into the base
 // price. handleSyncSeats subtracts this from the billed quantity before
-// updating the Stripe subscription item. Elite ($199.99) includes 2 seats
-// as of 2026-05-14; Solo and Pro charge from seat #1.
+// updating the Stripe subscription item. Elite ($199.99 monthly or
+// $1,919.99 yearly) includes 2 seats; yearly variants get the same.
 const INCLUDED_SEATS = {
-  solo: 0,
-  pro:  0,
-  all:  2,   // Elite
+  solo:        0,
+  pro:         0,
+  all:         2,
+  solo_yearly: 0,
+  pro_yearly:  0,
+  all_yearly:  2,
 };
+
+// Map a plan slug to the expected Vercel env var name for the not-found
+// error hint. Handles yearly + the Elite rename.
+function envHintForPlan(plan) {
+  const slug = (plan || 'solo').toLowerCase();
+  if (slug === 'all')         return 'STRIPE_PRICE_ELITE';
+  if (slug === 'solo_yearly') return 'STRIPE_PRICE_SOLO_YEARLY';
+  if (slug === 'pro_yearly')  return 'STRIPE_PRICE_PRO_YEARLY';
+  if (slug === 'all_yearly')  return 'STRIPE_PRICE_ELITE_YEARLY';
+  return `STRIPE_PRICE_${slug.toUpperCase()}`;
+}
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -80,9 +100,7 @@ async function handleCreate(req, res) {
 
   const priceId = PLAN_TO_PRICE[plan] || PLAN_TO_PRICE.solo;
   if (!priceId) {
-    // Hint the right env var name — note plan slug 'all' maps to ELITE.
-    const envHint = plan === 'all' ? 'STRIPE_PRICE_ELITE' : `STRIPE_PRICE_${(plan||'solo').toUpperCase()}`;
-    return res.status(500).json({ error: 'stripe_not_configured', detail: `No price ID for plan "${plan}". Set ${envHint} in Vercel env.` });
+    return res.status(500).json({ error: 'stripe_not_configured', detail: `No price ID for plan "${plan}". Set ${envHintForPlan(plan)} in Vercel env.` });
   }
 
   const supabase = getServiceClient();
