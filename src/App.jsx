@@ -22,7 +22,7 @@ import { listClients, addClient as apiAddClient, updateClient as apiUpdateClient
 import { listInvoices, upsertInvoice as apiUpsertInvoice, deleteInvoice as apiDeleteInvoice } from "./data/invoices";
 import { listQuotes,   upsertQuote   as apiUpsertQuote,   deleteQuote   as apiDeleteQuote   } from "./data/quotes";
 import { listJobs,     upsertJob     as apiUpsertJob,     deleteJob     as apiDeleteJob     } from "./data/jobs";
-import { listTeam,     upsertTeamMember as apiUpsertTeam, deleteTeamMember as apiDeleteTeam, createTechAccount as apiCreateTechAccount } from "./data/team";
+import { listTeam,     upsertTeamMember as apiUpsertTeam, deleteTeamMember as apiDeleteTeam, createTechAccount as apiCreateTechAccount, syncTechSeats } from "./data/team";
 import { listPlans,    upsertPlan       as apiUpsertPlan, deletePlan       as apiDeletePlan, dueWithinDays } from "./data/plans";
 import { listTimeOff,  upsertTimeOff    as apiUpsertTimeOff, deleteTimeOff as apiDeleteTimeOff } from "./data/timeOff";
 import { TRADE_CONFIG, ALL_TRADES, TRADE_CATEGORIES, getTradeConfig, isMultiTradeUser } from "./data/trades";
@@ -7755,6 +7755,10 @@ function TradevoiceApp() {
       console.error('removeTeamMember', e);
     }
     setTeamMembers(prev => prev.filter(m => m.id !== id));
+    // Sync Stripe seat billing — drops the contractor's seat quantity by
+    // one (or removes the line entirely if they're back to 0 techs). Fire
+    // and forget; failures are logged in syncTechSeats but don't block UX.
+    if (user?.id) syncTechSeats(user.id);
   };
 
   // Owner-driven tech provisioning. Wraps the data-layer helper that handles
@@ -7762,9 +7766,14 @@ function TradevoiceApp() {
   // patch their profile to role='tech', insert team_members row, restore the
   // owner's session. Returns { techId, password, member } so the caller can
   // show creds via the TechCredentialsDisplay modal.
+  //
+  // After creation succeeds, sync the seat billing — adds or increments the
+  // $19.99/mo tech-seat line on the owner's Stripe subscription.
   const createTechAccountHandler = async (profileData) => {
     if (!user?.id) throw new Error('Sign in as the owner before creating tech accounts.');
-    return apiCreateTechAccount(user.id, profileData);
+    const result = await apiCreateTechAccount(user.id, profileData);
+    syncTechSeats(user.id); // fire and forget
+    return result;
   };
 
   // ── Plans persistence ──────────────────────────────────────────────────────

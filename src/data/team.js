@@ -98,6 +98,33 @@ export async function deleteTeamMember(id) {
   if (error) throw error;
 }
 
+// ── Stripe seat billing sync ─────────────────────────────────────────────────
+// Calls the server endpoint that reconciles the contractor's subscription
+// tech-seat line item with their actual active team_members count. Run
+// after every createTechAccount and deleteTeamMember so billing tracks
+// reality. Failures are non-fatal — the team change still committed; the
+// owner will see the seat count update on their next invoice if Stripe
+// catches up later.
+export async function syncTechSeats(ownerId) {
+  if (!ownerId) return { ok: false, error: 'missing_owner_id' };
+  try {
+    const resp = await fetch('/api/stripe/create-subscription', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ action: 'sync_seats', userId: ownerId }),
+    });
+    const body = await resp.json().catch(() => ({}));
+    if (!resp.ok) {
+      console.warn('[syncTechSeats] non-OK response', resp.status, body);
+      return { ok: false, ...body };
+    }
+    return body; // { ok, mode, activeSeats, ... }
+  } catch (e) {
+    console.warn('[syncTechSeats] fetch failed', e);
+    return { ok: false, error: 'fetch_failed', detail: e?.message };
+  }
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // createTechAccount — owner buys a seat and provisions a new tech account.
 //
