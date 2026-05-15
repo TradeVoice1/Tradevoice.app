@@ -32,12 +32,15 @@ import { invoicesToQbCsv, downloadCsv } from "./lib/qbExport";
 import { useBreakpoint } from "./lib/useBreakpoint";
 
 // ─── FONTS ─────────────────────────────────────────────────────────────────────
+// Inter for body/UI everywhere. Playfair Display for the signup brand
+// panel headlines so the onboarding feels visually continuous with the
+// marketing site (thetradevoice.com), which uses Playfair for every h1/h2.
 const loadFonts = () => {
   if (document.getElementById('fb-fonts')) return;
   const link = document.createElement('link');
   link.id = 'fb-fonts';
   link.rel = 'stylesheet';
-  link.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap';
+  link.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@700;800;900&display=swap';
   document.head.appendChild(link);
 };
 
@@ -628,6 +631,150 @@ function LoginScreen({ onLogin, onSignup, onForgot }) {
   );
 }
 
+// ── SIGN UP SHELL ─────────────────────────────────────────────────────────────
+// Wraps the SignupScreen content. On desktop (≥1280 + fine pointer) it
+// renders as a full-bleed split-screen experience — a green marketing
+// hero panel on the left (logo, headline matching the active step,
+// vertical progress, trust signals) and the form content filling the
+// right half. This was a deliberate departure from AuthShell so the
+// signup feels like the marketing site (thetradevoice.com) rather than
+// an iPad modal stretched out.
+//
+// On tablet/mobile (isTablet === true) it falls back to the same
+// centered-card AuthShell pattern login/forgot-password use — the split
+// would feel cramped under 1280px and we want signup to remain usable
+// in iPad portrait, Surface, etc.
+//
+// The right panel has overflow:auto so even if Step 1's trade picker
+// (3-col grid showing every trade for the active category) ever
+// exceeds viewport height, the brand panel stays anchored on the left
+// instead of scrolling away.
+function SignupShell({ children, isTablet, step, steps }) {
+  if (isTablet) {
+    return (
+      <div style={{ minHeight: '100vh', background: C.bg, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px 16px', fontFamily: "'Inter', sans-serif" }}>
+        <div style={{ marginBottom: 36 }}><Logo size={80} /></div>
+        <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: '32px 28px', width: '100%', maxWidth: step === 2 ? 920 : 480, transition: 'max-width 0.25s ease' }}>
+          {children}
+        </div>
+      </div>
+    );
+  }
+
+  // Per-step copy for the left brand panel headline + sub. Mirrors the
+  // tone of the marketing site — serif headline, descriptive subline.
+  const stepCopy = [
+    { eyebrow: 'Welcome aboard',  title: 'Let’s build your account.',     sub: 'A few details and you’re in. No card needed yet.' },
+    { eyebrow: 'About your work', title: 'Tell us what you do.',                sub: 'We’ll preload the right quote sheets, materials, and labor rates for every trade you pick.' },
+    { eyebrow: 'Pick your plan',  title: 'A plan that fits your shop.',         sub: 'Every plan includes every feature. Pick by trade count today — change tiers anytime.' },
+    { eyebrow: 'Almost there',    title: 'Start your 28-day trial.',            sub: 'Card on file for when the trial ends. We won’t charge a cent today. Cancel anytime.' },
+  ];
+  const sc = stepCopy[step] || stepCopy[0];
+
+  return (
+    <div style={{ minHeight: '100vh', display: 'grid', gridTemplateColumns: '460px 1fr', background: '#f5f0eb', fontFamily: "'Inter', sans-serif" }}>
+      {/* LEFT — green marketing hero panel ────────────────────────────── */}
+      <aside style={{
+        background: 'linear-gradient(160deg, #1b4332 0%, #2d6a4f 60%, #40916c 100%)',
+        color: '#fff',
+        padding: '48px 52px 48px 56px',
+        display: 'flex',
+        flexDirection: 'column',
+        position: 'sticky',
+        top: 0,
+        height: '100vh',
+        boxSizing: 'border-box',
+      }}>
+        {/* Logo + wordmark — the wordmark is serif to echo the marketing
+            site's Playfair Display headline treatment. */}
+        <div style={{ marginBottom: 44, display: 'flex', alignItems: 'center', gap: 14 }}>
+          <Logo size={48} />
+          <div style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: 24, fontWeight: 900, letterSpacing: '-0.01em', lineHeight: 1 }}>
+            Tradevoice
+          </div>
+        </div>
+
+        {/* Eyebrow + headline + sub for the current step. Updates as the
+            user advances through 0 → 3 so the left panel always speaks
+            to what's in front of them. */}
+        <div style={{ marginBottom: 36 }}>
+          <div style={{ display: 'inline-block', background: 'rgba(255,255,255,0.15)', padding: '4px 12px', borderRadius: 20, fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 18 }}>
+            {sc.eyebrow}
+          </div>
+          <h1 style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: 36, fontWeight: 900, lineHeight: 1.1, marginBottom: 14, letterSpacing: '-0.02em', margin: 0 }}>
+            {sc.title}
+          </h1>
+          <div style={{ fontSize: 15, color: 'rgba(255,255,255,0.85)', lineHeight: 1.6, fontWeight: 300, marginTop: 14 }}>
+            {sc.sub}
+          </div>
+        </div>
+
+        {/* Vertical step indicator. Bigger and more presence than the
+            inline horizontal dots — it doubles as a progress map so
+            users know how much is left. */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 'auto' }}>
+          {steps.map((lbl, i) => {
+            const done   = i < step;
+            const active = i === step;
+            return (
+              <div key={lbl} style={{ display: 'flex', alignItems: 'center', gap: 14, opacity: done || active ? 1 : 0.55 }}>
+                <div style={{
+                  width: 30, height: 30, borderRadius: '50%',
+                  background: done ? '#fff' : active ? '#fff' : 'rgba(255,255,255,0.12)',
+                  border: `2px solid ${done || active ? '#fff' : 'rgba(255,255,255,0.3)'}`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 13, fontWeight: 800,
+                  color: done || active ? '#1b4332' : '#fff',
+                  flexShrink: 0,
+                  transition: 'all 0.2s',
+                }}>
+                  {done ? '✓' : i + 1}
+                </div>
+                <div style={{
+                  fontSize: 14,
+                  fontWeight: active ? 700 : 500,
+                  color: '#fff',
+                  letterSpacing: active ? '-0.01em' : 0,
+                }}>{lbl}</div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Trust strip — same vibe as the marketing site's hero stat row.
+            Two big serif numbers + a one-liner of social proof under. */}
+        <div style={{ paddingTop: 28, borderTop: '1px solid rgba(255,255,255,0.18)' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 16 }}>
+            <div>
+              <div style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: 32, fontWeight: 700, lineHeight: 1 }}>28</div>
+              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 4 }}>Day free trial</div>
+            </div>
+            <div>
+              <div style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: 32, fontWeight: 700, lineHeight: 1 }}>56</div>
+              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 4 }}>Trades supported</div>
+            </div>
+          </div>
+          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)', lineHeight: 1.55 }}>
+            Built for contractors by a contractor. Cancel anytime — no card needed during trial.
+          </div>
+        </div>
+      </aside>
+
+      {/* RIGHT — form content panel ──────────────────────────────────── */}
+      <main style={{
+        background: '#fff',
+        overflowY: 'auto',
+        padding: '56px 72px',
+        boxSizing: 'border-box',
+      }}>
+        <div style={{ maxWidth: step === 1 ? 920 : step === 2 ? 1100 : 560, marginLeft: 'auto', marginRight: 'auto' }}>
+          {children}
+        </div>
+      </main>
+    </div>
+  );
+}
+
 // ── SIGN UP (owner creating company account) ──────────────────────────────────
 // Four-step onboarding wizard:
 //   0 - Account     (name, email, password — skipped for users who arrived
@@ -896,31 +1043,41 @@ function SignupScreen({ onComplete, onBack }) {
   };
 
   return (
-    <AuthShell maxWidth={step === 2 && !isTablet ? 1280 : 480}>
-      {/* Step indicator */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 24, maxWidth: 560, marginLeft: 'auto', marginRight: 'auto' }}>
-        {steps.map((lbl, i) => (
-          <div key={lbl} style={{ display: 'flex', alignItems: 'center', gap: 8, flex: i < steps.length - 1 ? 1 : 0 }}>
-            <div style={{ width: 28, height: 28, borderRadius: '50%', background: i <= step ? C.orange : C.raised, border: `2px solid ${i <= step ? C.orange : C.border2}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: i <= step ? '#fff' : C.dim, flexShrink: 0 }}>
-              {i < step ? '✓' : i + 1}
+    <SignupShell isTablet={isTablet} step={step} steps={steps}>
+      {/* Horizontal step indicator — tablet/mobile only. Desktop gets a
+          vertical indicator in the left brand panel; rendering both
+          would feel redundant. */}
+      {isTablet && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 24 }}>
+          {steps.map((lbl, i) => (
+            <div key={lbl} style={{ display: 'flex', alignItems: 'center', gap: 8, flex: i < steps.length - 1 ? 1 : 0 }}>
+              <div style={{ width: 28, height: 28, borderRadius: '50%', background: i <= step ? C.orange : C.raised, border: `2px solid ${i <= step ? C.orange : C.border2}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: i <= step ? '#fff' : C.dim, flexShrink: 0 }}>
+                {i < step ? '✓' : i + 1}
+              </div>
+              {i < steps.length - 1 && <div style={{ flex: 1, height: 2, background: i < step ? C.orange : C.border2 }} />}
             </div>
-            {i < steps.length - 1 && <div style={{ flex: 1, height: 2, background: i < step ? C.orange : C.border2 }} />}
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
-      <div style={{ fontSize: 22, fontWeight: 700, color: C.text, marginBottom: 4, fontFamily: "'Inter', sans-serif", letterSpacing: '-0.02em' }}>
-        {step === 0 ? 'Create your account' :
-         step === 1 ? 'Your company' :
-         step === 2 ? 'Choose your plan' :
-                      'Add your card'}
-      </div>
-      <div style={{ fontSize: 14, color: C.muted, marginBottom: 22 }}>
-        {step === 0 ? '28-day free trial · cancel anytime' :
-         step === 1 ? 'Tell us about your business' :
-         step === 2 ? 'All plans include every feature' :
-                      "We won't charge until your trial ends"}
-      </div>
+      {/* Title + subtitle — tablet/mobile only. The desktop brand panel
+          already renders a serif headline tied to the current step. */}
+      {isTablet && (
+        <>
+          <div style={{ fontSize: 22, fontWeight: 700, color: C.text, marginBottom: 4, fontFamily: "'Inter', sans-serif", letterSpacing: '-0.02em' }}>
+            {step === 0 ? 'Create your account' :
+             step === 1 ? 'Your company' :
+             step === 2 ? 'Choose your plan' :
+                          'Add your card'}
+          </div>
+          <div style={{ fontSize: 14, color: C.muted, marginBottom: 22 }}>
+            {step === 0 ? '28-day free trial · cancel anytime' :
+             step === 1 ? 'Tell us about your business' :
+             step === 2 ? 'All plans include every feature' :
+                          "We won't charge until your trial ends"}
+          </div>
+        </>
+      )}
 
       {step === 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
@@ -931,17 +1088,70 @@ function SignupScreen({ onComplete, onBack }) {
       )}
 
       {step === 1 && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
-          <div><label style={s.label}>Company name *</label><input value={company} onChange={e => setCompany(e.target.value)} placeholder="Burke's Mechanical" style={{ ...s.input, width: '100%', padding: '12px 14px', boxSizing: 'border-box', fontSize: 16 }}/></div>
-          <div><label style={s.label}>Phone</label><input type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="(512) 555-0000" style={{ ...s.input, width: '100%', padding: '12px 14px', boxSizing: 'border-box', fontSize: 16 }}/></div>
+        // On desktop: split into a 2-column grid — left = company info,
+        //   right = trade picker (gets the bigger track since trades is
+        //   the meatier interaction). Trade chip grid uses 3 columns
+        //   with NO maxHeight so every trade for the active category
+        //   is visible without scrolling.
+        // On tablet/mobile: stacked single column, trade grid keeps a
+        //   maxHeight scroll so the modal doesn't blow up.
+        <div style={{
+          display: isTablet ? 'flex' : 'grid',
+          flexDirection: isTablet ? 'column' : undefined,
+          gridTemplateColumns: isTablet ? undefined : '320px 1fr',
+          gap: isTablet ? 13 : 36,
+          alignItems: isTablet ? 'stretch' : 'start',
+        }}>
+          {/* ── LEFT (or top on tablet): company basics ── */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
+            {!isTablet && (
+              <div style={{ fontSize: 14, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: C.muted, marginBottom: 4 }}>
+                Your business
+              </div>
+            )}
+            <div><label style={s.label}>Company name *</label><input value={company} onChange={e => setCompany(e.target.value)} placeholder="Burke's Mechanical" style={{ ...s.input, width: '100%', padding: '12px 14px', boxSizing: 'border-box', fontSize: 16 }}/></div>
+            <div><label style={s.label}>Phone</label><input type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="(512) 555-0000" style={{ ...s.input, width: '100%', padding: '12px 14px', boxSizing: 'border-box', fontSize: 16 }}/></div>
+
+            {/* Selected-count summary — moved up to the company side on
+                desktop so it sits next to the form fields rather than
+                inside the trade picker. Reinforces what they've picked
+                as they jump categories. */}
+            {!isTablet && trades.length > 0 && (
+              <div style={{ marginTop: 10, padding: '14px 16px', background: '#effaf4', border: '1px solid #b7dfca', borderRadius: 10 }}>
+                <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#1b4332', marginBottom: 6 }}>
+                  {trades.length} trade{trades.length === 1 ? '' : 's'} selected
+                </div>
+                <div style={{ fontSize: 13, color: '#1b4332', lineHeight: 1.5 }}>
+                  {trades.slice(0, 6).map(t => TRADE_CONFIG[t]?.label || t).join(', ')}
+                  {trades.length > 6 && <> + {trades.length - 6} more</>}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* ── RIGHT (or below on tablet): trade picker ── */}
           <div>
-            <label style={s.label}>Your trade(s) <span style={{ color: C.errorBold }}>*</span></label>
-            <div style={{ fontSize: 12, color: C.dim, marginBottom: 8 }}>
-              Pick every trade you do. We'll preload quote sheets, materials, and labor rates for each.
-            </div>
+            {!isTablet && (
+              <div style={{ fontSize: 14, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: C.muted, marginBottom: 8 }}>
+                Your trade(s) *
+              </div>
+            )}
+            {isTablet && (
+              <>
+                <label style={s.label}>Your trade(s) <span style={{ color: C.errorBold }}>*</span></label>
+                <div style={{ fontSize: 12, color: C.dim, marginBottom: 8 }}>
+                  Pick every trade you do. We'll preload quote sheets, materials, and labor rates for each.
+                </div>
+              </>
+            )}
+            {!isTablet && (
+              <div style={{ fontSize: 13, color: C.muted, marginBottom: 14, lineHeight: 1.55 }}>
+                Pick every trade you do. We'll preload quote sheets, materials, and labor rates for each one — bills of materials, default markups, payment terms, the works.
+              </div>
+            )}
 
             {/* Category tabs — pill row, scrolls horizontally on narrow screens */}
-            <div style={{ display: 'flex', gap: 6, marginBottom: 8, overflowX: 'auto', paddingBottom: 4, WebkitOverflowScrolling: 'touch' }}>
+            <div style={{ display: 'flex', gap: 6, marginBottom: 12, overflowX: 'auto', paddingBottom: 4, WebkitOverflowScrolling: 'touch', flexWrap: isTablet ? 'nowrap' : 'wrap' }}>
               {categoryNames.map(cat => {
                 const active = cat === tradeCat;
                 const count = (tradesByCategory[cat] || []).length;
@@ -950,7 +1160,7 @@ function SignupScreen({ onComplete, onBack }) {
                     key={cat}
                     onClick={() => { setTradeCat(cat); setTradeSearch(''); }}
                     style={{
-                      ...s.btn, padding: '7px 14px', fontSize: 13, minHeight: 36, flexShrink: 0,
+                      ...s.btn, padding: '8px 16px', fontSize: 13, minHeight: 38, flexShrink: 0,
                       background: active ? C.orange : C.raised,
                       border: `1.5px solid ${active ? C.orange : C.border2}`,
                       color: active ? '#fff' : C.muted, borderRadius: 50, fontWeight: 700,
@@ -968,11 +1178,12 @@ function SignupScreen({ onComplete, onBack }) {
               value={tradeSearch}
               onChange={e => setTradeSearch(e.target.value)}
               placeholder={`Search ${tradeCat.toLowerCase()} trades…`}
-              style={{ ...s.input, width: '100%', padding: '10px 12px', boxSizing: 'border-box', fontSize: 14, marginBottom: 10 }}
+              style={{ ...s.input, width: '100%', padding: '11px 14px', boxSizing: 'border-box', fontSize: 14, marginBottom: 12 }}
             />
 
-            {/* Selected-count summary */}
-            {trades.length > 0 && (
+            {/* Selected-count summary — tablet/mobile only; desktop has
+                its own callout on the left column. */}
+            {isTablet && trades.length > 0 && (
               <div style={{ fontSize: 12, color: C.muted, marginBottom: 8 }}>
                 <strong style={{ color: C.text }}>{trades.length}</strong> selected:
                 {' '}{trades.slice(0, 4).map(t => TRADE_CONFIG[t]?.label || t).join(', ')}
@@ -980,11 +1191,22 @@ function SignupScreen({ onComplete, onBack }) {
               </div>
             )}
 
-            {/* Trade chip grid — wraps as needed, scrolls vertically when long */}
+            {/* Trade chip grid.
+                Desktop: 3-column grid, no maxHeight — user sees every
+                trade for the active category at a glance, zero scroll
+                inside this region.
+                Tablet/mobile: 2-column, capped maxHeight, internal
+                scroll so the form doesn't blow past the viewport. */}
             <div style={{
-              display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6,
-              maxHeight: 280, overflowY: 'auto', padding: 2,
-              border: `1px solid ${C.border}`, borderRadius: 8, background: C.surface,
+              display: 'grid',
+              gridTemplateColumns: isTablet ? '1fr 1fr' : 'repeat(3, 1fr)',
+              gap: isTablet ? 6 : 8,
+              maxHeight: isTablet ? 280 : 'none',
+              overflowY: isTablet ? 'auto' : 'visible',
+              padding: isTablet ? 2 : 4,
+              border: `1px solid ${C.border}`,
+              borderRadius: 10,
+              background: C.surface,
             }}>
               {visibleTradesForCat.length === 0 && (
                 <div style={{ padding: 14, fontSize: 13, color: C.dim, gridColumn: '1 / -1', textAlign: 'center' }}>
@@ -999,11 +1221,14 @@ function SignupScreen({ onComplete, onBack }) {
                     key={key}
                     onClick={() => setTrades(prev => prev.includes(key) ? prev.filter(x => x !== key) : [...prev, key])}
                     style={{
-                      ...s.btn, padding: '9px 11px', fontSize: 13, minHeight: 42,
+                      ...s.btn,
+                      padding: isTablet ? '9px 11px' : '11px 14px',
+                      fontSize: isTablet ? 13 : 14,
+                      minHeight: isTablet ? 42 : 48,
                       background: selected ? cfg.color : C.raised,
                       border: `2px solid ${selected ? cfg.color : C.border2}`,
                       color: selected ? '#fff' : C.muted,
-                      borderRadius: 8, textAlign: 'left',
+                      borderRadius: 10, textAlign: 'left',
                       fontWeight: 600,
                       whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                     }}
@@ -1256,7 +1481,7 @@ function SignupScreen({ onComplete, onBack }) {
         </div>
       )}
 
-      <div style={{ display: 'flex', gap: 10, marginTop: 22, width: '100%', maxWidth: (step === 2 && !isTablet) ? 640 : 480, marginLeft: 'auto', marginRight: 'auto' }}>
+      <div style={{ display: 'flex', gap: 10, marginTop: isTablet ? 22 : 36, width: '100%', maxWidth: isTablet ? 480 : 560, marginLeft: 'auto', marginRight: 'auto' }}>
         {/* Back button: hidden for Google users on Step 1 (no Account
             step to return to). On Step 3 it still steps back to Plan in
             case the user wants to switch tier — payment phase resets so
@@ -1285,7 +1510,7 @@ function SignupScreen({ onComplete, onBack }) {
                                            'Start 28-Day Trial'}
         </button>
       </div>
-    </AuthShell>
+    </SignupShell>
   );
 }
 
