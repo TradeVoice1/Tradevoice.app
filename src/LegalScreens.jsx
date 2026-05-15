@@ -143,7 +143,7 @@ export function TermsScreen({ onBack }) {
           <tbody>
             <tr><td style={s.td}>Solo</td><td style={s.td}>$49.99/mo</td><td style={s.td}>1 trade</td></tr>
             <tr><td style={s.td}>Pro</td><td style={s.td}>$99.99/mo</td><td style={s.td}>Up to 3 trades</td></tr>
-            <tr><td style={s.td}>Elite</td><td style={s.td}>$149.99/mo</td><td style={s.td}>All 56 trades</td></tr>
+            <tr><td style={s.td}>Elite</td><td style={s.td}>$199.99/mo</td><td style={s.td}>All 56 trades + 2 tech seats included</td></tr>
             <tr><td style={s.td}>Additional Technician</td><td style={s.td}>$19.99/mo per seat</td><td style={s.td}>Per additional user</td></tr>
           </tbody>
         </table>

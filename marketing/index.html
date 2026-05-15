@@ -1531,11 +1531,12 @@
       </div>
       <div class="plan-card">
         <div class="plan-name">Elite</div>
-        <div class="plan-price" id="all-price">$149<span>.99/mo</span></div>
+        <div class="plan-price" id="all-price">$199<span>.99/mo</span></div>
         <div class="plan-trades">All 56 trades — for full-service contractors</div>
         <ul class="plan-features">
           <li>Everything in Pro</li>
           <li>All 56 trades on one account</li>
+          <li><strong>2 tech seats included</strong> (additional $19.99/mo)</li>
           <li>Bundle quotes across trades</li>
           <li>Dedicated onboarding call</li>
           <li>Custom QuickAdd library setup</li>
@@ -1595,7 +1596,7 @@
       <div class="faq-item"><button class="faq-q" onclick="toggleFAQ(this)">Do you store my clients' payment info? <span class="faq-arrow">+</span></button><div class="faq-a"><p>No. All payment processing goes through Stripe, which is PCI-DSS Level 1 certified. Tradevoice never sees or stores your clients' card numbers.</p></div></div>
       <div class="faq-item"><button class="faq-q" onclick="toggleFAQ(this)">How do the tax rates work? <span class="faq-arrow">+</span></button><div class="faq-a"><p>Tradevoice loads the 2026 default tax rates for all 50 states automatically. You can override any rate in Settings → Tax Rates. Rates are updated every January based on the Tax Foundation's annual report. Labor tax rules for states like Texas and Kansas are handled automatically.</p></div></div>
       <div class="faq-item"><button class="faq-q" onclick="toggleFAQ(this)">Can I use my own company logo? <span class="faq-arrow">+</span></button><div class="faq-a"><p>Yes. Upload your logo in Settings → Profile and it appears on every quote and invoice your clients receive. You can also choose your own accent color to match your brand.</p></div></div>
-      <div class="faq-item"><button class="faq-q" onclick="toggleFAQ(this)">What's the difference between Solo, Pro, and Elite? <span class="faq-arrow">+</span></button><div class="faq-a"><p>The difference is the number of trades you can add to your account. Solo supports 1 trade (like Plumber only). Pro supports up to 3. Elite gives you access to all 56 trades — every construction and service trade we cover. All plans include every feature.</p></div></div>
+      <div class="faq-item"><button class="faq-q" onclick="toggleFAQ(this)">What's the difference between Solo, Pro, and Elite? <span class="faq-arrow">+</span></button><div class="faq-a"><p>The difference is the number of trades you can add to your account. Solo supports 1 trade (like Plumber only). Pro supports up to 3. Elite gives you access to all 56 trades — every construction and service trade we cover — and includes 2 tech seats so your first two employees ride free. All plans include every feature.</p></div></div>
       <div class="faq-item"><button class="faq-q" onclick="toggleFAQ(this)">Does it connect to QuickBooks? <span class="faq-arrow">+</span></button><div class="faq-a"><p>QuickBooks integration is planned for a future release. Our invoice structure is already aligned with QuickBooks' 7-status system so the import will be clean when it launches. For now, you can export invoices as PDFs.</p></div></div>
     </div>
   </div>
@@ -1840,7 +1841,7 @@
     const btn = document.getElementById('toggle-btn');
     btn.classList.toggle('monthly', !isAnnual);
     const mult = isAnnual ? 0.8 : 1;
-    const prices = { solo: 49.99, pro: 99.99, all: 149.99 };
+    const prices = { solo: 49.99, pro: 99.99, all: 199.99 };
     document.getElementById('solo-price').innerHTML = `$${Math.round(prices.solo * mult)}<span>.${isAnnual ? '99' : '99'}/mo${isAnnual ? ' billed annually' : ''}</span>`;
     document.getElementById('pro-price').innerHTML  = `$${Math.round(prices.pro  * mult)}<span>.${isAnnual ? '99' : '99'}/mo${isAnnual ? ' billed annually' : ''}</span>`;
     document.getElementById('all-price').innerHTML  = `$${Math.round(prices.all  * mult)}<span>.${isAnnual ? '99' : '99'}/mo${isAnnual ? ' billed annually' : ''}</span>`;

@@ -608,8 +608,10 @@ function SignupScreen({ onComplete, onBack }) {
     { id: 'pro',  name: 'Pro',   price: '$99.99',  trades: 'Up to 3 trades', desc: 'Growing contractor, multiple trades', popular: true },
     // Slug stays 'all' as the internal plan identifier — user-facing name
     // changed 2026-05-14 from "All Trades" to "Elite" (signals premium tier
-    // better, and the "all 56 trades" detail moved into the description).
-    { id: 'all',  name: 'Elite', price: '$149.99', trades: 'All 56 trades',  desc: 'Full-service multi-trade contractor — every trade included' },
+    // better). Elite includes 2 tech seats by default; additional techs
+    // are still $19.99/mo. Price bumped to $199.99 alongside the seat
+    // bundle 2026-05-14.
+    { id: 'all',  name: 'Elite', price: '$199.99', trades: 'All 56 trades',  desc: 'Full-service multi-trade contractor — every trade + 2 tech seats included' },
   ];
   // Trade picker state — at 56+ trades the old "render every chip" pattern
   // doesn't fit anymore. We show category tabs (Construction / Service /
@@ -5983,12 +5985,14 @@ function Quotes({ user, logo, taxRates, onConvertToInvoice }) {
 // BILLING
 // ══════════════════════════════════════════════════════════════════════════════
 const PLANS = [
-  { name: 'Solo',  trades: 1,  price: 49.99,  desc: '1 trade — invoicing, quotes, payments',       badge: null         },
-  { name: 'Pro',   trades: 3,  price: 99.99,  desc: 'Up to 3 trades — everything in Solo',         badge: 'POPULAR'    },
+  { name: 'Solo',  trades: 1,  price: 49.99,  desc: '1 trade — invoicing, quotes, payments',             badge: null         },
+  { name: 'Pro',   trades: 3,  price: 99.99,  desc: 'Up to 3 trades — everything in Solo',               badge: 'POPULAR'    },
   // Display tier name "Elite" (renamed from "All Trades" 2026-05-14). Slug
-  // is still 'all' on the back-end; this PLANS table only drives the
-  // Settings billing UI.
-  { name: 'Elite', trades: 56, price: 149.99, desc: 'All 56 trades — full access',                  badge: 'BEST VALUE' },
+  // is still 'all' on the back-end. Elite bundles 2 free tech seats — the
+  // seat-sync endpoint subtracts those from the billed quantity. Price
+  // bumped to $199.99 to match the included-seat value (would have been
+  // $149.99 + 2×$19.99 = $189.97, rounded up to a clean $199.99).
+  { name: 'Elite', trades: 56, price: 199.99, desc: 'All 56 trades + 2 tech seats included',             badge: 'BEST VALUE' },
 ];
 // Payment method config — Stripe/PayPal are real integrations, others are display-only handles
 const PAYMENT_CONFIG = {

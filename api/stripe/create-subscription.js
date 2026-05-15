@@ -46,6 +46,17 @@ const PLAN_TO_PRICE = {
   all:  process.env.STRIPE_PRICE_ELITE || process.env.STRIPE_PRICE_ALL_TRADES,
 };
 
+// Plan-included tech seats. The contractor doesn't pay the $19.99/seat fee
+// for the first N techs on these plans — they're bundled into the base
+// price. handleSyncSeats subtracts this from the billed quantity before
+// updating the Stripe subscription item. Elite ($199.99) includes 2 seats
+// as of 2026-05-14; Solo and Pro charge from seat #1.
+const INCLUDED_SEATS = {
+  solo: 0,
+  pro:  0,
+  all:  2,   // Elite
+};
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
@@ -165,10 +176,12 @@ async function handleSyncSeats(req, res) {
 
   const supabase = getServiceClient();
 
-  // Pull the profile's subscription + count active techs in one round-trip.
+  // Pull the profile's subscription + plan + count active techs in one
+  // round-trip. We need `plan` to know how many seats are included in the
+  // base price — Elite gets 2 free, others get 0.
   const [{ data: profile, error: profErr }, { count: activeSeats, error: countErr }] = await Promise.all([
     supabase.from('profiles')
-      .select('stripe_subscription_id, subscription_status')
+      .select('stripe_subscription_id, subscription_status, plan')
       .eq('id', userId)
       .maybeSingle(),
     supabase.from('team_members')
@@ -186,13 +199,21 @@ async function handleSyncSeats(req, res) {
     return res.status(500).json({ error: 'team_count_failed' });
   }
 
+  const totalActive    = activeSeats || 0;
+  const includedSeats  = INCLUDED_SEATS[profile?.plan] ?? 0;
+  // Billed = active minus plan's free allowance, clamped to 0 so we never
+  // try to charge a negative quantity.
+  const billedSeats    = Math.max(0, totalActive - includedSeats);
+
   // No Stripe subscription yet → soft success. The seat count will be
   // synced naturally the first time billing setup runs.
   if (!profile?.stripe_subscription_id) {
     return res.status(200).json({
       ok: true,
       mode: 'deferred_no_subscription',
-      activeSeats: activeSeats || 0,
+      activeSeats: totalActive,
+      includedSeats,
+      billedSeats,
       detail: 'No Stripe subscription on file yet. Seat sync skipped — will run on first billing setup.',
     });
   }
@@ -201,15 +222,16 @@ async function handleSyncSeats(req, res) {
     const subscription = await stripe.subscriptions.retrieve(profile.stripe_subscription_id);
     const existing = subscription.items.data.find(i => i.price?.id === seatPriceId);
 
-    const desired = activeSeats || 0;
+    const desired = billedSeats;
+    const respBase = { ok: true, activeSeats: totalActive, includedSeats, billedSeats: desired };
 
-    // State 1: count=0, item exists → remove it.
+    // State 1: billedSeats=0, item exists → remove it.
     if (desired === 0 && existing) {
       await stripe.subscriptionItems.del(existing.id, { proration_behavior: 'create_prorations' });
-      return res.status(200).json({ ok: true, mode: 'removed', activeSeats: desired });
+      return res.status(200).json({ ...respBase, mode: 'removed' });
     }
 
-    // State 2: count>0, item missing → add it.
+    // State 2: billedSeats>0, item missing → add it.
     if (desired > 0 && !existing) {
       await stripe.subscriptionItems.create({
         subscription: subscription.id,
@@ -217,20 +239,21 @@ async function handleSyncSeats(req, res) {
         quantity:     desired,
         proration_behavior: 'create_prorations',
       });
-      return res.status(200).json({ ok: true, mode: 'added', activeSeats: desired });
+      return res.status(200).json({ ...respBase, mode: 'added' });
     }
 
-    // State 3: count>0, item exists, but quantity differs → update.
+    // State 3: billedSeats>0, item exists, but quantity differs → update.
     if (desired > 0 && existing && existing.quantity !== desired) {
       await stripe.subscriptionItems.update(existing.id, {
         quantity: desired,
         proration_behavior: 'create_prorations',
       });
-      return res.status(200).json({ ok: true, mode: 'updated', activeSeats: desired, previous: existing.quantity });
+      return res.status(200).json({ ...respBase, mode: 'updated', previous: existing.quantity });
     }
 
-    // State 4: already in sync (count=0 no item, or count=N item-with-N).
-    return res.status(200).json({ ok: true, mode: 'noop', activeSeats: desired });
+    // State 4: already in sync (billedSeats=0 no item, or billedSeats=N
+    // item-with-N).
+    return res.status(200).json({ ...respBase, mode: 'noop' });
   } catch (e) {
     console.error('[create-subscription:sync_seats] stripe call failed', e);
     return res.status(502).json({ error: 'stripe_error', detail: e?.message });
