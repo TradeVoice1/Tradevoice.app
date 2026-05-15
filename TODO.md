@@ -5,6 +5,24 @@ to pick up cold. Update this as we go.
 
 ---
 
+## 🧪 Pre-launch testing day (added 2026-05-15)
+
+Pick one focused day before opening the allowlist beyond the founder
+to run the full end-to-end test pass. Checklist + bug log lives in
+**`TESTING.md`** at the repo root — open that doc and run it
+top-to-bottom in one sitting (~3-4 hrs).
+
+**Top priority inside that doc:** Part 1 — the Stripe live-mode smoke
+test. We activated live mode + added env vars + fixed the webhook
+secret typo, but we never actually ran a real card through the
+pipeline. Until that's green we can't confidently invite anyone.
+
+When this day happens, also knock out the blockers in `TESTING.md`'s
+pre-flight (allowlist test email, Supabase migration check, etc.) and
+schedule a separate bug-fix day for anything that surfaces.
+
+---
+
 ## 🚨 Wire the $19.99 tech-seat add-on to Stripe (deferred 2026-05-14)
 
 The UI already advertises `$19.99/mo per seat` for additional team members
