@@ -127,13 +127,19 @@ export default async function handler(req, res) {
       }
       case 'account.application.deauthorized': {
         // The contractor revoked Tradevoice's access from their Stripe
-        // dashboard. Treat the same as our own /api/stripe/disconnect.
-        const acctId = event.account || event.data?.object?.id;
-        if (acctId) {
-          await supabase
+        // dashboard. Stripe fires this on the platform scope; the
+        // disconnecting account's ID is in event.account (event.data.object
+        // is the Application object, not the connected account — different
+        // shape from the other account.* events, so no fallback).
+        if (event.account) {
+          const { error } = await supabase
             .from('profiles')
             .update({ stripe_account_id: null, stripe_account_charges_enabled: false })
-            .eq('stripe_account_id', acctId);
+            .eq('stripe_account_id', event.account);
+          if (error) console.error('[stripe webhook] deauth profile clear failed:', error);
+          else       console.log('[stripe webhook] cleared Stripe Connect for account:', event.account);
+        } else {
+          console.warn('[stripe webhook] account.application.deauthorized fired with no event.account — cannot identify which contractor disconnected');
         }
         break;
       }
@@ -191,8 +197,13 @@ export default async function handler(req, res) {
             p_canceled_at:        null,
           });
           console.warn('[stripe webhook] (connect) plan sub invoice failed:', inv.subscription, inv.id);
-        } else if (inv.customer) {
+        } else if (!isConnectEvent && inv.customer) {
           // Platform: contractor's subscription to Tradevoice is past due.
+          // The `!isConnectEvent` guard prevents an unexpected Connect-side
+          // invoice failure (one with no subscription attached, which
+          // shouldn't happen in our flow but is defensively guarded) from
+          // accidentally writing into the platform profiles table using
+          // the contractor's customer's stripe_customer_id.
           await supabase.rpc('update_subscription_status', {
             p_customer_id:     inv.customer,
             p_subscription_id: inv.subscription || null,
@@ -200,6 +211,8 @@ export default async function handler(req, res) {
             p_trial_ends_at:   null,
           });
           console.warn('[stripe webhook] subscription invoice payment failed:', inv.customer, inv.id);
+        } else {
+          console.warn('[stripe webhook] invoice.payment_failed with unexpected shape — isConnect:', isConnectEvent, 'sub:', inv.subscription, 'customer:', inv.customer);
         }
         break;
       }
@@ -216,14 +229,20 @@ export default async function handler(req, res) {
             p_current_period_end: periodEnd,
             p_canceled_at:        null,
           });
-        } else if (inv.customer && inv.subscription) {
+          console.log('[stripe webhook] (connect) plan sub renewed:', inv.subscription, inv.id);
+        } else if (!isConnectEvent && inv.customer && inv.subscription) {
           // Renewal succeeded on Tradevoice's own customer subscription.
+          // The `!isConnectEvent` guard mirrors the failed handler so we
+          // never write Connect data into platform tables.
           await supabase.rpc('update_subscription_status', {
             p_customer_id:     inv.customer,
             p_subscription_id: inv.subscription,
             p_status:          'active',
             p_trial_ends_at:   null,
           });
+          console.log('[stripe webhook] platform sub renewed:', inv.customer, inv.id);
+        } else {
+          console.log('[stripe webhook] invoice.payment_succeeded ignored — isConnect:', isConnectEvent, 'sub:', inv.subscription, 'customer:', inv.customer);
         }
         break;
       }
