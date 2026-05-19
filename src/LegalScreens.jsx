@@ -25,10 +25,10 @@ export function PrivacyPolicyScreen({ onBack }) {
       </div>
       <div style={s.body}>
         <div style={s.h1}>Privacy Policy</div>
-        <div style={s.updated}>Last updated: April 8, 2026</div>
+        <div style={s.updated}>Last updated: May 19, 2026</div>
 
         <div style={s.h2}>1. Who We Are</div>
-        <p style={s.p}>TradeVoice ("we," "us," or "our") is a software platform operated by TradeVoice LLC. We provide invoicing, quoting, client management, and payment processing tools for independent contractors and trade businesses, accessible at thetradevoice.com.</p>
+        <p style={s.p}>TradeVoice ("we," "us," or "our") is a software product operated by Tiny's Apps LLC. We provide invoicing, quoting, client management, and payment processing tools for independent contractors and trade businesses, accessible at thetradevoice.com. References to "TradeVoice" in this policy describe the product; the legal entity behind the service is Tiny's Apps LLC.</p>
 
         <div style={s.h2}>2. Information We Collect</div>
         <p style={s.p}><strong>Information you provide directly:</strong></p>
@@ -84,7 +84,7 @@ export function PrivacyPolicyScreen({ onBack }) {
 
         <div style={s.contact}>
           <div style={{ fontSize: 14, fontWeight: 700, color: '#2d6a4f', marginBottom: 4 }}>Questions?</div>
-          <div style={{ fontSize: 14, color: '#444' }}>Contact us at <strong>privacy@thetradevoice.com</strong> — TradeVoice LLC · thetradevoice.com</div>
+          <div style={{ fontSize: 14, color: '#444' }}>Contact us at <strong>privacy@thetradevoice.com</strong> — Tiny's Apps LLC · thetradevoice.com</div>
         </div>
       </div>
     </div>
@@ -120,7 +120,7 @@ export function TermsScreen({ onBack }) {
       </div>
       <div style={s.body}>
         <div style={s.h1}>Terms and Conditions</div>
-        <div style={s.updated}>Last updated: April 8, 2026</div>
+        <div style={s.updated}>Last updated: May 19, 2026</div>
 
         <div style={s.h2}>1. Acceptance of Terms</div>
         <p style={s.p}>By creating an account or using the TradeVoice platform ("Service"), you agree to be bound by these Terms and Conditions. If you do not agree to these Terms, do not use the Service.</p>
@@ -181,7 +181,7 @@ export function TermsScreen({ onBack }) {
 
         <div style={s.contact}>
           <div style={{ fontSize: 14, fontWeight: 700, color: '#2d6a4f', marginBottom: 4 }}>Questions?</div>
-          <div style={{ fontSize: 14, color: '#444' }}>Contact us at <strong>legal@thetradevoice.com</strong> — TradeVoice LLC · thetradevoice.com</div>
+          <div style={{ fontSize: 14, color: '#444' }}>Contact us at <strong>legal@thetradevoice.com</strong> — Tiny's Apps LLC · thetradevoice.com</div>
         </div>
       </div>
     </div>
