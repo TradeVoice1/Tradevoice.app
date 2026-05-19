@@ -101,33 +101,21 @@ schedule a separate bug-fix day for anything that surfaces.
 
 ---
 
-## 🚨 Wire the $19.99 tech-seat add-on to Stripe (deferred 2026-05-14)
+## ✅ Tech-seat add-on (SHIPPED — moved out of deferred 2026-05-15)
 
-The UI already advertises `$19.99/mo per seat` for additional team members
-(SignupScreen footnote, Dashboard tech-performance widget CTA, Settings →
-Team "Buy a Tech Seat" button) — but `api/stripe/create-subscription.js`
-only creates a subscription with the base plan's single price item. There's
-no per-seat line being added or counted.
+Wired during the session that added the Elite tier rename. The
+"new endpoint" plan in the original deferral was scrapped in favor of
+consolidating into `api/stripe/create-subscription.js` as a multi-action
+dispatcher to stay under the Vercel Hobby 12-function cap:
 
-To wire it up:
-1. Stripe Price `STRIPE_PRICE_TECH_SEAT` already exists (created
-   2026-05-14 during the live-mode setup). Set as env var.
-2. When the contractor clicks "Create Tech Account" (`BuyTechSeatModal`),
-   after the team_member insert, call a new `/api/stripe/add-tech-seat`
-   endpoint that calls
-   `stripe.subscriptions.update(sub_id, { items: [...existing, { price: STRIPE_PRICE_TECH_SEAT, quantity: 1 }] })`.
-   Or — cleaner — store ONE subscription item for the seat add-on with
-   `quantity: N` where N is the active tech count; increment / decrement
-   the quantity on add / remove.
-3. On `team_member` delete (Settings → Team → remove), call the same
-   endpoint to decrement quantity.
-4. Update `webhook.js` invoice handlers to surface the seat line items
-   separately in receipts (optional polish).
-
-Function-count math: this adds one more `/api/stripe/*` endpoint. Stripe
-folder is at 9 today + 1 new = 10. Marketing 1 + library 1 + this = 12
-exactly. Still under the Hobby cap without consolidation, but tight.
-Worth doing alongside the Vercel Pro upgrade noted below.
+- `POST /api/stripe/create-subscription` with `action='sync_seats'` reads
+  the contractor's active `team_members` count, subtracts the plan's
+  included seats (Elite gets 2 free), and updates the Stripe sub's
+  tech-seat line item to match the billed quantity (add / update /
+  remove with proration).
+- `src/data/team.js` exports `syncTechSeats(ownerId)`; called after
+  every team_member add (createTechAccount) and remove (deleteTeamMember).
+- Idempotent — safe to call repeatedly.
 
 ---
 
@@ -188,68 +176,14 @@ fine indefinitely, so this is purely aesthetic.
 
 ---
 
-## 1. Card-on-file at signup (Stripe SetupIntent) — 🔴 HIGH PRIORITY
+## 1. Card-on-file at signup (Stripe SetupIntent) — ✅ DONE
 
-**Why deferred:** Needs Stripe platform account, serverless endpoints, env vars,
-and ToS revisions — too much new infrastructure to mix into a UX session.
-
-**Goal:** Trial requires a card up front. When the 28-day trial ends, Stripe
-auto-charges the card on file. User must agree in ToS.
-
-**What to build:**
-
-1. **Stripe account setup** (no code)
-   - Confirm platform account at https://dashboard.stripe.com is live.
-   - Grab keys:
-     - `pk_test_51TIFb3H...` (publishable, goes in front-end)
-     - `sk_test_51TIFb3H...` (secret, goes in Vercel env vars only)
-
-2. **Vercel env vars**
-   - `STRIPE_SECRET_KEY` (server)
-   - `VITE_STRIPE_PUBLISHABLE_KEY` (client)
-   - `STRIPE_WEBHOOK_SECRET` (for webhook signing)
-
-3. **Serverless endpoints** (`api/` folder, Vercel functions)
-   - `POST /api/stripe/setup-intent` — creates a customer + SetupIntent for the
-     signed-in user, returns `client_secret`.
-   - `POST /api/stripe/webhook` — verifies signature, listens for
-     `customer.subscription.created`, `invoice.payment_succeeded`,
-     `invoice.payment_failed`, `customer.subscription.deleted`.
-
-4. **Front-end signup flow change**
-   - Add a 4th step to `SignupScreen` after Plan: "Payment Method".
-   - Mount Stripe `<CardElement>` (or PaymentElement) using
-     `@stripe/react-stripe-js`.
-   - On submit: confirm SetupIntent client-side → store `stripe_customer_id`
-     + `stripe_payment_method_id` on the user's `profiles` row.
-   - Block `onComplete` until card is saved (or until the user explicitly
-     opts out, if we want a "trial without card" path).
-
-5. **Schema additions** (migration `0003_stripe.sql`)
-   ```sql
-   alter table public.profiles
-     add column if not exists stripe_customer_id text,
-     add column if not exists stripe_payment_method_id text,
-     add column if not exists stripe_subscription_id text,
-     add column if not exists trial_ends_at timestamptz default (now() + interval '28 days'),
-     add column if not exists subscription_status text default 'trialing';
-   ```
-
-6. **Trial-end charge**
-   - Best path: create a Stripe Subscription with `trial_period_days = 28` at
-     signup. Stripe handles the auto-charge. We just listen to webhooks for
-     status changes.
-   - Update `subscription_status` on `customer.subscription.updated`.
-   - Show "Trial ended" / "Past due" / "Cancelled" in the top-bar pill based
-     on the column instead of the hand-computed date.
-
-7. **Terms of Service revision**
-   - Add explicit auto-renew + auto-charge clause.
-   - Surface it on the signup checkbox copy: "I agree to the ToS, Privacy
-     Policy, and to be charged $X/mo after the 28-day trial unless I cancel."
-   - File at `src/LegalScreens.jsx` — `TermsScreen` component.
-
-**Estimated effort:** 4–6 hours.
+Shipped end-to-end: migration 0015 added the columns, `api/stripe/setup-intent.js`
++ `api/stripe/create-subscription.js` provide the back-end, SignupScreen Step 3
+mounts Stripe Elements PaymentElement, creates the trialing Subscription, and
+persists `stripe_customer_id` / `stripe_subscription_id` / `subscription_status`
+/ `trial_ends_at` on the profile. ToS checkbox on Step 2 covers the auto-renew
+clause (LegalScreens.jsx → TermsScreen section 4).
 
 ---
 
