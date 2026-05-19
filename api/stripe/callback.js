@@ -28,16 +28,40 @@ export default async function handler(req, res) {
     return res.redirect(302, `${baseUrl}/?stripe=error&msg=missing_params`);
   }
 
-  // Find the user that owns this state nonce. Listing all users is fine at
-  // current scale; we'd switch to a dedicated state table once we cross
-  // a few thousand contractors.
-  const { data: { users } = { users: [] }, error: listErr } = await supabase.auth.admin.listUsers();
-  if (listErr) {
-    console.error('[stripe callback] could not list users:', listErr);
-    return res.redirect(302, `${baseUrl}/?stripe=error&msg=lookup_failed`);
+  // Find the user that owns this state nonce. We walk every page of users
+  // looking for the one whose app_metadata.stripe_oauth_state matches.
+  //
+  // Why paginate: supabase.auth.admin.listUsers() defaults to 50 users per
+  // page (max 1000). With a single un-paginated call, the very first
+  // contractor who connects Stripe AFTER user #50 would silently fail
+  // with `state_mismatch` because their record isn't in the returned
+  // window — even though everything else is fine. Walking pages until
+  // we either find them or exhaust the list keeps this O(N/1000) safe
+  // and correct regardless of total user count.
+  //
+  // Long-term fix: stash the state nonce on a dedicated short-TTL table
+  // (or profiles column with index) and look up by state in O(1).
+  // Doing that requires a migration; keeping the paginated walk for now
+  // since it works for our private-preview scale.
+  let matchedUser = null;
+  let page = 1;
+  const PAGE_SIZE = 1000;            // Supabase admin API cap
+  // Cap pages so a bug elsewhere can't run away. 50k users is well past beta.
+  const MAX_PAGES = 50;
+  while (page <= MAX_PAGES) {
+    const { data, error: listErr } = await supabase.auth.admin.listUsers({ page, perPage: PAGE_SIZE });
+    if (listErr) {
+      console.error('[stripe callback] could not list users (page', page + '):', listErr);
+      return res.redirect(302, `${baseUrl}/?stripe=error&msg=lookup_failed`);
+    }
+    const pageUsers = data?.users || [];
+    const hit = pageUsers.find(u => u.app_metadata?.stripe_oauth_state === state);
+    if (hit) { matchedUser = hit; break; }
+    if (pageUsers.length < PAGE_SIZE) break;  // exhausted
+    page++;
   }
-  const matchedUser = users.find(u => u.app_metadata?.stripe_oauth_state === state);
   if (!matchedUser) {
+    console.warn('[stripe callback] state nonce not found across', page, 'page(s) — possible replay or expired link');
     return res.redirect(302, `${baseUrl}/?stripe=error&msg=state_mismatch`);
   }
   const returnUrl = matchedUser.app_metadata?.stripe_oauth_return || null;

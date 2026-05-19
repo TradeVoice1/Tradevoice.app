@@ -40,6 +40,16 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'could_not_persist_state' });
   }
 
+  // TODO(onboarding-UX): `business_type=company` prefills Stripe's
+  // onboarding form for incorporated businesses (LLC / Corp). Most one-
+  // person trades operate as sole proprietors and would prefer
+  // `individual` — which uses SSN + DOB instead of EIN + business
+  // address and skips a screen. The Stripe form is editable either way
+  // so this only affects the default; not a correctness bug. Fix:
+  // accept an `entityType` body param from the front-end (we already
+  // collect this on the Company step of signup as part of the LLC vs
+  // sole-prop decision) and pass it through. Skipping the prefill
+  // entirely (omit the param) lets Stripe ask — also acceptable.
   const params = new URLSearchParams({
     response_type: 'code',
     client_id:     clientId,

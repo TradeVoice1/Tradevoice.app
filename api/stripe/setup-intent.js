@@ -41,13 +41,20 @@ export default async function handler(req, res) {
 
   try {
     if (!customerId) {
+      // idempotencyKey scoped to this userId so parallel calls (e.g. user
+      // double-tapped Continue, or React Strict Mode double-fired the
+      // effect) reuse the same Stripe Customer instead of creating two.
+      // Stripe returns the original response for 24h on a matching key.
       const customer = await stripe.customers.create({
         email: email || undefined,
         name:  name || profile?.name || profile?.company || undefined,
         metadata: { tradevoice_user_id: userId },
+      }, {
+        idempotencyKey: `tv-customer-${userId}`,
       });
       customerId = customer.id;
-      // Persist immediately so we don't double-create on retry.
+      // Persist immediately so subsequent requests (and the create-subscription
+      // endpoint) reuse the customer without another Stripe round-trip.
       await supabase
         .from('profiles')
         .update({ stripe_customer_id: customerId })
