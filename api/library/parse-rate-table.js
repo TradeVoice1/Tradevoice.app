@@ -148,7 +148,12 @@ export default async function handler(req, res) {
     const anthropic = getAnthropic();
     const message = await anthropic.messages.create({
       model: DEFAULT_MODEL,
-      max_tokens: 4096,
+      // 4096 was hitting the ceiling on dense rate sheets (50+ line
+      // items). When Claude can't finish the tool_use payload it returns
+      // a truncated content array with no tool_use block, and we 502'd
+      // back to the user with no clear cause. 8192 gives ~200 items of
+      // headroom — well past any realistic contractor rate sheet.
+      max_tokens: 8192,
       system: SYSTEM_PROMPT,
       tools: [TOOL_SCHEMA],
       tool_choice: { type: 'tool', name: 'import_rate_items' },

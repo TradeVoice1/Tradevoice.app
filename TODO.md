@@ -5,6 +5,67 @@ to pick up cold. Update this as we go.
 
 ---
 
+## 🔒 Auth correlation on body-driven endpoints (added 2026-05-15)
+
+Several API endpoints accept `ownerId` (or `userId`) from the request
+body and trust it without correlating to the caller's auth session:
+
+- `api/marketing/send.js` — both handlers (review_request + campaign)
+- `api/library/parse-rate-table.js`
+- (Already-mitigated cousins: `api/stripe/setup-intent.js`, `create-subscription.js`,
+   `plan-checkout.js`, `disconnect.js` have the same pattern but the
+   blast radius is smaller — Stripe rejects invalid keys / sessions
+   downstream. The marketing + library endpoints are the real risk.)
+
+**Attack vector:** if an attacker obtains a real user's auth.users.id
+(a UUID — large keyspace, but UUIDs leak via various paths: server
+logs, an unrelated XSS, a future feature that exposes them), they can
+hit these endpoints with that ID and either fan out emails as that
+contractor (damages domain reputation) or burn Anthropic credits.
+
+**Fix (~30 min):**
+1. Add `api/_lib/auth.js` with a `requireUser(req)` helper that:
+   - Reads the `Authorization: Bearer <jwt>` header
+   - Validates it with `supabase.auth.getUser(jwt)`
+   - Returns `{ userId, email }` or throws 401
+2. Front-end already has the session — pass the JWT through
+   `Authorization` headers (existing supabase-js client auto-attaches
+   on `.functions.invoke` but our endpoints use plain fetch; add
+   the header manually in `src/data/*.js` helpers).
+3. In each endpoint, replace the `ownerId` body field with the value
+   from `requireUser(req).userId`. Reject if they don't match.
+
+Not blocking private preview (single trusted user), but should land
+before opening the allowlist past internal testing.
+
+---
+
+## ⏱️ Campaign timeout on >150-recipient blasts (added 2026-05-15)
+
+`api/marketing/send.js handleCampaign` sends emails in a synchronous
+for-loop, awaiting each Resend call before the next. Vercel Hobby
+caps serverless functions at 60s; at ~250ms per Resend round-trip,
+that's ~240 recipients max before the function dies mid-loop. Half
+the campaign lands, half doesn't, the marketing_campaigns row is
+left in `sending` status (never gets the final `update to 'sent'`),
+and there's no resume mechanism.
+
+**Fix options (rank by effort):**
+1. **Promise.all in batches of 20** with `Promise.allSettled` — easy
+   ~10-line change, lifts cap to ~4000 recipients in 60s. Best
+   immediate fix.
+2. **Move to Vercel Cron + a job queue table** — proper solution.
+   Endpoint just queues; cron drains. Requires Vercel Pro (blocked
+   below) and the recurring-jobs cron infrastructure.
+3. **Stream chunked progress back via SSE** — overkill for now.
+
+Option 1 first; Option 2 once Pro is live.
+
+Not blocking private preview (no real contractor has >100 clients in
+their address book yet). Important before launch.
+
+---
+
 ## 🔧 Stripe Connect: pass entityType through to OAuth (added 2026-05-15)
 
 `api/stripe/connect-start.js` hardcodes `stripe_user[business_type]=company`
