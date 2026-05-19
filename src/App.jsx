@@ -1097,7 +1097,7 @@ function SignupScreen({ onComplete, onBack }) {
 
       {step === 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
-          <div><label style={s.label}>Your name *</label><input value={name} onChange={e => setName(e.target.value)} placeholder="Matthew Burke" style={{ ...s.input, width: '100%', padding: '12px 14px', boxSizing: 'border-box', fontSize: 16 }}/></div>
+          <div><label style={s.label}>Your name *</label><input value={name} onChange={e => setName(e.target.value)} placeholder="Alex Rivera" style={{ ...s.input, width: '100%', padding: '12px 14px', boxSizing: 'border-box', fontSize: 16 }}/></div>
           <div><label style={s.label}>Email address *</label><input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="matt@company.com" style={{ ...s.input, width: '100%', padding: '12px 14px', boxSizing: 'border-box', fontSize: 16 }}/></div>
           <div><label style={s.label}>Password * <span style={{ color: C.dim, fontWeight: 400 }}>(min 6 characters)</span></label><input type="password" value={password} onChange={e => setPass(e.target.value)} placeholder="••••••••" style={{ ...s.input, width: '100%', padding: '12px 14px', boxSizing: 'border-box', fontSize: 16 }}/></div>
         </div>
@@ -1125,7 +1125,7 @@ function SignupScreen({ onComplete, onBack }) {
                 Your business
               </div>
             )}
-            <div><label style={s.label}>Company name *</label><input value={company} onChange={e => setCompany(e.target.value)} placeholder="Burke's Mechanical" style={{ ...s.input, width: '100%', padding: '12px 14px', boxSizing: 'border-box', fontSize: 16 }}/></div>
+            <div><label style={s.label}>Company name *</label><input value={company} onChange={e => setCompany(e.target.value)} placeholder="Cornerstone Mechanical" style={{ ...s.input, width: '100%', padding: '12px 14px', boxSizing: 'border-box', fontSize: 16 }}/></div>
             <div><label style={s.label}>Phone</label><input type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="(512) 555-0000" style={{ ...s.input, width: '100%', padding: '12px 14px', boxSizing: 'border-box', fontSize: 16 }}/></div>
 
             {/* Selected-count summary — moved up to the company side on
@@ -1543,7 +1543,7 @@ function JoinScreen({ onJoin, onBack }) {
   const lookupCode = () => {
     setError('');
     if (code.toUpperCase() === 'TV-BRK42X') {
-      setFound({ company: "Burke's Mechanical", owner: 'Matthew Burke', trades: ['Plumber','HVAC'] });
+      setFound({ company: "Cornerstone Mechanical", owner: 'Alex Rivera', trades: ['Plumber','HVAC'] });
       setStep(1);
     } else {
       setError('Company code not found. Check with your employer and try again.');
@@ -1859,9 +1859,9 @@ function Onboarding({ onComplete }) {
           <h2 style={{ margin: '0 0 6px', fontFamily: "'Inter', sans-serif", fontSize: 24, fontWeight: 700, color: C.text, letterSpacing: '-0.02em' }}>Your Profile</h2>
           <p style={{ margin: '0 0 20px', fontSize: 18, color: C.muted }}>This appears on your invoices and proposals.</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            {inputField('name',    'Your Name',    'John Burke',                'text',  true)}
-            {inputField('company', 'Company Name', "Burke's Mechanical",        'text',  false)}
-            {inputField('email',   'Email',        'john@burkesmechanical.com', 'email', true)}
+            {inputField('name',    'Your Name',    'Alex Rivera',               'text',  true)}
+            {inputField('company', 'Company Name', "Cornerstone Mechanical",    'text',  false)}
+            {inputField('email',   'Email',        'alex@cornerstonemech.com',  'email', true)}
             {inputField('phone',   'Phone',        '(555) 000-0000',            'tel',   false)}
           </div>
         </>}
@@ -6399,8 +6399,8 @@ function ProfileModal({ profile, onSave, onClose }) {
 
           {/* Basic info */}
           <div style={{ display: 'grid', gridTemplateColumns: isTablet ? '1fr' : '1fr 1fr', gap: 12 }}>
-            <F label="Your Name *">{I(name, setName, 'John Burke')}</F>
-            <F label="Company Name">{I(company, setCompany, "Burke's Mechanical")}</F>
+            <F label="Your Name *">{I(name, setName, 'Alex Rivera')}</F>
+            <F label="Company Name">{I(company, setCompany, "Cornerstone Mechanical")}</F>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: isTablet ? '1fr' : '1fr 1fr', gap: 12 }}>
             <F label="Email">{I(email, setEmail, 'john@company.com', 'email')}</F>
@@ -8076,6 +8076,11 @@ function Settings({ user, setUser, logo, onLogoChange, showProfileModal, setShow
 // Visible only when user.email is on the early-access list. Currently exposes
 // a single "Seed Demo Data" button. Place future internal dev tools here.
 function DeveloperPanel({ user }) {
+  // ⚠️ PRE-LAUNCH: remove the hardcoded yahoo fallback below before
+  // making the app publicly available. The env var VITE_EARLY_ACCESS_EMAILS
+  // is set in Vercel for both projects; the fallback only matters if that
+  // env var ever gets dropped. Tracked in TODO.md → "Scrub founder
+  // email fallback before public launch".
   const DEV_EMAILS = (import.meta.env.VITE_EARLY_ACCESS_EMAILS || 'mattparnellburkes@yahoo.com')
     .split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
   const isDev = DEV_EMAILS.includes(String(user?.email || '').trim().toLowerCase());
@@ -8623,6 +8628,12 @@ function TradevoiceApp() {
   // signUp from Settings → Team), which bypasses this gate intentionally —
   // techs are provisioned by an already-signed-in owner, so the lockdown
   // doesn't apply to them.
+  //
+  // ⚠️ PRE-LAUNCH: remove the hardcoded yahoo fallback below before making
+  // the app publicly available. The env var VITE_EARLY_ACCESS_EMAILS is
+  // set in Vercel; the fallback only matters if that env var ever gets
+  // dropped. Tracked in TODO.md → "Scrub founder email fallback before
+  // public launch".
   const EARLY_ACCESS_EMAILS = (import.meta.env.VITE_EARLY_ACCESS_EMAILS || 'mattparnellburkes@yahoo.com')
     .split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
 

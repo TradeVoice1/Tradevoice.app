@@ -61,8 +61,8 @@ export async function seedDevData({ userId, userName, userEmail, onProgress }) {
   // ──────────────────────────────────────────────────────────────────────
   log('Filling in profile + payment methods…');
   await upsertProfile(userId, {
-    name:    userName || 'Matt Burke',
-    company: "Burke's Mechanical & Trades Co.",
+    name:    userName || 'Alex Rivera',
+    company: "Cornerstone Mechanical & Trades Co.",
     phone:   '(512) 555-0100',
     trades:  ['Plumber', 'Electrician', 'HVAC', 'Roofing', 'Specialty'],
     states:  ['Texas', 'Louisiana'],
@@ -74,10 +74,10 @@ export async function seedDevData({ userId, userName, userEmail, onProgress }) {
     payments: {
       stripe:  { connected: true },
       paypal:  { connected: true },
-      venmo:   { handle: '@burkes-mechanical' },
-      cashapp: { handle: '$BurkesMech' },
+      venmo:   { handle: '@cornerstone-mechanical' },
+      cashapp: { handle: '$CornerstoneMech' },
       zelle:   { handle: '(512) 555-0100' },
-      check:   { handle: "Make checks payable to Burke's Mechanical Inc., 1840 Commerce Blvd, Austin TX 78704" },
+      check:   { handle: "Make checks payable to Cornerstone Mechanical Inc., 1840 Commerce Blvd, Austin TX 78704" },
       cash:    { enabled: true },
     },
   });
@@ -107,9 +107,9 @@ export async function seedDevData({ userId, userName, userEmail, onProgress }) {
   // ──────────────────────────────────────────────────────────────────────
   log('Adding 3 techs (pending invites)…');
   const techDefs = [
-    { name: 'Carlos Reyes', email: 'carlos.demo@burkes.local', role: 'tech', trades: ['Plumber','HVAC'],    status: 'pending', branch: 'Austin',   phone: '(512) 555-0411', perms: { createQuotes: true, createInvoices: true, viewAllJobs: false, recordPayments: true,  viewClients: true,  viewDashboard: false } },
-    { name: 'Jake Martinez', email: 'jake.demo@burkes.local',  role: 'tech', trades: ['Electrician'],       status: 'pending', branch: 'Austin',   phone: '(512) 555-0432', perms: { createQuotes: true, createInvoices: true, viewAllJobs: false, recordPayments: false, viewClients: true,  viewDashboard: false } },
-    { name: 'Mason Burke',   email: 'mason.demo@burkes.local', role: 'tech', trades: ['HVAC','Refrigeration'],status: 'pending', branch: 'Houston', phone: '(713) 555-0455', perms: { createQuotes: true, createInvoices: true, viewAllJobs: true,  recordPayments: true,  viewClients: true,  viewDashboard: true  } },
+    { name: 'Carlos Reyes', email: 'carlos.demo@example.local', role: 'tech', trades: ['Plumber','HVAC'],    status: 'pending', branch: 'Austin',   phone: '(512) 555-0411', perms: { createQuotes: true, createInvoices: true, viewAllJobs: false, recordPayments: true,  viewClients: true,  viewDashboard: false } },
+    { name: 'Jake Martinez', email: 'jake.demo@example.local',  role: 'tech', trades: ['Electrician'],       status: 'pending', branch: 'Austin',   phone: '(512) 555-0432', perms: { createQuotes: true, createInvoices: true, viewAllJobs: false, recordPayments: false, viewClients: true,  viewDashboard: false } },
+    { name: 'Mason Taylor',  email: 'mason.demo@example.local', role: 'tech', trades: ['HVAC','Refrigeration'],status: 'pending', branch: 'Houston', phone: '(713) 555-0455', perms: { createQuotes: true, createInvoices: true, viewAllJobs: true,  recordPayments: true,  viewClients: true,  viewDashboard: true  } },
   ];
   const techs = [];
   for (const t of techDefs) {

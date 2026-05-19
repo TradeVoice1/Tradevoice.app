@@ -5,6 +5,33 @@ to pick up cold. Update this as we go.
 
 ---
 
+## 🚨 Scrub founder email fallback before public launch (added 2026-05-19)
+
+`src/App.jsx` has TWO hardcoded fallback values of
+`mattparnellburkes@yahoo.com` for the early-access allowlist:
+
+- Line ~8079 (`DeveloperPanel.DEV_EMAILS`)
+- Line ~8631 (`EARLY_ACCESS_EMAILS` in the main `TradevoiceApp` component)
+
+These only fire if `VITE_EARLY_ACCESS_EMAILS` isn't set in Vercel (it
+currently IS set for both Production and Preview). The fallback is a
+dev-convenience so local-dev doesn't lock you out, but having a
+personal email shipped in client-side source is a privacy + future-
+employer-leak risk after launch.
+
+**Two options at launch time:**
+1. Replace both fallbacks with `''` (empty string) so they parse to
+   an empty allowlist. Forces the env var to be set — safer.
+2. Replace with a generic placeholder like `'founder@yourcompany.com'`
+   that nobody actually has access to. Useful if you want devs cloning
+   the repo to see "this is the pattern" without exposing your real
+   email.
+
+⚠️ Both lines have inline `⚠️ PRE-LAUNCH` comments pointing back here.
+Don't forget to remove them too once this is resolved.
+
+---
+
 ## 🔒 Auth correlation on body-driven endpoints (added 2026-05-15)
 
 Several API endpoints accept `ownerId` (or `userId`) from the request
