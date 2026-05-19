@@ -18,6 +18,15 @@
   "functions": {
     "api/stripe/webhook.js": {
       "maxDuration": 10
+    },
+    "api/cron/refresh-sales-tax.js": {
+      "maxDuration": 300
     }
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/cron/refresh-sales-tax",
+      "schedule": "0 3 * * 1"
+    }
+  ]
 }
