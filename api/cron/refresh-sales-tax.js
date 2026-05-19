@@ -21,10 +21,15 @@
 // most-recent good values. The audit log is the source of truth for
 // "did we successfully refresh X this week?"
 //
-// Concurrency: we process states in batches of 4 with Promise.allSettled.
-// Sequential = ~150-250s for 51 states (over Vercel Pro's 300s default
-// timeout). Concurrency 4 keeps us at ~40-60s and well-mannered toward
-// state government webservers.
+// Concurrency: we process states with a concurrency of 12. Empirically
+// (first production run on 2026-05-19) concurrency=4 with a 60k char
+// HTML cap landed only 8/46 states in 300s — Claude is the bottleneck
+// when given fat pages, and most state .gov sites are slow enough that
+// 4-way parallelism wasn't enough to hide the latency. Bumped to 12 +
+// tightened the HTML cap to 18k. 12 parallel HTTP calls from a single
+// Vercel function is well-mannered enough that no state has rate-limited
+// us, and the smaller HTML payload makes each Claude call ~3-5s instead
+// of ~30s. Combined: full 46-state run finishes in 60-90s.
 
 import { getServiceClient } from "../_lib/supabase.js";
 import { getAnthropic, DEFAULT_MODEL } from "../_lib/anthropic.js";
@@ -166,8 +171,12 @@ async function runWithConcurrency(items, limit, worker) {
 // Claude's context easily handles it but we'd burn 30-60k input tokens per
 // state for content that's mostly chrome. Cheap mechanical strip: drop
 // <script>, <style>, <nav>, <footer>, repeated whitespace. Brings most
-// pages to ~5-10k chars without hurting Claude's accuracy.
-async function fetchStripped(url, timeoutMs = 15000) {
+// pages to ~5-10k chars without hurting Claude's accuracy. Hard-cap at
+// 18k AFTER stripping — empirically Claude is fast on payloads that size,
+// hangs for 4+ minutes when handed 60k. Tighter fetch timeout (8s vs the
+// old 15s) so a slow state .gov page logs fetch_failed quickly instead of
+// blocking its slot in the concurrency pool.
+async function fetchStripped(url, timeoutMs = 8000) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
   try {
@@ -184,7 +193,10 @@ async function fetchStripped(url, timeoutMs = 15000) {
       .replace(/<footer[\s\S]*?<\/footer>/gi, '')
       .replace(/<!--[\s\S]*?-->/g, '')
       .replace(/\s+/g, ' ')
-      .slice(0, 60000); // hard cap so a runaway page can't blow the prompt
+      .slice(0, 18000); // hard cap — 18k is the sweet spot for Claude
+                        // speed (~3-5s) without losing the relevant
+                        // rate-table content. State tax pages put their
+                        // rate near the top of the body in 95%+ of cases.
   } finally {
     clearTimeout(timeout);
   }
@@ -215,7 +227,14 @@ async function refreshOne(supabase, anthropic, [stateName, url]) {
 
   let extracted;
   try {
-    const msg = await anthropic.messages.create({
+    // Race the Claude call against a 30s wall-clock timeout. The Anthropic
+    // SDK doesn't reliably abort hung requests by itself — on the first
+    // production run a few states (CT, CA, AR) had Claude calls that
+    // didn't return for 250+ seconds, pinning their concurrency slot and
+    // ultimately killing the whole function via Vercel's 300s ceiling.
+    // 30s is generous (typical successful call is 3-5s) and ensures any
+    // single hang only costs one slot for half a minute before we move on.
+    const claudePromise = anthropic.messages.create({
       model: DEFAULT_MODEL,
       max_tokens: 1024,
       system: SYSTEM_PROMPT,
@@ -228,6 +247,10 @@ async function refreshOne(supabase, anthropic, [stateName, url]) {
         ],
       }],
     });
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('claude_timeout_30s')), 30000)
+    );
+    const msg = await Promise.race([claudePromise, timeoutPromise]);
     const toolUse = msg.content?.find(c => c.type === 'tool_use');
     if (!toolUse) throw new Error('no tool_use in response');
     extracted = toolUse.input || {};
@@ -304,7 +327,11 @@ export default async function handler(req, res) {
   const startedAt = Date.now();
 
   const entries = Object.entries(STATE_SOURCES);
-  const results = await runWithConcurrency(entries, 4, (entry) =>
+  // Concurrency 12: each state takes ~5-8s end-to-end on the happy path,
+  // and the per-call 30s Claude timeout caps the worst case. 46 states at
+  // 12-way parallelism = ~4 batches ≈ 30-60s total. Vercel function limit
+  // is 300s with plenty of headroom.
+  const results = await runWithConcurrency(entries, 12, (entry) =>
     refreshOne(supabase, anthropic, entry)
   );
 
