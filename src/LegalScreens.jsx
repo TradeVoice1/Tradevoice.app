@@ -51,8 +51,10 @@ export function PrivacyPolicyScreen({ onBack }) {
         <p style={s.p}>We use the information we collect to:</p>
         <ul style={s.ul}>
           <li style={s.li}>Provide, operate, and improve the TradeVoice platform</li>
-          <li style={s.li}>Process payments and calculate taxes on your behalf</li>
+          <li style={s.li}>Process payments through our payment partner (Stripe)</li>
           <li style={s.li}>Send account-related emails (receipts, password resets, billing notices)</li>
+          <li style={s.li}>Send marketing-related emails on your behalf to your clients, when you explicitly request it (review requests, campaigns) — your clients can opt out at any time via the unsubscribe link in every message</li>
+          <li style={s.li}>Process documents you upload (such as rate sheets) using AI to extract structured data</li>
           <li style={s.li}>Respond to support requests</li>
           <li style={s.li}>Detect and prevent fraud or unauthorized access</li>
           <li style={s.li}>Comply with legal obligations</li>
@@ -60,26 +62,43 @@ export function PrivacyPolicyScreen({ onBack }) {
         <p style={s.p}>We do <strong>not</strong> sell your personal information to third parties. Ever.</p>
 
         <div style={s.h2}>4. How We Share Your Information</div>
-        <p style={s.p}><strong>With your clients:</strong> Invoice and quote information you send to clients is shared with those clients at your direction.</p>
-        <p style={s.p}><strong>With service providers:</strong> We share data with trusted third-party providers including Stripe (payment processing), Supabase (database and authentication), TaxJar (tax calculation), and Vercel (hosting). These providers are contractually required to protect your data.</p>
+        <p style={s.p}><strong>With your clients:</strong> Invoice, quote, and marketing email content you send to clients is shared with those clients at your direction.</p>
+        <p style={s.p}><strong>With service providers:</strong> We share data with the following trusted third-party providers, each contractually required to protect your data and use it only to perform the service we contract them for:</p>
+        <ul style={s.ul}>
+          <li style={s.li}><strong>Stripe</strong> — payment processing for subscriptions, customer invoices, and Stripe Connect payouts to your bank account</li>
+          <li style={s.li}><strong>Supabase</strong> — database, authentication, file storage, and row-level security</li>
+          <li style={s.li}><strong>Vercel</strong> — hosting, serverless functions, and edge networking</li>
+          <li style={s.li}><strong>Resend</strong> — outbound transactional and marketing email delivery</li>
+          <li style={s.li}><strong>Anthropic (Claude)</strong> — AI processing of documents you upload for data extraction (e.g. rate sheets). See section 5 for details on what data is sent and how it is handled.</li>
+          <li style={s.li}><strong>Google</strong> — optional Sign-In with Google. If you use this option, Google shares your name and email address with us. Use of Google services is also governed by Google's own Privacy Policy.</li>
+        </ul>
         <p style={s.p}><strong>For legal reasons:</strong> We may disclose information if required by law, court order, or government request.</p>
 
-        <div style={s.h2}>5. Data Retention</div>
+        <div style={s.h2}>5. AI Document Processing</div>
+        <p style={s.p}>TradeVoice includes features that use artificial intelligence to extract structured data from documents you choose to upload (for example, parsing a contractor rate sheet PDF into labor, material, and equipment line items). When you use these features:</p>
+        <ul style={s.ul}>
+          <li style={s.li}>The document content is sent to Anthropic's Claude API for processing.</li>
+          <li style={s.li}>Anthropic processes the content to return structured output back to TradeVoice. Per Anthropic's API terms, customer inputs and outputs are <strong>not</strong> used to train Anthropic's models.</li>
+          <li style={s.li}>We do not store the raw uploaded file after processing — only the structured items you confirm and import into your rate library.</li>
+          <li style={s.li}>You should not upload documents containing sensitive personal information about third parties (e.g. employees' Social Security numbers) without their consent.</li>
+        </ul>
+
+        <div style={s.h2}>6. Data Retention</div>
         <p style={s.p}>We retain your account data for as long as your account is active. If you cancel your account, we retain your data for 90 days before permanent deletion, giving you time to export your records.</p>
 
-        <div style={s.h2}>6. Data Security</div>
+        <div style={s.h2}>7. Data Security</div>
         <p style={s.p}>We use industry-standard security measures including encrypted connections (HTTPS/TLS), encrypted storage for sensitive data, and row-level security so each user can only access their own data.</p>
 
-        <div style={s.h2}>7. Your Rights</div>
+        <div style={s.h2}>8. Your Rights</div>
         <p style={s.p}>You have the right to access, correct, delete, or export your personal data at any time. Contact us at privacy@thetradevoice.com to exercise any of these rights.</p>
 
-        <div style={s.h2}>8. Cookies</div>
+        <div style={s.h2}>9. Cookies</div>
         <p style={s.p}>We use essential cookies only to keep you logged in and maintain your session. We do not use advertising or tracking cookies.</p>
 
-        <div style={s.h2}>9. Children's Privacy</div>
+        <div style={s.h2}>10. Children's Privacy</div>
         <p style={s.p}>TradeVoice is not intended for use by anyone under the age of 18. We do not knowingly collect personal information from minors.</p>
 
-        <div style={s.h2}>10. Changes to This Policy</div>
+        <div style={s.h2}>11. Changes to This Policy</div>
         <p style={s.p}>We may update this Privacy Policy from time to time. We will notify you of significant changes by email or by posting a notice in the platform.</p>
 
         <div style={s.contact}>
@@ -136,26 +155,27 @@ export function TermsScreen({ onBack }) {
           <thead>
             <tr>
               <th style={s.th}>Plan</th>
-              <th style={s.th}>Price</th>
+              <th style={s.th}>Monthly</th>
+              <th style={s.th}>Yearly (save 20%)</th>
               <th style={s.th}>Scope</th>
             </tr>
           </thead>
           <tbody>
-            <tr><td style={s.td}>Solo</td><td style={s.td}>$49.99/mo</td><td style={s.td}>1 trade</td></tr>
-            <tr><td style={s.td}>Pro</td><td style={s.td}>$99.99/mo</td><td style={s.td}>Up to 3 trades</td></tr>
-            <tr><td style={s.td}>Elite</td><td style={s.td}>$199.99/mo</td><td style={s.td}>All 56 trades + 2 tech seats included</td></tr>
-            <tr><td style={s.td}>Additional Technician</td><td style={s.td}>$19.99/mo per seat</td><td style={s.td}>Per additional user</td></tr>
+            <tr><td style={s.td}>Solo</td><td style={s.td}>$49.99/mo</td><td style={s.td}>$479.99/yr</td><td style={s.td}>1 trade</td></tr>
+            <tr><td style={s.td}>Pro</td><td style={s.td}>$99.99/mo</td><td style={s.td}>$959.99/yr</td><td style={s.td}>Up to 3 trades</td></tr>
+            <tr><td style={s.td}>Elite</td><td style={s.td}>$199.99/mo</td><td style={s.td}>$1,919.99/yr</td><td style={s.td}>All 56 trades + 2 tech seats included</td></tr>
+            <tr><td style={s.td}>Additional Technician</td><td style={s.td}>$19.99/mo per seat</td><td style={s.td}>—</td><td style={s.td}>Per additional user beyond plan-included seats</td></tr>
           </tbody>
         </table>
-        <p style={s.p}>All plans include a <strong>28-day free trial</strong>. No charge until the trial ends. Subscriptions are billed monthly in advance. You may cancel at any time — cancellation takes effect at the end of the current billing period. No refunds for partial months.</p>
+        <p style={s.p}>All plans include a <strong>28-day free trial</strong>. A valid payment method is required to start the trial; we do not charge during the trial period. Subscriptions are billed in advance — monthly plans renew every month, yearly plans every year — until you cancel. You may cancel at any time from Settings → Billing; cancellation takes effect at the end of the current billing period and you retain access until then. No refunds for partial months or partial years. Tech seats above any plan-included allowance are billed pro-rata when added and credited pro-rata when removed.</p>
 
         <div style={s.h2}>5. Payment Processing</div>
         <p style={s.p}>TradeVoice uses Stripe Connect for payment processing. By enabling payment collection you agree to Stripe's Terms of Service. TradeVoice charges a <strong>1% platform fee</strong> on payments collected through the platform, in addition to Stripe's standard processing fees (3.9% + $0.30 per transaction).</p>
 
         <div style={s.h2}>6. Tax Calculations</div>
-        <p style={s.p}>TradeVoice provides tax rate estimates as a convenience feature. These estimates may not reflect the exact tax rate applicable to every transaction.</p>
+        <p style={s.p}>TradeVoice provides default tax rates by U.S. state and reasonable rules for contractor labor as a convenience feature. These defaults are based on our internal reference tables and are not connected to a live tax-API provider. They may not reflect the exact tax rate applicable to every transaction, local jurisdiction, or service category, and rates may change over time without immediate update in the platform.</p>
         <div style={s.warning}>
-          ⚠️ <strong>TradeVoice is not a tax advisor.</strong> You are solely responsible for collecting and remitting the correct taxes for your business. We strongly recommend consulting a licensed tax professional for your specific tax obligations.
+          ⚠️ <strong>TradeVoice is not a tax advisor.</strong> You are solely responsible for verifying, collecting, and remitting the correct taxes for your business. We strongly recommend consulting a licensed tax professional for your specific tax obligations and reviewing the per-invoice tax rate against your local requirements before sending an invoice.
         </div>
 
         <div style={s.h2}>7. Your Content</div>
