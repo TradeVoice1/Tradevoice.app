@@ -524,6 +524,7 @@ export default function JobsScreen({ user, team = [], onCreateInvoice }) {
         <JobDetailModal
           job={selectedJob}
           techs={techs}
+          jobs={jobs}
           isTech={isTech}
           userId={user?.id}
           onPhotosChange={(photos) => handlePhotosChange(selectedJob.id, photos)}

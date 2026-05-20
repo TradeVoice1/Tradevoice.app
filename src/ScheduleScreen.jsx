@@ -283,7 +283,7 @@ function PhotoTile({ photo, onView, onCycleLabel, onSetCaption, onDelete }) {
 // (drag-reschedule still works on Schedule, but Jobs/list and phone use cases
 // need a tap-to-edit path). When `onReschedule` is provided, the date/time
 // row exposes a Change button that flips the row into an editor.
-export function JobDetailModal({ job, techs, onClose, onStatusChange, onCreateInvoice, onPhotosChange, onReschedule, userId, isTech = false }) {
+export function JobDetailModal({ job, techs, jobs = [], onClose, onStatusChange, onCreateInvoice, onPhotosChange, onReschedule, userId, isTech = false }) {
   useEscapeClose(onClose);
   // Layout breakpoint — desktop gets a 720px modal with a 2-col body so
   // the form doesn't feel claustrophobic when there's plenty of room
@@ -457,17 +457,31 @@ export function JobDetailModal({ job, techs, onClose, onStatusChange, onCreateIn
                 <div style={s.value}>{formatDate(new Date(job.date))} · {formatTime(job.startHour)} — {formatTime(job.startHour + job.duration)}</div>
               )}
               {rescheduling && (
-                <div style={{ marginTop: 6, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
-                    <label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                      <span style={{ fontSize: 10, fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Date</span>
-                      <input
-                        type="date"
-                        value={reDate}
-                        onChange={e => setReDate(e.target.value)}
-                        style={{ padding: '8px 10px', border: '1.5px solid #ddd', borderRadius: 6, fontSize: 14, minHeight: 40 }}
-                      />
-                    </label>
+                <div style={{ marginTop: 6, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {/* Full-width JobDatePicker — same component used in
+                      AddJobModal. Bridges date-string state (reDate) to
+                      Date object the picker expects. Filters this job
+                      out of the density view so it doesn't show as a
+                      conflict on its own current date. */}
+                  <div>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: 6 }}>Date</span>
+                    <JobDatePicker
+                      value={new Date(reDate + 'T12:00:00')}
+                      onChange={d => {
+                        const yyyy = d.getFullYear();
+                        const mm   = String(d.getMonth() + 1).padStart(2, '0');
+                        const dd   = String(d.getDate()).padStart(2, '0');
+                        setReDate(`${yyyy}-${mm}-${dd}`);
+                      }}
+                      jobs={jobs.filter(j => j.id !== job.id)}
+                      techs={techs}
+                      selectedHour={reHour}
+                      selectedDuration={reDuration}
+                      selectedTechId={job.techUserId}
+                      onPickStartHour={h => setReHour(h)}
+                    />
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                     <label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                       <span style={{ fontSize: 10, fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Start</span>
                       <select
@@ -1883,6 +1897,7 @@ export default function ScheduleScreen({
         <JobDetailModal
           job={selectedJob}
           techs={techs}
+          jobs={jobs}
           isTech={isTech}
           userId={user?.id}
           onPhotosChange={(photos) => handleJobPhotosChange(selectedJob.id, photos)}
