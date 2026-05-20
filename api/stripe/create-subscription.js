@@ -55,14 +55,20 @@ const PLAN_TO_PRICE = {
 // Plan-included tech seats. The contractor doesn't pay the $19.99/seat fee
 // for the first N techs on these plans — they're bundled into the base
 // price. handleSyncSeats subtracts this from the billed quantity before
-// updating the Stripe subscription item. Elite ($199.99 monthly or
-// $1,919.99 yearly) includes 2 seats; yearly variants get the same.
+// updating the Stripe subscription item.
+//
+// Pricing tiers as of 2026-05-19:
+//   Solo  ($49.99/mo,  $479.99/yr)  — 0 seats included
+//   Pro   ($99.99/mo,  $959.99/yr)  — 1 seat  included
+//                                     (added 2026-05-19; marketing site
+//                                      now promises 1 free seat on Pro)
+//   Elite ($199.99/mo, $1919.99/yr) — 2 seats included
 const INCLUDED_SEATS = {
   solo:        0,
-  pro:         0,
+  pro:         1,
   all:         2,
   solo_yearly: 0,
-  pro_yearly:  0,
+  pro_yearly:  1,
   all_yearly:  2,
 };
 

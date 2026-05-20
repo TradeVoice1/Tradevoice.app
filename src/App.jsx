@@ -883,7 +883,7 @@ function SignupScreen({ onComplete, onBack }) {
   // right Stripe Price ID via PLAN_TO_PRICE.
   const PLANS_SU = [
     { id: 'solo', name: 'Solo',  monthlyPrice: 49.99,  yearlyPrice: 479.99,   trades: '1 trade',        desc: 'Just you — one trade, full power' },
-    { id: 'pro',  name: 'Pro',   monthlyPrice: 99.99,  yearlyPrice: 959.99,   trades: 'Up to 3 trades', desc: 'Growing contractor, multiple trades', popular: true },
+    { id: 'pro',  name: 'Pro',   monthlyPrice: 99.99,  yearlyPrice: 959.99,   trades: 'Up to 3 trades', desc: 'Growing contractor, multiple trades — 1 tech seat included', popular: true },
     { id: 'all',  name: 'Elite', monthlyPrice: 199.99, yearlyPrice: 1919.99,  trades: 'All 56 trades',  desc: 'Full-service multi-trade contractor — every trade + 2 tech seats included' },
   ];
 
@@ -1389,7 +1389,7 @@ function SignupScreen({ onComplete, onBack }) {
           <div style={{ width: '100%', maxWidth: isTablet ? 480 : 640, marginLeft: 'auto', marginRight: 'auto' }}>
           <div style={{ fontSize: 13, color: C.dim, marginTop: 4, textAlign: 'center' }}>28-day free trial · No credit card needed · Cancel anytime</div>
           <div style={{ fontSize: 13, color: C.muted, textAlign: 'center', marginTop: 8 }}>
-            Need team members? Add techs for <strong style={{ color: C.orange }}>$19.99/mo each</strong> after sign-up in Settings → Team{plan === 'all' ? ' (first 2 free on Elite)' : ''}. 28-day free trial on all plans.
+            Need team members? Add techs for <strong style={{ color: C.orange }}>$19.99/mo each</strong> after sign-up in Settings → Team{plan === 'all' ? ' (first 2 free on Elite)' : plan === 'pro' ? ' (first 1 free on Pro)' : ''}. 28-day free trial on all plans.
           </div>
 
           {/* ── Payment methods preview ──
@@ -6694,7 +6694,7 @@ function Quotes({ user, logo, taxRates, onConvertToInvoice }) {
 // ══════════════════════════════════════════════════════════════════════════════
 const PLANS = [
   { name: 'Solo',  trades: 1,  price: 49.99,  desc: '1 trade — invoicing, quotes, payments',             badge: null         },
-  { name: 'Pro',   trades: 3,  price: 99.99,  desc: 'Up to 3 trades — everything in Solo',               badge: 'POPULAR'    },
+  { name: 'Pro',   trades: 3,  price: 99.99,  desc: 'Up to 3 trades + 1 tech seat included',             badge: 'POPULAR'    },
   // Display tier name "Elite" (renamed from "All Trades" 2026-05-14). Slug
   // is still 'all' on the back-end. Elite bundles 2 free tech seats — the
   // seat-sync endpoint subtracts those from the billed quantity. Price
