@@ -4862,7 +4862,7 @@ const fmt = n => '$' + Number(n || 0).toLocaleString('en-US', { minimumFractionD
 // ══════════════════════════════════════════════════════════════════════════════
 // QUOTE DOCUMENT (read-only, print-ready, trade-aware)
 // ══════════════════════════════════════════════════════════════════════════════
-function QuoteDocument({ quote, client, user, logo, onRevise, onBack, onConvertToInvoice, onDelete, onSend }) {
+function QuoteDocument({ quote, client, user, logo, onRevise, onBack, onConvertToInvoice, onScheduleJob, onDelete, onSend }) {
   const { isTablet } = useBreakpoint();
   const calc      = calcQuote(quote, user?.state);
   const locked    = quote.status === 'accepted' || quote.status === 'invoiced';
@@ -4942,6 +4942,17 @@ function QuoteDocument({ quote, client, user, logo, onRevise, onBack, onConvertT
             </Btn>
           )}
           {!locked && quote.status !== 'draft' && <Btn variant="flat" size="sm" style={{ flex: isTablet ? 1 : undefined }} onClick={onRevise}>Revise</Btn>}
+          {/* Schedule-Job from quote — quick path to put the work on the
+              calendar without retyping client + trade. Shown on quotes
+              that are out (sent / accepted / draft is fine too) but not
+              already invoiced. Prefills the AddJobModal with the quote's
+              client, trade, and an estimated duration computed from the
+              quote's labor hours. */}
+          {quote.status !== 'invoiced' && onScheduleJob && (
+            <Btn variant="flat" size="sm" style={{ flex: isTablet ? 1 : undefined }} onClick={onScheduleJob}>
+              Schedule Job →
+            </Btn>
+          )}
           {/* Convert-to-Invoice — shown on every quote that isn't already invoiced. Highlighted to stand out. */}
           {quote.status !== 'invoiced' && (
             <Btn variant="primary" size="sm" style={{ flex: isTablet ? 1 : undefined, background: C.success, border: `2px solid ${C.success}` }} onClick={onConvertToInvoice}>
@@ -6714,7 +6725,7 @@ function ProfileModal({ profile, onSave, onClose }) {
 // ══════════════════════════════════════════════════════════════════════════════
 // QUOTES
 // ══════════════════════════════════════════════════════════════════════════════
-function Quotes({ user, logo, taxRates, onConvertToInvoice }) {
+function Quotes({ user, logo, taxRates, onConvertToInvoice, onScheduleJob }) {
   const [clients,       setClients]    = useState([]);
   const [quotes,        setQuotes]     = useState([]);
   const [loading,       setLoading]    = useState(true);
@@ -6863,6 +6874,7 @@ function Quotes({ user, logo, taxRates, onConvertToInvoice }) {
           onBack={() => setView('hub')}
           onRevise={() => startRevision(active)}
           onConvertToInvoice={() => convertToInvoice(active)}
+          onScheduleJob={onScheduleJob ? () => onScheduleJob(active, activeC) : null}
           onDelete={() => deleteQuoteFlow(active)}
           onSend={sendQuote}
         />
@@ -8993,6 +9005,34 @@ function TradevoiceApp() {
     setSection('schedule');
   };
 
+  // Quote → Job. Mirrors the Plan → Job pattern above. Triggered by the
+  // "Schedule Job" button on QuoteDocument (visible after a quote is
+  // accepted by the customer). Builds a job draft from the quote's
+  // client + trade + line items, estimates duration from summed labor
+  // hours (with a 2-hour floor so trivial jobs still get a real slot),
+  // and routes to Schedule where AddJobModal opens prefilled. Adds a
+  // note linking the job back to the quote for cross-reference.
+  const handleScheduleFromQuote = (quote, client) => {
+    if (!quote) return;
+    const laborHours = Array.isArray(quote.labor)
+      ? quote.labor.reduce((sum, row) => sum + (Number(row.hrs) || 0), 0)
+      : 0;
+    // Round to nearest 0.5 hr so the schedule grid lines up; never under 2.
+    const duration = Math.max(2, Math.round(laborHours * 2) / 2);
+    setPendingJobDraft({
+      title:        quote.title || (client?.name ? `${client.name} — ${quote.trade || 'service'}` : 'Job from quote'),
+      clientId:     quote.clientId   ?? client?.id   ?? null,
+      clientName:   quote.clientName ?? client?.name ?? '',
+      trade:        quote.trade      ?? '',
+      duration,
+      techUserId:   null, // owner picks at schedule time; quotes don't carry a tech assignment
+      notes:        `Job scheduled from quote ${quote.number || ''}. Estimated ${laborHours || '—'} labor hr per quote.`.trim(),
+      quoteId:      quote.id,
+      date:         new Date().toISOString().split('T')[0],
+    });
+    setSection('schedule');
+  };
+
   // ── Auth state ────────────────────────────────────────────────────────────
   // authScreen: null (app) | 'login' | 'signup' | 'join' | 'onboarding'
   // Deep-link support: marketing "Start Free Trial" buttons send people to
@@ -9207,7 +9247,7 @@ function TradevoiceApp() {
     dashboard: <Dashboard    user={user} nav={navigateTo} invoices={sharedInvoices} plans={plans} onScheduleFromPlan={handleScheduleFromPlan} teamMembers={teamMembers} />,
     invoice:   <VoiceInvoice user={user} logo={logo} payments={payments} taxRates={taxRates} teamMembers={teamMembers} sharedInvoices={sharedInvoices} setSharedInvoices={setSharedInvoices} persistInvoice={persistInvoice} removeInvoice={removeInvoice} handleUnInvoice={handleUnInvoice} pendingInvoiceId={pendingInvoiceId} clearPendingInvoice={() => setPendingInvoiceId(null)} pendingMonthFilter={pendingMonthFilter} clearPendingMonthFilter={() => setPendingMonthFilter(null)} />,
     billing:   <Billing      user={user} setUser={setUser} payments={payments} />,
-    quotes:    <Quotes       user={user} logo={logo} taxRates={taxRates} onConvertToInvoice={handleConvertToInvoice} />,
+    quotes:    <Quotes       user={user} logo={logo} taxRates={taxRates} onConvertToInvoice={handleConvertToInvoice} onScheduleJob={handleScheduleFromQuote} />,
     schedule:  <ScheduleScreen user={user} team={teamMembers} onCreateInvoice={handleJobToInvoice} plans={plans} setPlans={setPlans} pendingJobDraft={pendingJobDraft} clearPendingJobDraft={() => setPendingJobDraft(null)} timeOff={timeOff} />,
     jobs:      <JobsScreen   user={user} team={teamMembers} onCreateInvoice={handleJobToInvoice} />,
     plans:     <PlansScreen  user={user} team={teamMembers} plans={plans} persistPlan={persistPlan} removePlan={removePlan} onScheduleFromPlan={handleScheduleFromPlan} />,
