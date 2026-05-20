@@ -1151,7 +1151,7 @@
         Plumber · Electrician · HVAC · Roofer · Carpenter · Painter · Drywall · Flooring · Tile · Concrete · Mason · Insulation · Siding · Gutters · Solar · Stucco · Garage Door · Fence · Deck/Patio · Foundation · Waterproofing · Excavation · Demolition · Sheet Metal · Glass / Window · Septic · Pool / Spa · Welder · Locksmith · Asphalt · Refrigeration · Fire Protection · Asbestos / Mold · Boiler · Low Voltage · Security / Alarm · Audio / Video · Well / Pump · Landscaping · Lawn Care · Tree Service · Cleaning · Pressure Washing · Window Cleaning · Carpet Cleaning · Restoration · Chimney Sweep · Pest Control · Snow Removal · Junk Removal · Handyman · Appliance Repair · Commercial Cleaning · Gutter Cleaning · Mobile Auto Detailing · Multi-Trade
       </div>
       <div style="font-size: 12px; color: var(--muted); margin-top: 12px; font-style: italic;">
-        Each trade ships with industry-standard line items (NEC, ASHRAE, ASPE, NRCA, IICRC, etc.) so the bid you send looks like you've been doing this 20 years.
+        Each trade ships with a curated starter library of common line items. Where there's a recognized industry codebook — NEC for electrical, ASHRAE for HVAC, ASPE for plumbing, NRCA for roofing, IICRC for restoration — our defaults reference it directly.
       </div>
     </div>
     <!-- ── Plumber ── -->
@@ -1657,6 +1657,18 @@
     <span class="section-tag">From scattered to synced</span>
     <h2>What changes when you actually run the shop</h2>
     <p class="sub">Multi-tech operations live and die by visibility. Here's what the right tool does to a crew.</p>
+    <!-- Cleaned up 2026-05-19. Two issues fixed:
+         (1) The two "Hrs/wk chasing the crew" + "Jobs falling through
+             cracks" stat blocks (6 hrs / 1 in 8 / 30 min / 0) were
+             entirely fabricated — we have no real customer benchmark
+             data pre-launch. Removed. Bullet lists carry the message
+             on their own.
+         (2) Two After bullets overclaimed features we haven't shipped:
+             "Schedule on your phone — drag to reschedule" (no phone
+             optimization + drag-to-reschedule is on the Tier 2 roadmap)
+             and "Customer auto-notified when the slot moves" (no
+             customer-notification automation built yet). Replaced with
+             two bullets describing features that actually ship today. -->
     <div class="ba-grid">
       <div class="ba-card ba-before">
         <span class="ba-tag">Before Tradevoice</span>
@@ -1665,23 +1677,15 @@
         <div class="ba-item"><span class="ba-x"></span>No idea which tech actually pays for himself</div>
         <div class="ba-item"><span class="ba-x"></span>Schedule on a whiteboard at the office</div>
         <div class="ba-item"><span class="ba-x"></span>Reschedules become phone-tag chaos</div>
-        <div class="ba-result">
-          <div><div class="ba-result-label">Hrs/wk chasing the crew</div><div class="ba-result-val">~6 hrs</div></div>
-          <div><div class="ba-result-label">Jobs falling through cracks</div><div class="ba-result-val">1 in 8</div></div>
-        </div>
       </div>
       <div class="ba-vs">VS</div>
       <div class="ba-card ba-after">
         <span class="ba-tag">After Tradevoice</span>
         <div class="ba-item"><span class="ba-check"></span>Every job, every tech, on one screen</div>
         <div class="ba-item"><span class="ba-check"></span>Every invoice auto-attributed to who did the work</div>
-        <div class="ba-item"><span class="ba-check"></span>Revenue per tech at a glance</div>
-        <div class="ba-item"><span class="ba-check"></span>Schedule on your phone — drag to reschedule</div>
-        <div class="ba-item"><span class="ba-check"></span>Customer auto-notified when the slot moves</div>
-        <div class="ba-result">
-          <div><div class="ba-result-label">Hrs/wk chasing the crew</div><div class="ba-result-val">~30 min</div></div>
-          <div><div class="ba-result-label">Jobs falling through cracks</div><div class="ba-result-val">0</div></div>
-        </div>
+        <div class="ba-item"><span class="ba-check"></span>Revenue per tech at a glance on the dashboard</div>
+        <div class="ba-item"><span class="ba-check"></span>Per-tech permissions you control from one screen</div>
+        <div class="ba-item"><span class="ba-check"></span>Reschedule from any browser — tablet, laptop, or desktop</div>
       </div>
     </div>
   </div>
