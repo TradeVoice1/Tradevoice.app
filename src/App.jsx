@@ -1640,27 +1640,49 @@ function SubscriptionLockedScreen({ user, onSignOut }) {
        user.plan === 'pro' ? 'Pro' : user.plan === 'pro_yearly' ? 'Pro (annual)' :
        user.plan === 'solo_yearly' ? 'Solo (annual)' : 'Solo')
     : 'your plan';
+  // Two distinct lockout reasons get distinct copy + CTAs:
+  //   past_due / unpaid → Stripe charged the card and it FAILED. The
+  //     account is paid-up-through-some-date but the next invoice
+  //     bounced. Customer needs to update their card to clear the
+  //     failed invoice and unlock.
+  //   canceled / incomplete* → True cancellation (intentional or signup
+  //     never finished). They need to resubscribe to come back.
+  const status = user?.subscription_status || '';
+  const isPaymentFailure = status === 'past_due' || status === 'unpaid';
+
+  // mailto for both paths until we wire one-tap update-payment and
+  // one-tap resubscribe endpoints. Founder handles reactivation
+  // manually from Stripe Dashboard / Customers page for now.
+  const updatePaymentMailto = `mailto:hello@thetradevoice.com?subject=Payment%20Update%20%E2%80%94%20Tradevoice&body=Hi%20Tradevoice%2C%0A%0AMy%20payment%20failed%20and%20my%20account%20is%20locked.%20I%27d%20like%20to%20update%20my%20payment%20information.%0A%0A-%20Account%20email%3A%20${encodeURIComponent(user?.email || '')}%0A-%20Plan%3A%20${encodeURIComponent(planName)}%0A%0AThanks!`;
   const resubscribeMailto = `mailto:hello@thetradevoice.com?subject=Resubscribe%20%E2%80%94%20Tradevoice&body=Hi%20Tradevoice%2C%0A%0AMy%20subscription%20has%20ended%20and%20I%27d%20like%20to%20reactivate.%0A%0A-%20Account%20email%3A%20${encodeURIComponent(user?.email || '')}%0A-%20Previous%20plan%3A%20${encodeURIComponent(planName)}%0A%0AThanks!`;
+
+  const eyebrow  = isPaymentFailure ? 'Payment failed'           : 'Subscription ended';
+  const headline = isPaymentFailure ? `Update your payment, ${user?.name?.split(' ')[0] || 'contractor'}.` : `Welcome back, ${user?.name?.split(' ')[0] || 'contractor'}.`;
+  const body = isPaymentFailure
+    ? `We tried to charge the card on file for your ${planName} subscription and it didn't go through. Your account is locked until we receive payment. Update your card and once your payment processes, you'll be right back in.`
+    : `Your ${planName} subscription has ended and your account is locked. Your data is safely preserved for 90 days — resubscribe and everything is right where you left it: clients, invoices, quotes, jobs, all of it.`;
+  const ctaLabel = isPaymentFailure ? 'Update Payment Method' : 'Resubscribe via Email';
+  const ctaHref  = isPaymentFailure ? updatePaymentMailto      : resubscribeMailto;
+  const footnote = isPaymentFailure
+    ? 'Email us — we\'ll send a secure link to update your card and process the outstanding payment within 1 business day. One-tap update directly from the app is on our roadmap.'
+    : 'We\'ll reactivate your account within 1 business day. One-tap resubscribe directly from the app is on our roadmap.';
+
   return (
     <div style={{ minHeight: '100vh', background: C.bg, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px 16px', fontFamily: "'Inter', sans-serif" }}>
       <div style={{ marginBottom: 32 }}><Logo size={64} /></div>
       <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 16, padding: '40px 32px', width: '100%', maxWidth: 480, textAlign: 'center', boxShadow: C.shadow1 }}>
-        <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: C.muted, marginBottom: 8 }}>Subscription ended</div>
-        <h1 style={{ fontSize: 26, fontWeight: 800, color: C.text, marginBottom: 12, letterSpacing: '-0.02em' }}>Welcome back, {user?.name?.split(' ')[0] || 'contractor'}.</h1>
-        <p style={{ fontSize: 15, color: C.muted, lineHeight: 1.65, marginBottom: 24 }}>
-          Your {planName} subscription has ended and your account is locked. Your data is safely preserved for 90 days — resubscribe and everything is right where you left it: clients, invoices, quotes, jobs, all of it.
-        </p>
+        <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: isPaymentFailure ? C.errorBold : C.muted, marginBottom: 8 }}>{eyebrow}</div>
+        <h1 style={{ fontSize: 26, fontWeight: 800, color: C.text, marginBottom: 12, letterSpacing: '-0.02em' }}>{headline}</h1>
+        <p style={{ fontSize: 15, color: C.muted, lineHeight: 1.65, marginBottom: 24 }}>{body}</p>
         <div style={{ background: C.raised, border: `1px solid ${C.border2}`, borderRadius: 10, padding: '14px 16px', marginBottom: 22, textAlign: 'left' }}>
           <div style={{ fontSize: 12, fontWeight: 700, color: C.muted, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6 }}>Account</div>
           <div style={{ fontSize: 14, color: C.text, fontWeight: 600 }}>{user?.email}</div>
           {user?.company && <div style={{ fontSize: 13, color: C.muted, marginTop: 2 }}>{user.company}</div>}
         </div>
-        <a href={resubscribeMailto} style={{ ...s.btn, display: 'block', background: C.orange, color: '#fff', padding: '14px', fontSize: 15, fontWeight: 700, borderRadius: 50, border: 'none', textDecoration: 'none', marginBottom: 14 }}>
-          Resubscribe via Email
+        <a href={ctaHref} style={{ ...s.btn, display: 'block', background: C.orange, color: '#fff', padding: '14px', fontSize: 15, fontWeight: 700, borderRadius: 50, border: 'none', textDecoration: 'none', marginBottom: 14 }}>
+          {ctaLabel}
         </a>
-        <div style={{ fontSize: 12, color: C.dim, lineHeight: 1.55, marginBottom: 24 }}>
-          We'll reactivate your account within 1 business day. One-tap resubscribe directly from the app is on our roadmap.
-        </div>
+        <div style={{ fontSize: 12, color: C.dim, lineHeight: 1.55, marginBottom: 24 }}>{footnote}</div>
         <button onClick={onSignOut} style={{ ...s.btn, background: 'transparent', border: `1px solid ${C.border2}`, color: C.muted, padding: '10px 18px', fontSize: 13, borderRadius: 50, fontWeight: 600 }}>
           Sign out
         </button>
@@ -8527,16 +8549,15 @@ function TradevoiceApp() {
     // Stripe subscription statuses that grant active access to the app.
     // - trialing: free trial active, full access
     // - active:   paying, full access
-    // - past_due: latest invoice payment failed but Stripe is auto-retrying;
-    //             keep access during the grace window so the customer can
-    //             update their card from inside the app before being locked
-    //             out. Stripe's retry schedule typically gives 3-7 days
-    //             before flipping to canceled/unpaid.
     //
-    // Everything else (canceled, unpaid, incomplete, incomplete_expired)
-    // means no current right to use the app. profileLockedOut() catches
-    // those and the lockout screen prompts a resubscribe.
-    const ACTIVE_SUB_STATUSES = ['trialing', 'active', 'past_due'];
+    // ANYTHING ELSE locks the user out — no grace window for past_due
+    // either. Policy as of 2026-05-19: if the card fails (past_due),
+    // they have to update payment AND have it successfully process
+    // before they can come back into the app. The lockout screen
+    // branches on subscription_status to show either:
+    //   - past_due / unpaid: "Update Payment" CTA (card declined path)
+    //   - canceled / incomplete*: "Resubscribe" CTA (true cancellation path)
+    const ACTIVE_SUB_STATUSES = ['trialing', 'active'];
 
     const profileIsComplete = (p) => {
       if (!p) return false;
