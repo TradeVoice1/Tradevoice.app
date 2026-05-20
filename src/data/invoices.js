@@ -218,6 +218,11 @@ export async function getPublicInvoice(shareToken) {
           coiPolicyNumber:      data.profile.coi_policy_number   || '',
           coiExpiresAt:         data.profile.coi_expires_at      || '',
           defaultLateFeePolicy: data.profile.default_late_fee_policy || '',
+          // Social handles (migration 0027). The contractor's chosen
+          // Facebook/X/Instagram/TikTok identifiers, rendered as a
+          // "Follow us" row on the public invoice. Empty {} when the
+          // contractor hasn't configured any platform.
+          socialHandles:        data.profile.social_handles      || {},
         }
       : null,
   };

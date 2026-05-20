@@ -9,6 +9,7 @@
 import React, { useState, useEffect } from "react";
 import { getPublicInvoice, signPublicInvoice } from "./data/invoices";
 import { StripePayPanel } from "./StripePayPanel";
+import { buildSocialLinks } from "./lib/socialHandles";
 
 // ── Customer e-signature block ──
 // Typed-name acknowledgement (CAN-SPAM-style soft signature; not a drawn
@@ -382,6 +383,25 @@ export function InvoicePaymentPage({ token }) {
                   After paying, your contractor will mark this invoice paid. Questions?
                   {profile?.phone && <> Call <strong style={{ color: '#666' }}>{profile.phone}</strong>.</>}
                 </div>
+              </div>
+            );
+          })()}
+
+          {/* Follow Us — social handles. Same conditional discipline as
+              the payment-methods block above: build a normalized list and
+              skip rendering entirely if every platform is blank. */}
+          {(() => {
+            const links = buildSocialLinks(profile?.socialHandles);
+            if (!links.length) return null;
+            return (
+              <div style={{ padding: '16px 32px', borderTop: `1.5px solid ${C.border}`, background: '#fff', display: 'flex', alignItems: 'center', gap: 18, flexWrap: 'wrap' }}>
+                <div style={{ fontSize: 12, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#aaa' }}>Follow us</div>
+                {links.map(l => (
+                  <a key={l.platform} href={l.url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, fontWeight: 700, color: accent, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                    <span aria-hidden="true">{l.icon}</span>
+                    <span>{l.display}</span>
+                  </a>
+                ))}
               </div>
             );
           })()}

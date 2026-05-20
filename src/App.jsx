@@ -30,6 +30,7 @@ import { uploadLogo, deleteLogo } from "./data/storage";
 import { listRateLibrary } from "./data/rateLibrary";
 import { invoicesToQbCsv, downloadCsv } from "./lib/qbExport";
 import { useBreakpoint } from "./lib/useBreakpoint";
+import { buildSocialLinks } from "./lib/socialHandles";
 
 // ─── FONTS ─────────────────────────────────────────────────────────────────────
 // Inter for body/UI everywhere. Playfair Display for the signup brand
@@ -4163,6 +4164,23 @@ function InvoiceDocument({ invoice, user, logo, payments, onEdit, onBack, onReco
           );
         })()}
 
+        {/* Follow Us — social handles, only the ones with a value set. */}
+        {user?.socialHandles && (() => {
+          const links = buildSocialLinks(user.socialHandles);
+          if (!links.length) return null;
+          return (
+            <div style={{ padding: '14px 44px', borderTop: '1.5px solid #ebebeb', background: '#fff', display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+              <div style={{ fontSize: 12, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#aaa', fontFamily: "'Inter', sans-serif" }}>Follow us</div>
+              {links.map(l => (
+                <a key={l.platform} href={l.url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, fontWeight: 700, color: C.orange, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                  <span>{l.icon}</span>
+                  <span>{l.display}</span>
+                </a>
+              ))}
+            </div>
+          );
+        })()}
+
         {/* Footer */}
         <div style={{ padding:'10px 44px', background:'#f4f4f4', borderTop:'1px solid #e8e8e8', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
           <div style={{ fontSize:14, color:'#bbb', fontStyle:'italic' }}>{invoice.number} — {invoice.createdAt}</div>
@@ -7543,7 +7561,7 @@ function TimeOffPanel({ team = [], timeOff = [], onAdd, onRemove }) {
 // ══════════════════════════════════════════════════════════════════════════════
 // SETTINGS
 // ══════════════════════════════════════════════════════════════════════════════
-function Settings({ user, setUser, logo, onLogoChange, showProfileModal, setShowProfileModal, payments, setPayments, taxRates, setTaxRates, teamMembers, setTeamMembers, persistTeamMember, removeTeamMember, createTechAccount: createTechAccountFn, timeOff = [], persistTimeOff, removeTimeOff }) {
+function Settings({ user, setUser, logo, onLogoChange, showProfileModal, setShowProfileModal, payments, setPayments, taxRates, setTaxRates, socialHandles, setSocialHandles, teamMembers, setTeamMembers, persistTeamMember, removeTeamMember, createTechAccount: createTechAccountFn, timeOff = [], persistTimeOff, removeTimeOff }) {
   const { isTablet } = useBreakpoint();
   const tradeCount   = user.trades?.length || 1;
   const currentPrice = getPrice(tradeCount);
@@ -7854,6 +7872,45 @@ function Settings({ user, setUser, logo, onLogoChange, showProfileModal, setShow
           }}>
             {payments?.cash?.enabled ? 'Enabled' : 'Enable'}
           </button>
+        </div>
+      </div>
+
+      {/* ── Social Media ────────────────────────────────────────────────────
+          Optional handles for Facebook / X / Instagram / TikTok. Each row
+          gets surfaced on invoice + quote footers as "Follow us on ..."
+          links — but only if the contractor actually filled in a value.
+          Same convention as the payment handles above: empty = hidden. */}
+      <div style={{ marginBottom: 28 }}>
+        <SectionLabel>Social Media</SectionLabel>
+        <div style={{ fontSize: 15, color: C.muted, marginBottom: 16, lineHeight: 1.6 }}>
+          Add the social accounts you want to promote. Each one with a value will appear at the bottom of every invoice and quote as a "Follow us on …" link. Leave blank to hide.
+        </div>
+        <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 4, overflow: 'hidden' }}>
+          {[
+            { key: 'facebook',  label: 'Facebook',  prefix: null, ph: 'facebook.com/yourbusiness or your-page-name' },
+            { key: 'instagram', label: 'Instagram', prefix: '@',  ph: 'yourbusiness' },
+            { key: 'twitter',   label: 'X / Twitter', prefix: '@', ph: 'yourbusiness' },
+            { key: 'tiktok',    label: 'TikTok',    prefix: '@',  ph: 'yourbusiness' },
+          ].map(({ key, label, prefix, ph }, i, arr) => {
+            const val = socialHandles?.[key] || '';
+            return (
+              <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 20px', borderBottom: i < arr.length - 1 ? `1px solid ${C.border}` : 'none', flexWrap: 'wrap' }}>
+                <div style={{ width: 130, fontFamily: "'Inter', sans-serif", fontSize: 17, fontWeight: 700, color: C.text, flexShrink: 0 }}>{label}</div>
+                <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 6, minWidth: 180 }}>
+                  {prefix && <span style={{ fontSize: 17, color: C.muted, fontWeight: 700 }}>{prefix}</span>}
+                  <input
+                    value={val}
+                    onChange={e => setSocialHandles(prev => ({ ...prev, [key]: e.target.value }))}
+                    placeholder={ph}
+                    style={{ ...s.input, flex: 1, padding: '9px 12px', fontSize: 16, minHeight: 44 }}
+                  />
+                </div>
+                <div style={{ fontSize: 14, color: val.trim() ? C.success : C.dim, flexShrink: 0 }}>
+                  {val.trim() ? 'Shows on invoices' : 'Not shown'}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 
@@ -8360,6 +8417,11 @@ function TradevoiceApp() {
     cash:    { enabled: false },
   });
   const [taxRates, setTaxRates] = useState({}); // contractor overrides keyed by state name
+  // Social-media handles (Facebook / X / Instagram / TikTok) — surfaced
+  // on invoice + quote footers so customers can follow the business. All
+  // optional; the render path skips any blank value so a contractor with
+  // only Instagram doesn't get empty "Facebook:" rows on their invoices.
+  const [socialHandles, setSocialHandles] = useState({});
   const [teamMembers, setTeamMembers] = useState([]);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [sharedInvoices, setSharedInvoices] = useState([]);
@@ -8407,6 +8469,9 @@ function TradevoiceApp() {
     }
     if (user.taxRates && Object.keys(user.taxRates).length > 0) {
       setTaxRates(user.taxRates);
+    }
+    if (user.socialHandles && Object.keys(user.socialHandles).length > 0) {
+      setSocialHandles(user.socialHandles);
     }
     if (user.logoUrl) setLogo(user.logoUrl);
   }, [user?.id]);
@@ -8516,6 +8581,14 @@ function TradevoiceApp() {
     setTaxRates(prev => {
       const resolved = typeof next === 'function' ? next(prev) : next;
       queueSettingsSave({ taxRates: resolved });
+      return resolved;
+    });
+  };
+
+  const setSocialHandlesPersist = (next) => {
+    setSocialHandles(prev => {
+      const resolved = typeof next === 'function' ? next(prev) : next;
+      queueSettingsSave({ socialHandles: resolved });
       return resolved;
     });
   };
@@ -8825,7 +8898,7 @@ function TradevoiceApp() {
     plans:     <PlansScreen  user={user} team={teamMembers} plans={plans} persistPlan={persistPlan} removePlan={removePlan} onScheduleFromPlan={handleScheduleFromPlan} />,
     clients:   <Clients      user={user} nav={setSection} invoices={sharedInvoices} />,
     marketing: <MarketingScreen user={user} />,
-    settings:  <Settings     user={user} setUser={setUser} logo={logo} onLogoChange={setLogo} showProfileModal={showProfileModal} setShowProfileModal={setShowProfileModal} payments={payments} setPayments={setPaymentsPersist} taxRates={taxRates} setTaxRates={setTaxRatesPersist} teamMembers={teamMembers} setTeamMembers={setTeamMembers} persistTeamMember={persistTeamMember} removeTeamMember={removeTeamMember} createTechAccount={createTechAccountHandler} timeOff={timeOff} persistTimeOff={persistTimeOff} removeTimeOff={removeTimeOff} />,
+    settings:  <Settings     user={user} setUser={setUser} logo={logo} onLogoChange={setLogo} showProfileModal={showProfileModal} setShowProfileModal={setShowProfileModal} payments={payments} setPayments={setPaymentsPersist} taxRates={taxRates} setTaxRates={setTaxRatesPersist} socialHandles={socialHandles} setSocialHandles={setSocialHandlesPersist} teamMembers={teamMembers} setTeamMembers={setTeamMembers} persistTeamMember={persistTeamMember} removeTeamMember={removeTeamMember} createTechAccount={createTechAccountHandler} timeOff={timeOff} persistTimeOff={persistTimeOff} removeTimeOff={removeTimeOff} />,
     privacy:   <PrivacyPolicyScreen onBack={() => setSection('settings')} />,
     terms:     <TermsScreen onBack={() => setSection('settings')} />,
   }[section];

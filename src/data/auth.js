@@ -37,6 +37,12 @@ const dbToProfile = (row) => row && ({
   defaultLateFeePolicy: row.default_late_fee_policy  ?? '',
   payments:         row.payments          ?? {},
   taxRates:         row.tax_rates         ?? {},
+  // Social-media handles (migration 0027) — Facebook / X / Instagram /
+  // TikTok. Stored as an open-ended JSONB so adding new platforms later
+  // doesn't require a migration. Values can be either a full URL or just
+  // the bare handle; the renderer normalizes when building public links.
+  // Same render contract as payments: only show what's filled in.
+  socialHandles:    row.social_handles    ?? {},
   // Stripe Connect (migration 0013). Null until the contractor finishes the
   // OAuth handshake; charges_enabled flips true once Stripe verifies their
   // account can accept charges (driven by the account.updated webhook).
@@ -77,6 +83,7 @@ const profileToDb = (p) => ({
   default_late_fee_policy:  p.defaultLateFeePolicy    ?? null,
   payments:           p.payments,
   tax_rates:          p.taxRates,
+  social_handles:     p.socialHandles    ?? {},
 });
 
 // ── Public API ───────────────────────────────────────────────────────────────
