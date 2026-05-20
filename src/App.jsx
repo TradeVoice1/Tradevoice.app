@@ -1503,13 +1503,31 @@ function SignupScreen({ onComplete, onBack }) {
             <div style={{ fontSize: 12, fontWeight: 800, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 8 }}>
               Card on file
             </div>
-            <div ref={cardMountRef} style={{ minHeight: 180, padding: paymentPhase === 'loading' ? '20px 14px' : 0 }}>
-              {paymentPhase === 'loading' && (
-                <div style={{ textAlign: 'center', color: C.dim, fontSize: 13, padding: '36px 0' }}>
-                  Loading secure card form…
-                </div>
-              )}
-            </div>
+            {/* CRITICAL: cardMountRef MUST be an empty React-owned div with no
+                React children. Stripe's PaymentElement.mount() blows away
+                whatever is inside this div and replaces it with its own
+                iframe. If React previously rendered a child here (like the
+                "Loading…" message), Stripe wipes it out — and when React
+                later tries to update/remove that child node, it throws
+                NotFoundError on removeChild and crashes the whole tree
+                (the actual bug we hit in live testing 2026-05-19).
+                The Loading message is rendered as a SIBLING above, so
+                React's reconciliation never has to touch a node Stripe
+                has rewritten. */}
+            {paymentPhase === 'loading' && (
+              <div style={{ textAlign: 'center', color: C.dim, fontSize: 13, padding: '36px 14px', minHeight: 180, boxSizing: 'border-box' }}>
+                Loading secure card form…
+              </div>
+            )}
+            <div
+              ref={cardMountRef}
+              style={{
+                minHeight: 180,
+                // Hide the empty mount target while loading so the page
+                // doesn't show a 180px gap above the Loading message.
+                display: paymentPhase === 'loading' ? 'none' : 'block',
+              }}
+            />
             <div style={{ fontSize: 11, color: C.dim, marginTop: 6, textAlign: 'center' }}>
               Card processed securely by Stripe. Your details never touch Tradevoice's servers.
             </div>
