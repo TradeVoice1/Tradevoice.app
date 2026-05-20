@@ -1274,6 +1274,28 @@ export default function ScheduleScreen({
     if (sameDay && job.startHour === hour && sameDuration) return;
     if (!user?.id) return;
 
+    // Confirm-before-move dialog so an accidental drag doesn't silently
+    // reschedule a job. Shows the destination date + time so the owner
+    // can verify they meant it. If they cancel, no state change happens
+    // — the drag UI already cleared (setDrag(null) ran in the hook) and
+    // local state was never optimistically updated yet, so the job stays
+    // in its original calendar position.
+    //
+    // Pulled from the drag-reschedule path. The inline modal "Save New
+    // Time" path also routes through here, but the user explicitly
+    // clicked Save in that case, so a second confirmation would be
+    // redundant — checked via the `duration != null` heuristic (modal
+    // path always passes duration; drag path leaves it undefined).
+    const isDragReschedule = duration == null;
+    if (isDragReschedule) {
+      const dest = new Date(dayIso + 'T12:00:00');
+      const dateStr = dest.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+      const timeStr = formatTime(hour);
+      const title = job.title || job.clientName || 'this job';
+      const ok = window.confirm(`Move "${title}" to ${dateStr} at ${timeStr}?\n\nClick OK to confirm or Cancel to leave it where it is.`);
+      if (!ok) return;
+    }
+
     // If the assigned tech is off on the new date, give the owner a chance to
     // back out before we save the move. They can still confirm if they're
     // intentionally moving past the constraint.
