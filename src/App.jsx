@@ -8237,8 +8237,35 @@ function TradevoiceApp() {
     // configured. Google OAuth users land here with a blank trigger-
     // created row — those values are both empty until they finish
     // SignupScreen Step 1 (Company) + Step 2 (Plan + ToS).
-    const profileIsComplete = (p) =>
-      !!p && !!p.acceptedTermsAt && Array.isArray(p.trades) && p.trades.length > 0;
+    // Gate that decides whether a signed-in user goes to the Dashboard
+    // or back through SignupScreen. Hardened on 2026-05-19 to close a
+    // bypass: before that, a Google-OAuth user (or any user) could
+    // open the browser console, run `supabase.from('profiles').update`
+    // on their own row to set acceptedTermsAt + trades, refresh the
+    // page, and land in the Dashboard without ever creating a Stripe
+    // subscription — i.e. free, perpetual access.
+    //
+    // Three-prong check now:
+    //   1. acceptedTermsAt — the click-wrap confirmation
+    //   2. trades — proves they ran through Step 1 (Company)
+    //   3. stripe_subscription_id — proves Step 3 (Payment) succeeded
+    //      and Stripe created a real (trialing) subscription. Can't be
+    //      forged client-side because the subscription is created by
+    //      the server-only create-subscription endpoint using the
+    //      service-role Stripe key.
+    //
+    // Tech accounts are EXEMPT from the subscription requirement —
+    // they're provisioned by createTechAccount under an already-paying
+    // owner, don't go through the signup wizard themselves, and don't
+    // hold their own subscription. Their owner pays the $19.99/mo seat
+    // fee separately via the create-subscription sync_seats action.
+    const profileIsComplete = (p) => {
+      if (!p) return false;
+      if (p.role === 'tech') return true;
+      return !!p.acceptedTermsAt
+          && Array.isArray(p.trades) && p.trades.length > 0
+          && !!p.stripe_subscription_id;
+    };
 
     // Shared allowlist enforcement for any auth event (boot session
     // restore + every subsequent sign-in). Catches Google OAuth users
