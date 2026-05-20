@@ -1553,6 +1553,17 @@ export default function ScheduleScreen({
     () => jobs.filter(j => j.date > new Date() && j.status !== 'cancelled').slice(0, 5),
     [jobs]
   );
+  // Overdue / needs-reschedule bucket — anything still in 'scheduled' or
+  // 'in-progress' whose date has passed. The contractor needs to either
+  // mark it complete, reschedule it, or cancel it. Surfaced as its own
+  // banner + sidebar section so these jobs don't get lost in past months
+  // of the calendar where nobody scrolls back to.
+  const overdueJobs = useMemo(() => {
+    const startOfToday = new Date(); startOfToday.setHours(0, 0, 0, 0);
+    return jobs
+      .filter(j => (j.status === 'scheduled' || j.status === 'in-progress') && j.date < startOfToday)
+      .sort((a, b) => new Date(a.date) - new Date(b.date)); // oldest first — most urgent
+  }, [jobs]);
 
   const headerTitle = () => {
     if (view === 'month') return `${MONTHS[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
@@ -1611,6 +1622,24 @@ export default function ScheduleScreen({
           <span style={{ fontSize: 17, fontWeight: 800, color: '#111', marginRight: 4 }}>
             {isTech ? 'My Schedule' : 'Schedule'}
           </span>
+          {overdueJobs.length > 0 && (
+            <button
+              onClick={() => {
+                setSidebarOpen(true);
+                // Defer scroll until the sidebar has actually rendered.
+                setTimeout(() => document.getElementById('needs-attention')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+              }}
+              style={{
+                padding: '6px 10px', minHeight: 32, borderRadius: 14,
+                background: '#fef2f2', color: '#991b1b',
+                border: '1px solid #fecaca', fontSize: 12, fontWeight: 700,
+                cursor: 'pointer', whiteSpace: 'nowrap',
+              }}
+              title="Jobs that need rescheduling"
+            >
+              ⚠ {overdueJobs.length} overdue
+            </button>
+          )}
           <button style={s.navBtn} onClick={() => navigate(-1)}>‹</button>
           <button style={{ ...s.navBtn, fontSize: 13, padding: '8px 12px' }} onClick={() => setCurrentDate(new Date())}>Today</button>
           <button style={s.navBtn} onClick={() => navigate(1)}>›</button>
@@ -1644,12 +1673,32 @@ export default function ScheduleScreen({
         <>
           {/* Header — owner sees the company schedule + Add Job; tech sees their own. */}
           <div style={s.header}>
-            <div>
-              <div style={s.title}>{isTech ? 'My Schedule' : 'Schedule'}</div>
-              {isTech && (
-                <div style={{ fontSize: 13, color: '#666', marginTop: 2 }}>
-                  Jobs assigned to you · {jobs.length} this {view === 'day' ? 'day' : view}
-                </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div>
+                <div style={s.title}>{isTech ? 'My Schedule' : 'Schedule'}</div>
+                {isTech && (
+                  <div style={{ fontSize: 13, color: '#666', marginTop: 2 }}>
+                    Jobs assigned to you · {jobs.length} this {view === 'day' ? 'day' : view}
+                  </div>
+                )}
+              </div>
+              {/* Overdue badge — clicking scrolls the sidebar to the
+                  Needs Attention section. Always visible (no sidebar
+                  toggle on laptop) so contractors see overdue counts
+                  the second they open Schedule. */}
+              {overdueJobs.length > 0 && (
+                <button
+                  onClick={() => document.getElementById('needs-attention')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                  style={{
+                    padding: '8px 14px', borderRadius: 18,
+                    background: '#fef2f2', color: '#991b1b',
+                    border: '1px solid #fecaca', fontSize: 13, fontWeight: 700,
+                    cursor: 'pointer', whiteSpace: 'nowrap',
+                  }}
+                  title="Jobs that need rescheduling — click to view"
+                >
+                  ⚠ {overdueJobs.length} need{overdueJobs.length === 1 ? 's' : ''} rescheduling
+                </button>
               )}
             </div>
             {!isTech && (
@@ -1729,6 +1778,64 @@ export default function ScheduleScreen({
                     </div>
                     <span style={{ marginLeft: 'auto', fontSize: 12, color: '#888', fontWeight: 700 }}>{count}</span>
                   </button>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Needs Attention — overdue jobs that need rescheduling. Only
+              rendered when there are any so the sidebar stays clean on
+              days where everything's caught up. Clicking a job opens
+              the JobDetailModal where the contractor can reschedule
+              inline or mark it complete/cancelled. */}
+          {overdueJobs.length > 0 && (
+            <div
+              id="needs-attention"
+              style={{
+                marginBottom: 24,
+                background: '#fef2f2',
+                border: '1px solid #fecaca',
+                borderRadius: 10,
+                padding: 12,
+              }}
+            >
+              <div style={{ ...s.sideTitle, color: '#991b1b', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span>⚠ Needs Rescheduling</span>
+                <span style={{ marginLeft: 'auto', background: '#dc2626', color: '#fff', borderRadius: 10, padding: '1px 8px', fontSize: 11 }}>
+                  {overdueJobs.length}
+                </span>
+              </div>
+              {overdueJobs.map(job => {
+                const daysLate = Math.max(1, Math.floor((new Date().setHours(0,0,0,0) - new Date(job.date).setHours(0,0,0,0)) / (1000 * 60 * 60 * 24)));
+                const techName = techs.find(t => t.id === job.techUserId)?.name;
+                return (
+                  <div
+                    key={job.id}
+                    onClick={() => setSelectedJob(job)}
+                    style={{
+                      padding: '10px 12px',
+                      borderRadius: 8,
+                      border: '1px solid #fecaca',
+                      background: '#fff',
+                      marginBottom: 8,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 6 }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: '#111', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {job.title || 'Job'}
+                      </div>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: '#991b1b', whiteSpace: 'nowrap' }}>
+                        {daysLate}d late
+                      </span>
+                    </div>
+                    <div style={{ fontSize: 12, color: '#666', marginTop: 2 }}>
+                      {job.clientName || '—'}{techName ? ` · ${techName}` : ''}
+                    </div>
+                    <div style={{ fontSize: 11, color: '#888', marginTop: 2 }}>
+                      Was {formatDate(job.date)} at {formatTime(job.startHour)} · tap to reschedule
+                    </div>
+                  </div>
                 );
               })}
             </div>
