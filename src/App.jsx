@@ -1619,6 +1619,56 @@ function SignupScreen({ onComplete, onBack }) {
   );
 }
 
+// ── SUBSCRIPTION LOCKED SCREEN ────────────────────────────────────────────────
+// Rendered when a paying customer's subscription has ended (canceled,
+// unpaid, expired) and they try to use the app. Shows their account
+// info + a Resubscribe CTA that creates a new Stripe Subscription
+// against their existing customer record. The data they had before
+// is still intact in Supabase per Terms § 6 (90-day retention) —
+// once they resubscribe, they land back on their Dashboard with
+// everything where they left it.
+//
+// The Resubscribe button is intentionally a placeholder that emails
+// hello@thetradevoice.com for now — we don't yet have a one-tap
+// resubscribe API endpoint (would need a new SetupIntent flow without
+// the full SignupScreen wizard). Logged in TODO.md as a follow-up.
+// Until that ships, founder responds to the email + manually
+// reactivates from Stripe Dashboard.
+function SubscriptionLockedScreen({ user, onSignOut }) {
+  const planName = user?.plan
+    ? (user.plan === 'all' ? 'Elite' : user.plan === 'all_yearly' ? 'Elite (annual)' :
+       user.plan === 'pro' ? 'Pro' : user.plan === 'pro_yearly' ? 'Pro (annual)' :
+       user.plan === 'solo_yearly' ? 'Solo (annual)' : 'Solo')
+    : 'your plan';
+  const resubscribeMailto = `mailto:hello@thetradevoice.com?subject=Resubscribe%20%E2%80%94%20Tradevoice&body=Hi%20Tradevoice%2C%0A%0AMy%20subscription%20has%20ended%20and%20I%27d%20like%20to%20reactivate.%0A%0A-%20Account%20email%3A%20${encodeURIComponent(user?.email || '')}%0A-%20Previous%20plan%3A%20${encodeURIComponent(planName)}%0A%0AThanks!`;
+  return (
+    <div style={{ minHeight: '100vh', background: C.bg, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px 16px', fontFamily: "'Inter', sans-serif" }}>
+      <div style={{ marginBottom: 32 }}><Logo size={64} /></div>
+      <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 16, padding: '40px 32px', width: '100%', maxWidth: 480, textAlign: 'center', boxShadow: C.shadow1 }}>
+        <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: C.muted, marginBottom: 8 }}>Subscription ended</div>
+        <h1 style={{ fontSize: 26, fontWeight: 800, color: C.text, marginBottom: 12, letterSpacing: '-0.02em' }}>Welcome back, {user?.name?.split(' ')[0] || 'contractor'}.</h1>
+        <p style={{ fontSize: 15, color: C.muted, lineHeight: 1.65, marginBottom: 24 }}>
+          Your {planName} subscription has ended and your account is locked. Your data is safely preserved for 90 days — resubscribe and everything is right where you left it: clients, invoices, quotes, jobs, all of it.
+        </p>
+        <div style={{ background: C.raised, border: `1px solid ${C.border2}`, borderRadius: 10, padding: '14px 16px', marginBottom: 22, textAlign: 'left' }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: C.muted, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6 }}>Account</div>
+          <div style={{ fontSize: 14, color: C.text, fontWeight: 600 }}>{user?.email}</div>
+          {user?.company && <div style={{ fontSize: 13, color: C.muted, marginTop: 2 }}>{user.company}</div>}
+        </div>
+        <a href={resubscribeMailto} style={{ ...s.btn, display: 'block', background: C.orange, color: '#fff', padding: '14px', fontSize: 15, fontWeight: 700, borderRadius: 50, border: 'none', textDecoration: 'none', marginBottom: 14 }}>
+          Resubscribe via Email
+        </a>
+        <div style={{ fontSize: 12, color: C.dim, lineHeight: 1.55, marginBottom: 24 }}>
+          We'll reactivate your account within 1 business day. One-tap resubscribe directly from the app is on our roadmap.
+        </div>
+        <button onClick={onSignOut} style={{ ...s.btn, background: 'transparent', border: `1px solid ${C.border2}`, color: C.muted, padding: '10px 18px', fontSize: 13, borderRadius: 50, fontWeight: 600 }}>
+          Sign out
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ── JOIN COMPANY (tech entering company code) ─────────────────────────────────
 function JoinScreen({ onJoin, onBack }) {
   const [code,     setCode]    = useState('');
@@ -7675,9 +7725,14 @@ function Settings({ user, setUser, logo, onLogoChange, showProfileModal, setShow
     if (cancelBusy) return;
     const status = user.subscription_status;
     const isTrialing = status === 'trialing';
+    // Cancellation policy as of 2026-05-19: no refunds, period. Trialing
+    // users get out free (card never charged). Paying users keep access
+    // through the rest of their current paid period, then are locked out.
+    // Dialog wording mirrors Terms § 4 so what they're agreeing to here
+    // matches what they agreed to at signup.
     const msg = isTrialing
-      ? 'Cancel your trial?\n\nYour card on file will not be charged. You can come back any time and start a new trial.'
-      : 'Cancel your subscription?\n\nYou keep access until the end of your current billing period, then your account is canceled. No refund for partial months.';
+      ? 'Cancel your trial?\n\nYour card on file will not be charged. Your account will be locked when you cancel; sign up again any time to start a new trial.'
+      : 'Cancel your subscription?\n\nYou keep access through the end of your current paid period. When that period ends, your account is locked and you will need to resubscribe to regain access. All payments are final — no refund for the current or any past period.';
     if (!window.confirm(msg)) return;
     setCancelBusy(true);
     setCancelError('');
@@ -8469,12 +8524,40 @@ function TradevoiceApp() {
     // owner, don't go through the signup wizard themselves, and don't
     // hold their own subscription. Their owner pays the $19.99/mo seat
     // fee separately via the create-subscription sync_seats action.
+    // Stripe subscription statuses that grant active access to the app.
+    // - trialing: free trial active, full access
+    // - active:   paying, full access
+    // - past_due: latest invoice payment failed but Stripe is auto-retrying;
+    //             keep access during the grace window so the customer can
+    //             update their card from inside the app before being locked
+    //             out. Stripe's retry schedule typically gives 3-7 days
+    //             before flipping to canceled/unpaid.
+    //
+    // Everything else (canceled, unpaid, incomplete, incomplete_expired)
+    // means no current right to use the app. profileLockedOut() catches
+    // those and the lockout screen prompts a resubscribe.
+    const ACTIVE_SUB_STATUSES = ['trialing', 'active', 'past_due'];
+
     const profileIsComplete = (p) => {
       if (!p) return false;
       if (p.role === 'tech') return true;
       return !!p.acceptedTermsAt
           && Array.isArray(p.trades) && p.trades.length > 0
-          && !!p.stripe_subscription_id;
+          && !!p.stripe_subscription_id
+          && ACTIVE_SUB_STATUSES.includes(p.subscription_status);
+    };
+
+    // Distinguish "lockout" (paid customer whose period ended) from
+    // "incomplete signup" (never finished). A locked-out user has all
+    // the signup pieces but the subscription is canceled/expired —
+    // they need to RESUBSCRIBE, not redo signup from scratch.
+    const profileLockedOut = (p) => {
+      if (!p) return false;
+      if (p.role === 'tech') return false;
+      return !!p.acceptedTermsAt
+          && Array.isArray(p.trades) && p.trades.length > 0
+          && !!p.stripe_subscription_id
+          && !ACTIVE_SUB_STATUSES.includes(p.subscription_status);
     };
 
     // Shared allowlist enforcement for any auth event (boot session
@@ -8511,6 +8594,15 @@ function TradevoiceApp() {
     const routeAuthed = async (sessionUser) => {
       const profile = await getProfile(sessionUser.id, sessionUser.email);
       if (cancelled) return;
+      // Lockout path: paid customer whose subscription ended. They have
+      // all the signup pieces but no active subscription, so we send
+      // them to the lockout screen for a one-tap resubscribe — NOT back
+      // through the full signup wizard.
+      if (profileLockedOut(profile)) {
+        setAuthScreen('locked');
+        setUser(profile); // keep their profile around for the resubscribe flow
+        return;
+      }
       if (!profileIsComplete(profile)) {
         // Don't setUser — keep them in the auth-screen branch so the
         // wizard is what renders. SignupScreen reads the session on
@@ -8911,6 +9003,20 @@ function TradevoiceApp() {
         <div style={{ fontSize: 13, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 700 }}>Loading…</div>
       </div>
     );
+  }
+
+  // Locked-out user — subscription ended (canceled / unpaid / expired).
+  // Render the dedicated lockout screen with a Resubscribe CTA instead
+  // of letting them through to Dashboard or bouncing to SignupScreen.
+  // This is intentionally checked BEFORE the !user branch — locked
+  // users still have a profile in state (we kept user set in routeAuthed
+  // so the lockout screen can show their name + plan info).
+  if (authScreen === 'locked') {
+    return <SubscriptionLockedScreen user={user} onSignOut={async () => {
+      try { await signOut(); } catch (_) {}
+      setUser(null);
+      setAuthScreen('login');
+    }} />;
   }
 
   // Show auth screens when no user
