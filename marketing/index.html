@@ -149,12 +149,22 @@
   .mockup-tab.idle { background: transparent; color: #9ca3af; border-color: #e5e7eb; }
 
   /* ── PRESS BAR ─────────────────────────────────────────────────────────────── */
-  .press-bar { padding: 36px 0; background: var(--cream); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
-  .founder-bar-inner { display: flex; flex-direction: column; align-items: center; gap: 24px; }
-  .founder-bar-label { font-size: 15px; font-weight: 600; color: var(--text); letter-spacing: 0.01em; text-align: center; max-width: 480px; line-height: 1.6; }
-  .founder-quote { font-family: 'Playfair Display', serif; font-size: 18px; font-style: italic; color: var(--green); text-align: center; max-width: 420px; line-height: 1.6; border-left: 3px solid var(--green); padding-left: 16px; margin-top: 4px; }
-  .founder-years-big { font-family: 'Playfair Display', serif; font-size: 42px; font-weight: 700; color: var(--green); line-height: 1; }
-  .founder-years-big span { font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; color: var(--muted); margin-left: 6px; vertical-align: middle; }
+  .press-bar { padding: 96px 0; background: var(--cream); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+  .founder-bar-inner { display: flex; flex-direction: column; align-items: center; gap: 32px; max-width: 820px; margin: 0 auto; text-align: center; }
+  .founder-eyebrow { font-size: 12px; font-weight: 700; color: var(--green); letter-spacing: 0.18em; text-transform: uppercase; margin-bottom: 4px; }
+  .founder-bar-label { font-size: 18px; font-weight: 500; color: var(--muted); letter-spacing: 0.01em; max-width: 620px; line-height: 1.65; }
+  .founder-quote { font-family: 'Playfair Display', serif; font-size: clamp(28px, 4vw, 42px); font-style: italic; color: var(--green-dark); line-height: 1.25; max-width: 760px; letter-spacing: -0.01em; position: relative; padding: 0 24px; }
+  .founder-quote::before, .founder-quote::after { content: ''; position: absolute; top: 50%; width: 36px; height: 2px; background: var(--green-mist); transform: translateY(-50%); }
+  .founder-quote::before { left: -54px; }
+  .founder-quote::after  { right: -54px; }
+  .founder-attribution { font-size: 14px; font-weight: 600; color: var(--text); letter-spacing: 0.04em; }
+  .founder-attribution-title { font-size: 13px; color: var(--muted); font-weight: 500; margin-top: 2px; }
+  .founder-years-big { font-family: 'Playfair Display', serif; font-size: 72px; font-weight: 700; color: var(--green); line-height: 1; letter-spacing: -0.02em; }
+  .founder-years-big span { font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600; color: var(--muted); margin-left: 12px; vertical-align: middle; letter-spacing: 0.08em; text-transform: uppercase; }
+  @media (max-width: 720px) {
+    .founder-quote::before, .founder-quote::after { display: none; }
+    .founder-quote { padding: 0 8px; }
+  }
   .founder-cards { display: flex; align-items: center; gap: 0; flex-wrap: wrap; justify-content: center; }
   .founder-card { display: flex; align-items: center; gap: 16px; padding: 0 40px; }
   .founder-years { font-family: 'Playfair Display', serif; font-size: 48px; font-weight: 700; color: var(--green); line-height: 1; }
@@ -177,6 +187,42 @@
   @media (max-width: 900px) { .wn-grid { grid-template-columns: 1fr; gap: 16px; } }
   .wn-card { background: var(--white); border: 1px solid var(--border); border-radius: 14px; padding: 26px 24px; transition: transform 0.15s, box-shadow 0.15s; }
   .wn-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(15,23,42,0.06); }
+
+  /* ── AI RATE LIBRARY SPOTLIGHT ─────────────────────────────────────────
+     Dedicated onboarding spotlight for the rate-library feature. The
+     point of this block: when a contractor lands on the page, they see
+     "I'm going to have to retype my whole price book" as the typical
+     SaaS onboarding pain. This section neutralizes that fear with the
+     "drop a PDF, done in seconds" demo. Dark-green hero background to
+     pull the eye and set this apart from the standard cream sections. */
+  .ai-spotlight {
+    background: linear-gradient(160deg, var(--green-dark) 0%, var(--green) 60%, var(--green-mid) 100%);
+    color: #fff;
+    padding: 100px 0;
+    position: relative; overflow: hidden;
+  }
+  .ai-spotlight::before {
+    content: ''; position: absolute; inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    pointer-events: none;
+  }
+  .ai-spotlight .container { position: relative; z-index: 1; }
+  .ai-spot-tag { display: inline-block; background: rgba(255,255,255,0.15); color: #fff; padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 18px; }
+  .ai-spot-head { font-family: 'Playfair Display', serif; font-size: clamp(32px, 5vw, 56px); font-weight: 900; line-height: 1.1; margin-bottom: 18px; letter-spacing: -0.02em; max-width: 760px; }
+  .ai-spot-head em { color: var(--green-mist); font-style: normal; }
+  .ai-spot-sub { font-size: 18px; color: rgba(255,255,255,0.85); line-height: 1.65; font-weight: 300; max-width: 720px; margin-bottom: 56px; }
+
+  .ai-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 48px; }
+  @media (max-width: 900px) { .ai-steps { grid-template-columns: 1fr; gap: 16px; } }
+  .ai-step { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 14px; padding: 28px 26px; transition: transform 0.15s, background 0.15s; }
+  .ai-step:hover { transform: translateY(-2px); background: rgba(255,255,255,0.12); }
+  .ai-step-num { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 50%; background: #fff; color: var(--green-dark); font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 900; margin-bottom: 18px; }
+  .ai-step-title { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 800; color: #fff; margin-bottom: 10px; letter-spacing: -0.01em; }
+  .ai-step-desc { font-size: 14px; color: rgba(255,255,255,0.8); line-height: 1.65; }
+
+  .ai-spot-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 20px; padding-top: 28px; border-top: 1px solid rgba(255,255,255,0.18); }
+  .ai-spot-foot-line { font-size: 15px; color: rgba(255,255,255,0.85); line-height: 1.6; max-width: 540px; }
+  .ai-spot-foot-line strong { color: #fff; font-weight: 700; }
   .wn-icon { width: 44px; height: 44px; border-radius: 10px; background: var(--green-light); color: var(--green-dark); display: flex; align-items: center; justify-content: center; font-size: 22px; margin-bottom: 16px; }
   .wn-tag { display: inline-block; background: var(--green); color: #fff; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 3px 10px; border-radius: 12px; margin-bottom: 10px; }
   .wn-title { font-family: 'Playfair Display', serif; font-size: 21px; font-weight: 800; color: var(--text); margin-bottom: 8px; letter-spacing: -0.01em; line-height: 1.2; }
@@ -697,6 +743,7 @@
       </a>
       <div class="nav-links">
         <a href="#whats-new">What's new</a>
+        <a href="#onboarding">Onboarding</a>
         <a href="#features">Features</a>
         <a href="#pricing">Pricing</a>
         <a href="#compare">Compare</a>
@@ -794,12 +841,21 @@
 </section>
 
 <!-- ── FOUNDER BAR ──────────────────────────────────────────────────────────────── -->
+<!-- Re-scaled 2026-05-19 — the original block read as a thin footer-strip;
+     now it reads as a real founder statement. Bigger Playfair quote with
+     visual flanking lines, generous vertical padding, a clear attribution
+     under the quote, and a hero-size "12+" stat below.  -->
 <section class="press-bar">
   <div class="container">
     <div class="founder-bar-inner">
-      <div class="founder-bar-label">Built by a contractor with 12+ years in the field.</div>
+      <div class="founder-eyebrow">Built by a contractor</div>
+      <div class="founder-bar-label">Tradevoice was built from the inside out — by someone who spent twelve years on the tools, dealing with the same paperwork, late invoices, and clunky software contractors deal with every day.</div>
       <div class="founder-quote">"I built this tool for other contractors like me."</div>
-      <div class="founder-years-big">12+ <span>Years in the Trades</span></div>
+      <div>
+        <div class="founder-attribution">Matt</div>
+        <div class="founder-attribution-title">Founder · Tradevoice</div>
+      </div>
+      <div class="founder-years-big">12<span>Years in the Trades</span></div>
     </div>
   </div>
 </section>
@@ -859,6 +915,53 @@
         <div class="wn-desc">Skip the password. Sign up or sign in with your work Gmail in two clicks. Card-on-file, plan picker, and trial setup follow the same flow — you land in the app in under 60 seconds.</div>
       </div>
 
+    </div>
+  </div>
+</section>
+
+<!-- ── AI RATE LIBRARY SPOTLIGHT ────────────────────────────────────────────────
+     Onboarding hero. Most SaaS onboarding for contractors hits a wall at
+     "now retype every labor rate, material, and equipment item from your
+     binder/PDF/spreadsheet" — multi-hour, soul-crushing setup work that
+     causes a huge fraction of trial sign-ups to bounce. This block sells
+     past that wall: drop the PDF, walk away with a complete library in
+     seconds. Positioned right after the "What's New" feature grid so
+     visitors who land on the page see the magic moment of onboarding
+     before they ever click Sign Up. -->
+<section class="ai-spotlight" id="onboarding">
+  <div class="container">
+    <span class="ai-spot-tag">Onboarding in minutes</span>
+    <h2 class="ai-spot-head">Drop your rate sheet. <em>We do the rest.</em></h2>
+    <p class="ai-spot-sub">Most contractor apps make you retype every labor rate, material price, and equipment line by hand. That's hours of work before you can send your first quote. Tradevoice reads your existing rate sheet PDF — or even a phone photo of one — and builds your full library in seconds.</p>
+
+    <div class="ai-steps">
+
+      <div class="ai-step">
+        <div class="ai-step-num">1</div>
+        <div class="ai-step-title">Drop the PDF</div>
+        <div class="ai-step-desc">Any rate sheet you've already built — supplier quote, your old contractor's spreadsheet exported to PDF, even a snapshot of a paper page taped above the workbench. We accept PDF, JPG, PNG.</div>
+      </div>
+
+      <div class="ai-step">
+        <div class="ai-step-num">2</div>
+        <div class="ai-step-title">Claude reads it</div>
+        <div class="ai-step-desc">Claude (the same AI that powers Anthropic's enterprise tools) parses every labor, material, and equipment line into structured items. It separates trades, recognizes units, and flags anything it isn't sure about.</div>
+      </div>
+
+      <div class="ai-step">
+        <div class="ai-step-num">3</div>
+        <div class="ai-step-title">Review &amp; import</div>
+        <div class="ai-step-desc">You see a preview grid before anything's saved. Uncheck rows that aren't yours. Click Import and your full library is ready to drop into the next quote in one tap.</div>
+      </div>
+
+    </div>
+
+    <div class="ai-spot-foot">
+      <div class="ai-spot-foot-line">
+        <strong>Most contractors are quoting their first job within 5 minutes of signing up.</strong>
+        No data entry marathon. No "set up your library before you can quote" gate. Just drop the PDF and go.
+      </div>
+      <a href="mailto:hello@thetradevoice.com?subject=Early%20Access%20Request%20—%20Tradevoice&body=Hi%20Tradevoice%2C%0A%0AI%27d%20like%20to%20request%20early%20access.%20A%20bit%20about%20me%3A%0A%0A-%20Name%3A%0A-%20Trade%2Fs%3A%0A-%20State%3A%0A-%20Crew%20size%3A%0A%0AThanks!" class="hero-btn-white" style="white-space: nowrap;">Request Early Access</a>
     </div>
   </div>
 </section>
