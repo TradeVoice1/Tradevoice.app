@@ -128,13 +128,37 @@ export async function upsertProfile(userId, patch) {
   const dbPatch = profileToDb(patch);
   Object.keys(dbPatch).forEach(k => dbPatch[k] === undefined && delete dbPatch[k]);
 
-  const { data, error } = await supabase
+  // Try UPDATE first — covers the common case where the handle_new_user
+  // trigger has already created a profile row for this auth user.
+  // Use maybeSingle() instead of single() so 0 rows doesn't throw "Cannot
+  // coerce the result to a single JSON object" — it returns null and we
+  // fall through to the INSERT path below.
+  let { data, error } = await supabase
     .from('profiles')
     .update(dbPatch)
     .eq('id', userId)
     .select()
-    .single();
+    .maybeSingle();
   if (error) throw error;
+
+  // 0 rows returned from the UPDATE means there's no profile row for this
+  // user. Two scenarios:
+  //   1. The handle_new_user trigger didn't fire / errored during signUp
+  //      (rare, but observed during testing 2026-05-19).
+  //   2. The profile row was deleted and the user is rebuilding.
+  // Either way, INSERT one now so the calling signup flow can complete.
+  // We explicitly set id = userId so the row aligns with the auth.users
+  // record. RLS allows inserting your own profile (auth.uid() = id).
+  if (!data) {
+    const { data: inserted, error: insErr } = await supabase
+      .from('profiles')
+      .insert({ id: userId, ...dbPatch })
+      .select()
+      .single();
+    if (insErr) throw insErr;
+    data = inserted;
+  }
+
   const { data: { user } } = await supabase.auth.getUser();
   return { ...dbToProfile(data), email: user?.email ?? '' };
 }
