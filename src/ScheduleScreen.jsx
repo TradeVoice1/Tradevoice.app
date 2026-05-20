@@ -658,6 +658,191 @@ export function JobDetailModal({ job, techs, onClose, onStatusChange, onCreateIn
 }
 
 // ─── ADD JOB MODAL ────────────────────────────────────────────────────────────
+// ── Inline date picker with job-density preview ──────────────────────────────
+// Replaces the small browser-native <input type="date"> in the AddJobModal
+// with a full month-grid widget. Each day cell shows the day number plus a
+// stack of dots — one per existing job that day, colored by status — so the
+// owner can see how busy a date already is BEFORE picking it. Tapping a day
+// also unfolds a list of those jobs (with times + client) below the grid so
+// the new job's start hour can be chosen without overlapping.
+//
+// Receives all the data it needs from AddJobModal (jobs list, selected
+// tech, currently-considered start hour + duration). When a tech filter
+// is applied, only that tech's jobs render — viewing the calendar from
+// "I'm assigning this to Mike" filters down to Mike's existing load.
+function JobDatePicker({ value, onChange, jobs = [], techs = [], selectedHour, selectedDuration, selectedTechId, onPickStartHour }) {
+  // Anchor month — defaults to the month containing the current value so
+  // opening the picker shows the relevant page. Independent of value so
+  // the user can navigate freely without un-selecting their date.
+  const initial = value instanceof Date ? value : new Date(value);
+  const [month, setMonth] = useState(new Date(initial.getFullYear(), initial.getMonth(), 1));
+  const today = useMemo(() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; }, []);
+
+  // Build the 6-row × 7-col grid: pad the front with prev-month days so the
+  // 1st of the month lands on its correct weekday column, then fill 42
+  // cells total. Anything outside the active month is rendered muted.
+  const cells = useMemo(() => {
+    const firstDow = new Date(month.getFullYear(), month.getMonth(), 1).getDay();
+    const startDay = new Date(month.getFullYear(), month.getMonth(), 1 - firstDow);
+    return Array.from({ length: 42 }, (_, i) => {
+      const d = new Date(startDay);
+      d.setDate(startDay.getDate() + i);
+      d.setHours(0, 0, 0, 0);
+      return d;
+    });
+  }, [month]);
+
+  // Index jobs by yyyy-mm-dd for O(1) lookup per cell.
+  const jobsByDay = useMemo(() => {
+    const map = new Map();
+    jobs.forEach(j => {
+      // Honor the tech filter — if a tech is assigned to this new job,
+      // only show conflicts on THEIR calendar (not the whole shop's).
+      if (selectedTechId && j.techUserId && j.techUserId !== selectedTechId) return;
+      const d = new Date(j.date); d.setHours(0, 0, 0, 0);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      if (!map.has(key)) map.set(key, []);
+      map.get(key).push(j);
+    });
+    // Sort each day's jobs by start hour so the conflict list below the
+    // grid reads chronologically.
+    for (const arr of map.values()) arr.sort((a, b) => (a.startHour || 0) - (b.startHour || 0));
+    return map;
+  }, [jobs, selectedTechId]);
+
+  const keyFor = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const selectedKey = keyFor(value instanceof Date ? value : new Date(value));
+  const selectedDayJobs = jobsByDay.get(selectedKey) || [];
+
+  // Conflict detection: would the new job's [startHour, startHour+duration)
+  // overlap any existing job's [startHour, startHour+duration) on the
+  // selected day? Used to flag the start-time picker below.
+  const hasStartHourConflict = (hour) => {
+    const newEnd = hour + (selectedDuration || 1);
+    return selectedDayJobs.some(j => {
+      const jStart = j.startHour || 0;
+      const jEnd = jStart + (j.duration || 1);
+      return hour < jEnd && newEnd > jStart;
+    });
+  };
+
+  const techById = useMemo(() => {
+    const m = new Map();
+    techs.forEach(t => m.set(t.id, t));
+    return m;
+  }, [techs]);
+
+  return (
+    <div style={{ border: '1px solid #e5e7eb', borderRadius: 10, padding: 14, background: '#fafafa' }}>
+      {/* Month navigation header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+        <button type="button" onClick={() => setMonth(m => new Date(m.getFullYear(), m.getMonth() - 1, 1))}
+          style={{ border: '1px solid #ddd', background: '#fff', borderRadius: 6, width: 32, height: 32, cursor: 'pointer', fontWeight: 700, color: '#555' }}>‹</button>
+        <div style={{ fontWeight: 700, fontSize: 15, color: '#111' }}>
+          {MONTHS[month.getMonth()]} {month.getFullYear()}
+        </div>
+        <button type="button" onClick={() => setMonth(m => new Date(m.getFullYear(), m.getMonth() + 1, 1))}
+          style={{ border: '1px solid #ddd', background: '#fff', borderRadius: 6, width: 32, height: 32, cursor: 'pointer', fontWeight: 700, color: '#555' }}>›</button>
+      </div>
+
+      {/* Day-of-week labels */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4, marginBottom: 4 }}>
+        {DAYS.map(d => (
+          <div key={d} style={{ textAlign: 'center', fontSize: 11, fontWeight: 700, color: '#999', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{d}</div>
+        ))}
+      </div>
+
+      {/* Day cells — 6 rows × 7 cols. Each cell shows day number + 1 dot
+          per existing job. Dot color follows the job status. */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4 }}>
+        {cells.map((d, i) => {
+          const inMonth   = d.getMonth() === month.getMonth();
+          const isToday   = isSameDay(d, today);
+          const isPast    = d < today;
+          const isSelected = isSameDay(d, value instanceof Date ? value : new Date(value));
+          const dayJobs   = jobsByDay.get(keyFor(d)) || [];
+          const dotColor  = (status) => STATUS_COLORS[status]?.text || '#888';
+
+          return (
+            <button
+              key={i}
+              type="button"
+              onClick={() => onChange(new Date(d.getFullYear(), d.getMonth(), d.getDate(), 12))}
+              style={{
+                aspectRatio: '1 / 1',
+                minHeight: 52,
+                border: isSelected ? `2px solid ${COLORS.green}` : `1px solid ${isToday ? COLORS.green : '#e5e7eb'}`,
+                background: isSelected ? COLORS.greenLight : (inMonth ? '#fff' : '#f5f5f5'),
+                color: inMonth ? (isPast ? '#aaa' : '#111') : '#ccc',
+                borderRadius: 8,
+                padding: '4px 6px',
+                cursor: 'pointer',
+                fontFamily: 'inherit',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                position: 'relative',
+              }}
+            >
+              <div style={{ fontSize: 14, fontWeight: isToday || isSelected ? 800 : 600, alignSelf: 'flex-end' }}>{d.getDate()}</div>
+              {/* Up to 4 dots; overflow renders as "+N more" */}
+              {dayJobs.length > 0 && (
+                <div style={{ display: 'flex', gap: 2, flexWrap: 'wrap', justifyContent: 'center', width: '100%' }}>
+                  {dayJobs.slice(0, 4).map((j, k) => (
+                    <span key={k} style={{ width: 6, height: 6, borderRadius: '50%', background: dotColor(j.status) }} />
+                  ))}
+                  {dayJobs.length > 4 && (
+                    <span style={{ fontSize: 9, color: '#666', fontWeight: 700 }}>+{dayJobs.length - 4}</span>
+                  )}
+                </div>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Existing-jobs panel for the selected day */}
+      <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid #e5e7eb' }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: '#888', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 6 }}>
+          {selectedDayJobs.length === 0
+            ? 'No jobs scheduled for this day'
+            : `${selectedDayJobs.length} job${selectedDayJobs.length === 1 ? '' : 's'} on this day${selectedTechId ? ' (assigned tech)' : ''}`}
+        </div>
+        {selectedDayJobs.length > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {selectedDayJobs.map(j => {
+              const techName = j.techUserId ? techById.get(j.techUserId)?.name : null;
+              const conflict = hasStartHourConflict(j.startHour) && selectedHour != null && (selectedHour === j.startHour);
+              return (
+                <div key={j.id} style={{
+                  display: 'flex', alignItems: 'center', gap: 10, padding: '6px 10px',
+                  background: conflict ? '#fef2f2' : '#fff',
+                  border: `1px solid ${conflict ? '#fecaca' : '#e5e7eb'}`,
+                  borderRadius: 6, fontSize: 12,
+                }}>
+                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: STATUS_COLORS[j.status]?.text || '#888', flexShrink: 0 }} />
+                  <span
+                    onClick={() => onPickStartHour && onPickStartHour(j.startHour + (j.duration || 1))}
+                    style={{ fontWeight: 700, color: '#333', cursor: onPickStartHour ? 'pointer' : 'default', textDecoration: onPickStartHour ? 'underline dotted' : 'none' }}
+                    title={onPickStartHour ? `Click to start the new job after this one (${formatTime(j.startHour + (j.duration || 1))})` : ''}
+                  >
+                    {formatTime(j.startHour)} – {formatTime(j.startHour + (j.duration || 1))}
+                  </span>
+                  <span style={{ color: '#666', flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {j.title || 'Job'}{j.clientName ? ` · ${j.clientName}` : ''}
+                  </span>
+                  {techName && <span style={{ color: '#888', fontSize: 11 }}>{techName}</span>}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function AddJobModal({ techs, jobs = [], onClose, onAdd, defaultDate, prefill = null, timeOff = [] }) {
   useEscapeClose(onClose);
   // Wider modal on desktop browsers — same pattern as JobDetailModal.
@@ -829,29 +1014,26 @@ function AddJobModal({ techs, jobs = [], onClose, onAdd, defaultDate, prefill = 
               )}
             </div>
           </div>
-          {/* Date / Start / Duration — 3-col row so the "when" fields sit
-              together. Date was previously hidden (defaulted to today from
-              the calendar cell click; no editor surface), but the Quote →
-              Schedule Job entry path needs a date picker because the
-              contractor is scheduling work for a FUTURE date, not the
-              current calendar focus. */}
-          <div style={{ display: 'grid', gridTemplateColumns: isTablet ? '1fr' : '1.1fr 1fr 1fr', gap: 12 }}>
-            <div>
-              <label style={s.label}>Date</label>
-              <input
-                type="date"
-                style={s.input}
-                value={(form.date instanceof Date ? form.date : new Date(form.date)).toISOString().split('T')[0]}
-                onChange={e => {
-                  // Parse the picker value as a local-noon date so timezones
-                  // can't shift it onto the wrong day (e.g. Saturday 11pm
-                  // UTC = Sunday 7am EST without the noon anchor).
-                  const v = e.target.value;
-                  if (!v) return;
-                  update('date', new Date(v + 'T12:00:00'));
-                }}
-              />
-            </div>
+          {/* Date — full-width JobDatePicker. The native <input type="date">
+              was too small on desktop and didn't show existing-job density,
+              which made it easy to double-book a tech. The picker renders
+              the full month, dots existing jobs on each day (filtered by
+              the assigned tech if one is set), and lists that day's jobs
+              below so the contractor can see conflicts before they pick a
+              start time. */}
+          <label style={s.label}>Date</label>
+          <JobDatePicker
+            value={form.date}
+            onChange={d => update('date', d)}
+            jobs={jobs}
+            techs={techs}
+            selectedHour={form.startHour}
+            selectedDuration={form.duration}
+            selectedTechId={form.techUserId}
+            onPickStartHour={h => update('startHour', h)}
+          />
+          {/* Start Time + Duration — 2-col row below the calendar. */}
+          <div style={{ display: 'grid', gridTemplateColumns: isTablet ? '1fr 1fr' : '1fr 1fr', gap: 12 }}>
             <div>
               <label style={s.label}>Start Time</label>
               <select style={s.select} value={form.startHour} onChange={e => update('startHour', parseInt(e.target.value))}>
