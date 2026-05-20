@@ -829,7 +829,29 @@ function AddJobModal({ techs, jobs = [], onClose, onAdd, defaultDate, prefill = 
               )}
             </div>
           </div>
-          <div style={s.row2}>
+          {/* Date / Start / Duration — 3-col row so the "when" fields sit
+              together. Date was previously hidden (defaulted to today from
+              the calendar cell click; no editor surface), but the Quote →
+              Schedule Job entry path needs a date picker because the
+              contractor is scheduling work for a FUTURE date, not the
+              current calendar focus. */}
+          <div style={{ display: 'grid', gridTemplateColumns: isTablet ? '1fr' : '1.1fr 1fr 1fr', gap: 12 }}>
+            <div>
+              <label style={s.label}>Date</label>
+              <input
+                type="date"
+                style={s.input}
+                value={(form.date instanceof Date ? form.date : new Date(form.date)).toISOString().split('T')[0]}
+                onChange={e => {
+                  // Parse the picker value as a local-noon date so timezones
+                  // can't shift it onto the wrong day (e.g. Saturday 11pm
+                  // UTC = Sunday 7am EST without the noon anchor).
+                  const v = e.target.value;
+                  if (!v) return;
+                  update('date', new Date(v + 'T12:00:00'));
+                }}
+              />
+            </div>
             <div>
               <label style={s.label}>Start Time</label>
               <select style={s.select} value={form.startHour} onChange={e => update('startHour', parseInt(e.target.value))}>
