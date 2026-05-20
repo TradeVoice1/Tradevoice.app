@@ -8614,6 +8614,7 @@ function TradevoiceApp() {
       if (!sessionUser?.email) return true; // weird edge case — let it through, profile fetch will fail if real
       const email = String(sessionUser.email).trim().toLowerCase();
       if (email.endsWith('@tradevoice.app')) return true;  // tech synthetic email
+      if (ALLOWLIST_OPEN) return true;                     // open-mode: any email allowed
       if (EARLY_ACCESS_EMAILS.includes(email)) return true;
       // Non-invited human signed in (almost certainly via Google OAuth).
       // Sign them out and tell them why. They might have created a
@@ -9023,8 +9024,19 @@ function TradevoiceApp() {
   // set in Vercel; the fallback only matters if that env var ever gets
   // dropped. Tracked in TODO.md → "Scrub founder email fallback before
   // public launch".
-  const EARLY_ACCESS_EMAILS = (import.meta.env.VITE_EARLY_ACCESS_EMAILS || 'mattparnellburkes@yahoo.com')
+  //
+  // 2026-05-19: added an "open mode" wildcard. Setting
+  // VITE_EARLY_ACCESS_EMAILS to "*" (or including "*" in the comma-list)
+  // disables the allowlist gate entirely — any email can complete
+  // signup. Use during end-to-end testing so we can validate the full
+  // real-user experience without juggling allowlist entries for each
+  // test email. The marketing site still says "Request Early Access"
+  // — those are separate copy on the marketing project and aren't
+  // affected by this flag.
+  const EARLY_ACCESS_RAW = (import.meta.env.VITE_EARLY_ACCESS_EMAILS || 'mattparnellburkes@yahoo.com');
+  const EARLY_ACCESS_EMAILS = EARLY_ACCESS_RAW
     .split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
+  const ALLOWLIST_OPEN = EARLY_ACCESS_EMAILS.includes('*');
 
   // SignupScreen now owns the whole orchestration (signup → SetupIntent →
   // confirm card → create subscription → upsertProfile) and hands us back
