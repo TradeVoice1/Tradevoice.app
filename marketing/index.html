@@ -1009,42 +1009,36 @@
     <div class="wn-grid">
 
       <div class="wn-card">
-        <div class="wn-icon">📋</div>
         <div class="wn-tag">New</div>
         <div class="wn-title">AI Rate Library</div>
         <div class="wn-desc">Drop your rate sheet PDF and Claude parses every labor, material, and equipment item into your library in seconds. No more retyping prices from a 12-page document. Photos of a paper rate sheet work too.</div>
       </div>
 
       <div class="wn-card">
-        <div class="wn-icon">✉️</div>
         <div class="wn-tag">New</div>
         <div class="wn-title">Review request emails &amp; campaigns</div>
         <div class="wn-desc">Pick the clients you want a Google review from, hit send. Or compose a one-shot campaign and blast your whole list. RFC-compliant one-click unsubscribe, your company name in the From line, replies come straight to you.</div>
       </div>
 
       <div class="wn-card">
-        <div class="wn-icon">🏗️</div>
         <div class="wn-tag">New</div>
         <div class="wn-title">Commercial invoice fields</div>
         <div class="wn-desc">PO number, work order, job site address, requested-by, approved-by, salesperson, permit number, and late-fee terms — the fields commercial AP departments need before they'll cut you a check.</div>
       </div>
 
       <div class="wn-card">
-        <div class="wn-icon">✍️</div>
         <div class="wn-tag">New</div>
         <div class="wn-title">Customer e-signature on invoices</div>
         <div class="wn-desc">Your customer signs the invoice right on the public payment link before paying. The signature, name, IP address, and timestamp are saved with the invoice. Cleanest proof-of-acceptance most trades have ever had.</div>
       </div>
 
       <div class="wn-card">
-        <div class="wn-icon">🔁</div>
         <div class="wn-tag">New</div>
         <div class="wn-title">Service contracts with auto-billing</div>
         <div class="wn-desc">Set up a maintenance plan, enroll a customer, Stripe handles the recurring charge on your connected account. Annual HVAC tune-ups, quarterly fire-system inspections, monthly grounds-keeping — the recurring revenue you've been leaving on the table.</div>
       </div>
 
       <div class="wn-card">
-        <div class="wn-icon">🔐</div>
         <div class="wn-tag">New</div>
         <div class="wn-title">Sign in with Google</div>
         <div class="wn-desc">Skip the password. Sign up or sign in with your work Gmail in two clicks. Card-on-file, plan picker, and trial setup follow the same flow — you land in the app in under 60 seconds.</div>
@@ -1516,7 +1510,7 @@
               <span class="showcase-frame-title">All Jobs · Today</span>
               <span class="showcase-frame-pill">12 active</span>
             </div>
-            <div class="sf-bucket-head over">⚠ Overdue · 1</div>
+            <div class="sf-bucket-head over">Overdue · 1</div>
             <div class="sf-row">
               <div><div class="sf-name">Wilson — Drain repair</div><div class="sf-sub">Carlos R. · Was scheduled Nov 9</div></div>
               <span class="sf-pill due">Overdue</span>
@@ -1660,54 +1654,16 @@
   </div>
 </section>
 
-<!-- ── ROI CALCULATOR ──────────────────────────────────────────────────────────── -->
-<section class="roi" id="roi">
-  <div class="container">
-    <span class="section-tag">See your numbers</span>
-    <h2>How much is slow invoicing costing you?</h2>
-    <p class="sub">Move the sliders and see the real dollar impact of getting paid faster.</p>
-    <div class="roi-card">
-      <div class="roi-sliders">
-        <div>
-          <div class="roi-label">Jobs per month</div>
-          <div class="roi-val" id="jobs-val">12</div>
-          <input type="range" min="2" max="50" value="12" id="jobs-slider" oninput="calcROI()"/>
-        </div>
-        <div>
-          <div class="roi-label">Average invoice size</div>
-          <div class="roi-val" id="inv-val">$850</div>
-          <input type="range" min="200" max="5000" value="850" step="50" id="inv-slider" oninput="calcROI()"/>
-        </div>
-        <div>
-          <div class="roi-label">Days to get paid (currently)</div>
-          <div class="roi-val" id="days-val">28 days</div>
-          <input type="range" min="7" max="60" value="28" id="days-slider" oninput="calcROI()"/>
-        </div>
-        <div>
-          <div class="roi-label">Days to get paid (with Tradevoice)</div>
-          <div class="roi-val" id="new-days-val">4 days</div>
-          <input type="range" min="1" max="14" value="4" id="new-days-slider" oninput="calcROI()"/>
-        </div>
-      </div>
-      <div class="roi-results">
-        <div class="roi-result">
-          <div class="roi-result-num" id="monthly-rev">$10,200</div>
-          <div class="roi-result-lbl">Monthly revenue</div>
-        </div>
-        <div class="roi-result">
-          <div class="roi-result-num" id="days-saved">24 days</div>
-          <div class="roi-result-lbl">Days recovered per invoice</div>
-        </div>
-        <div class="roi-result">
-          <div class="roi-result-num" id="annual-impact" style="color:var(--success)">+$40,800</div>
-          <div class="roi-result-lbl">Annual cash flow improvement</div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
+<!-- ROI calculator removed 2026-05-19 — pre-launch we don't have real
+     customer benchmarks for the "days saved" and "annual impact" numbers
+     it was outputting. Bringing it back once we have real data to anchor
+     the math. CSS class (.roi) and the calcROI script are kept in place
+     for the quick re-add. -->
 
-<!-- ── TESTIMONIALS ────────────────────────────────────────────────────────────── -->
+
+<!-- Testimonial section removed 2026-05-19 — no real customer testimonials
+     yet (private preview). Bringing it back as real reviews come in.
+     CSS for .testimonials, .testi-* kept in place to make re-add trivial.
 <section class="testimonials" id="reviews">
   <div class="container">
     <span class="section-tag">Real contractors</span>
@@ -1747,6 +1703,7 @@
     </div>
   </div>
 </section>
+-->
 
 <!-- ── COMPETITOR COMPARISON ──────────────────────────────────────────────────── -->
 <section class="compare" id="compare">
@@ -2105,7 +2062,7 @@
       </div>
       <div class="tax-calendar">
         <div class="cal-month">All 50 States</div>
-        <div class="cal-num" style="font-size:48px">📍</div>
+        <div class="cal-num" style="font-family:'Playfair Display',serif;font-size:64px;font-weight:900;color:var(--green-dark);line-height:1;">50</div>
         <div class="cal-label">State-level defaults shipping today; rooftop accuracy on the roadmap</div>
         <span class="cal-badge">Included in every plan</span>
       </div>
@@ -2128,21 +2085,21 @@
         <p style="font-size:17px;color:#666;line-height:1.75;margin-bottom:24px;">Every state has different licensing requirements for residential and commercial work. TradeVoice has them all built in — so when you set up your profile, we show you exactly what license type you need for your state and trade.</p>
         <div style="display:flex;flex-direction:column;gap:14px">
           <div style="display:flex;align-items:flex-start;gap:14px">
-            <div style="width:36px;height:36px;border-radius:8px;background:#f0f7f4;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px;">📋</div>
+            <div style="width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0;margin-top:9px;"></div>
             <div>
               <div style="font-size:15px;font-weight:700;color:#111;margin-bottom:3px">Residential & commercial — all 50 states</div>
               <div style="font-size:14px;color:#888;line-height:1.6">Separate license types for residential and commercial work, with the governing board and website for each state.</div>
             </div>
           </div>
           <div style="display:flex;align-items:flex-start;gap:14px">
-            <div style="width:36px;height:36px;border-radius:8px;background:#f0f7f4;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px;">🔧</div>
+            <div style="width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0;margin-top:9px;"></div>
             <div>
               <div style="font-size:15px;font-weight:700;color:#111;margin-bottom:3px">Trade-specific requirements</div>
               <div style="font-size:14px;color:#888;line-height:1.6">Plumbing, electrical, HVAC, roofing — each trade has its own license requirements. We cover all of them.</div>
             </div>
           </div>
           <div style="display:flex;align-items:flex-start;gap:14px">
-            <div style="width:36px;height:36px;border-radius:8px;background:#f0f7f4;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px;">📄</div>
+            <div style="width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0;margin-top:9px;"></div>
             <div>
               <div style="font-size:15px;font-weight:700;color:#111;margin-bottom:3px">Shows on every invoice</div>
               <div style="font-size:14px;color:#888;line-height:1.6">Your license number appears automatically on every invoice and quote — so clients can verify your credentials and your paperwork reads professionally.</div>
@@ -2184,7 +2141,7 @@
          "TradeVoice is not a tax advisor" pattern from the Terms — sets
          clear responsibility expectations. -->
     <div style="margin-top:32px;padding:14px 18px;background:#fff8eb;border:1px solid #f5d5a0;border-radius:10px;font-size:13px;color:#7a4f1a;line-height:1.6;max-width:900px;margin-left:auto;margin-right:auto">
-      ⚠️ <strong>Always verify with your state licensing board before bidding.</strong> Our reference data is maintained from official board sources and updated as we become aware of changes, but state licensing rules can update at any time. TradeVoice displays this information for convenience — you are responsible for holding the correct licenses, permits, and registrations for your jurisdiction and the work you perform.
+      <strong>Important — Always verify with your state licensing board before bidding.</strong> Our reference data is maintained from official board sources and updated as we become aware of changes, but state licensing rules can update at any time. TradeVoice displays this information for convenience — you are responsible for holding the correct licenses, permits, and registrations for your jurisdiction and the work you perform.
     </div>
   </div>
 </section>
@@ -2270,7 +2227,7 @@
           <li><a href="#features">Features</a></li>
           <li><a href="#pricing">Pricing</a></li>
           <li><a href="#compare">Compare</a></li>
-          <li><a href="#roi">ROI Calculator</a></li>
+          <li><a href="#tech-seats">Tech seats</a></li>
           <li><a href="#trades">Trades</a></li>
         </ul>
       </div>
