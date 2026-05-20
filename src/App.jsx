@@ -4477,7 +4477,7 @@ function ShareInvoiceModal({ invoice, onClose, onSend }) {
       display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
     }}>
       <div onClick={e => e.stopPropagation()} style={{
-        background: '#fff', borderRadius: 14, width: '100%', maxWidth: 500,
+        background: '#fff', borderRadius: 14, width: '100%', maxWidth: 640,
         boxShadow: '0 20px 60px rgba(0,0,0,0.25)', overflow: 'hidden',
       }}>
         {/* Header */}
@@ -4601,7 +4601,7 @@ function ShareQuoteModal({ quote, onClose, onSend }) {
       display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
     }}>
       <div onClick={e => e.stopPropagation()} style={{
-        background: '#fff', borderRadius: 14, width: '100%', maxWidth: 500,
+        background: '#fff', borderRadius: 14, width: '100%', maxWidth: 640,
         boxShadow: '0 20px 60px rgba(0,0,0,0.25)', overflow: 'hidden',
       }}>
         <div style={{ padding: '20px 24px', background: C.orange, color: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -6458,7 +6458,7 @@ function NewClientModal({ onSave, onClose }) {
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: '#000000aa', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 999, padding: 20 }}>
-      <div style={{ background: C.surface, border: `1px solid ${C.border2}`, borderRadius: 4, padding: 28, width: '100%', maxWidth: 400 }}>
+      <div style={{ background: C.surface, border: `1px solid ${C.border2}`, borderRadius: 4, padding: 32, width: '100%', maxWidth: 560 }}>
         <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 25, fontWeight: 900, color: C.text, marginBottom: 20, textTransform: 'uppercase' }}>New Client</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div><Label>Name *</Label><Input value={name}    onChange={setName}    placeholder="Sandra Johnson" /></div>
@@ -6576,7 +6576,7 @@ function ProfileModal({ profile, onSave, onClose }) {
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: '#000000bb', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 999, padding: 20 }}>
-      <div style={{ background: C.surface, border: `1px solid ${C.border2}`, borderRadius: 4, padding: '28px 26px', width: '100%', maxWidth: 540, maxHeight: '92vh', overflowY: 'auto' }}>
+      <div style={{ background: C.surface, border: `1px solid ${C.border2}`, borderRadius: 4, padding: '28px 26px', width: '100%', maxWidth: 720, maxHeight: '92vh', overflowY: 'auto' }}>
 
         <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 24, fontWeight: 900, color: C.text, marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Company Profile</div>
         <p style={{ fontSize: 15, color: C.muted, marginBottom: 22, marginTop: 0 }}>Everything here appears on all quotes and invoices.</p>
@@ -7442,7 +7442,7 @@ function BuyTechSeatModal({ user, onClose, onCreate }) {
       display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
     }}>
       <div onClick={e => e.stopPropagation()} style={{
-        background: '#fff', borderRadius: 14, width: '100%', maxWidth: 520,
+        background: '#fff', borderRadius: 14, width: '100%', maxWidth: 640,
         maxHeight: '92vh', overflow: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.25)',
       }}>
         {/* Header */}

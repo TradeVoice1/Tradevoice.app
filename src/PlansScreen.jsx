@@ -6,6 +6,7 @@ import {
   cancelPlanSubscription,
 } from "./data/planSubscriptions";
 import { useEscapeClose } from "./lib/useEscapeClose";
+import { useBreakpoint } from "./lib/useBreakpoint";
 
 // Small palette aligned with the rest of the app (avoid importing C from App.jsx
 // to keep this component independently lazy-loadable).
@@ -58,6 +59,7 @@ const frequencyLabel = (months) => {
 // PLAN CREATE / EDIT MODAL
 // ────────────────────────────────────────────────────────────────────────────
 function PlanModal({ initial, clients, team, trades, onClose, onSave }) {
+  const { isTablet } = useBreakpoint();
   useEscapeClose(onClose);
   const [title,            setTitle]      = useState(initial?.title           || '');
   const [clientId,         setClientId]   = useState(initial?.clientId        || '');
@@ -122,7 +124,7 @@ function PlanModal({ initial, clients, team, trades, onClose, onSave }) {
 
   const s = {
     overlay: { position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.45)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 },
-    modal:   { background: '#fff', borderRadius: 14, width: '100%', maxWidth: 520, maxHeight: '90vh', overflow: 'auto', boxShadow: '0 20px 60px rgba(15, 23, 42, 0.2)' },
+    modal:   { background: '#fff', borderRadius: 14, width: '100%', maxWidth: isTablet ? 520 : 640, maxHeight: '90vh', overflow: 'auto', boxShadow: '0 20px 60px rgba(15, 23, 42, 0.2)' },
     header:  { background: C.green, padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0 },
     body:    { padding: '20px 24px' },
     label:   { fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.1em', color: C.muted, marginBottom: 6, display: 'block', marginTop: 14 },
@@ -400,6 +402,7 @@ function PlanRow({ plan, subs = [], clients = [], ownerId, expanded, onToggleExp
 //            contractor can either text/email it to the customer or open
 //            it while sitting beside them.
 function EnrollModal({ plan, clients, ownerId, onClose, onCreated }) {
+  const { isTablet } = useBreakpoint();
   useEscapeClose(onClose);
   const [clientId,   setClientId]   = useState('');
   const [email,      setEmail]      = useState('');
@@ -454,7 +457,7 @@ function EnrollModal({ plan, clients, ownerId, onClose, onCreated }) {
 
   const s = {
     overlay: { position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.45)', zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 },
-    modal:   { background: '#fff', borderRadius: 14, width: '100%', maxWidth: 520, maxHeight: '90vh', overflow: 'auto', boxShadow: '0 20px 60px rgba(15, 23, 42, 0.2)' },
+    modal:   { background: '#fff', borderRadius: 14, width: '100%', maxWidth: isTablet ? 520 : 640, maxHeight: '90vh', overflow: 'auto', boxShadow: '0 20px 60px rgba(15, 23, 42, 0.2)' },
     header:  { background: C.green, padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0 },
     body:    { padding: '20px 24px' },
     label:   { fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.1em', color: C.muted, marginBottom: 6, display: 'block', marginTop: 14 },

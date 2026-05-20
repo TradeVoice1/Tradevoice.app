@@ -74,7 +74,7 @@ function ReviewRequestModal({ clients, ownerId, reviewLink, onClose, onSent }) {
 
   const s = {
     overlay: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 },
-    modal: { background: '#fff', borderRadius: 14, width: '100%', maxWidth: 500, maxHeight: '85vh', overflow: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' },
+    modal: { background: '#fff', borderRadius: 14, width: '100%', maxWidth: 640, maxHeight: '85vh', overflow: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' },
     header: { background: C.green, padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0 },
     body: { padding: '20px 24px' },
     clientRow: (sel) => ({ display: 'flex', alignItems: 'center', gap: 12, padding: '12px', borderRadius: 8, border: `1px solid ${sel ? C.greenBorder : '#e8e8e8'}`, background: sel ? C.greenLight : '#fff', cursor: 'pointer', marginBottom: 8 }),
@@ -186,7 +186,7 @@ function NewCampaignModal({ ownerId, onClose, onSent }) {
 
   const s = {
     overlay: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 },
-    modal: { background: '#fff', borderRadius: 14, width: '100%', maxWidth: 540, maxHeight: '90vh', overflow: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' },
+    modal: { background: '#fff', borderRadius: 14, width: '100%', maxWidth: 720, maxHeight: '90vh', overflow: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' },
     header: { background: C.green, padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0 },
     body: { padding: '20px 24px' },
     label: { fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.1em', color: '#888', marginBottom: 6, display: 'block', marginTop: 14 },

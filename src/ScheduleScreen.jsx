@@ -399,7 +399,7 @@ export function JobDetailModal({ job, techs, onClose, onStatusChange, onCreateIn
 
   const s = {
     overlay: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 },
-    modal: { background: '#fff', borderRadius: 14, width: '100%', maxWidth: 520, maxHeight: '90vh', overflow: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' },
+    modal: { background: '#fff', borderRadius: 14, width: '100%', maxWidth: isTablet ? 520 : 640, maxHeight: '90vh', overflow: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' },
     header: { background: COLORS.green, padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', position: 'sticky', top: 0, zIndex: 1 },
     closeBtn: { background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', width: 44, height: 44, borderRadius: '50%', cursor: 'pointer', fontSize: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
     body: { padding: '20px 24px' },
@@ -660,6 +660,10 @@ export function JobDetailModal({ job, techs, onClose, onStatusChange, onCreateIn
 // ─── ADD JOB MODAL ────────────────────────────────────────────────────────────
 function AddJobModal({ techs, jobs = [], onClose, onAdd, defaultDate, prefill = null, timeOff = [] }) {
   useEscapeClose(onClose);
+  // Wider modal on desktop browsers — same pattern as JobDetailModal.
+  // 480→640 lets form fields breathe instead of stacking everything
+  // in a phone-width column when there's a whole laptop screen open.
+  const { isTablet } = useBreakpoint();
   // `prefill` lets the parent seed the form (e.g. when scheduling from a recurring plan).
   // The plan's defaults — title, client name, trade, default tech, default duration, planId, target date —
   // flow straight into the initial form state. The user can still override anything before saving.

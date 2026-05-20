@@ -17,8 +17,10 @@
 // front-end just sends the user's plan slug ('solo'|'pro'|'all').
 
 import { useEffect, useRef, useState } from "react";
+import { useBreakpoint } from "./lib/useBreakpoint";
 
 export function BillingPaymentModal({ user, plan, onClose, onSaved }) {
+  const { isTablet } = useBreakpoint();
   const [phase, setPhase] = useState('idle');     // idle | loading | ready | submitting | success | error
   const [error, setError] = useState('');
   const stripeRef   = useRef(null);
@@ -136,7 +138,7 @@ export function BillingPaymentModal({ user, plan, onClose, onSaved }) {
       display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
     }}>
       <div onClick={e => e.stopPropagation()} style={{
-        background: '#fff', borderRadius: 14, width: '100%', maxWidth: 520,
+        background: '#fff', borderRadius: 14, width: '100%', maxWidth: isTablet ? 520 : 640,
         maxHeight: '92vh', overflow: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.25)',
       }}>
         <div style={{ padding: '20px 24px', background: '#2d6a4f', color: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
