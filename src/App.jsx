@@ -3372,6 +3372,12 @@ function InvoiceEditor({ initial, user, teamMembers = [], existingInvoices = [],
   // property-management work where AP needs PO numbers + job-site differentiation.
   const [poNumber,        setPoNumber]        = useState(initial?.poNumber        || '');
   const [workOrderNumber, setWorkOrderNumber] = useState(initial?.workOrderNumber || '');
+  // Job number (migration 0029) — auto-stamped when handleJobToInvoice
+  // creates this invoice from a scheduled job. Stays read-only on
+  // those auto-stamped invoices but EDITABLE on manually-created ones
+  // so the contractor can type their own job tracking code (e.g. an
+  // external work ticket from a property manager).
+  const [jobNumber,       setJobNumber]       = useState(initial?.jobNumber       || '');
   const [jobAddress,      setJobAddress]      = useState(initial?.jobAddress      || '');
   // jobAddressSameAsBilling: defaults true when the invoice has no separate
   // job address (most cases). Unchecking exposes the dedicated job-address field.
@@ -3448,6 +3454,7 @@ function InvoiceEditor({ initial, user, teamMembers = [], existingInvoices = [],
       // the redundant block instead of showing the same address twice.
       poNumber:           poNumber.trim()         || '',
       workOrderNumber:    workOrderNumber.trim()  || '',
+      jobNumber:          jobNumber.trim()        || '',
       jobAddress:         jobAddressSame ? '' : jobAddress.trim(),
       requestedBy:        requestedBy.trim()      || '',
       approvedBy:         approvedBy.trim()       || '',
@@ -3602,8 +3609,13 @@ function InvoiceEditor({ initial, user, teamMembers = [], existingInvoices = [],
       <div style={{ background:C.surface, border:`1px solid ${C.border}`, borderRadius:4, padding:'20px 22px', marginBottom:16 }}>
         <div style={{ fontSize:15, fontWeight:800, color:C.muted, letterSpacing:'0.1em', textTransform:'uppercase', marginBottom:14, fontFamily:"'Inter', sans-serif" }}>Job Details</div>
 
-        {/* PO + Work Order + Service Period */}
+        {/* Job # + PO + Work Order + Service Period */}
         <div style={{ display:'grid', gridTemplateColumns:isTablet?'1fr':'1fr 1fr 1fr 1fr', gap:12 }}>
+          <div>
+            <label style={s.label}>Job #</label>
+            <input value={jobNumber} onChange={e=>setJobNumber(e.target.value)} placeholder="e.g. JOB-2026-0042"
+              style={{ ...s.input, width:'100%', padding:'11px 12px', boxSizing:'border-box', fontSize:17, minHeight:48 }} />
+          </div>
           <div>
             <label style={s.label}>PO Number</label>
             <input value={poNumber} onChange={e=>setPoNumber(e.target.value)} placeholder="e.g. PO-29481"
@@ -4033,6 +4045,7 @@ function InvoiceDocument({ invoice, user, logo, payments, onEdit, onBack, onReco
                 // Optional metadata — only render rows that are populated so
                 // residential one-off invoices stay clean and commercial
                 // invoices surface what AP needs.
+                ...(invoice.jobNumber        ? [['Job #', invoice.jobNumber]] : []),
                 ...(invoice.poNumber         ? [['PO #', invoice.poNumber]] : []),
                 ...(invoice.workOrderNumber  ? [['Work Order #', invoice.workOrderNumber]] : []),
                 ...(invoice.permitNumber     ? [['Permit #', invoice.permitNumber]] : []),
@@ -9190,6 +9203,12 @@ function TradevoiceApp() {
     const draft = {
       // DB trigger assigns the number on insert (migration 0012).
       number: null,
+      // Job number snapshot (migration 0029) — stamped at conversion
+      // time so the invoice document can show "Job #JOB-2026-0042"
+      // and a customer or auditor can trace the invoice back to the
+      // original scheduled work. job.number is itself set by the
+      // assign_job_number trigger when the job was first inserted.
+      jobNumber:     job.number   || '',
       clientName:    job.clientName || '',
       clientPhone:   job.phone      || '',
       clientAddress: job.address    || '',

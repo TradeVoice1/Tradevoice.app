@@ -40,6 +40,10 @@ const dbToInvoice = (r) => ({
   // ── Tracking + job-detail fields (migration 0023) ──────────────────────
   poNumber:           r.po_number             ?? '',
   workOrderNumber:    r.work_order_number     ?? '',
+  // Denormalized job number snapshot (migration 0029). Stamped by
+  // handleJobToInvoice when an invoice is created from a Schedule job;
+  // empty string for invoices created directly (not from a job).
+  jobNumber:          r.job_number            ?? '',
   jobAddress:         r.job_address           ?? '',
   requestedBy:        r.requested_by          ?? '',
   approvedBy:         r.approved_by           ?? '',
@@ -93,6 +97,7 @@ const invoiceToDb = (inv) => ({
   // to null so Postgres doesn't store unhelpful '' values for dates etc.
   po_number:            inv.poNumber           || null,
   work_order_number:    inv.workOrderNumber    || null,
+  job_number:           inv.jobNumber          || null,
   job_address:          inv.jobAddress         || null,
   requested_by:         inv.requestedBy        || null,
   approved_by:          inv.approvedBy         || null,

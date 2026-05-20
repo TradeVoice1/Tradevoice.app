@@ -122,8 +122,8 @@ function renderStatusPill({ sc, large = false }) {
   );
 }
 
-// Groups a job into one of seven date buckets. The order in the returned
-// object's keys also drives display order (Overdue first, Past last).
+// Forward-looking buckets. The order here also drives display order
+// at the top of the list (Overdue first, then chronological forward).
 const dateBuckets = () => ({
   Overdue:    [],
   Today:      [],
@@ -131,8 +131,13 @@ const dateBuckets = () => ({
   'This Week': [],
   'Next Week': [],
   Later:      [],
-  Past:       [],
 });
+
+// Month label for past-job folders: "May 2026", "April 2026", etc.
+// Returned by date.toLocaleString — guaranteed locale-correct + sorts
+// naturally by year-month when used as a Map key (we sort the entries
+// chronologically descending when rendering anyway).
+const monthLabel = (d) => d.toLocaleString('en-US', { month: 'long', year: 'numeric' });
 
 export default function JobsScreen({ user, team = [], onCreateInvoice }) {
   const { isTablet } = useBreakpoint();
@@ -201,7 +206,11 @@ export default function JobsScreen({ user, team = [], onCreateInvoice }) {
     return result;
   }, [jobs, isTech, user?.id, filterTech, filterStatus, search]);
 
-  // Bucket by date. Overdue = past + still scheduled (not completed/cancelled).
+  // Bucket by date. Forward buckets (Overdue / Today / Tomorrow / This
+  // Week / Next Week / Later) work the same as before. Past jobs now
+  // split into MONTHLY folders ("May 2026", "April 2026", …) instead
+  // of one giant Past pile — keeps the list manageable as a contractor
+  // accumulates a year+ of completed work.
   const grouped = useMemo(() => {
     const today = new Date(); today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1);
@@ -209,11 +218,22 @@ export default function JobsScreen({ user, team = [], onCreateInvoice }) {
     const twoWeeks = new Date(today); twoWeeks.setDate(today.getDate() + 14);
 
     const buckets = dateBuckets();
+    // Use a Map for past months so insertion order can be controlled by
+    // sorting later. Key = "May 2026"; value = { sortKey, jobs }.
+    const monthMap = new Map();
     visibleJobs.forEach(j => {
       const d = new Date(j.date); d.setHours(0, 0, 0, 0);
       if (d < today) {
-        if (j.status === 'scheduled' || j.status === 'in-progress') buckets.Overdue.push(j);
-        else                                                         buckets.Past.push(j);
+        if (j.status === 'scheduled' || j.status === 'in-progress') {
+          // Past + still-scheduled = overdue regardless of how old.
+          buckets.Overdue.push(j);
+        } else {
+          // Completed / cancelled / etc. → monthly folder.
+          const label = monthLabel(d);
+          const sortKey = d.getFullYear() * 12 + d.getMonth();
+          if (!monthMap.has(label)) monthMap.set(label, { sortKey, jobs: [] });
+          monthMap.get(label).jobs.push(j);
+        }
       } else if (d.getTime() === today.getTime())    buckets.Today.push(j);
       else if (d.getTime() === tomorrow.getTime())   buckets.Tomorrow.push(j);
       else if (d < oneWeek)                          buckets['This Week'].push(j);
@@ -221,14 +241,24 @@ export default function JobsScreen({ user, team = [], onCreateInvoice }) {
       else                                           buckets.Later.push(j);
     });
 
-    // Within each bucket, sort earliest first (Past flips to most-recent first).
+    // Within forward buckets, earliest first.
     Object.values(buckets).forEach(b => b.sort((a, c) => {
       const dx = new Date(a.date) - new Date(c.date);
       return dx !== 0 ? dx : (a.startHour || 0) - (c.startHour || 0);
     }));
-    buckets.Past.reverse();
 
-    return buckets;
+    // Sort each monthly folder most-recent first (jobs within May 2026
+    // ordered May 31 → May 1 → May …). Then sort the folders themselves
+    // most-recent month first so the list reads as a reverse-chronological
+    // archive as the user scrolls down past the forward buckets.
+    const sortedMonths = Array.from(monthMap.entries())
+      .sort(([, a], [, b]) => b.sortKey - a.sortKey);
+    const result = { ...buckets };
+    for (const [label, { jobs: monthJobs }] of sortedMonths) {
+      monthJobs.sort((a, c) => new Date(c.date) - new Date(a.date));
+      result[label] = monthJobs;
+    }
+    return result;
   }, [visibleJobs]);
 
   // ── Mutation handlers (shared with the JobDetailModal when it's open) ─────

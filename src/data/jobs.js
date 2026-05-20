@@ -4,6 +4,10 @@ import { supabase } from "../supabase";
 
 const dbToJob = (r) => ({
   id:         r.id,
+  // Human-readable job number (migration 0029): "JOB-2026-0042" format,
+  // assigned by the assign_job_number BEFORE INSERT trigger on the DB.
+  // Read-only from the front-end — never written back via jobToDb.
+  number:     r.number          ?? '',
   clientId:   r.client_id     ?? null,
   // Denormalized snapshot of the client name — used for calendar tooltips and
   // Job→Invoice conversion. Was missing from the DB schema before migration
