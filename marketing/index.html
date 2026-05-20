@@ -148,11 +148,14 @@
   .why-tv { padding: 80px 0; background: var(--white); }
   .why-tv .why-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; max-width: 1100px; margin: 0 auto; }
   @media (max-width: 900px) { .why-tv .why-grid { grid-template-columns: 1fr; gap: 20px; } }
-  .why-card { padding: 28px 24px; border: 1px solid var(--border); border-radius: 14px; background: var(--white); transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s; }
+  .why-card { padding: 32px 28px; border: 1px solid var(--border); border-radius: 14px; background: var(--white); transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s; }
   .why-card:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(15,23,42,0.06); border-color: var(--green-mist); }
-  .why-icon { width: 52px; height: 52px; border-radius: 12px; background: var(--green-light); color: var(--green-dark); display: flex; align-items: center; justify-content: center; font-size: 26px; margin-bottom: 18px; }
-  .why-title { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 800; color: var(--text); margin-bottom: 10px; letter-spacing: -0.01em; line-height: 1.2; }
-  .why-desc { font-size: 14px; color: var(--muted); line-height: 1.65; }
+  /* Subtle accent underline on each Playfair headline — gives the trio
+     visual anchors without the emoji-in-a-square look the section had
+     originally. 32px wide green-dark bar sits above the title. */
+  .why-title { font-family: 'Playfair Display', serif; font-size: 24px; font-weight: 800; color: var(--text); margin-bottom: 12px; letter-spacing: -0.01em; line-height: 1.2; position: relative; padding-top: 18px; }
+  .why-title::before { content: ''; position: absolute; top: 0; left: 0; width: 36px; height: 3px; background: var(--green); border-radius: 2px; }
+  .why-desc { font-size: 15px; color: var(--muted); line-height: 1.7; }
 
   /* ── TRUE-NUMBERS STRIP (pre-pricing) ──────────────────────────────────
      A compact stat strip just above the pricing section. Unlike the
@@ -948,19 +951,16 @@
     <div class="why-grid">
 
       <div class="why-card">
-        <div class="why-icon">🚀</div>
         <div class="why-title">Fast where it matters</div>
         <div class="why-desc">From first estimate to final payment in one place. Quote in minutes, send it the moment you leave the driveway, watch it convert to an invoice in one tap when the work's done.</div>
       </div>
 
       <div class="why-card">
-        <div class="why-icon">💵</div>
         <div class="why-title">Paid your way</div>
         <div class="why-desc">Card, ACH, Zelle, Venmo, Cash App, check, cash — every method your client already uses, tagged on every invoice. You keep 100% of what you billed; the processing fee rides with the customer.</div>
       </div>
 
       <div class="why-card">
-        <div class="why-icon">🛠️</div>
         <div class="why-title">Every trade</div>
         <div class="why-desc">Plumbing to chimney sweep, restoration to roofing, audio-video to electrical — 56 trades supported on day one with pre-built quote sheets, material libraries, and labor rate defaults.</div>
       </div>
