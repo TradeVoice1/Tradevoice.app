@@ -857,12 +857,42 @@ function SignupScreen({ onComplete, onBack }) {
   // If the page mounted with an active Supabase session, the user
   // already authenticated via Google and we should skip Step 0 (Account).
   // We also use this to know NOT to call signUp() in initPayment.
+  //
+  // 2026-05-19: hardened against a real bug found in testing. The
+  // founder hit /signup while still logged in as their existing
+  // account; this effect blindly attached the new wizard to their
+  // existing user, so finishing the wizard OVERWROTE their existing
+  // profile and created a duplicate Stripe subscription against their
+  // existing customer. Now we additionally check whether the existing
+  // profile is already "complete" (paid, trades set, terms accepted)
+  // — if so, the user shouldn't be on signup at all, so we hand them
+  // back to App.jsx via onComplete and let the normal routing send
+  // them to Dashboard.
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
         const session = await getSessionUser();
         if (cancelled || !session) return;
+        // Sanity check: is this an already-paying user who landed on
+        // signup by mistake? If yes, bail out — don't let them
+        // re-fill the wizard and clobber their profile.
+        try {
+          const existingProfile = await getProfile(session.id, session.email);
+          if (cancelled) return;
+          const alreadyComplete = !!existingProfile
+            && !!existingProfile.acceptedTermsAt
+            && Array.isArray(existingProfile.trades) && existingProfile.trades.length > 0
+            && !!existingProfile.stripe_subscription_id;
+          if (alreadyComplete) {
+            console.log('SignupScreen: existing complete profile detected — routing to dashboard');
+            onComplete(existingProfile);
+            return;
+          }
+        } catch (profileErr) {
+          console.warn('SignupScreen: profile lookup during session check failed', profileErr?.message);
+          // Fall through — better to let them complete signup than be stuck.
+        }
         authUserIdRef.current = session.id;
         setIsExistingAuthUser(true);
         setEmail(session.email || '');
