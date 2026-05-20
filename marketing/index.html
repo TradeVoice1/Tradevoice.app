@@ -121,9 +121,67 @@
   .hero-btn-white:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.15); }
   .hero-btn-outline { background: transparent; color: #fff; border: 2px solid rgba(255,255,255,0.5); padding: 14px 32px; border-radius: 50px; font-size: 16px; font-weight: 600; text-decoration: none; display: inline-block; transition: all 0.2s; font-family: 'DM Sans', sans-serif; }
   .hero-btn-outline:hover { border-color: #fff; background: rgba(255,255,255,0.1); }
+  /* Legacy hero-stats styles kept for backward compat in case the strip
+     ever gets reintroduced. Hero now uses .hero-promise (below). */
   .hero-stats { display: flex; gap: 32px; margin-top: 48px; }
   .hero-stat-num { font-family: 'Playfair Display', serif; font-size: 32px; font-weight: 900; color: #fff; }
   .hero-stat-lbl { font-size: 13px; color: rgba(255,255,255,0.65); margin-top: 2px; }
+  .hero-promise {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: clamp(18px, 2vw, 22px);
+    color: rgba(255,255,255,0.9);
+    margin-top: 48px;
+    padding-left: 18px;
+    border-left: 3px solid var(--green-mist);
+    max-width: 480px;
+    line-height: 1.45;
+    font-weight: 700;
+  }
+
+  /* ── WHY TRADEVOICE PILLARS ────────────────────────────────────────────
+     Three icon + headline + sub trios that introduce the value props
+     immediately after the hero. Sits between the hero and founder bar
+     so visitors get a clear "what is this and why should I care" before
+     scrolling into deep content. No numbers — just phrased promises
+     mapped to contractor outcomes. */
+  .why-tv { padding: 80px 0; background: var(--white); }
+  .why-tv .why-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; max-width: 1100px; margin: 0 auto; }
+  @media (max-width: 900px) { .why-tv .why-grid { grid-template-columns: 1fr; gap: 20px; } }
+  .why-card { padding: 28px 24px; border: 1px solid var(--border); border-radius: 14px; background: var(--white); transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s; }
+  .why-card:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(15,23,42,0.06); border-color: var(--green-mist); }
+  .why-icon { width: 52px; height: 52px; border-radius: 12px; background: var(--green-light); color: var(--green-dark); display: flex; align-items: center; justify-content: center; font-size: 26px; margin-bottom: 18px; }
+  .why-title { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 800; color: var(--text); margin-bottom: 10px; letter-spacing: -0.01em; line-height: 1.2; }
+  .why-desc { font-size: 14px; color: var(--muted); line-height: 1.65; }
+
+  /* ── TRUE-NUMBERS STRIP (pre-pricing) ──────────────────────────────────
+     A compact stat strip just above the pricing section. Unlike the
+     original "3x / $387" hero strip we removed, every number here is
+     a real, provable product attribute — not an outcome claim. Reads
+     as a confidence reinforcer right at the decision moment. */
+  .pre-pricing-stats {
+    background: var(--cream);
+    padding: 48px 0;
+    border-top: 1px solid var(--border);
+  }
+  .pre-pricing-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 36px; max-width: 880px; margin: 0 auto; text-align: center;
+  }
+  @media (max-width: 720px) { .pre-pricing-grid { grid-template-columns: 1fr; gap: 28px; } }
+  .pp-num { font-family: 'Playfair Display', serif; font-size: clamp(40px, 5vw, 56px); font-weight: 900; color: var(--green-dark); line-height: 1; letter-spacing: -0.02em; }
+  .pp-lbl { font-size: 13px; color: var(--muted); font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; margin-top: 8px; }
+
+  /* ── CLOSING PROMISE STRIP (pre-CTA) ───────────────────────────────────
+     Three phrased promises right before the final "Request Early Access"
+     banner. Same three-column rhythm as the pre-pricing stats but with
+     serif words instead of numbers — keeps the visual variety without
+     adding more claims at the bottom of the funnel. */
+  .closing-strip { padding: 64px 0; background: var(--white); border-top: 1px solid var(--border); }
+  .closing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 36px; max-width: 980px; margin: 0 auto; text-align: center; }
+  @media (max-width: 900px) { .closing-grid { grid-template-columns: 1fr; gap: 24px; } }
+  .cl-head { font-family: 'Playfair Display', serif; font-size: clamp(22px, 2.4vw, 28px); font-weight: 800; color: var(--green-dark); letter-spacing: -0.01em; margin-bottom: 8px; line-height: 1.2; }
+  .cl-sub { font-size: 14px; color: var(--muted); line-height: 1.65; max-width: 260px; margin: 0 auto; }
   .hero-mockup {
     background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
     border-radius: 20px; padding: 20px; backdrop-filter: blur(4px);
@@ -769,20 +827,12 @@
           <a href="mailto:hello@thetradevoice.com?subject=Early%20Access%20Request%20—%20Tradevoice&body=Hi%20Tradevoice%2C%0A%0AI%27d%20like%20to%20request%20early%20access.%20A%20bit%20about%20me%3A%0A%0A-%20Name%3A%0A-%20Trade%2Fs%3A%0A-%20State%3A%0A-%20Crew%20size%3A%0A%0AThanks!" class="hero-btn-white">Request Early Access</a>
           <a href="#features" class="hero-btn-outline">See It In Action</a>
         </div>
-        <div class="hero-stats">
-          <div>
-            <div class="hero-stat-num">3x</div>
-            <div class="hero-stat-lbl">Faster quote acceptance</div>
-          </div>
-          <div>
-            <div class="hero-stat-num">$387</div>
-            <div class="hero-stat-lbl">Avg. invoice recovered faster</div>
-          </div>
-          <div>
-            <div class="hero-stat-num">5</div>
-            <div class="hero-stat-lbl">Trades supported</div>
-          </div>
-        </div>
+        <!-- Hero promise line — replaced the original "3x / $387 / 5"
+             stat strip on 2026-05-19. Those numbers weren't yet backed
+             by real customer data and one of them (5 trades) was flat
+             wrong (we support 56). Single italic serif line reads as
+             a confident promise without overclaiming. -->
+        <div class="hero-promise">"Run your trade business like the pros — without paying like one."</div>
       </div>
       <div class="hero-mockup">
         <div class="mockup-bar">
@@ -836,6 +886,38 @@
           </div>
         </div>
       </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── WHY TRADEVOICE ────────────────────────────────────────────────────────────
+     Three value-prop pillars introduced right after the hero. Replaces
+     the old stat-strip pattern with phrased promises tied to contractor
+     outcomes (speed, payment flexibility, breadth of trades). Sits here
+     so visitors immediately see "what this app does for me" without
+     reading marketing fluff. -->
+<section class="why-tv">
+  <div class="container">
+    <div class="why-grid">
+
+      <div class="why-card">
+        <div class="why-icon">🚀</div>
+        <div class="why-title">Fast where it matters</div>
+        <div class="why-desc">From first estimate to final payment in one place. Quote in minutes, send it the moment you leave the driveway, watch it convert to an invoice in one tap when the work's done.</div>
+      </div>
+
+      <div class="why-card">
+        <div class="why-icon">💵</div>
+        <div class="why-title">Paid your way</div>
+        <div class="why-desc">Card, ACH, Zelle, Venmo, Cash App, check, cash — every method your client already uses, tagged on every invoice. You keep 100% of what you billed; the processing fee rides with the customer.</div>
+      </div>
+
+      <div class="why-card">
+        <div class="why-icon">🛠️</div>
+        <div class="why-title">Every trade</div>
+        <div class="why-desc">Plumbing to chimney sweep, restoration to roofing, audio-video to electrical — 56 trades supported on day one with pre-built quote sheets, material libraries, and labor rate defaults.</div>
+      </div>
+
     </div>
   </div>
 </section>
@@ -1685,6 +1767,29 @@
   </div>
 </section>
 
+<!-- ── PRE-PRICING TRUE-NUMBERS STRIP ────────────────────────────────────────────
+     Three product attributes a visitor sees right before the pricing
+     cards. Every number is a real, provable attribute of the product —
+     not an outcome claim — so we can defend every line. -->
+<section class="pre-pricing-stats">
+  <div class="container">
+    <div class="pre-pricing-grid">
+      <div>
+        <div class="pp-num">56</div>
+        <div class="pp-lbl">Trades supported</div>
+      </div>
+      <div>
+        <div class="pp-num">28<span style="font-size:0.55em;color:var(--muted);letter-spacing:0.05em;">-day</span></div>
+        <div class="pp-lbl">Free trial · every plan</div>
+      </div>
+      <div>
+        <div class="pp-num">100<span style="font-size:0.55em;color:var(--muted);">%</span></div>
+        <div class="pp-lbl">Of every invoice · to you</div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- ── PRICING ─────────────────────────────────────────────────────────────────── -->
 <section class="pricing" id="pricing">
   <div class="container">
@@ -1920,6 +2025,30 @@
         <span class="store-icon"></span>
         <div><div class="store-sub">Start now on</div><div class="store-name">thetradevoice.com</div><div style="font-size:11px;color:#4ade80;font-weight:600;margin-top:4px">Available Now</div></div>
       </a>
+    </div>
+  </div>
+</section>
+
+<!-- ── CLOSING PROMISE STRIP ────────────────────────────────────────────────────
+     Phrased promises (no numbers) right before the final CTA banner.
+     Same three-column rhythm as the pre-pricing stats but in words,
+     so the page closes with a softer reinforcement of value props
+     rather than another number-heavy moment. -->
+<section class="closing-strip">
+  <div class="container">
+    <div class="closing-grid">
+      <div>
+        <div class="cl-head">Faster.</div>
+        <div class="cl-sub">Quote acceptance that doesn't drag. Customers sign on the same link they pay on.</div>
+      </div>
+      <div>
+        <div class="cl-head">Cleaner.</div>
+        <div class="cl-sub">Invoices commercial AP departments actually accept — PO numbers, COI, signatures, the works.</div>
+      </div>
+      <div>
+        <div class="cl-head">Every trade.</div>
+        <div class="cl-sub">From the solo plumber to the multi-trade shop, one tool for everything.</div>
+      </div>
     </div>
   </div>
 </section>
