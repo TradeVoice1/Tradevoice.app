@@ -172,6 +172,52 @@
   .pp-num { font-family: 'Playfair Display', serif; font-size: clamp(40px, 5vw, 56px); font-weight: 900; color: var(--green-dark); line-height: 1; letter-spacing: -0.02em; }
   .pp-lbl { font-size: 13px; color: var(--muted); font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; margin-top: 8px; }
 
+  /* ── TECH SEATS ────────────────────────────────────────────────────────
+     Dedicated section that explains the multi-tech model: included seats
+     per plan, $19.99/mo per additional, Tech ID logins, and the
+     permission grid the owner controls. Tech seats are a real
+     differentiator that was previously buried in a one-line footnote
+     near pricing; this section pulls it forward as a feature the
+     visitor can shop on. */
+  .tech-seats { padding: 90px 0; background: var(--white); }
+  .tech-seats h2 { font-size: clamp(30px, 4vw, 46px); font-weight: 900; text-align: center; margin-bottom: 12px; line-height: 1.1; }
+  .tech-seats .sub { text-align: center; color: var(--muted); font-size: 18px; margin-bottom: 56px; font-weight: 300; max-width: 720px; margin-left: auto; margin-right: auto; }
+
+  /* "How tech seats work" 3-step strip */
+  .ts-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; max-width: 1080px; margin: 0 auto 64px; }
+  @media (max-width: 900px) { .ts-steps { grid-template-columns: 1fr; gap: 18px; } }
+  .ts-step { padding: 28px 26px; background: var(--cream); border: 1px solid var(--border); border-radius: 14px; transition: transform 0.15s, border-color 0.15s; }
+  .ts-step:hover { transform: translateY(-2px); border-color: var(--green-mist); }
+  .ts-step-num { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 50%; background: var(--green); color: #fff; font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 900; margin-bottom: 16px; }
+  .ts-step-title { font-family: 'Playfair Display', serif; font-size: 21px; font-weight: 800; color: var(--text); margin-bottom: 8px; letter-spacing: -0.01em; line-height: 1.2; }
+  .ts-step-desc { font-size: 14px; color: var(--muted); line-height: 1.6; }
+  .ts-step-desc code { background: rgba(45,106,79,0.08); color: var(--green-dark); padding: 1px 6px; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 13px; font-weight: 700; }
+
+  /* Plan → included seats table */
+  .ts-plans { background: var(--cream); border: 1px solid var(--border); border-radius: 16px; padding: 32px 36px; max-width: 980px; margin: 0 auto 56px; }
+  .ts-plans-head { font-family: 'Playfair Display', serif; font-size: 26px; font-weight: 800; color: var(--text); margin-bottom: 6px; letter-spacing: -0.01em; text-align: center; }
+  .ts-plans-sub { font-size: 14px; color: var(--muted); text-align: center; margin-bottom: 24px; }
+  .ts-plans-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  @media (max-width: 720px) { .ts-plans-grid { grid-template-columns: 1fr; } }
+  .ts-plan { padding: 22px 20px; background: var(--white); border: 1px solid var(--border); border-radius: 12px; text-align: center; }
+  .ts-plan-name { font-size: 13px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+  .ts-plan-included { font-family: 'Playfair Display', serif; font-size: 44px; font-weight: 900; color: var(--green-dark); line-height: 1; margin-bottom: 4px; }
+  .ts-plan-included-lbl { font-size: 13px; color: var(--muted); margin-bottom: 14px; }
+  .ts-plan-extra { font-size: 13px; color: var(--text); padding-top: 14px; border-top: 1px solid var(--border); font-weight: 600; }
+  .ts-plan-extra-price { color: var(--green-dark); font-weight: 800; }
+
+  /* Permission grid */
+  .ts-perms-wrap { max-width: 1080px; margin: 0 auto; padding: 36px 36px; background: var(--white); border: 1px solid var(--border); border-radius: 16px; }
+  .ts-perms-head { font-family: 'Playfair Display', serif; font-size: 26px; font-weight: 800; color: var(--text); margin-bottom: 6px; letter-spacing: -0.01em; }
+  .ts-perms-sub { font-size: 14px; color: var(--muted); margin-bottom: 20px; line-height: 1.65; max-width: 640px; }
+  .ts-perms-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px 28px; }
+  @media (max-width: 900px) { .ts-perms-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 600px) { .ts-perms-grid { grid-template-columns: 1fr; } }
+  .ts-perm { display: flex; align-items: flex-start; gap: 10px; }
+  .ts-perm-check { flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%; background: var(--green-light); color: var(--green-dark); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 900; margin-top: 1px; }
+  .ts-perm-text { font-size: 14px; color: var(--text); line-height: 1.5; font-weight: 600; }
+  .ts-perm-text small { display: block; font-weight: 400; color: var(--muted); margin-top: 2px; }
+
   /* ── CLOSING PROMISE STRIP (pre-CTA) ───────────────────────────────────
      Three phrased promises right before the final "Request Early Access"
      banner. Same three-column rhythm as the pre-pricing stats but with
@@ -802,6 +848,7 @@
       <div class="nav-links">
         <a href="#whats-new">What's new</a>
         <a href="#onboarding">Onboarding</a>
+        <a href="#tech-seats">Crew</a>
         <a href="#features">Features</a>
         <a href="#pricing">Pricing</a>
         <a href="#compare">Compare</a>
@@ -1767,6 +1814,125 @@
   </div>
 </section>
 
+<!-- ── TECH SEATS ───────────────────────────────────────────────────────────────
+     Multi-tech section. Three pieces, top to bottom:
+       1. 3-step "how it works" — Buy seat → Set permissions → Tech signs in
+       2. Plan-by-plan included seats card (0/0/2 + $19.99/mo per additional)
+       3. Permission grid showing the 6 toggles the owner controls per tech
+     Sits just before pre-pricing stats so contractors with crews see the
+     value before the pricing decision. -->
+<section class="tech-seats" id="tech-seats">
+  <div class="container">
+    <span class="section-tag">Run your crew</span>
+    <h2>One owner. Multiple techs. Permissions you control.</h2>
+    <p class="sub">Add as many technicians as you need. Each one gets their own login, sees only what you let them see, and gets attributed on every job and invoice they touch.</p>
+
+    <!-- 3-step explainer -->
+    <div class="ts-steps">
+
+      <div class="ts-step">
+        <div class="ts-step-num">1</div>
+        <div class="ts-step-title">Buy a tech seat</div>
+        <div class="ts-step-desc">Settings → Team → Buy a Tech Seat. We bill it pro-rata for the rest of the current month — no surprise lump charges. Remove a seat later and you're credited pro-rata too.</div>
+      </div>
+
+      <div class="ts-step">
+        <div class="ts-step-num">2</div>
+        <div class="ts-step-title">Set permissions</div>
+        <div class="ts-step-desc">Six toggles control what each tech can do — see all jobs vs only their own, create invoices, record payments, see clients, see the dashboard, and more. Different techs can have different permissions.</div>
+      </div>
+
+      <div class="ts-step">
+        <div class="ts-step-num">3</div>
+        <div class="ts-step-title">Hand them a Tech ID</div>
+        <div class="ts-step-desc">We generate a unique Tech ID for each technician — looks like <code>TV-T-K3M9R7</code>. They sign in with that ID and a password you set. No email required. Their phone, their login.</div>
+      </div>
+
+    </div>
+
+    <!-- Plan-by-plan included seats -->
+    <div class="ts-plans">
+      <div class="ts-plans-head">What each plan includes</div>
+      <div class="ts-plans-sub">Additional seats are <strong>$19.99/mo each</strong> on every plan — pro-rated when you add or remove a tech mid-month.</div>
+      <div class="ts-plans-grid">
+
+        <div class="ts-plan">
+          <div class="ts-plan-name">Solo</div>
+          <div class="ts-plan-included">0</div>
+          <div class="ts-plan-included-lbl">included tech seats</div>
+          <div class="ts-plan-extra">Add seats at <span class="ts-plan-extra-price">$19.99/mo each</span></div>
+        </div>
+
+        <div class="ts-plan">
+          <div class="ts-plan-name">Pro</div>
+          <div class="ts-plan-included">0</div>
+          <div class="ts-plan-included-lbl">included tech seats</div>
+          <div class="ts-plan-extra">Add seats at <span class="ts-plan-extra-price">$19.99/mo each</span></div>
+        </div>
+
+        <div class="ts-plan">
+          <div class="ts-plan-name">Elite</div>
+          <div class="ts-plan-included">2</div>
+          <div class="ts-plan-included-lbl">included tech seats</div>
+          <div class="ts-plan-extra">Additional at <span class="ts-plan-extra-price">$19.99/mo each</span></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Permission grid -->
+    <div class="ts-perms-wrap">
+      <div class="ts-perms-head">Permissions you control per tech</div>
+      <div class="ts-perms-sub">Each tech gets the access they need, nothing more. Toggle any of these for any tech, change them anytime — they take effect on the tech's next page load.</div>
+      <div class="ts-perms-grid">
+
+        <div class="ts-perm">
+          <div class="ts-perm-check">✓</div>
+          <div class="ts-perm-text">Create quotes
+            <small>Build and send quotes to customers</small>
+          </div>
+        </div>
+
+        <div class="ts-perm">
+          <div class="ts-perm-check">✓</div>
+          <div class="ts-perm-text">Create invoices
+            <small>Convert completed jobs into invoices</small>
+          </div>
+        </div>
+
+        <div class="ts-perm">
+          <div class="ts-perm-check">✓</div>
+          <div class="ts-perm-text">Record payments
+            <small>Mark cash, check, or handle payments as received</small>
+          </div>
+        </div>
+
+        <div class="ts-perm">
+          <div class="ts-perm-check">✓</div>
+          <div class="ts-perm-text">View all jobs
+            <small>See the whole calendar, not just their own jobs</small>
+          </div>
+        </div>
+
+        <div class="ts-perm">
+          <div class="ts-perm-check">✓</div>
+          <div class="ts-perm-text">View clients
+            <small>Access the client list and contact info</small>
+          </div>
+        </div>
+
+        <div class="ts-perm">
+          <div class="ts-perm-check">✓</div>
+          <div class="ts-perm-text">View dashboard
+            <small>See revenue numbers and business KPIs</small>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- ── PRE-PRICING TRUE-NUMBERS STRIP ────────────────────────────────────────────
      Three product attributes a visitor sees right before the pricing
      cards. Every number is a real, provable attribute of the product —
@@ -1878,7 +2044,7 @@
         <div class="sec-badge"><div class="sec-icon"></div><div><div class="sec-title">Bank-level encryption</div><div class="sec-desc">All data encrypted in transit and at rest using AES-256.</div></div></div>
         <div class="sec-badge"><div class="sec-icon"></div><div><div class="sec-title">Stripe-powered payments</div><div class="sec-desc">PCI-DSS compliant. We never store card numbers.</div></div></div>
         <div class="sec-badge"><div class="sec-icon"></div><div><div class="sec-title">We don't sell your data</div><div class="sec-desc">Your clients, your invoices, your business. Always.</div></div></div>
-        <div class="sec-badge"><div class="sec-icon"></div><div><div class="sec-title">Automatic backups</div><div class="sec-desc">Your data backed up continuously. Never lose a record.</div></div></div>
+        <div class="sec-badge"><div class="sec-icon"></div><div><div class="sec-title">Automatic backups</div><div class="sec-desc">Daily backups handled by our database provider. Export your records anytime.</div></div></div>
       </div>
     </div>
   </div>
@@ -1921,9 +2087,14 @@
           <div class="tax-step"><div class="tax-num">2</div><div class="tax-step-text">TradeVoice prefills the state's default rate and any contractor-labor exemptions we ship with</div></div>
           <div class="tax-step"><div class="tax-num">3</div><div class="tax-step-text">You confirm or override the rate. No more "what did I charge last time?" guesswork.</div></div>
         </div>
-        <div style="margin-top:24px;padding:16px 20px;background:rgba(255,255,255,0.08);border-radius:10px;border:1px solid rgba(255,255,255,0.15)">
-          <div style="font-size:13px;font-weight:700;color:rgba(255,255,255,0.6);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">Coming later</div>
-          <div style="font-size:15px;color:rgba(255,255,255,0.9);line-height:1.6">Rooftop-accurate live tax lookups by city + county + zip are on the roadmap. We'll wire them in once we partner with a tax-API provider. Until then, the defaults give you a solid starting point and you can override per invoice in seconds.</div>
+        <!-- Contrast fix: this card sits on the cream-colored .tax-updates
+             section background, so it needs dark text + a white card
+             (the previous rgba-white-on-rgba-white styling was a leftover
+             from copying a dark-hero pattern and rendered as invisible
+             white-on-cream). -->
+        <div style="margin-top:24px;padding:16px 20px;background:#fff;border-radius:10px;border:1px solid var(--green-mist)">
+          <div style="font-size:12px;font-weight:800;color:var(--green-dark);text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px">Coming later</div>
+          <div style="font-size:15px;color:var(--text);line-height:1.6">Rooftop-accurate live tax lookups by city + county + zip are on the roadmap. We'll wire them in once we partner with a tax-API provider. Until then, the defaults give you a solid starting point and you can override per invoice in seconds.</div>
         </div>
       </div>
       <div class="tax-calendar">
@@ -1968,7 +2139,7 @@
             <div style="width:36px;height:36px;border-radius:8px;background:#f0f7f4;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px;">📄</div>
             <div>
               <div style="font-size:15px;font-weight:700;color:#111;margin-bottom:3px">Shows on every invoice</div>
-              <div style="font-size:14px;color:#888;line-height:1.6">Your license number appears automatically on every invoice and quote, building trust with clients and meeting legal requirements.</div>
+              <div style="font-size:14px;color:#888;line-height:1.6">Your license number appears automatically on every invoice and quote — so clients can verify your credentials and your paperwork reads professionally.</div>
             </div>
           </div>
         </div>
@@ -1997,8 +2168,17 @@
             </div>
           </div>
         </div>
-        <div style="font-size:12px;color:#aaa;text-align:center;margin-top:12px">All 50 states · 5 trades · Residential & Commercial</div>
+        <div style="font-size:12px;color:#aaa;text-align:center;margin-top:12px">All 50 states · 56 trades · Residential & Commercial</div>
       </div>
+    </div>
+    <!-- License data disclaimer — important. State licensing requirements
+         change as legislatures update statutes; our reference data is
+         maintained but not realtime. Encourage every contractor to verify
+         current rules against their state's primary source. Mirrors the
+         "TradeVoice is not a tax advisor" pattern from the Terms — sets
+         clear responsibility expectations. -->
+    <div style="margin-top:32px;padding:14px 18px;background:#fff8eb;border:1px solid #f5d5a0;border-radius:10px;font-size:13px;color:#7a4f1a;line-height:1.6;max-width:900px;margin-left:auto;margin-right:auto">
+      ⚠️ <strong>Always verify with your state licensing board before bidding.</strong> Our reference data is maintained from official board sources and updated as we become aware of changes, but state licensing rules can update at any time. TradeVoice displays this information for convenience — you are responsible for holding the correct licenses, permits, and registrations for your jurisdiction and the work you perform.
     </div>
   </div>
 </section>
