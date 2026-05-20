@@ -812,9 +812,15 @@ function SignupScreen({ onComplete, onBack }) {
   const { isTablet } = useBreakpoint();
   // Refs to the Stripe.js instance + Elements instance + the DOM node the
   // PaymentElement mounts into. Live across Step 2 → Step 3 transitions.
-  const stripeRef     = useRef(null);
-  const elementsRef   = useRef(null);
-  const cardMountRef  = useRef(null);
+  // paymentElementRef holds the actual PaymentElement so we can call
+  // .unmount() on it in cleanup — without explicit unmount, React's
+  // reconciliation tries to removeChild on Stripe's iframe (which Stripe
+  // injected via direct DOM manipulation) and throws NotFoundError,
+  // which crashes the whole React tree on commit.
+  const stripeRef         = useRef(null);
+  const elementsRef       = useRef(null);
+  const paymentElementRef = useRef(null);
+  const cardMountRef      = useRef(null);
   // Set once we have an auth user — either freshly created via signUp in
   // initPayment() OR detected on mount because the user arrived via
   // Google OAuth and is already signed in.
@@ -976,10 +982,20 @@ function SignupScreen({ onComplete, onBack }) {
           },
         },
       });
+      // Before creating a new PaymentElement, tear down any previous one.
+      // Without this, navigating Step 3 → Step 2 → Step 3 (re-init payment)
+      // would leave the prior Stripe iframe orphaned in the DOM and the
+      // next React render would removeChild-throw on it.
+      if (paymentElementRef.current) {
+        try { paymentElementRef.current.unmount(); } catch (_) {}
+        paymentElementRef.current = null;
+      }
+
       const paymentElement = elements.create('payment', { layout: 'tabs' });
 
-      stripeRef.current   = stripe;
-      elementsRef.current = elements;
+      stripeRef.current         = stripe;
+      elementsRef.current       = elements;
+      paymentElementRef.current = paymentElement;
       setPaymentPhase('ready');
       requestAnimationFrame(() => {
         if (cardMountRef.current) paymentElement.mount(cardMountRef.current);
@@ -989,6 +1005,21 @@ function SignupScreen({ onComplete, onBack }) {
       setPaymentPhase('error');
     }
   };
+
+  // Cleanup: when SignupScreen unmounts (e.g. user finishes signup and
+  // gets routed to Dashboard, or navigates away mid-flow), explicitly
+  // unmount the Stripe PaymentElement so React's reconciliation doesn't
+  // try to remove DOM nodes Stripe injected itself. Otherwise React
+  // throws NotFoundError on removeChild and crashes the whole tree to
+  // a blank page (root div becomes empty, Stripe iframes orphaned).
+  useEffect(() => {
+    return () => {
+      if (paymentElementRef.current) {
+        try { paymentElementRef.current.unmount(); } catch (_) {}
+        paymentElementRef.current = null;
+      }
+    };
+  }, []);
 
   // When the user transitions to Step 3 for the first time, kick off the
   // payment init. Subsequent re-renders skip (paymentPhase !== 'idle').
@@ -1507,7 +1538,16 @@ function SignupScreen({ onComplete, onBack }) {
         {!(step === 1 && isExistingAuthUser) && (
           <button
             onClick={step === 0 ? onBack : () => {
-              if (step === 3) setPaymentPhase('idle'); // re-init Elements next entry
+              if (step === 3) {
+                // Explicitly unmount the Stripe PaymentElement before
+                // React unmounts the cardMountRef div on Step 3 exit.
+                // Same NotFoundError-prevention as the cleanup useEffect.
+                if (paymentElementRef.current) {
+                  try { paymentElementRef.current.unmount(); } catch (_) {}
+                  paymentElementRef.current = null;
+                }
+                setPaymentPhase('idle'); // re-init Elements next entry
+              }
               setStep(s => s - 1);
             }}
             disabled={paymentPhase === 'submitting'}
