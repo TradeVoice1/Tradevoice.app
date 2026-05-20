@@ -285,6 +285,11 @@ function PhotoTile({ photo, onView, onCycleLabel, onSetCaption, onDelete }) {
 // row exposes a Change button that flips the row into an editor.
 export function JobDetailModal({ job, techs, onClose, onStatusChange, onCreateInvoice, onPhotosChange, onReschedule, userId, isTech = false }) {
   useEscapeClose(onClose);
+  // Layout breakpoint — desktop gets a 720px modal with a 2-col body so
+  // the form doesn't feel claustrophobic when there's plenty of room
+  // around it on a laptop browser. Tablet + phone keep the original
+  // single-column 480px-wide modal.
+  const { isTablet } = useBreakpoint();
   const tech = techs.find(t => t.id === job.techUserId);
   const sc = STATUS_COLORS[job.status] || STATUS_COLORS.scheduled;
   const [uploading, setUploading]   = useState(false);
@@ -420,6 +425,11 @@ export function JobDetailModal({ job, techs, onClose, onStatusChange, onCreateIn
           <button style={s.closeBtn} onClick={onClose}>×</button>
         </div>
         <div style={s.body}>
+          {/* Two-column body on desktop (laptop+), single column on tablet/
+              phone. Left column holds the textual "what + who + where"
+              fields; right column holds Photos + status controls. */}
+          <div style={s.bodyGrid}>
+          <div>
           <div style={s.row}>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
@@ -518,6 +528,9 @@ export function JobDetailModal({ job, techs, onClose, onStatusChange, onCreateIn
               <div style={{ fontSize: 14, color: '#555', lineHeight: 1.6, marginTop: 4 }}>{job.notes}</div>
             </div>
           )}
+          </div>
+          {/* ── Right column (desktop) / continues stacked (tablet) ── */}
+          <div>
 
           {/* Photos — owner + tech can both add/remove. Tap a thumbnail to view full size. */}
           <div style={{ padding: '10px 0' }}>
@@ -577,6 +590,8 @@ export function JobDetailModal({ job, techs, onClose, onStatusChange, onCreateIn
               ))}
             </div>
           </div>
+          </div>{/* end right column */}
+          </div>{/* end bodyGrid */}
         </div>
         <div style={s.actionBtns}>
           {/* Owner-only: reschedule + create-invoice. Techs only see Done.
@@ -721,9 +736,16 @@ function AddJobModal({ techs, jobs = [], onClose, onAdd, defaultDate, prefill = 
 
   const s = {
     overlay: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 },
-    modal: { background: '#fff', borderRadius: 14, width: '100%', maxWidth: 480, maxHeight: '90vh', overflow: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' },
+    // Desktop: 720px wide so the 2-column body has room. Tablet/mobile:
+    // 480px (the original single-column width). isTablet flips on
+    // viewport < 1280 OR coarse-pointer device.
+    modal: { background: '#fff', borderRadius: 14, width: '100%', maxWidth: isTablet ? 480 : 720, maxHeight: '90vh', overflow: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' },
     header: { background: COLORS.green, padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0 },
-    body: { padding: '20px 24px' },
+    body: { padding: isTablet ? '20px 24px' : '24px 32px' },
+    // Two-column wrapper used only on desktop to put address/tech/phone
+    // on one side and photos/status on the other. Falls back to single
+    // column on tablet via grid-template-columns: 1fr.
+    bodyGrid: { display: 'grid', gridTemplateColumns: isTablet ? '1fr' : '1fr 1fr', gap: isTablet ? 0 : 32 },
     label: { fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.1em', color: '#888', marginBottom: 6, display: 'block', marginTop: 14 },
     // 16px font + 44px min height — iOS Safari otherwise zooms the page on
     // input focus, and tap targets <44pt are unreliable with gloved fingers.
