@@ -974,7 +974,30 @@ function SignupScreen({ onComplete, onBack }) {
       // delay until Step 3 so users browsing the plan picker don't leave
       // orphaned accounts if they bail before payment.
       if (!userId) {
-        const { user: authUser, session } = await signUp(email.trim(), password);
+        let authUser, session;
+        try {
+          const result = await signUp(email.trim(), password);
+          authUser = result.user;
+          session  = result.session;
+        } catch (signUpErr) {
+          // Supabase rejects emails that already have an account. Catch
+          // the common cases and route the user to sign-in instead of
+          // dead-ending with "Could not start payment setup". Most likely
+          // path here: someone whose subscription got canceled trying to
+          // "sign up again" with their old email — they should sign in
+          // and use the resubscribe flow on the lockout screen.
+          const msg = String(signUpErr?.message || '').toLowerCase();
+          if (msg.includes('already registered') || msg.includes('user already exists') || msg.includes('email exists')) {
+            throw new Error(`An account already exists for ${email.trim()}. Sign in instead — if your subscription has ended, you can resubscribe from the locked-account screen after you log in.`);
+          }
+          // Some Supabase configurations return a generic message for the
+          // same case to avoid email-enumeration. If the message hints at
+          // that, soften it the same way.
+          if (msg.includes('rate limit') || msg.includes('duplicate')) {
+            throw new Error(`We couldn't create that account. If you already signed up with this email, sign in instead — your trial or subscription is still tied to your existing account.`);
+          }
+          throw signUpErr;
+        }
         if (!session) {
           // "Confirm email" is enabled in Supabase. Tell the user, then
           // bounce them back to Step 0 so the flow doesn't dead-end.
