@@ -92,7 +92,73 @@ export default async function handler(req, res) {
   const action = (req.body?.action || 'create');
   if (action === 'create')      return handleCreate(req, res);
   if (action === 'sync_seats')  return handleSyncSeats(req, res);
-  return res.status(400).json({ error: 'unknown_action', detail: `action must be 'create' or 'sync_seats' (got ${JSON.stringify(action)})` });
+  if (action === 'cancel')      return handleCancel(req, res);
+  return res.status(400).json({ error: 'unknown_action', detail: `action must be 'create', 'sync_seats', or 'cancel' (got ${JSON.stringify(action)})` });
+}
+
+// ─── handleCancel ────────────────────────────────────────────────────────────
+// Contractor cancels their own Tradevoice subscription from Settings →
+// Billing. Default = "cancel at period end" so trialing users keep
+// access until trial_end (no charge fires); active users keep access
+// until the end of the billing period they already paid for. Pass
+// immediate=true to cancel right now without that grace window.
+//
+// Stripe will emit customer.subscription.updated (cancel_at_period_end
+// flip) and eventually customer.subscription.deleted (at period_end or
+// immediately, depending on the flag). webhook.js handles both paths
+// and reconciles profiles.subscription_status.
+async function handleCancel(req, res) {
+  const { userId, immediate = false } = req.body || {};
+  if (!userId) return res.status(400).json({ error: 'missing_user_id' });
+
+  const supabase = getServiceClient();
+  const { data: profile, error: profErr } = await supabase
+    .from('profiles')
+    .select('stripe_subscription_id, subscription_status')
+    .eq('id', userId)
+    .maybeSingle();
+  if (profErr) {
+    console.error('[create-subscription:cancel] profile lookup failed', profErr);
+    return res.status(500).json({ error: 'profile_lookup_failed' });
+  }
+  if (!profile?.stripe_subscription_id) {
+    return res.status(400).json({ error: 'no_subscription', detail: 'No active subscription on file to cancel.' });
+  }
+
+  try {
+    let updated;
+    if (immediate) {
+      // Immediate cancel — sub is deleted on Stripe. Useful for trials
+      // that haven't started paying yet, or users who want to leave now.
+      updated = await stripe.subscriptions.cancel(profile.stripe_subscription_id);
+    } else {
+      // Cancel at period end — graceful default. Sub stays active /
+      // trialing until current_period_end, then auto-cancels. No
+      // surprise loss of access; no autocharge for trialing users.
+      updated = await stripe.subscriptions.update(profile.stripe_subscription_id, {
+        cancel_at_period_end: true,
+      });
+    }
+
+    // Optimistically update local subscription_status so the UI shows
+    // the new state without waiting for the webhook to land. The
+    // webhook will reconcile authoritatively a few seconds later.
+    await supabase
+      .from('profiles')
+      .update({ subscription_status: updated.status })
+      .eq('id', userId);
+
+    return res.status(200).json({
+      ok:                true,
+      mode:              immediate ? 'immediate' : 'at_period_end',
+      status:            updated.status,
+      cancelAtPeriodEnd: !!updated.cancel_at_period_end,
+      cancelAt:          updated.cancel_at ? new Date(updated.cancel_at * 1000).toISOString() : null,
+    });
+  } catch (e) {
+    console.error('[create-subscription:cancel] stripe call failed', e);
+    return res.status(502).json({ error: 'stripe_error', detail: e?.message });
+  }
 }
 
 // ─── handleCreate ────────────────────────────────────────────────────────────

@@ -7627,6 +7627,51 @@ function Settings({ user, setUser, logo, onLogoChange, showProfileModal, setShow
   // Tech-onboarding modals (owner buys a seat → fills out profile → sees credentials)
   const [showBuySeat,    setShowBuySeat]    = useState(false);
   const [techCredsToShow, setTechCredsToShow] = useState(null);
+  // Cancel-subscription flow state. cancelBusy guards the button so a
+  // double-click can't fire two cancel requests; cancelError surfaces
+  // any failure inline next to the button.
+  const [cancelBusy,  setCancelBusy]  = useState(false);
+  const [cancelError, setCancelError] = useState('');
+
+  // Cancel the contractor's own Tradevoice subscription. Defaults to
+  // "cancel at period end" — graceful for both trialing users (no
+  // charge fires when trial_end hits) and paying users (they keep
+  // access through the rest of the billing period they paid for).
+  // Hits api/stripe/create-subscription with action='cancel'; that
+  // endpoint flips cancel_at_period_end=true on Stripe and writes
+  // subscription_status back to the profile row optimistically. The
+  // webhook reconciles a few seconds later.
+  const handleCancelPlan = async () => {
+    if (cancelBusy) return;
+    const status = user.subscription_status;
+    const isTrialing = status === 'trialing';
+    const msg = isTrialing
+      ? 'Cancel your trial?\n\nYour card on file will not be charged. You can come back any time and start a new trial.'
+      : 'Cancel your subscription?\n\nYou keep access until the end of your current billing period, then your account is canceled. No refund for partial months.';
+    if (!window.confirm(msg)) return;
+    setCancelBusy(true);
+    setCancelError('');
+    try {
+      const r = await fetch('/api/stripe/create-subscription', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ action: 'cancel', userId: user.id }),
+      });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.detail || j.error || 'Could not cancel subscription.');
+      // Reflect new status locally so the UI updates immediately.
+      setUser(prev => ({ ...prev, subscription_status: j.status }));
+      window.alert(
+        isTrialing
+          ? 'Your trial has been canceled. You will not be charged.'
+          : 'Your subscription is set to cancel at the end of the current billing period.'
+      );
+    } catch (e) {
+      setCancelError(e?.message || 'Could not cancel. Try again.');
+    } finally {
+      setCancelBusy(false);
+    }
+  };
 
   const updateHandle = (key, val) => setPayments(p => ({ ...p, [key]: { ...p[key], handle: val } }));
   // PayPal still uses the placeholder boolean toggle until we wire its OAuth
@@ -8133,15 +8178,35 @@ function Settings({ user, setUser, logo, onLogoChange, showProfileModal, setShow
         <div style={{ fontSize: 15, fontWeight: 800, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12, fontFamily: "'Inter', sans-serif" }}>Subscription</div>
         <div style={{ background: '#f0fdf4', border: `1px solid ${C.success}33`, borderRadius: 4, padding: '20px 22px', marginBottom: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
           <div>
-            <div style={{ fontSize: 15, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.success, marginBottom: 4 }}>Active Plan</div>
+            <div style={{ fontSize: 15, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.success, marginBottom: 4 }}>
+              {user.subscription_status === 'trialing' ? 'Trial — Active' :
+               user.subscription_status === 'canceled' ? 'Canceled' :
+               user.subscription_status === 'past_due' ? 'Past Due' :
+                                                          'Active Plan'}
+            </div>
             <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 25, fontWeight: 900, color: C.text }}>{planName}</div>
             <div style={{ fontSize: 17, color: C.muted, marginTop: 2 }}>{user.trades?.join(', ')}</div>
-            <div style={{ fontSize: 16, color: C.dim, marginTop: 3 }}>Next billing: April 20, 2026</div>
+            {/* Real trial-end or next-billing line — replaces the hardcoded
+                "April 20, 2026" placeholder. Trialing users see trial end
+                date; active subs would show their next billing date once
+                we surface it from the Stripe webhook (not yet wired). */}
+            {user.subscription_status === 'trialing' && user.trial_ends_at && (
+              <div style={{ fontSize: 16, color: C.dim, marginTop: 3 }}>
+                Trial ends: {new Date(user.trial_ends_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+              </div>
+            )}
           </div>
           <div style={{ textAlign: 'right' }}>
             <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 43, fontWeight: 900, color: C.orange, lineHeight: 1 }}>${currentPrice}</div>
             <div style={{ fontSize: 17, color: C.muted }}>per month</div>
-            <GhostBtn size="sm" style={{ marginTop: 10 }}>Cancel Plan</GhostBtn>
+            <GhostBtn size="sm" style={{ marginTop: 10 }} onClick={handleCancelPlan} disabled={cancelBusy || user.subscription_status === 'canceled'}>
+              {cancelBusy
+                ? 'Canceling…'
+                : user.subscription_status === 'canceled' ? 'Canceled' : 'Cancel Plan'}
+            </GhostBtn>
+            {cancelError && (
+              <div style={{ fontSize: 12, color: C.error, marginTop: 6, maxWidth: 200, textAlign: 'right' }}>{cancelError}</div>
+            )}
           </div>
         </div>
 
