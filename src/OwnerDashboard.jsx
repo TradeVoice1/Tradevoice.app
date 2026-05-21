@@ -21,7 +21,7 @@
 //   • TOTP gate (Phase 2)
 
 import React, { useEffect, useMemo, useState } from "react";
-import { fetchSuperOwnerData, PLAN_PRICES } from "./data/superOwner";
+import { fetchSuperOwnerData, fetchAccountTimeline, PLAN_PRICES } from "./data/superOwner";
 
 // Mirrors App.jsx's COLORS so the founder view feels native, not a
 // bolted-on admin panel. If the main color palette ever shifts, move
@@ -124,6 +124,10 @@ export default function OwnerDashboard({ user }) {
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [expandedId, setExpandedId] = useState(null);
+  // Phase 4 — per-account event timeline. Lazy-loaded when a row
+  // expands so we don't fan out N RPC calls just to render a list.
+  // Keyed by profile_id so cached timelines survive collapse + re-expand.
+  const [timelines, setTimelines] = useState({}); // { profileId: { loading, error, events } }
 
   const load = async () => {
     setLoading(true);
@@ -139,6 +143,18 @@ export default function OwnerDashboard({ user }) {
   };
 
   useEffect(() => { load(); }, []);
+
+  // Lazily fetch the timeline when a row first expands. Cached after
+  // first fetch (`!timelines[id]` guard) so re-expanding the same row
+  // doesn't re-hit the RPC.
+  useEffect(() => {
+    if (!expandedId) return;
+    if (timelines[expandedId]) return;
+    setTimelines(prev => ({ ...prev, [expandedId]: { loading: true, error: null, events: [] } }));
+    fetchAccountTimeline(expandedId)
+      .then(events => setTimelines(prev => ({ ...prev, [expandedId]: { loading: false, error: null, events } })))
+      .catch(e => setTimelines(prev => ({ ...prev, [expandedId]: { loading: false, error: e?.message || 'Failed to load timeline.', events: [] } })));
+  }, [expandedId]);
 
   // Filter + search the accounts table. Search matches email/name/company
   // case-insensitively; status filter is a hard equality.
@@ -376,9 +392,8 @@ export default function OwnerDashboard({ user }) {
                               <DetailField label="Plan Price"  value={a.plan ? fmtMoney(PLAN_PRICES[a.plan] || 0) : '—'} />
                               <DetailField label="Active Seats" value={a.activeSeats} />
                             </div>
-                            <div style={{ marginTop: 14, fontSize: 12, color: C.dim, fontStyle: 'italic' }}>
-                              Full subscription event timeline lands in Phase 4 (Stripe webhook → subscription_events table).
-                            </div>
+                            {/* Phase 4 — subscription event timeline */}
+                            <Timeline state={timelines[a.id]} fallbackCreatedAt={a.createdAt} />
                           </td>
                         </tr>
                       )}
@@ -389,6 +404,100 @@ export default function OwnerDashboard({ user }) {
             </table>
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+// Per-account subscription event timeline. Renders inside the
+// expanded row. Loading / error / empty states are all distinct so
+// the contractor (well, you, when looking at this) can tell whether
+// the RPC actually returned no events vs. is still loading vs.
+// errored. When events ARE present they render newest-first as a
+// vertical timeline with colored dots per event type.
+function Timeline({ state, fallbackCreatedAt }) {
+  if (!state || state.loading) {
+    return (
+      <div style={{ marginTop: 14, fontSize: 12, color: C.dim, fontStyle: 'italic' }}>
+        Loading timeline…
+      </div>
+    );
+  }
+  if (state.error) {
+    return (
+      <div style={{ marginTop: 14, fontSize: 13, color: C.red, background: C.redLight, padding: 10, borderRadius: 6 }}>
+        {state.error}
+      </div>
+    );
+  }
+  const events = state.events || [];
+  if (events.length === 0) {
+    return (
+      <div style={{ marginTop: 14 }}>
+        <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.muted, marginBottom: 8 }}>
+          Subscription Timeline
+        </div>
+        <div style={{ fontSize: 12, color: C.dim, fontStyle: 'italic' }}>
+          No subscription events recorded yet{fallbackCreatedAt ? ` (account created ${fallbackCreatedAt.toLocaleDateString('en-US')})` : ''}. Future Stripe webhook events will land here automatically.
+        </div>
+      </div>
+    );
+  }
+
+  // Color + label per event type — keeps the timeline scannable.
+  const meta = {
+    subscription_created:  { dot: '#2563eb', label: 'Subscription Created' },
+    subscription_updated:  { dot: '#6b7280', label: 'Subscription Updated' },
+    subscription_canceled: { dot: '#dc2626', label: 'Subscription Canceled' },
+    payment_succeeded:     { dot: '#15803d', label: 'Payment Succeeded' },
+    payment_failed:        { dot: '#d97706', label: 'Payment Failed' },
+    account_created:       { dot: '#2d6a4f', label: 'Account Created' },
+    trial_ending:          { dot: '#d97706', label: 'Trial Ending' },
+    resubscribed:          { dot: '#2563eb', label: 'Resubscribed' },
+  };
+
+  return (
+    <div style={{ marginTop: 14 }}>
+      <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#6b6b6b', marginBottom: 10 }}>
+        Subscription Timeline · {events.length} event{events.length === 1 ? '' : 's'}
+      </div>
+      <div style={{ position: 'relative', paddingLeft: 18 }}>
+        {/* Vertical line connecting the dots */}
+        <div style={{ position: 'absolute', left: 5, top: 4, bottom: 4, width: 2, background: '#e5e7eb' }} />
+        {events.map(ev => {
+          const m = meta[ev.eventType] || { dot: '#9ca3af', label: ev.eventType };
+          return (
+            <div key={ev.id} style={{ position: 'relative', paddingBottom: 12, fontSize: 13 }}>
+              <div style={{
+                position: 'absolute', left: -18, top: 4,
+                width: 12, height: 12, borderRadius: '50%',
+                background: m.dot, border: '2px solid #fff',
+                boxShadow: '0 0 0 1px #e5e7eb',
+              }} />
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
+                <span style={{ fontWeight: 700, color: '#1a1a1a' }}>{m.label}</span>
+                {ev.status && (
+                  <span style={{ fontSize: 11, color: '#6b6b6b', background: '#f1f5f9', padding: '1px 6px', borderRadius: 4 }}>
+                    {ev.status}
+                  </span>
+                )}
+                {ev.amount != null && ev.amount > 0 && (
+                  <span style={{ fontSize: 12, color: '#15803d', fontWeight: 700 }}>
+                    ${ev.amount.toFixed(2)}
+                  </span>
+                )}
+                <span style={{ marginLeft: 'auto', fontSize: 12, color: '#9a9a9a' }}>
+                  {ev.occurredAt ? ev.occurredAt.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : '—'}
+                </span>
+              </div>
+              {ev.stripeSubscriptionId && (
+                <div style={{ fontSize: 11, color: '#9a9a9a', marginTop: 2, fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace" }}>
+                  {ev.stripeSubscriptionId}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );

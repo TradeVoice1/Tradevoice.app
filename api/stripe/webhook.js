@@ -176,11 +176,30 @@ export default async function handler(req, res) {
         } else {
           // Platform subscription (Tradevoice's own customer).
           const trialEnd = sub.trial_end ? new Date(sub.trial_end * 1000).toISOString() : null;
+          const effectiveStatus = event.type === 'customer.subscription.deleted' ? 'canceled' : sub.status;
           await supabase.rpc('update_subscription_status', {
             p_customer_id:     sub.customer,
             p_subscription_id: sub.id,
-            p_status:          event.type === 'customer.subscription.deleted' ? 'canceled' : sub.status,
+            p_status:          effectiveStatus,
             p_trial_ends_at:   trialEnd,
+          });
+          // Phase 4 — log to subscription_events for the founder
+          // dashboard's per-customer timeline (migration 0034).
+          // Resolve profile_id from stripe_customer_id. Skip silently
+          // if the profile isn't found (e.g. customer created but
+          // profile not yet linked) — webhook ordering can put the
+          // subscription.created event slightly before our own DB
+          // write that stamps the customer_id.
+          await logEventForCustomer(supabase, sub.customer, {
+            event_type: event.type === 'customer.subscription.deleted'
+              ? 'subscription_canceled'
+              : (event.type === 'customer.subscription.created'
+                  ? 'subscription_created'
+                  : 'subscription_updated'),
+            status:     effectiveStatus,
+            stripe_event_id: event.id,
+            stripe_subscription_id: sub.id,
+            occurred_at: new Date(event.created * 1000).toISOString(),
           });
           console.log('[stripe webhook] subscription', event.type, sub.customer, sub.status);
         }
@@ -209,6 +228,14 @@ export default async function handler(req, res) {
             p_subscription_id: inv.subscription || null,
             p_status:          'past_due',
             p_trial_ends_at:   null,
+          });
+          await logEventForCustomer(supabase, inv.customer, {
+            event_type: 'payment_failed',
+            status:     'past_due',
+            amount:     inv.amount_due != null ? inv.amount_due / 100 : null,
+            stripe_event_id: event.id,
+            stripe_subscription_id: inv.subscription || null,
+            occurred_at: new Date(event.created * 1000).toISOString(),
           });
           console.warn('[stripe webhook] subscription invoice payment failed:', inv.customer, inv.id);
         } else {
@@ -239,6 +266,14 @@ export default async function handler(req, res) {
             p_subscription_id: inv.subscription,
             p_status:          'active',
             p_trial_ends_at:   null,
+          });
+          await logEventForCustomer(supabase, inv.customer, {
+            event_type: 'payment_succeeded',
+            status:     'active',
+            amount:     inv.amount_paid != null ? inv.amount_paid / 100 : null,
+            stripe_event_id: event.id,
+            stripe_subscription_id: inv.subscription,
+            occurred_at: new Date(event.created * 1000).toISOString(),
           });
           console.log('[stripe webhook] platform sub renewed:', inv.customer, inv.id);
         } else {
@@ -297,3 +332,40 @@ export default async function handler(req, res) {
 
   return res.status(200).json({ received: true });
 }
+
+// Phase 4 — write to subscription_events for the founder dashboard.
+// Resolves stripe_customer_id → profile_id, then calls the
+// log_subscription_event RPC. Idempotency is handled at the DB level
+// via the unique index on stripe_event_id, so this is safe to call
+// from any webhook retry. All errors swallowed/logged — event logging
+// must never break the actual webhook handler. The subscription state
+// update is the source of truth; this is just the audit trail.
+async function logEventForCustomer(supabase, stripeCustomerId, evt) {
+  if (!stripeCustomerId) return;
+  try {
+    const { data: prof, error: profErr } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('stripe_customer_id', stripeCustomerId)
+      .maybeSingle();
+    if (profErr || !prof?.id) {
+      // Not found yet (race between subscription.created and our own
+      // profile update that stamps customer_id), or a legitimately
+      // unknown customer. Don't crash — just skip.
+      return;
+    }
+    await supabase.rpc('log_subscription_event', {
+      p_profile_id:            prof.id,
+      p_event_type:            evt.event_type,
+      p_status:                evt.status              ?? null,
+      p_amount:                evt.amount              ?? null,
+      p_stripe_event_id:       evt.stripe_event_id     ?? null,
+      p_stripe_subscription_id:evt.stripe_subscription_id ?? null,
+      p_metadata:              evt.metadata           || {},
+      p_occurred_at:           evt.occurred_at        || new Date().toISOString(),
+    });
+  } catch (e) {
+    console.warn('[stripe webhook] logEventForCustomer failed:', e?.message);
+  }
+}
+

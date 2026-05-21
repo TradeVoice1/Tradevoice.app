@@ -62,6 +62,14 @@ const dbToProfile = (row) => row && ({
   // the Supabase Auth dashboard and exempt from the billing gates
   // (no Stripe customer, no subscription, no trial countdown).
   isSuperOwner:     row.is_super_owner    ?? false,
+  // TOTP enrollment + most-recent unlock timestamp (Phase 2). Used
+  // by App.jsx to decide whether to render the TOTP setup screen,
+  // the TOTP unlock prompt, or pass straight through to the
+  // dashboard. NEVER read super_owner_totp_secret here — that field
+  // stays server-side, fetched only by the setup Edge Function and
+  // returned exactly once.
+  superOwnerTotpEnabledAt: row.super_owner_totp_enabled_at ?? null,
+  superOwnerUnlockAt:      row.super_owner_unlock_at       ?? null,
 });
 
 const profileToDb = (p) => ({

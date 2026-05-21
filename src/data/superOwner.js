@@ -118,3 +118,25 @@ export async function fetchSuperOwnerData() {
 
   return { accounts, summary, unauthorized: false };
 }
+
+// Phase 4 — fetch the per-account event timeline. Powers the expanded
+// row in the founder dashboard. RPC is gated server-side on the
+// super-owner flag; returns null if the caller isn't the founder.
+export async function fetchAccountTimeline(profileId) {
+  if (!profileId) return [];
+  const { data, error } = await supabase.rpc('get_super_owner_account_events', {
+    p_profile_id: profileId,
+  });
+  if (error) throw error;
+  if (!Array.isArray(data)) return [];
+  return data.map(e => ({
+    id:                   e.id,
+    profileId:            e.profile_id,
+    eventType:            e.event_type,
+    status:               e.status,
+    amount:               e.amount != null ? Number(e.amount) : null,
+    stripeSubscriptionId: e.stripe_subscription_id,
+    metadata:             e.metadata || {},
+    occurredAt:           e.occurred_at ? new Date(e.occurred_at) : null,
+  }));
+}

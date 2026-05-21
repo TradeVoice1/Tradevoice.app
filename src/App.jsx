@@ -19,9 +19,14 @@ const MarketingScreen      = lazy(() => import("./MarketingScreen"));
 // because most accounts never see this code path — only the super-owner
 // account renders it, so it shouldn't be in the main bundle.
 const OwnerDashboard       = lazy(() => import("./OwnerDashboard"));
+// TOTP gate (Phase 2) — wraps OwnerDashboard. Setup screen on first
+// dashboard visit, unlock prompt every 30 min idle. Lazy for the same
+// reason as OwnerDashboard (regular accounts never trigger this path).
+const TotpScreen           = lazy(() => import("./TotpScreen"));
 const PrivacyPolicyScreen  = lazy(() => import("./LegalScreens").then(m => ({ default: m.PrivacyPolicyScreen })));
 const TermsScreen          = lazy(() => import("./LegalScreens").then(m => ({ default: m.TermsScreen })));
 import { signIn, signUp, signOut, getProfile, upsertProfile, getSessionUser, onAuthChange, techSignIn, techChangePassword, signInWithGoogle } from "./data/auth";
+import { isUnlockValid } from "./data/superOwnerTotp";
 import { listClients, addClient as apiAddClient, updateClient as apiUpdateClient, deleteClient as apiDeleteClient } from "./data/clients";
 import { listInvoices, upsertInvoice as apiUpsertInvoice, deleteInvoice as apiDeleteInvoice } from "./data/invoices";
 import { listQuotes,   upsertQuote   as apiUpsertQuote,   deleteQuote   as apiDeleteQuote   } from "./data/quotes";
@@ -9479,15 +9484,38 @@ function TradevoiceApp() {
     setSection(sec);
   };
 
-  // Founder route is conditionally added to the content map ONLY for the
-  // super-owner account. Belt-and-suspenders alongside the RPC's own
-  // gating — even if some future refactor leaked section='founder' to
-  // a regular user, the map wouldn't have the key and they'd just
-  // render nothing instead of mounting OwnerDashboard (which would
-  // still show "access denied" via the RPC, but no reason to even
-  // load the component code on someone else's session).
+  // Founder route — conditionally added to the content map ONLY for the
+  // super-owner account, AND gated through the TOTP screen on every
+  // dashboard load (setup mode if no secret yet, unlock mode if the
+  // 30-min session expired). The dashboard component only mounts after
+  // a successful unlock — that's the difference between "hidden behind
+  // a flag" and "hidden behind 2FA," and it's what makes the founder
+  // view safe to ship.
+  //
+  // Layers of defense, in order of strength:
+  //   1. RLS on every table (super_owner OR-clauses, migration 0030)
+  //   2. SECURITY DEFINER RPC explicitly checks is_super_owner
+  //   3. Front-end UI only renders the tab for super-owner accounts
+  //   4. TOTP gate keeps session-stealers out even with valid auth
+  const founderTotpReady =
+    !!user?.isSuperOwner
+    && !!user?.superOwnerTotpEnabledAt
+    && isUnlockValid(user?.superOwnerUnlockAt);
+  const founderTotpMode =
+    !user?.superOwnerTotpEnabledAt ? 'setup' : 'unlock';
+  const founderNode = !user?.isSuperOwner
+    ? null
+    : (founderTotpReady
+        ? <OwnerDashboard user={user} />
+        : <TotpScreen
+            user={user}
+            mode={founderTotpMode}
+            onUnlocked={(at) => setUser(prev => prev ? { ...prev, superOwnerUnlockAt: at, superOwnerTotpEnabledAt: prev.superOwnerTotpEnabledAt || at } : prev)}
+            onSignOut={async () => { try { await signOut(); } catch (_) {} setUser(null); setAuthScreen('login'); }}
+          />);
+
   const content = {
-    ...(user?.isSuperOwner ? { founder: <OwnerDashboard user={user} /> } : {}),
+    ...(founderNode ? { founder: founderNode } : {}),
     dashboard: <Dashboard    user={user} nav={navigateTo} invoices={sharedInvoices} plans={plans} onScheduleFromPlan={handleScheduleFromPlan} teamMembers={teamMembers} />,
     invoice:   <VoiceInvoice user={user} logo={logo} payments={payments} taxRates={taxRates} teamMembers={teamMembers} sharedInvoices={sharedInvoices} setSharedInvoices={setSharedInvoices} persistInvoice={persistInvoice} removeInvoice={removeInvoice} handleUnInvoice={handleUnInvoice} pendingInvoiceId={pendingInvoiceId} clearPendingInvoice={() => setPendingInvoiceId(null)} pendingMonthFilter={pendingMonthFilter} clearPendingMonthFilter={() => setPendingMonthFilter(null)} />,
     billing:   <Billing      user={user} setUser={setUser} payments={payments} />,
