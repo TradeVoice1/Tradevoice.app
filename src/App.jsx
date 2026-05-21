@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, lazy, Suspense, Fragment } from "react";
+import { useState, useRef, useEffect, useMemo, lazy, Suspense, Fragment } from "react";
 // Heavy screens are code-split — they load on demand the first time the user
 // visits them. The auth bundle stays small so first paint is fast.
 const ForgotPasswordScreen = lazy(() => import("./ForgotPassword").then(m => ({ default: m.ForgotPasswordScreen })));
