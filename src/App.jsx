@@ -9326,8 +9326,15 @@ function TradevoiceApp() {
     setSection(sec);
   };
 
+  // Founder route is conditionally added to the content map ONLY for the
+  // super-owner account. Belt-and-suspenders alongside the RPC's own
+  // gating — even if some future refactor leaked section='founder' to
+  // a regular user, the map wouldn't have the key and they'd just
+  // render nothing instead of mounting OwnerDashboard (which would
+  // still show "access denied" via the RPC, but no reason to even
+  // load the component code on someone else's session).
   const content = {
-    founder:   <OwnerDashboard user={user} />,
+    ...(user?.isSuperOwner ? { founder: <OwnerDashboard user={user} /> } : {}),
     dashboard: <Dashboard    user={user} nav={navigateTo} invoices={sharedInvoices} plans={plans} onScheduleFromPlan={handleScheduleFromPlan} teamMembers={teamMembers} />,
     invoice:   <VoiceInvoice user={user} logo={logo} payments={payments} taxRates={taxRates} teamMembers={teamMembers} sharedInvoices={sharedInvoices} setSharedInvoices={setSharedInvoices} persistInvoice={persistInvoice} removeInvoice={removeInvoice} handleUnInvoice={handleUnInvoice} pendingInvoiceId={pendingInvoiceId} clearPendingInvoice={() => setPendingInvoiceId(null)} pendingMonthFilter={pendingMonthFilter} clearPendingMonthFilter={() => setPendingMonthFilter(null)} />,
     billing:   <Billing      user={user} setUser={setUser} payments={payments} />,
