@@ -838,7 +838,13 @@ function SignupScreen({ onComplete, onBack }) {
   const [company, setCompany] = useState('');
   const [phone, setPhone]     = useState('');
   const [trades, setTrades]   = useState([]);
-  const [states, setStates]   = useState(['Texas']);
+  // Empty default — the wizard's Step 1 forces the user to pick one
+  // before they can continue. Previously this was hard-coded to
+  // ['Texas'], which silently stamped every signup as a Texas business
+  // (and worse, there was no state picker in the Step 1 UI at all, so
+  // contractors outside Texas couldn't correct it). Multi-state
+  // contractors can still add more states later in Settings.
+  const [states, setStates]   = useState([]);
   const [plan, setPlan]       = useState('pro');
   // 'monthly' | 'yearly'. Yearly = 20% off the monthly × 12 (sticker
   // shock is real, so we default to monthly — yearly is the upsell
@@ -960,7 +966,12 @@ function SignupScreen({ onComplete, onBack }) {
   const steps = ['Account', 'Company', 'Plan', 'Payment'];
   const canNext = [
     () => isExistingAuthUser || (name.trim() && email.trim() && password.length >= 6),
-    () => company.trim() && trades.length > 0,
+    // Step 1 (Company) now also requires at least one state. Without
+    // this, contractors signed up with an empty states array and got
+    // no licensing/tax data preloaded for their region — and as long
+    // as the default was hard-coded to Texas, they all silently became
+    // "Texas contractors" regardless of where they actually worked.
+    () => company.trim() && trades.length > 0 && states.length > 0,
     () => plan !== '' && acceptedTerms,
     () => paymentPhase === 'ready' && !paymentError,
   ];
@@ -1216,6 +1227,25 @@ function SignupScreen({ onComplete, onBack }) {
             )}
             <div><label style={s.label}>Company name *</label><input value={company} onChange={e => setCompany(e.target.value)} placeholder="Cornerstone Mechanical" style={{ ...s.input, width: '100%', padding: '12px 14px', boxSizing: 'border-box', fontSize: 16 }}/></div>
             <div><label style={s.label}>Phone</label><input type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="(512) 555-0000" style={{ ...s.input, width: '100%', padding: '12px 14px', boxSizing: 'border-box', fontSize: 16 }}/></div>
+            {/* State picker — primary state only at signup. Multi-state
+                contractors can add more states later in Settings →
+                Business Details. Drives the licensing + sales-tax
+                preloads, so getting this right matters far more than
+                the contractor probably realizes. */}
+            <div>
+              <label style={s.label}>State *</label>
+              <select
+                value={states[0] || ''}
+                onChange={e => setStates(e.target.value ? [e.target.value] : [])}
+                style={{ ...s.input, width: '100%', padding: '12px 14px', boxSizing: 'border-box', fontSize: 16, cursor: 'pointer', background: C.surface, borderColor: states.length ? C.orange : C.border2 }}
+              >
+                <option value="">— Select your state —</option>
+                {STATES.map(st => <option key={st} value={st}>{st}</option>)}
+              </select>
+              <div style={{ fontSize: 12, color: C.dim, marginTop: 6 }}>
+                Operate in multiple states? Pick the one you're licensed in primarily — you can add more in Settings after signup.
+              </div>
+            </div>
 
             {/* Selected-count summary — moved up to the company side on
                 desktop so it sits next to the form fields rather than
@@ -7901,9 +7931,18 @@ function Settings({ user, setUser, logo, onLogoChange, showProfileModal, setShow
     window.history.replaceState({}, '', window.location.pathname + (newSearch ? `?${newSearch}` : ''));
   }, []);
 
-  // Build list of states the contractor works in
-  const activeStates = (user.states?.length > 1 ? user.states : [user.state || 'Texas'])
-    .map(s => s.trim()).filter(Boolean);
+  // Build list of states the contractor works in. Prefer the multi-
+  // state array; fall back to the legacy single-state string. NO
+  // silent 'Texas' default — if the user has no state set, the tax-
+  // rates section renders empty rather than mis-stamping every new
+  // invoice with Texas rates. (Was the source of a real bug where
+  // signups defaulted to Texas regardless of where the contractor
+  // actually operated; see commit history around signup state picker.)
+  const activeStates = (
+    user.states?.length > 0
+      ? user.states
+      : (user.state ? [user.state] : [])
+  ).map(s => s.trim()).filter(Boolean);
 
   const updateTaxRate = (stateName, field, val) => {
     setTaxRates(prev => ({
