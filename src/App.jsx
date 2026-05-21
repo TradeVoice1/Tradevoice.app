@@ -9484,13 +9484,10 @@ function TradevoiceApp() {
     setSection(sec);
   };
 
-  // Founder route — conditionally added to the content map ONLY for the
-  // super-owner account, AND gated through the TOTP screen on every
-  // dashboard load (setup mode if no secret yet, unlock mode if the
-  // 30-min session expired). The dashboard component only mounts after
-  // a successful unlock — that's the difference between "hidden behind
-  // a flag" and "hidden behind 2FA," and it's what makes the founder
-  // view safe to ship.
+  // Founder TOTP readiness — computed here so we can use it both for the
+  // full-screen gate (immediately below) and to decide whether to even
+  // render the Founder tab in the nav. The dashboard never mounts unless
+  // founderTotpReady is true, full stop.
   //
   // Layers of defense, in order of strength:
   //   1. RLS on every table (super_owner OR-clauses, migration 0030)
@@ -9501,21 +9498,9 @@ function TradevoiceApp() {
     !!user?.isSuperOwner
     && !!user?.superOwnerTotpEnabledAt
     && isUnlockValid(user?.superOwnerUnlockAt);
-  const founderTotpMode =
-    !user?.superOwnerTotpEnabledAt ? 'setup' : 'unlock';
-  const founderNode = !user?.isSuperOwner
-    ? null
-    : (founderTotpReady
-        ? <OwnerDashboard user={user} />
-        : <TotpScreen
-            user={user}
-            mode={founderTotpMode}
-            onUnlocked={(at) => setUser(prev => prev ? { ...prev, superOwnerUnlockAt: at, superOwnerTotpEnabledAt: prev.superOwnerTotpEnabledAt || at } : prev)}
-            onSignOut={async () => { try { await signOut(); } catch (_) {} setUser(null); setAuthScreen('login'); }}
-          />);
 
   const content = {
-    ...(founderNode ? { founder: founderNode } : {}),
+    ...(user?.isSuperOwner && founderTotpReady ? { founder: <OwnerDashboard user={user} /> } : {}),
     dashboard: <Dashboard    user={user} nav={navigateTo} invoices={sharedInvoices} plans={plans} onScheduleFromPlan={handleScheduleFromPlan} teamMembers={teamMembers} />,
     invoice:   <VoiceInvoice user={user} logo={logo} payments={payments} taxRates={taxRates} teamMembers={teamMembers} sharedInvoices={sharedInvoices} setSharedInvoices={setSharedInvoices} persistInvoice={persistInvoice} removeInvoice={removeInvoice} handleUnInvoice={handleUnInvoice} pendingInvoiceId={pendingInvoiceId} clearPendingInvoice={() => setPendingInvoiceId(null)} pendingMonthFilter={pendingMonthFilter} clearPendingMonthFilter={() => setPendingMonthFilter(null)} />,
     billing:   <Billing      user={user} setUser={setUser} payments={payments} />,
@@ -9673,6 +9658,38 @@ function TradevoiceApp() {
   const MenuOverlay = showProfileMenu && (
     <div style={{ position: 'fixed', inset: 0, zIndex: 90 }} onClick={() => setShowProfileMenu(false)} />
   );
+
+  // ── FOUNDER TOTP GATE — full-screen takeover ──────────────────────────────
+  // For the super-owner account, NOTHING renders (no nav, no top bar,
+  // no other section) until the TOTP code is verified. This is the
+  // "front door" UX the founder asked for: refresh the app → land on
+  // the QR / unlock screen → after a valid code, the regular app
+  // shell renders with the Founder tab pre-selected.
+  //
+  // Tech accounts and normal contractor accounts never see this — they
+  // don't have isSuperOwner. The gate is also a no-op when
+  // founderTotpReady is already true (unlock_at within 30 min).
+  if (user?.isSuperOwner && !founderTotpReady) {
+    const totpMode = !user.superOwnerTotpEnabledAt ? 'setup' : 'unlock';
+    return (
+      <Suspense fallback={<div style={{ minHeight: '100vh', background: '#0f172a' }} />}>
+        <TotpScreen
+          user={user}
+          mode={totpMode}
+          onUnlocked={(at) => setUser(prev => prev ? {
+            ...prev,
+            superOwnerUnlockAt:       at,
+            superOwnerTotpEnabledAt:  prev.superOwnerTotpEnabledAt || at,
+          } : prev)}
+          onSignOut={async () => {
+            try { await signOut(); } catch (_) {}
+            setUser(null);
+            setAuthScreen('login');
+          }}
+        />
+      </Suspense>
+    );
+  }
 
   // ── TABLET: top bar + top tab nav + flex-fill content ─────────────────────
   // Nav moved to the top (was at the bottom) so the page content — especially
