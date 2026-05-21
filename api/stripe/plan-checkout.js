@@ -17,6 +17,7 @@
 
 import { stripe } from "../_lib/stripe.js";
 import { getServiceClient } from "../_lib/supabase.js";
+import { requireAuth } from "../_lib/requireAuth.js";
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -24,8 +25,15 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'method_not_allowed' });
   }
 
-  const { ownerId, planId, clientId, customerEmail, customerName, returnUrl } = req.body || {};
-  if (!ownerId) return res.status(400).json({ error: 'missing_owner_id' });
+  // Gate: only the authenticated owner can start a checkout for one
+  // of their own plans. The plan_owned_by_caller check downstream is
+  // a belt-and-suspenders second check but the auth layer is the
+  // primary defense.
+  const auth = await requireAuth(req, { requireUserMatch: req.body?.ownerId });
+  if (!auth.ok) return res.status(auth.status).json({ error: auth.error });
+
+  const { planId, clientId, customerEmail, customerName, returnUrl } = req.body || {};
+  const ownerId = auth.userId;
   if (!planId)  return res.status(400).json({ error: 'missing_plan_id' });
 
   const supabase = getServiceClient();

@@ -24,6 +24,7 @@
 
 import { getServiceClient } from "../_lib/supabase.js";
 import { sendEmail, personalize, plainToHtml, appendUnsubscribeLine, unsubscribeUrlFor } from "../_lib/email.js";
+import { requireAuth } from "../_lib/requireAuth.js";
 
 const DEFAULT_REVIEW_MESSAGE = `Hi [FirstName],
 
@@ -56,8 +57,14 @@ export default async function handler(req, res) {
 
 // ─── REVIEW REQUEST ──────────────────────────────────────────────────────────
 async function handleReviewRequest(req, res) {
-  const { ownerId, clientIds, reviewLink, customMessage } = req.body || {};
-  if (!ownerId) return res.status(400).json({ error: 'missing_owner_id' });
+  // Gate: only the authenticated owner can send marketing email under
+  // their own clients' list. Without this an attacker could spam
+  // emails to any contractor's client list (a real abuse vector
+  // since email costs Tradevoice money and damages domain reputation).
+  const auth = await requireAuth(req, { requireUserMatch: req.body?.ownerId });
+  if (!auth.ok) return res.status(auth.status).json({ error: auth.error });
+  const { clientIds, reviewLink, customMessage } = req.body || {};
+  const ownerId = auth.userId;
   if (!Array.isArray(clientIds) || !clientIds.length) {
     return res.status(400).json({ error: 'missing_client_ids' });
   }
@@ -158,8 +165,10 @@ async function handleReviewRequest(req, res) {
 
 // ─── CAMPAIGN ────────────────────────────────────────────────────────────────
 async function handleCampaign(req, res) {
-  const { ownerId, name, tradeFilter, subject, message } = req.body || {};
-  if (!ownerId)         return res.status(400).json({ error: 'missing_owner_id' });
+  const auth = await requireAuth(req, { requireUserMatch: req.body?.ownerId });
+  if (!auth.ok) return res.status(auth.status).json({ error: auth.error });
+  const { name, tradeFilter, subject, message } = req.body || {};
+  const ownerId = auth.userId;
   if (!name?.trim())    return res.status(400).json({ error: 'missing_name' });
   if (!subject?.trim()) return res.status(400).json({ error: 'missing_subject' });
   if (!message?.trim()) return res.status(400).json({ error: 'missing_message' });

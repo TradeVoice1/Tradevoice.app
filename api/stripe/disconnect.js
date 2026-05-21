@@ -7,6 +7,7 @@
 
 import { getServiceClient } from "../_lib/supabase.js";
 import { stripe } from "../_lib/stripe.js";
+import { requireAuth } from "../_lib/requireAuth.js";
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -14,8 +15,14 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'method_not_allowed' });
   }
 
-  const { userId } = req.body || {};
-  if (!userId) return res.status(400).json({ error: 'missing_user_id' });
+  // Authentication + IDOR gate. Without this, anyone could call
+  // /api/stripe/disconnect with another contractor's userId and
+  // sever their Stripe Connect link, breaking their ability to
+  // receive customer payments. The body's claimed userId is
+  // ignored in favor of the JWT's user_id below.
+  const auth = await requireAuth(req, { requireUserMatch: req.body?.userId });
+  if (!auth.ok) return res.status(auth.status).json({ error: auth.error });
+  const userId = auth.userId;
 
   const supabase = getServiceClient();
   const { data: profile, error: getErr } = await supabase

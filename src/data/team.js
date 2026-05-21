@@ -1,6 +1,7 @@
 // Team members. Owner manages their crew; members can read their own row (RLS handles it).
 
 import { supabase } from "../supabase";
+import { authedFetch } from "../lib/authedFetch";
 
 const dbToMember = (r) => ({
   id:                  r.id,
@@ -108,7 +109,7 @@ export async function deleteTeamMember(id) {
 export async function syncTechSeats(ownerId) {
   if (!ownerId) return { ok: false, error: 'missing_owner_id' };
   try {
-    const resp = await fetch('/api/stripe/create-subscription', {
+    const resp = await authedFetch('/api/stripe/create-subscription', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify({ action: 'sync_seats', userId: ownerId }),

@@ -21,6 +21,7 @@
 
 import { getAnthropic, DEFAULT_MODEL } from "../_lib/anthropic.js";
 import { getServiceClient } from "../_lib/supabase.js";
+import { requireAuth } from "../_lib/requireAuth.js";
 
 const MAX_BYTES = 8 * 1024 * 1024; // 8 MB
 
@@ -104,8 +105,15 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'method_not_allowed' });
   }
 
-  const { ownerId, fileBase64, fileName, mediaType } = req.body || {};
-  if (!ownerId)    return res.status(400).json({ error: 'missing_owner_id' });
+  // Gate: only the authenticated owner can trigger Claude-backed rate-
+  // table parsing for THEIR account. Without this an attacker could
+  // burn the founder's Claude API budget by submitting parses under
+  // any ownerId (Claude calls are expensive — this is real abuse).
+  const auth = await requireAuth(req, { requireUserMatch: req.body?.ownerId });
+  if (!auth.ok) return res.status(auth.status).json({ error: auth.error });
+
+  const { fileBase64, fileName, mediaType } = req.body || {};
+  const ownerId = auth.userId;
   if (!fileBase64) return res.status(400).json({ error: 'missing_file' });
 
   // Verify the caller actually owns the owner_id they claim. RLS would

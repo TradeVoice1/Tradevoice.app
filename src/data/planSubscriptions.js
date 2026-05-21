@@ -7,6 +7,7 @@
 // customer monthly/yearly, webhook keeps status in sync.
 
 import { supabase } from "../supabase";
+import { authedFetch } from "../lib/authedFetch";
 
 const dbToSub = (r) => ({
   id:                    r.id,
@@ -138,7 +139,7 @@ export function countByStatus(subs) {
 // and returns a Stripe Checkout Session URL. Webhook flips the row to
 // 'active' once the customer enters their card.
 export async function startEnrollmentCheckout({ ownerId, planId, clientId, customerEmail, customerName, returnUrl }) {
-  const resp = await fetch('/api/stripe/plan-checkout', {
+  const resp = await authedFetch('/api/stripe/plan-checkout', {
     method:  'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ ownerId, planId, clientId, customerEmail, customerName, returnUrl }),
@@ -156,7 +157,7 @@ export async function startEnrollmentCheckout({ ownerId, planId, clientId, custo
 // defaults to false (cancel at period end so the customer keeps coverage
 // they already paid for). Webhook will reconcile final state.
 export async function cancelEnrollmentSubscription({ ownerId, planSubscriptionId, immediate = false }) {
-  const resp = await fetch('/api/stripe/plan-cancel-subscription', {
+  const resp = await authedFetch('/api/stripe/plan-cancel-subscription', {
     method:  'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ ownerId, planSubscriptionId, immediate }),

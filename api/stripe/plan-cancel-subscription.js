@@ -13,6 +13,7 @@
 
 import { stripe } from "../_lib/stripe.js";
 import { getServiceClient } from "../_lib/supabase.js";
+import { requireAuth } from "../_lib/requireAuth.js";
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -20,8 +21,14 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'method_not_allowed' });
   }
 
-  const { ownerId, planSubscriptionId, immediate } = req.body || {};
-  if (!ownerId)            return res.status(400).json({ error: 'missing_owner_id' });
+  // Gate: only the authenticated owner can cancel one of their own
+  // service-contract subscriptions. Without this an attacker could
+  // cancel any contractor's plan subscriptions to their customers.
+  const auth = await requireAuth(req, { requireUserMatch: req.body?.ownerId });
+  if (!auth.ok) return res.status(auth.status).json({ error: auth.error });
+
+  const { planSubscriptionId, immediate } = req.body || {};
+  const ownerId = auth.userId;
   if (!planSubscriptionId) return res.status(400).json({ error: 'missing_plan_subscription_id' });
 
   const supabase = getServiceClient();

@@ -2,6 +2,7 @@
 // around the /api/marketing/* endpoints.
 
 import { supabase } from "../supabase";
+import { authedFetch } from "../lib/authedFetch";
 
 const dbToCampaign = (r) => ({
   id:           r.id,
@@ -62,7 +63,7 @@ export async function listRecentSends(limit = 25) {
 // Vercel Hobby's 12-function cap; the server-side dispatcher in send.js
 // keeps the implementations separate. Behavior unchanged.
 export async function sendReviewRequests({ ownerId, clientIds, reviewLink, customMessage }) {
-  const resp = await fetch('/api/marketing/send', {
+  const resp = await authedFetch('/api/marketing/send', {
     method:  'POST',
     headers: { 'Content-Type': 'application/json' },
     body:    JSON.stringify({ type: 'review_request', ownerId, clientIds, reviewLink, customMessage }),
@@ -77,7 +78,7 @@ export async function sendReviewRequests({ ownerId, clientIds, reviewLink, custo
 }
 
 export async function sendCampaign({ ownerId, name, tradeFilter, subject, message }) {
-  const resp = await fetch('/api/marketing/send', {
+  const resp = await authedFetch('/api/marketing/send', {
     method:  'POST',
     headers: { 'Content-Type': 'application/json' },
     body:    JSON.stringify({ type: 'campaign', ownerId, name, tradeFilter, subject, message }),

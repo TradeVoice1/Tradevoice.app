@@ -37,6 +37,7 @@
 
 import { stripe } from "../_lib/stripe.js";
 import { getServiceClient } from "../_lib/supabase.js";
+import { requireAuth } from "../_lib/requireAuth.js";
 
 // Slug → Stripe Price ID. Six plans: 3 base × monthly/yearly. The base slug
 // ('solo' / 'pro' / 'all') stays consistent across cadences so reporting,
@@ -108,8 +109,10 @@ export default async function handler(req, res) {
 // immediately, depending on the flag). webhook.js handles both paths
 // and reconciles profiles.subscription_status.
 async function handleCancel(req, res) {
-  const { userId, immediate = false } = req.body || {};
-  if (!userId) return res.status(400).json({ error: 'missing_user_id' });
+  const auth = await requireAuth(req, { requireUserMatch: req.body?.userId });
+  if (!auth.ok) return res.status(auth.status).json({ error: auth.error });
+  const { immediate = false } = req.body || {};
+  const userId = auth.userId;
 
   const supabase = getServiceClient();
   const { data: profile, error: profErr } = await supabase
@@ -166,8 +169,10 @@ async function handleCancel(req, res) {
 // single-file version — only difference is it now lives in a function
 // rather than the module's default export.
 async function handleCreate(req, res) {
-  const { userId, plan, paymentMethodId } = req.body || {};
-  if (!userId)          return res.status(400).json({ error: 'missing_user_id' });
+  const auth = await requireAuth(req, { requireUserMatch: req.body?.userId });
+  if (!auth.ok) return res.status(auth.status).json({ error: auth.error });
+  const { plan, paymentMethodId } = req.body || {};
+  const userId = auth.userId;
   if (!paymentMethodId) return res.status(400).json({ error: 'missing_payment_method' });
 
   const priceId = PLAN_TO_PRICE[plan] || PLAN_TO_PRICE.solo;
@@ -253,8 +258,9 @@ async function handleCreate(req, res) {
 //   - STRIPE_PRICE_TECH_SEAT env var not set → return error so owner sees it
 //   - Stripe API failure → return 502 with detail
 async function handleSyncSeats(req, res) {
-  const { userId } = req.body || {};
-  if (!userId) return res.status(400).json({ error: 'missing_user_id' });
+  const auth = await requireAuth(req, { requireUserMatch: req.body?.userId });
+  if (!auth.ok) return res.status(auth.status).json({ error: auth.error });
+  const userId = auth.userId;
 
   const seatPriceId = process.env.STRIPE_PRICE_TECH_SEAT;
   if (!seatPriceId) {

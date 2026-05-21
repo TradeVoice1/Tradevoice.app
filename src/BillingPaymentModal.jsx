@@ -18,6 +18,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useBreakpoint } from "./lib/useBreakpoint";
+import { authedFetch } from "./lib/authedFetch";
 
 export function BillingPaymentModal({ user, plan, onClose, onSaved }) {
   const { isTablet } = useBreakpoint();
@@ -35,7 +36,7 @@ export function BillingPaymentModal({ user, plan, onClose, onSaved }) {
       setPhase('loading');
       setError('');
       try {
-        const r = await fetch('/api/stripe/setup-intent', {
+        const r = await authedFetch('/api/stripe/setup-intent', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -112,7 +113,7 @@ export function BillingPaymentModal({ user, plan, onClose, onSaved }) {
 
     // Now create the subscription with this PM.
     try {
-      const r = await fetch('/api/stripe/create-subscription', {
+      const r = await authedFetch('/api/stripe/create-subscription', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: user.id, plan, paymentMethodId }),

@@ -10,6 +10,7 @@
 
 import { getServiceClient } from "../_lib/supabase.js";
 import { randomUUID } from "node:crypto";
+import { requireAuth } from "../_lib/requireAuth.js";
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -17,8 +18,16 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'method_not_allowed' });
   }
 
-  const { userId, returnUrl } = req.body || {};
-  if (!userId) return res.status(400).json({ error: 'missing_user_id' });
+  // Gate: only the authenticated user can initiate Stripe Connect
+  // OAuth for their own account. Without this an attacker could
+  // trigger the OAuth flow under any contractor's user_id (the state
+  // nonce check on the /callback path is the only thing that stopped
+  // this from being a true takeover).
+  const auth = await requireAuth(req, { requireUserMatch: req.body?.userId });
+  if (!auth.ok) return res.status(auth.status).json({ error: auth.error });
+
+  const { returnUrl } = req.body || {};
+  const userId = auth.userId;
 
   const clientId = process.env.STRIPE_CONNECT_CLIENT_ID;
   if (!clientId) {

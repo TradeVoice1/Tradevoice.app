@@ -40,6 +40,7 @@ import { listRateLibrary } from "./data/rateLibrary";
 import { invoicesToQbCsv, downloadCsv } from "./lib/qbExport";
 import { useBreakpoint } from "./lib/useBreakpoint";
 import { buildSocialLinks } from "./lib/socialHandles";
+import { authedFetch } from "./lib/authedFetch";
 
 // ─── FONTS ─────────────────────────────────────────────────────────────────────
 // Inter for body/UI everywhere. Playfair Display for the signup brand
@@ -1029,7 +1030,7 @@ function SignupScreen({ onComplete, onBack }) {
 
       // Create Stripe Customer (if not yet) + SetupIntent. The server
       // saves stripe_customer_id back on the profile row.
-      const r = await fetch('/api/stripe/setup-intent', {
+      const r = await authedFetch('/api/stripe/setup-intent', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({ userId, email: email.trim(), name: name || company }),
@@ -1124,7 +1125,7 @@ function SignupScreen({ onComplete, onBack }) {
       if (!pmId) throw new Error('Setup completed but no payment method was returned.');
 
       // 2. Create the trialing subscription on the right Price ID.
-      const subResp = await fetch('/api/stripe/create-subscription', {
+      const subResp = await authedFetch('/api/stripe/create-subscription', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({
@@ -7984,7 +7985,7 @@ function Settings({ user, setUser, logo, onLogoChange, showProfileModal, setShow
     setCancelBusy(true);
     setCancelError('');
     try {
-      const r = await fetch('/api/stripe/create-subscription', {
+      const r = await authedFetch('/api/stripe/create-subscription', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({ action: 'cancel', userId: user.id }),
@@ -8026,7 +8027,7 @@ function Settings({ user, setUser, logo, onLogoChange, showProfileModal, setShow
     if (stripeBusy) return;
     setStripeBusy(true);
     try {
-      const r = await fetch('/api/stripe/connect-start', {
+      const r = await authedFetch('/api/stripe/connect-start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: user.id, returnUrl: window.location.origin }),
@@ -8044,7 +8045,7 @@ function Settings({ user, setUser, logo, onLogoChange, showProfileModal, setShow
     if (!window.confirm('Disconnect your Stripe account? Customers won\'t be able to pay invoices online until you reconnect.')) return;
     setStripeBusy(true);
     try {
-      const r = await fetch('/api/stripe/disconnect', {
+      const r = await authedFetch('/api/stripe/disconnect', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: user.id }),

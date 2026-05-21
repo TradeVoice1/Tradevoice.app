@@ -7,6 +7,7 @@
 // owner_id must equal auth.uid() on every insert / update / delete.
 
 import { supabase } from "../supabase";
+import { authedFetch } from "../lib/authedFetch";
 
 const dbToItem = (r) => ({
   id:          r.id,
@@ -132,7 +133,7 @@ export async function parseRateTable({ ownerId, file }) {
     reader.readAsDataURL(file);
   });
 
-  const resp = await fetch('/api/library/parse-rate-table', {
+  const resp = await authedFetch('/api/library/parse-rate-table', {
     method:  'POST',
     headers: { 'Content-Type': 'application/json' },
     body:    JSON.stringify({
