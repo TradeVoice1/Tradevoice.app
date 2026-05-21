@@ -6924,11 +6924,55 @@ function ProfileModal({ profile, onSave, onClose }) {
   );
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: '#000000bb', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 999, padding: 20 }}>
-      <div style={{ background: C.surface, border: `1px solid ${C.border2}`, borderRadius: 4, padding: '28px 26px', width: '100%', maxWidth: 720, maxHeight: '92vh', overflowY: 'auto' }}>
+    <div style={{
+      position: 'fixed', inset: 0, background: '#000000bb',
+      display: 'flex',
+      // Tablet/phone: modal centered, original behavior. Laptop:
+      // full-screen takeover with no padding so the form has room
+      // for all the new multi-state / per-state-license sections
+      // we added in migration 0037. The form was getting cramped
+      // at 720px max-width.
+      alignItems:     isTablet ? 'center' : 'stretch',
+      justifyContent: isTablet ? 'center' : 'stretch',
+      zIndex: 999,
+      padding: isTablet ? 20 : 0,
+      overflowY: isTablet ? 'visible' : 'auto',
+    }}>
+      <div style={{
+        background: C.surface,
+        border:       isTablet ? `1px solid ${C.border2}` : 'none',
+        borderRadius: isTablet ? 4 : 0,
+        // Laptop fills viewport edge-to-edge (within a comfortable
+        // reading column); tablet keeps the prior modal sizing.
+        padding:      isTablet ? '28px 26px' : '36px max(40px, calc((100vw - 1100px) / 2))',
+        width:        '100%',
+        maxWidth:     isTablet ? 720 : 'none',
+        maxHeight:    isTablet ? '92vh' : 'none',
+        minHeight:    isTablet ? 'auto' : '100vh',
+        overflowY:    isTablet ? 'auto' : 'visible',
+        boxSizing:    'border-box',
+      }}>
 
-        <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 24, fontWeight: 900, color: C.text, marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Company Profile</div>
-        <p style={{ fontSize: 15, color: C.muted, marginBottom: 22, marginTop: 0 }}>Everything here appears on all quotes and invoices.</p>
+        {/* Header — laptop gets a wider title + a top-right Done button
+            so the user can close without scrolling to the bottom action
+            row. The Done button mirrors what handleSave does. */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: isTablet ? 22 : 28 }}>
+          <div>
+            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: isTablet ? 24 : 32, fontWeight: 900, color: C.text, marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Company Profile</div>
+            <p style={{ fontSize: 15, color: C.muted, marginBottom: 0, marginTop: 0 }}>Everything here appears on all quotes and invoices.</p>
+          </div>
+          {!isTablet && (
+            <button
+              onClick={onClose}
+              style={{
+                background: 'transparent', border: 'none', color: C.muted,
+                fontSize: 28, fontWeight: 300, cursor: 'pointer', lineHeight: 1,
+                padding: '4px 12px', borderRadius: 8, fontFamily: 'inherit',
+              }}
+              title="Close"
+            >×</button>
+          )}
+        </div>
 
         {/* Logo */}
         <div style={{ marginBottom: 22 }}>
