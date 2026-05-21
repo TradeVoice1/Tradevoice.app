@@ -19,13 +19,13 @@
 --     has otpauth libs; Postgres would have to roll its own HMAC-SHA1).
 --     This migration just stores the secret + the last-unlock timestamp.
 --   • After deploy, flag the owner account by running THIS in Supabase
---     SQL editor (only works once the matthew@tradevoice.com account
+--     SQL editor (only works once the matthew@thetradevoice.com account
 --     exists in auth.users):
 --
 --       update public.profiles
 --          set is_super_owner = true
 --        where id = (select id from auth.users
---                     where email = 'matthew@tradevoice.com');
+--                     where email = 'matthew@thetradevoice.com');
 --
 --   • The Phase-2 Edge Function will reject any unlock attempt where
 --     the caller's profile has is_super_owner = false, so flagging is

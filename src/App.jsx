@@ -8610,11 +8610,11 @@ function TradevoiceApp() {
     const profileIsComplete = (p) => {
       if (!p) return false;
       if (p.role === 'tech') return true;
-      // Founder account (migration 0030) bypasses every signup gate.
-      // It's created directly via the Supabase Auth dashboard with no
-      // Stripe customer, so checking for stripe_subscription_id would
-      // permanently block it. Flagging is_super_owner = true is the
-      // explicit handshake that says "this account is exempt".
+      // Founder account (matthew@thetradevoice.com, migration 0030)
+      // bypasses every signup gate. It's created directly via the
+      // Supabase Auth dashboard with no Stripe customer, so checking
+      // for stripe_subscription_id would permanently block it.
+      // Flagging is_super_owner = true is the explicit handshake.
       if (p.isSuperOwner) return true;
       return !!p.acceptedTermsAt
           && Array.isArray(p.trades) && p.trades.length > 0
