@@ -206,8 +206,10 @@ export default function OwnerDashboard({ user }) {
         case 'trial':      return a.trialDaysLeft ?? -Infinity;
         case 'seats':      return a.activeSeats ?? 0;
         case 'monthly':    return a.monthlyRevenue ?? 0;
+        case 'lifetime':   return a.lifetimeRevenue ?? 0;
         case 'lastSignIn': return a.lastSignInAt?.getTime() ?? 0;
         case 'createdAt':  return a.createdAt?.getTime()   ?? 0;
+        case 'lastPayment':return a.lastPaymentAt?.getTime() ?? 0;
         default:           return '';
       }
     };
@@ -235,7 +237,7 @@ export default function OwnerDashboard({ user }) {
       setSortDir(d => d === 'asc' ? 'desc' : 'asc');
     } else {
       setSortBy(col);
-      const numericOrDate = ['trial', 'seats', 'monthly', 'lastSignIn', 'createdAt'].includes(col);
+      const numericOrDate = ['trial', 'seats', 'monthly', 'lifetime', 'lastSignIn', 'createdAt', 'lastPayment'].includes(col);
       setSortDir(numericOrDate ? 'desc' : 'asc');
     }
   };
@@ -342,9 +344,23 @@ export default function OwnerDashboard({ user }) {
               accent={C.green}
               sub="Active subs only"
             />
+            <StatTile
+              label="Lifetime Revenue"
+              value={fmtMoney(data.summary.lifetimeRevenue)}
+              accent={C.greenDark}
+              sub="Total ever collected"
+            />
+            <StatTile
+              label="This Month"
+              value={fmtMoney(data.summary.currentMonthRevenue)}
+              accent={C.success}
+              sub="Collected since 1st"
+            />
           </div>
 
-          {/* Activity strip */}
+          {/* Revenue activity strip — refocused from "what did contractors
+              do" to "how much money came in." Last-24h revenue is the
+              real-time pulse; new signups are the leading indicator. */}
           <div style={{
             background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12,
             padding: '12px 18px', marginBottom: 20,
@@ -352,6 +368,10 @@ export default function OwnerDashboard({ user }) {
           }}>
             <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: C.muted }}>
               Last 24 hours
+            </div>
+            <div>
+              <span style={{ fontWeight: 800, color: C.success }}>{fmtMoney(data.summary.last24hRevenue)}</span>
+              <span style={{ color: C.muted, marginLeft: 6 }}>collected</span>
             </div>
             <div>
               <span style={{ fontWeight: 800, color: C.text }}>{data.summary.newSignups24h}</span>
@@ -414,10 +434,12 @@ export default function OwnerDashboard({ user }) {
           <option value="name:desc">Sort: Z → A (Name)</option>
           <option value="company:asc">Sort: A → Z (Company)</option>
           <option value="email:asc">Sort: A → Z (Email)</option>
+          <option value="lifetime:desc">Sort: Top revenue (lifetime)</option>
+          <option value="monthly:desc">Sort: Top revenue (monthly)</option>
+          <option value="lastPayment:desc">Sort: Most recent payment</option>
           <option value="createdAt:desc">Sort: Newest signups first</option>
           <option value="createdAt:asc">Sort: Oldest signups first</option>
           <option value="lastSignIn:desc">Sort: Recently active</option>
-          <option value="monthly:desc">Sort: Highest revenue first</option>
           <option value="trial:asc">Sort: Trial ending soonest</option>
         </select>
       </div>
@@ -443,8 +465,8 @@ export default function OwnerDashboard({ user }) {
                   <SortableTh col="plan"       onSort={handleSort} arrow={sortArrow('plan')}>Plan</SortableTh>
                   <SortableTh col="status"     onSort={handleSort} arrow={sortArrow('status')}>Status</SortableTh>
                   <SortableTh col="trial"      onSort={handleSort} arrow={sortArrow('trial')}      align="center">Trial Left</SortableTh>
-                  <SortableTh col="seats"      onSort={handleSort} arrow={sortArrow('seats')}      align="center">Seats</SortableTh>
                   <SortableTh col="monthly"    onSort={handleSort} arrow={sortArrow('monthly')}    align="right">Monthly</SortableTh>
+                  <SortableTh col="lifetime"   onSort={handleSort} arrow={sortArrow('lifetime')}   align="right">Lifetime $</SortableTh>
                   <SortableTh col="lastSignIn" onSort={handleSort} arrow={sortArrow('lastSignIn')}>Last Sign-In</SortableTh>
                 </tr>
               </thead>
@@ -482,11 +504,16 @@ export default function OwnerDashboard({ user }) {
                               }}>{a.trialDaysLeft != null ? `${a.trialDaysLeft}d` : '—'}</span>
                             : <span style={{ color: C.dim }}>—</span>)}
                         </td>
-                        <td style={{ ...td, textAlign: 'center', color: C.text, fontWeight: 700 }}>
-                          {a.activeSeats}
-                        </td>
                         <td style={{ ...td, textAlign: 'right', color: a.monthlyRevenue > 0 ? C.success : C.dim, fontWeight: 700 }}>
                           {a.monthlyRevenue > 0 ? fmtMoney(a.monthlyRevenue) : '—'}
+                        </td>
+                        <td style={{ ...td, textAlign: 'right', color: a.lifetimeRevenue > 0 ? C.greenDark : C.dim, fontWeight: 800 }}>
+                          {a.lifetimeRevenue > 0 ? fmtMoney(a.lifetimeRevenue) : '—'}
+                          {a.paymentCount > 0 && (
+                            <div style={{ fontSize: 11, fontWeight: 500, color: C.muted, marginTop: 2 }}>
+                              {a.paymentCount} payment{a.paymentCount === 1 ? '' : 's'}
+                            </div>
+                          )}
                         </td>
                         <td style={{ ...td, color: C.muted }}>
                           {fmtRel(a.lastSignInAt)}
@@ -535,43 +562,78 @@ export default function OwnerDashboard({ user }) {
                               </div>
                             )}
 
-                            {/* Account profile — who is this contractor? */}
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16, marginBottom: 18 }}>
+                            {/* ── REVENUE BANNER ── The headline number.
+                                Lifetime $ from this customer, count of
+                                payments, and what they pay each month.
+                                Green-tinted so it pops as the most
+                                important info on the screen. */}
+                            {!a.isSuperOwner && (
+                              <div style={{
+                                background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)',
+                                border: '1px solid #bbf7d0',
+                                borderRadius: 10, padding: '14px 18px', marginBottom: 16,
+                                display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 14,
+                              }}>
+                                <div>
+                                  <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.success, marginBottom: 4 }}>
+                                    Lifetime Revenue
+                                  </div>
+                                  <div style={{ fontSize: 24, fontWeight: 900, color: C.success, lineHeight: 1 }}>
+                                    {fmtMoney(a.lifetimeRevenue)}
+                                  </div>
+                                </div>
+                                <div>
+                                  <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.muted, marginBottom: 4 }}>
+                                    Payments
+                                  </div>
+                                  <div style={{ fontSize: 22, fontWeight: 800, color: C.text, lineHeight: 1 }}>
+                                    {a.paymentCount}
+                                  </div>
+                                  {a.lastPaymentAt && (
+                                    <div style={{ fontSize: 11, color: C.muted, marginTop: 4 }}>
+                                      Last: {fmtDate(a.lastPaymentAt)}
+                                    </div>
+                                  )}
+                                </div>
+                                <div>
+                                  <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.muted, marginBottom: 4 }}>
+                                    Monthly
+                                  </div>
+                                  <div style={{ fontSize: 22, fontWeight: 800, color: C.text, lineHeight: 1 }}>
+                                    {a.monthlyRevenue > 0 ? fmtMoney(a.monthlyRevenue) : '—'}
+                                  </div>
+                                  {a.plan && (
+                                    <div style={{ fontSize: 11, color: C.muted, marginTop: 4 }}>
+                                      {a.plan.charAt(0).toUpperCase() + a.plan.slice(1)} plan
+                                    </div>
+                                  )}
+                                </div>
+                                <div>
+                                  <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.muted, marginBottom: 4 }}>
+                                    Next Payment
+                                  </div>
+                                  <div style={{ fontSize: 14, fontWeight: 700, color: C.text, lineHeight: 1.3 }}>
+                                    {a.cancelAtPeriodEnd
+                                      ? <span style={{ color: C.yellow }}>None — canceling</span>
+                                      : (a.currentPeriodEnd ? fmtDate(a.currentPeriodEnd) : 'TBD')}
+                                  </div>
+                                  {!a.cancelAtPeriodEnd && a.monthlyRevenue > 0 && (
+                                    <div style={{ fontSize: 11, color: C.muted, marginTop: 4 }}>
+                                      {fmtMoney(a.monthlyRevenue)}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Customer context — small, just enough to identify them. */}
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16, marginBottom: 14 }}>
                               <DetailField label="Company"   value={a.company || '—'} />
                               <DetailField label="Phone"     value={a.phone   || '—'} />
-                              <DetailField label="Trades"    value={a.trades?.length ? a.trades.join(', ') : '—'} />
-                              <DetailField label="States"    value={a.states?.length ? a.states.join(', ') : '—'} />
-                              <DetailField label="License"   value={a.license || '—'} />
-                              <DetailField label="Accepted Terms" value={fmtDate(a.acceptedTermsAt)} />
-                            </div>
-
-                            {/* Activity — what have they done in the app? */}
-                            <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.muted, marginBottom: 8 }}>
-                              Activity
-                            </div>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 16, marginBottom: 18 }}>
-                              <DetailField label="Invoices Sent" value={`${a.invoicesCount} (${a.invoicesPaidCount} paid)`} />
-                              <DetailField label="Last Invoice"  value={fmtDate(a.lastInvoiceAt)} />
-                              <DetailField label="Jobs Scheduled" value={a.jobsCount} />
-                              <DetailField label="Last Job"      value={fmtDate(a.lastJobAt)} />
-                              <DetailField label="Quotes Drafted" value={a.quotesCount} />
-                              <DetailField label="Clients Added" value={a.clientsCount} />
-                              <DetailField label="Team Members"  value={`${a.teamCount} (${a.activeSeats} active)`} />
-                            </div>
-
-                            {/* Billing context — Stripe + plan details */}
-                            <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.muted, marginBottom: 8 }}>
-                              Billing
-                            </div>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16 }}>
-                              <DetailField label="Signed Up"  value={fmtDate(a.createdAt)} />
-                              <DetailField label="Trial Ends" value={a.isSuperOwner ? '—' : fmtDate(a.trialEndsAt)} />
-                              <DetailField label="Period Ends" value={fmtDate(a.currentPeriodEnd)} />
+                              <DetailField label="Signed Up" value={fmtDate(a.createdAt)} />
                               <DetailField label="Last Sign-In" value={fmtDate(a.lastSignInAt)} />
                               <DetailField label="Card on File" value={a.hasCard ? 'Yes' : 'No'} />
-                              <DetailField label="Plan Price"  value={a.plan ? fmtMoney(PLAN_PRICES[a.plan] || 0) : '—'} />
                               <DetailField label="Stripe Customer" value={a.stripeCustomerId || '—'} mono />
-                              <DetailField label="Subscription ID" value={a.stripeSubscriptionId || '—'} mono />
                             </div>
                             {/* Phase 4 — subscription event timeline */}
                             <Timeline state={timelines[a.id]} fallbackCreatedAt={a.createdAt} />

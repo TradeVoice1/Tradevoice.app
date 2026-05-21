@@ -79,6 +79,16 @@ export async function fetchSuperOwnerData() {
     const lastJobAt        = r.last_job_at       ? new Date(r.last_job_at)       : null;
     const acceptedTermsAt  = r.accepted_terms_at ? new Date(r.accepted_terms_at) : null;
 
+    // Revenue fields (migration 0036) — the founder-focused signals.
+    // lifetime_revenue is the sum of every payment_succeeded event for
+    // this account. NULL on accounts with no payments yet, but the
+    // RPC coalesces to 0 so we always get a number.
+    const lifetimeRevenue       = r.lifetime_revenue       != null ? Number(r.lifetime_revenue)       : 0;
+    const paymentCount          = r.payment_count          ?? 0;
+    const lastPaymentAt         = r.last_payment_at        ? new Date(r.last_payment_at) : null;
+    const currentMonthRevenue   = r.current_month_revenue  != null ? Number(r.current_month_revenue)  : 0;
+    const last24hRevenue        = r.last_24h_revenue       != null ? Number(r.last_24h_revenue)       : 0;
+
     return {
       id:                   r.id,
       email:                r.email || '(no email)',
@@ -104,14 +114,12 @@ export async function fetchSuperOwnerData() {
       lastSignInAt:         r.last_sign_in_at ? new Date(r.last_sign_in_at) : null,
       activeSeats:          r.active_seats ?? 0,
       teamCount:            r.team_count    ?? 0,
-      // Activity counts — surface "are they actually using the app?"
-      invoicesCount:        r.invoices_count      ?? 0,
-      invoicesPaidCount:    r.invoices_paid_count ?? 0,
-      lastInvoiceAt,
-      jobsCount:            r.jobs_count    ?? 0,
-      lastJobAt,
-      quotesCount:          r.quotes_count  ?? 0,
-      clientsCount:         r.clients_count ?? 0,
+      // ── Founder revenue fields (NEW, migration 0036) ──
+      lifetimeRevenue,
+      paymentCount,
+      lastPaymentAt,
+      currentMonthRevenue,
+      last24hRevenue,
       monthlyRevenue,
       hasCard:              !!r.stripe_payment_method_id,
       stripeCustomerId:     r.stripe_customer_id || null,
@@ -140,6 +148,17 @@ export async function fetchSuperOwnerData() {
     // MRR sums the per-account monthlyRevenue. Currency is USD per the
     // pricing constants above.
     monthlyRevenue:   accounts.reduce((s, a) => s + a.monthlyRevenue, 0),
+    // ── Founder revenue rollups (migration 0036) ──────────────────────
+    // Lifetime: total platform revenue ever collected. Sums each
+    // account's lifetime_revenue from subscription_events.
+    lifetimeRevenue:  accounts.reduce((s, a) => s + (a.lifetimeRevenue || 0), 0),
+    // Current month: revenue collected since the 1st of this month.
+    // Tells you "how am I doing this month so far?"
+    currentMonthRevenue: accounts.reduce((s, a) => s + (a.currentMonthRevenue || 0), 0),
+    // Last 24h: revenue collected in the past day. Surfaces big
+    // renewal mornings + sudden churn impact (negative? no, payments
+    // don't go negative — but missing renewals show up as 0).
+    last24hRevenue:   accounts.reduce((s, a) => s + (a.last24hRevenue || 0), 0),
     // Activity last 24h — new signups + recent sign-ins.
     newSignups24h:    accounts.filter(a => a.createdAt && a.createdAt.getTime() >= last24h && !a.isSuperOwner).length,
     recentSignins24h: accounts.filter(a => a.lastSignInAt && a.lastSignInAt.getTime() >= last24h).length,
