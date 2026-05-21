@@ -8610,6 +8610,12 @@ function TradevoiceApp() {
     const profileIsComplete = (p) => {
       if (!p) return false;
       if (p.role === 'tech') return true;
+      // Founder account (migration 0030) bypasses every signup gate.
+      // It's created directly via the Supabase Auth dashboard with no
+      // Stripe customer, so checking for stripe_subscription_id would
+      // permanently block it. Flagging is_super_owner = true is the
+      // explicit handshake that says "this account is exempt".
+      if (p.isSuperOwner) return true;
       return !!p.acceptedTermsAt
           && Array.isArray(p.trades) && p.trades.length > 0
           && !!p.stripe_subscription_id
@@ -8623,6 +8629,8 @@ function TradevoiceApp() {
     const profileLockedOut = (p) => {
       if (!p) return false;
       if (p.role === 'tech') return false;
+      // Founder account is never locked out — no subscription to lapse.
+      if (p.isSuperOwner) return false;
       return !!p.acceptedTermsAt
           && Array.isArray(p.trades) && p.trades.length > 0
           && !!p.stripe_subscription_id
@@ -9289,6 +9297,11 @@ function TradevoiceApp() {
   // attached a subscription yet. Tapping the pill jumps straight to
   // Settings → Billing where they can add/update a card.
   const trialInfo = (() => {
+    // Founder account (migration 0030) — no trial, no subscription.
+    // Show a distinctive pill so it's obvious which account is logged
+    // in (and a visible reminder that the billing logic is bypassed).
+    if (user?.isSuperOwner) return { label: 'Founder Account', tone: 'success' };
+
     const status   = user?.subscription_status;
     const hasCard  = !!user?.stripe_payment_method_id;
     const trialEnd = user?.trial_ends_at

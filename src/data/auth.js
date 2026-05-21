@@ -57,6 +57,11 @@ const dbToProfile = (row) => row && ({
   trial_ends_at:                  row.trial_ends_at                  ?? null,
   subscription_status:             row.subscription_status            ?? 'trialing',
   createdAt:        row.created_at        ?? null,    // when the profile row was inserted (≈ signup time) — used for trial countdown
+  // Founder / super-owner flag (migration 0030). True only for the
+  // single Tradevoice founder account, which is created directly via
+  // the Supabase Auth dashboard and exempt from the billing gates
+  // (no Stripe customer, no subscription, no trial countdown).
+  isSuperOwner:     row.is_super_owner    ?? false,
 });
 
 const profileToDb = (p) => ({
