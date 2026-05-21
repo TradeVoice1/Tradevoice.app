@@ -7074,6 +7074,36 @@ function Billing({ user, setUser, payments }) {
   const currentPrice = getPrice(tradeCount);
   const planName     = PLANS.find(p => p.trades === tradeCount)?.name || 'Starter';
 
+  // Founder account (migration 0030): no Stripe customer, no
+  // subscription, no plan. Render a clean "Founder Account" panel
+  // instead of the misleading "Solo $49.99" fallback the default
+  // logic would produce when user.trades is empty.
+  if (user?.isSuperOwner) {
+    return (
+      <div>
+        <SectionHead icon="" title="Billing" sub="Founder account — billing bypassed" />
+        <div style={{
+          background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)',
+          border: '1px solid #bbf7d0',
+          borderRadius: 12, padding: '24px 28px', marginBottom: 24,
+        }}>
+          <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', color: C.success, marginBottom: 6 }}>
+            Founder Account
+          </div>
+          <div style={{ fontSize: 22, fontWeight: 900, color: C.text, marginBottom: 8 }}>
+            No plan · No subscription · No charges
+          </div>
+          <div style={{ fontSize: 14, color: C.muted, lineHeight: 1.6, maxWidth: 540 }}>
+            This account is exempt from Tradevoice billing. There's no Stripe customer,
+            no subscription, and no card on file — so nothing can ever charge you.
+            All features are unlocked. To use the app as a paying customer for testing,
+            sign in with a different account.
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // ── Subscription state ──
   const subStatus = user?.subscription_status || 'trialing';
   const hasCard   = !!user?.stripe_payment_method_id;
