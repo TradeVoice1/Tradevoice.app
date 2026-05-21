@@ -8756,6 +8756,30 @@ function TradevoiceApp() {
     return () => { cancelled = true; unsubscribe(); };
   }, []);
   const [section, setSection] = useState('dashboard');
+  // Founder-only nav item — prepended to the normal NAV array so the
+  // super-owner sees "Founder" as the first tab/sidebar entry while
+  // every other account sees the standard nav unchanged. Memoized so
+  // the array reference is stable across renders. Declared up here
+  // with the other hooks so it's called on every render in the same
+  // order, before any conditional early returns further down.
+  const navItems = useMemo(() => (
+    user?.isSuperOwner
+      ? [{ id: 'founder', label: 'Founder' }, ...NAV]
+      : NAV
+  ), [user?.isSuperOwner]);
+
+  // Default the super-owner to the Founder section on first hydration.
+  // Effect (not initial state) because user is set asynchronously
+  // after the auth boot completes — useState('dashboard') runs before
+  // we know who's logged in. Must be declared above the early returns
+  // for the same Rules-of-Hooks reason as navItems above.
+  useEffect(() => {
+    if (user?.isSuperOwner && section === 'dashboard') {
+      setSection('founder');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.isSuperOwner]);
+
   const [logo,    setLogo]    = useState(null);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [payments, setPayments] = useState({
@@ -9301,27 +9325,6 @@ function TradevoiceApp() {
     if (opts && opts.month) setPendingMonthFilter(opts.month);
     setSection(sec);
   };
-
-  // Founder-only nav item — prepended to the normal NAV array so the
-  // super-owner sees "Founder" as the first tab/sidebar entry while
-  // every other account sees the standard nav unchanged. Memoized so
-  // the array reference is stable across renders.
-  const navItems = useMemo(() => (
-    user?.isSuperOwner
-      ? [{ id: 'founder', label: 'Founder' }, ...NAV]
-      : NAV
-  ), [user?.isSuperOwner]);
-
-  // Default the super-owner to the Founder section on first hydration.
-  // Done in an effect (not initial state) because user is set
-  // asynchronously after the auth boot completes — the initial
-  // useState('dashboard') runs before we know who's logged in.
-  useEffect(() => {
-    if (user?.isSuperOwner && section === 'dashboard') {
-      setSection('founder');
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.isSuperOwner]);
 
   const content = {
     founder:   <OwnerDashboard user={user} />,
