@@ -15,6 +15,10 @@ const BillingPaymentModal = lazy(() => import("./BillingPaymentModal").then(m =>
 // never open Settings.
 const RateLibraryPanel = lazy(() => import("./RateLibraryPanel"));
 const MarketingScreen      = lazy(() => import("./MarketingScreen"));
+// Founder-only "god view" dashboard (migrations 0030 + 0031). Lazy-loaded
+// because most accounts never see this code path — only the super-owner
+// account renders it, so it shouldn't be in the main bundle.
+const OwnerDashboard       = lazy(() => import("./OwnerDashboard"));
 const PrivacyPolicyScreen  = lazy(() => import("./LegalScreens").then(m => ({ default: m.PrivacyPolicyScreen })));
 const TermsScreen          = lazy(() => import("./LegalScreens").then(m => ({ default: m.TermsScreen })));
 import { signIn, signUp, signOut, getProfile, upsertProfile, getSessionUser, onAuthChange, techSignIn, techChangePassword, signInWithGoogle } from "./data/auth";
@@ -9298,7 +9302,29 @@ function TradevoiceApp() {
     setSection(sec);
   };
 
+  // Founder-only nav item — prepended to the normal NAV array so the
+  // super-owner sees "Founder" as the first tab/sidebar entry while
+  // every other account sees the standard nav unchanged. Memoized so
+  // the array reference is stable across renders.
+  const navItems = useMemo(() => (
+    user?.isSuperOwner
+      ? [{ id: 'founder', label: 'Founder' }, ...NAV]
+      : NAV
+  ), [user?.isSuperOwner]);
+
+  // Default the super-owner to the Founder section on first hydration.
+  // Done in an effect (not initial state) because user is set
+  // asynchronously after the auth boot completes — the initial
+  // useState('dashboard') runs before we know who's logged in.
+  useEffect(() => {
+    if (user?.isSuperOwner && section === 'dashboard') {
+      setSection('founder');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.isSuperOwner]);
+
   const content = {
+    founder:   <OwnerDashboard user={user} />,
     dashboard: <Dashboard    user={user} nav={navigateTo} invoices={sharedInvoices} plans={plans} onScheduleFromPlan={handleScheduleFromPlan} teamMembers={teamMembers} />,
     invoice:   <VoiceInvoice user={user} logo={logo} payments={payments} taxRates={taxRates} teamMembers={teamMembers} sharedInvoices={sharedInvoices} setSharedInvoices={setSharedInvoices} persistInvoice={persistInvoice} removeInvoice={removeInvoice} handleUnInvoice={handleUnInvoice} pendingInvoiceId={pendingInvoiceId} clearPendingInvoice={() => setPendingInvoiceId(null)} pendingMonthFilter={pendingMonthFilter} clearPendingMonthFilter={() => setPendingMonthFilter(null)} />,
     billing:   <Billing      user={user} setUser={setUser} payments={payments} />,
@@ -9470,7 +9496,7 @@ function TradevoiceApp() {
 
         {/* Top tab nav — oval pill buttons */}
         <div style={{ background: C.surface, borderBottom: `1px solid ${C.border}`, height: BOTTOM_H, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '0 10px', overflowX: 'auto' }}>
-          {NAV.map(item => {
+          {navItems.map(item => {
             const active = section === item.id;
             return (
               <button key={item.id} onClick={() => setSection(item.id)} style={{
@@ -9517,7 +9543,7 @@ function TradevoiceApp() {
         {/* Sidebar — nav only (logo and profile now live in the top bar) */}
         <div style={{ width: 210, background: C.surface, borderRight: `1px solid ${C.border}`, display: 'flex', flexDirection: 'column', position: 'sticky', top: TOP_H, height: `calc(100vh - ${TOP_H}px)`, flexShrink: 0 }}>
           <nav style={{ flex: 1, padding: '20px 12px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {NAV.map(item => {
+            {navItems.map(item => {
               const active = section === item.id;
               return (
                 <button key={item.id} onClick={() => setSection(item.id)} style={{
