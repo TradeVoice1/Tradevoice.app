@@ -175,13 +175,18 @@ export default async function handler(req, res) {
           console.log('[stripe webhook] (connect) plan sub', event.type, sub.id, sub.status);
         } else {
           // Platform subscription (Tradevoice's own customer).
-          const trialEnd = sub.trial_end ? new Date(sub.trial_end * 1000).toISOString() : null;
+          const trialEnd      = sub.trial_end          ? new Date(sub.trial_end          * 1000).toISOString() : null;
+          const periodEnd     = sub.current_period_end ? new Date(sub.current_period_end * 1000).toISOString() : null;
+          const canceledAtIso = sub.canceled_at        ? new Date(sub.canceled_at        * 1000).toISOString() : null;
           const effectiveStatus = event.type === 'customer.subscription.deleted' ? 'canceled' : sub.status;
           await supabase.rpc('update_subscription_status', {
-            p_customer_id:     sub.customer,
-            p_subscription_id: sub.id,
-            p_status:          effectiveStatus,
-            p_trial_ends_at:   trialEnd,
+            p_customer_id:          sub.customer,
+            p_subscription_id:      sub.id,
+            p_status:               effectiveStatus,
+            p_trial_ends_at:        trialEnd,
+            p_cancel_at_period_end: !!sub.cancel_at_period_end,
+            p_current_period_end:   periodEnd,
+            p_canceled_at:          canceledAtIso,
           });
           // Phase 4 — log to subscription_events for the founder
           // dashboard's per-customer timeline (migration 0034).
@@ -199,9 +204,34 @@ export default async function handler(req, res) {
             status:     effectiveStatus,
             stripe_event_id: event.id,
             stripe_subscription_id: sub.id,
+            metadata: {
+              cancel_at_period_end: !!sub.cancel_at_period_end,
+              current_period_end:   periodEnd,
+              canceled_at:          canceledAtIso,
+            },
             occurred_at: new Date(event.created * 1000).toISOString(),
           });
-          console.log('[stripe webhook] subscription', event.type, sub.customer, sub.status);
+          // Distinct cancellation_scheduled event when the user
+          // clicked Cancel but the period hasn't ended yet. This
+          // surfaces as its own event in the per-customer timeline
+          // so it's easy to spot "the moment they decided to leave"
+          // vs. the eventual period-end cancellation. ID-suffix
+          // keeps it from colliding with the umbrella event log
+          // above under the unique stripe_event_id index.
+          if (sub.cancel_at_period_end && event.type !== 'customer.subscription.deleted') {
+            await logEventForCustomer(supabase, sub.customer, {
+              event_type: 'cancellation_scheduled',
+              status:     effectiveStatus,
+              stripe_event_id: `${event.id}:cancel`,
+              stripe_subscription_id: sub.id,
+              metadata: {
+                current_period_end: periodEnd,
+                canceled_at:        canceledAtIso,
+              },
+              occurred_at: new Date(event.created * 1000).toISOString(),
+            });
+          }
+          console.log('[stripe webhook] subscription', event.type, sub.customer, sub.status, sub.cancel_at_period_end ? '(canceling)' : '');
         }
         break;
       }

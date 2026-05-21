@@ -68,20 +68,50 @@ export async function fetchSuperOwnerData() {
       ? (basePrice + seatPrice)
       : 0;
 
+    // New cancellation-aware fields (migration 0035). cancel_at_period_end
+    // is the "user clicked Cancel" signal; the subscription is still
+    // active/trialing but won't auto-renew. current_period_end tells us
+    // when access actually ends.
+    const isCanceling      = !!r.cancel_at_period_end && r.subscription_status !== 'canceled';
+    const currentPeriodEnd = r.current_period_end ? new Date(r.current_period_end) : null;
+    const canceledAt       = r.canceled_at       ? new Date(r.canceled_at)       : null;
+    const lastInvoiceAt    = r.last_invoice_at   ? new Date(r.last_invoice_at)   : null;
+    const lastJobAt        = r.last_job_at       ? new Date(r.last_job_at)       : null;
+    const acceptedTermsAt  = r.accepted_terms_at ? new Date(r.accepted_terms_at) : null;
+
     return {
       id:                   r.id,
       email:                r.email || '(no email)',
       name:                 r.name || '',
       company:              r.company || '',
+      phone:                r.phone || '',
+      trades:               Array.isArray(r.trades) ? r.trades : [],
+      states:               Array.isArray(r.states) ? r.states : [],
+      license:              r.license || '',
       plan:                 r.plan || '',
       role:                 r.role || 'owner',
       subscriptionStatus:   r.subscription_status || 'trialing',
       isSuperOwner:         !!r.is_super_owner,
+      // Cancellation lifecycle
+      isCanceling,
+      currentPeriodEnd,
+      canceledAt,
+      cancelAtPeriodEnd:    !!r.cancel_at_period_end,
       trialEndsAt:          trialEnd,
       trialDaysLeft,
+      acceptedTermsAt,
       createdAt,
       lastSignInAt:         r.last_sign_in_at ? new Date(r.last_sign_in_at) : null,
       activeSeats:          r.active_seats ?? 0,
+      teamCount:            r.team_count    ?? 0,
+      // Activity counts — surface "are they actually using the app?"
+      invoicesCount:        r.invoices_count      ?? 0,
+      invoicesPaidCount:    r.invoices_paid_count ?? 0,
+      lastInvoiceAt,
+      jobsCount:            r.jobs_count    ?? 0,
+      lastJobAt,
+      quotesCount:          r.quotes_count  ?? 0,
+      clientsCount:         r.clients_count ?? 0,
       monthlyRevenue,
       hasCard:              !!r.stripe_payment_method_id,
       stripeCustomerId:     r.stripe_customer_id || null,
@@ -103,6 +133,10 @@ export async function fetchSuperOwnerData() {
     trialingCount:    accounts.filter(a => a.subscriptionStatus === 'trialing' && !a.isSuperOwner).length,
     pastDueCount:     accounts.filter(a => a.subscriptionStatus === 'past_due').length,
     canceledCount:    accounts.filter(a => a.subscriptionStatus === 'canceled').length,
+    // "Canceling" — they clicked Cancel but the period hasn't ended.
+    // Still active/trialing right now but won't auto-renew. The
+    // churn-prediction signal we couldn't track until migration 0035.
+    cancelingCount:   accounts.filter(a => a.isCanceling && !a.isSuperOwner).length,
     // MRR sums the per-account monthlyRevenue. Currency is USD per the
     // pricing constants above.
     monthlyRevenue:   accounts.reduce((s, a) => s + a.monthlyRevenue, 0),

@@ -48,9 +48,16 @@ const C = {
 // Pretty status badge — matches the visual language used elsewhere in
 // the app (small caps, colored pill). Keep statuses lowercase so the
 // styling never depends on case.
-const StatusBadge = ({ status, isSuperOwner }) => {
+const StatusBadge = ({ status, isSuperOwner, isCanceling }) => {
   if (isSuperOwner) {
     return <Pill bg={C.greenDark} fg="#fff">Founder</Pill>;
+  }
+  // Canceling beats the underlying status pill — "Active · Canceling" is
+  // the high-signal state. Once status flips to 'canceled' (period
+  // ended), this branch no longer fires; we fall through to the red
+  // 'Canceled' pill below.
+  if (isCanceling) {
+    return <Pill bg={C.yellowLight} fg={C.yellow}>Canceling</Pill>;
   }
   const map = {
     trialing:  { bg: C.greenLight,  fg: C.green,     label: 'Trialing' },
@@ -161,8 +168,18 @@ export default function OwnerDashboard({ user }) {
   const visibleAccounts = useMemo(() => {
     const needle = search.trim().toLowerCase();
     return data.accounts.filter(a => {
-      if (filterStatus !== 'all' && a.subscriptionStatus !== filterStatus && !(filterStatus === 'founder' && a.isSuperOwner)) return false;
-      if (filterStatus === 'founder' && !a.isSuperOwner) return false;
+      if (filterStatus !== 'all') {
+        // "canceling" and "founder" are pseudo-statuses derived from
+        // flags rather than literal subscription_status values, so
+        // they need their own branches before the equality check below.
+        if (filterStatus === 'canceling') {
+          if (!a.isCanceling) return false;
+        } else if (filterStatus === 'founder') {
+          if (!a.isSuperOwner) return false;
+        } else if (a.subscriptionStatus !== filterStatus) {
+          return false;
+        }
+      }
       if (!needle) return true;
       return (a.email + ' ' + a.name + ' ' + a.company).toLowerCase().includes(needle);
     });
@@ -239,6 +256,13 @@ export default function OwnerDashboard({ user }) {
               onClick={() => setFilterStatus('trialing')}
             />
             <StatTile
+              label="Canceling"
+              value={data.summary.cancelingCount}
+              accent={data.summary.cancelingCount > 0 ? C.yellow : C.text}
+              sub="Clicked cancel · still active"
+              onClick={() => setFilterStatus('canceling')}
+            />
+            <StatTile
               label="Past Due"
               value={data.summary.pastDueCount}
               accent={data.summary.pastDueCount > 0 ? C.yellow : C.text}
@@ -303,6 +327,7 @@ export default function OwnerDashboard({ user }) {
           <option value="all">All statuses</option>
           <option value="active">Active</option>
           <option value="trialing">Trialing</option>
+          <option value="canceling">Canceling</option>
           <option value="past_due">Past Due</option>
           <option value="canceled">Canceled</option>
           <option value="founder">Founder</option>
@@ -359,7 +384,7 @@ export default function OwnerDashboard({ user }) {
                           {a.plan ? <Pill bg="#eff6ff" fg="#1d4ed8">{a.plan}</Pill> : <span style={{ color: C.dim }}>—</span>}
                         </td>
                         <td style={td}>
-                          <StatusBadge status={a.subscriptionStatus} isSuperOwner={a.isSuperOwner} />
+                          <StatusBadge status={a.subscriptionStatus} isSuperOwner={a.isSuperOwner} isCanceling={a.isCanceling} />
                         </td>
                         <td style={{ ...td, textAlign: 'center' }}>
                           {a.isSuperOwner ? '—' : (a.subscriptionStatus === 'trialing'
@@ -382,15 +407,83 @@ export default function OwnerDashboard({ user }) {
                       {expanded && (
                         <tr style={{ background: '#fafaf7', borderBottom: `1px solid ${C.border}` }}>
                           <td colSpan={8} style={{ padding: '14px 18px' }}>
+                            {/* Cancellation banner — the highest-signal info
+                                when present, so it gets its own row at the
+                                top of the drill-down. Renders amber for
+                                "they clicked cancel but the period is still
+                                running" and red for fully-canceled. */}
+                            {a.isCanceling && (
+                              <div style={{
+                                background: '#fffbeb', border: '1px solid #fde68a',
+                                borderRadius: 8, padding: '10px 14px', marginBottom: 14,
+                                display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
+                              }}>
+                                <div>
+                                  <div style={{ fontSize: 12, fontWeight: 800, color: C.yellow, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                                    Cancellation Scheduled
+                                  </div>
+                                  <div style={{ fontSize: 13, color: '#78350f', marginTop: 2 }}>
+                                    Customer clicked Cancel. Access ends {a.currentPeriodEnd ? fmtDate(a.currentPeriodEnd) : 'at period end'}.
+                                  </div>
+                                </div>
+                                {a.currentPeriodEnd && (
+                                  <div style={{ fontSize: 13, fontWeight: 800, color: '#78350f' }}>
+                                    {Math.max(0, Math.ceil((a.currentPeriodEnd.getTime() - Date.now()) / (24 * 60 * 60 * 1000)))}d left
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                            {a.subscriptionStatus === 'canceled' && a.canceledAt && (
+                              <div style={{
+                                background: C.redLight, border: '1px solid #fecaca',
+                                borderRadius: 8, padding: '10px 14px', marginBottom: 14,
+                              }}>
+                                <div style={{ fontSize: 12, fontWeight: 800, color: C.red, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                                  Subscription Canceled
+                                </div>
+                                <div style={{ fontSize: 13, color: '#7f1d1d', marginTop: 2 }}>
+                                  Canceled {fmtDate(a.canceledAt)}. No longer paying.
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Account profile — who is this contractor? */}
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16, marginBottom: 18 }}>
+                              <DetailField label="Company"   value={a.company || '—'} />
+                              <DetailField label="Phone"     value={a.phone   || '—'} />
+                              <DetailField label="Trades"    value={a.trades?.length ? a.trades.join(', ') : '—'} />
+                              <DetailField label="States"    value={a.states?.length ? a.states.join(', ') : '—'} />
+                              <DetailField label="License"   value={a.license || '—'} />
+                              <DetailField label="Accepted Terms" value={fmtDate(a.acceptedTermsAt)} />
+                            </div>
+
+                            {/* Activity — what have they done in the app? */}
+                            <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.muted, marginBottom: 8 }}>
+                              Activity
+                            </div>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 16, marginBottom: 18 }}>
+                              <DetailField label="Invoices Sent" value={`${a.invoicesCount} (${a.invoicesPaidCount} paid)`} />
+                              <DetailField label="Last Invoice"  value={fmtDate(a.lastInvoiceAt)} />
+                              <DetailField label="Jobs Scheduled" value={a.jobsCount} />
+                              <DetailField label="Last Job"      value={fmtDate(a.lastJobAt)} />
+                              <DetailField label="Quotes Drafted" value={a.quotesCount} />
+                              <DetailField label="Clients Added" value={a.clientsCount} />
+                              <DetailField label="Team Members"  value={`${a.teamCount} (${a.activeSeats} active)`} />
+                            </div>
+
+                            {/* Billing context — Stripe + plan details */}
+                            <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.muted, marginBottom: 8 }}>
+                              Billing
+                            </div>
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16 }}>
                               <DetailField label="Signed Up"  value={fmtDate(a.createdAt)} />
                               <DetailField label="Trial Ends" value={a.isSuperOwner ? '—' : fmtDate(a.trialEndsAt)} />
+                              <DetailField label="Period Ends" value={fmtDate(a.currentPeriodEnd)} />
                               <DetailField label="Last Sign-In" value={fmtDate(a.lastSignInAt)} />
                               <DetailField label="Card on File" value={a.hasCard ? 'Yes' : 'No'} />
+                              <DetailField label="Plan Price"  value={a.plan ? fmtMoney(PLAN_PRICES[a.plan] || 0) : '—'} />
                               <DetailField label="Stripe Customer" value={a.stripeCustomerId || '—'} mono />
                               <DetailField label="Subscription ID" value={a.stripeSubscriptionId || '—'} mono />
-                              <DetailField label="Plan Price"  value={a.plan ? fmtMoney(PLAN_PRICES[a.plan] || 0) : '—'} />
-                              <DetailField label="Active Seats" value={a.activeSeats} />
                             </div>
                             {/* Phase 4 — subscription event timeline */}
                             <Timeline state={timelines[a.id]} fallbackCreatedAt={a.createdAt} />
@@ -446,14 +539,15 @@ function Timeline({ state, fallbackCreatedAt }) {
 
   // Color + label per event type — keeps the timeline scannable.
   const meta = {
-    subscription_created:  { dot: '#2563eb', label: 'Subscription Created' },
-    subscription_updated:  { dot: '#6b7280', label: 'Subscription Updated' },
-    subscription_canceled: { dot: '#dc2626', label: 'Subscription Canceled' },
-    payment_succeeded:     { dot: '#15803d', label: 'Payment Succeeded' },
-    payment_failed:        { dot: '#d97706', label: 'Payment Failed' },
-    account_created:       { dot: '#2d6a4f', label: 'Account Created' },
-    trial_ending:          { dot: '#d97706', label: 'Trial Ending' },
-    resubscribed:          { dot: '#2563eb', label: 'Resubscribed' },
+    subscription_created:   { dot: '#2563eb', label: 'Subscription Created' },
+    subscription_updated:   { dot: '#6b7280', label: 'Subscription Updated' },
+    subscription_canceled:  { dot: '#dc2626', label: 'Subscription Canceled' },
+    cancellation_scheduled: { dot: '#d97706', label: 'Cancellation Scheduled' },
+    payment_succeeded:      { dot: '#15803d', label: 'Payment Succeeded' },
+    payment_failed:         { dot: '#d97706', label: 'Payment Failed' },
+    account_created:        { dot: '#2d6a4f', label: 'Account Created' },
+    trial_ending:           { dot: '#d97706', label: 'Trial Ending' },
+    resubscribed:           { dot: '#2563eb', label: 'Resubscribed' },
   };
 
   return (
