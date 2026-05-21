@@ -6923,39 +6923,55 @@ function ProfileModal({ profile, onSave, onClose }) {
       style={{ ...s.input, width: '100%', padding: '12px 14px', boxSizing: 'border-box', fontSize: 17, minHeight: 48 }} />
   );
 
+  // Layout: on tablet/phone, classic centered modal (the original
+  // pattern). On laptop, full-page takeover with a scrollable
+  // container + centered max-width content column inside. The
+  // previous attempt used flex with alignItems/justifyContent:
+  // stretch + dynamic padding which broke the content sizing —
+  // this version uses simple block layout that can't overflow.
+  if (isTablet) {
+    return (
+      <div style={{ position: 'fixed', inset: 0, background: '#000000bb', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 999, padding: 20 }}>
+        <div style={{
+          background: C.surface, border: `1px solid ${C.border2}`, borderRadius: 4,
+          padding: '28px 26px', width: '100%', maxWidth: 720,
+          maxHeight: '92vh', overflowY: 'auto', boxSizing: 'border-box',
+        }}>
+          {renderProfileBody()}
+        </div>
+      </div>
+    );
+  }
+
+  // Laptop: full-page takeover. Outer scrolls; inner column is
+  // centered with a sensible reading width.
   return (
     <div style={{
-      position: 'fixed', inset: 0, background: '#000000bb',
-      display: 'flex',
-      // Tablet/phone: modal centered, original behavior. Laptop:
-      // full-screen takeover with no padding so the form has room
-      // for all the new multi-state / per-state-license sections
-      // we added in migration 0037. The form was getting cramped
-      // at 720px max-width.
-      alignItems:     isTablet ? 'center' : 'stretch',
-      justifyContent: isTablet ? 'center' : 'stretch',
+      position: 'fixed', inset: 0,
+      background: C.bg,
+      overflowY: 'auto',
+      overflowX: 'hidden',
       zIndex: 999,
-      padding: isTablet ? 20 : 0,
-      overflowY: isTablet ? 'visible' : 'auto',
     }}>
       <div style={{
-        background: C.surface,
-        border:       isTablet ? `1px solid ${C.border2}` : 'none',
-        borderRadius: isTablet ? 4 : 0,
-        // Laptop fills viewport edge-to-edge (within a comfortable
-        // reading column); tablet keeps the prior modal sizing.
-        padding:      isTablet ? '28px 26px' : '36px max(40px, calc((100vw - 1100px) / 2))',
-        width:        '100%',
-        maxWidth:     isTablet ? 720 : 'none',
-        maxHeight:    isTablet ? '92vh' : 'none',
-        minHeight:    isTablet ? 'auto' : '100vh',
-        overflowY:    isTablet ? 'auto' : 'visible',
-        boxSizing:    'border-box',
+        maxWidth: 1100,
+        margin:   '0 auto',
+        padding:  '36px 40px 80px',
+        boxSizing:'border-box',
       }}>
+        {renderProfileBody()}
+      </div>
+    </div>
+  );
 
-        {/* Header — laptop gets a wider title + a top-right Done button
-            so the user can close without scrolling to the bottom action
-            row. The Done button mirrors what handleSave does. */}
+  // Body content — extracted so both layouts share the same children
+  // without us having to duplicate the form. Closures over all the
+  // useState values defined earlier in this component.
+  function renderProfileBody() {
+    return (
+      <>
+        {/* Header — laptop gets a wider title + a top-right × button
+            so the user can close without scrolling to the bottom. */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: isTablet ? 22 : 28 }}>
           <div>
             <div style={{ fontFamily: "'Inter', sans-serif", fontSize: isTablet ? 24 : 32, fontWeight: 900, color: C.text, marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Company Profile</div>
@@ -7205,9 +7221,9 @@ function ProfileModal({ profile, onSave, onClose }) {
           <Btn variant="ghost" onClick={onClose}>Cancel</Btn>
           <Btn variant="primary" onClick={handleSave} disabled={!name.trim()}>Save Profile</Btn>
         </div>
-      </div>
-    </div>
-  );
+      </>
+    );
+  }
 }
 
 
