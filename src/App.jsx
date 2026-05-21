@@ -6639,6 +6639,31 @@ function NewClientModal({ onSave, onClose }) {
 // ══════════════════════════════════════════════════════════════════════════════
 // PROFILE MODAL
 // ══════════════════════════════════════════════════════════════════════════════
+
+// Form field wrapper — label + optional hint + children. Defined at
+// MODULE SCOPE (not inside ProfileModal) because React reconciles
+// components by their function reference. If a custom component is
+// declared inside a parent component's body, every parent render
+// creates a NEW function reference → React thinks it's a different
+// component type → unmounts the entire subtree, including any
+// <input> inside. Result: typing in the input fires a state update,
+// re-renders the parent, the input gets unmounted/remounted, focus
+// is lost, the user has to click back in for every single character.
+//
+// Symptom users see: "I click the field, type one letter, lose focus,
+// have to click again to type the next letter." Classic React
+// pitfall. Hoisting to module scope fixes it permanently — the
+// component reference is stable across renders.
+function F({ label, children, hint }) {
+  return (
+    <div>
+      <label style={s.label}>{label}</label>
+      {hint && <div style={{ fontSize: 13, color: C.dim, marginBottom: 6, marginTop: -4 }}>{hint}</div>}
+      {children}
+    </div>
+  );
+}
+
 function ProfileModal({ profile, onSave, onClose }) {
   const { isTablet } = useBreakpoint();
   const [name,         setName]        = useState(profile.name         || '');
@@ -6723,13 +6748,9 @@ function ProfileModal({ profile, onSave, onClose }) {
     });
   };
 
-  const F = ({ label, children, hint }) => (
-    <div>
-      <label style={s.label}>{label}</label>
-      {hint && <div style={{ fontSize: 13, color: C.dim, marginBottom: 6, marginTop: -4 }}>{hint}</div>}
-      {children}
-    </div>
-  );
+  // F (form field wrapper) is now defined at module scope above this
+  // function — see the comment up there for why. Don't reintroduce
+  // an inline definition: it causes focus loss on every keystroke.
   const I = (val, onChange, ph, type='text') => (
     <input type={type} value={val} onChange={e => onChange(e.target.value)} placeholder={ph}
       style={{ ...s.input, width: '100%', padding: '12px 14px', boxSizing: 'border-box', fontSize: 17, minHeight: 48 }} />
