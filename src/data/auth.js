@@ -19,6 +19,12 @@ const dbToProfile = (row) => row && ({
   state:            (row.states ?? []).join(', '),
   tagline:          row.tagline           ?? '',
   license:          row.license           ?? '',
+  // Per-state license numbers (migration 0037). Map of state name →
+  // license number. Used when the contractor operates in multiple
+  // states and needs different license credentials per state.
+  // Falls back to the single `license` field above for any state
+  // not explicitly mapped.
+  stateLicenses:    row.state_licenses    ?? {},
   accentColor:      row.accent_color      ?? '',
   defaultTerms:     row.default_terms     ?? '',
   plan:             row.plan              ?? '',
@@ -82,6 +88,7 @@ const profileToDb = (p) => ({
   states:             p.states            ?? [],
   tagline:            p.tagline           ?? null,
   license:            p.license           ?? null,
+  state_licenses:     p.stateLicenses     ?? {},
   accent_color:       p.accentColor       ?? null,
   default_terms:      p.defaultTerms      ?? null,
   plan:               p.plan              ?? null,

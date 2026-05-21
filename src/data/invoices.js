@@ -66,6 +66,11 @@ const dbToInvoice = (r) => ({
   // applies. NULL on rows from before the migration — front-end falls
   // back to user.states[0] in calcInvoice when this is empty.
   state:              r.state                 ?? '',
+  // Per-invoice license number (migration 0037). Stamped at save
+  // time from profile.stateLicenses[state]. Preserves the correct
+  // license-at-time-of-issue even if the contractor later changes
+  // their per-state licenses.
+  licenseNumber:      r.license_number        ?? '',
 });
 
 // Translate the front-end invoice shape into the DB column names. We do NOT include
@@ -125,6 +130,7 @@ const invoiceToDb = (inv) => ({
   // doesn't store '' for a state name (which would never match the
   // STATE_TAX_DEFAULTS lookup downstream anyway).
   state:                inv.state              || null,
+  license_number:       inv.licenseNumber      || null,
 });
 
 export async function listInvoices() {

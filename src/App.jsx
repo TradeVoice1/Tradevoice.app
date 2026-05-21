@@ -3460,6 +3460,34 @@ function InvoiceEditor({ initial, user, teamMembers = [], existingInvoices = [],
   const [invoiceState, setInvoiceState] = useState(
     initial?.state || userPrimaryState || ''
   );
+  // License number for this invoice (migration 0037). Auto-pulled from
+  // user.stateLicenses[invoiceState] when the state changes; falls
+  // back to user.license. Editable so the contractor can override
+  // for one-off jobs. Stamped on save so the invoice preserves the
+  // license that applied AT TIME OF ISSUE even if the contractor
+  // later changes their per-state licenses.
+  const licenseForState = (st) => {
+    const map = (user?.stateLicenses && typeof user.stateLicenses === 'object') ? user.stateLicenses : {};
+    return (st && map[st]) || user?.license || '';
+  };
+  const [invoiceLicense, setInvoiceLicense] = useState(
+    initial?.licenseNumber || licenseForState(initial?.state || userPrimaryState)
+  );
+  // When the contractor swaps states on an in-flight invoice, auto-
+  // swap the license to match — unless they've already typed an
+  // override that doesn't match any of their on-file licenses.
+  const handleInvoiceStateChange = (newState) => {
+    setInvoiceState(newState);
+    const map = (user?.stateLicenses && typeof user.stateLicenses === 'object') ? user.stateLicenses : {};
+    // Build a set of "known" license values that auto-apply for any
+    // state (incl. the legacy fallback). If the current invoiceLicense
+    // is one of these, we own it and can auto-swap. If the user typed
+    // something custom that doesn't match anything, respect it.
+    const knownLicenses = new Set(Object.values(map).filter(Boolean).concat([user?.license || '']));
+    if (knownLicenses.has(invoiceLicense)) {
+      setInvoiceLicense(licenseForState(newState));
+    }
+  };
 
   const handleTermsChange = (newTerms) => {
     setTerms(newTerms);
@@ -3530,6 +3558,10 @@ function InvoiceEditor({ initial, user, teamMembers = [], existingInvoices = [],
       // is preserved over time even if the contractor later adds or
       // removes states from their profile.
       state:              invoiceState           || userPrimaryState || '',
+      // Per-invoice license snapshot (migration 0037). Preserves the
+      // license that applied AT TIME OF ISSUE even if the contractor
+      // later edits their per-state licenses in Settings.
+      licenseNumber:      invoiceLicense         || '',
       // Ship 2 (migration 0024)
       permitNumber:       permitNumber.trim()     || '',
       discountAmount:     Number(discountAmount)  || 0,
@@ -3729,10 +3761,10 @@ function InvoiceEditor({ initial, user, teamMembers = [], existingInvoices = [],
             contractor notices they're billing under a non-default rate. */}
         {isMultiState && (
           <div style={{ marginTop:14, padding:'14px 16px', background:'#fffaf3', border:'1px solid #fbeacf', borderRadius:10 }}>
-            <label style={s.label}>Job State (drives tax rate)</label>
+            <label style={s.label}>Job State (drives tax rate + license)</label>
             <select
               value={invoiceState}
-              onChange={e => setInvoiceState(e.target.value)}
+              onChange={e => handleInvoiceStateChange(e.target.value)}
               style={{ ...s.input, width:'100%', padding:'11px 12px', boxSizing:'border-box', fontSize:17, minHeight:48, cursor:'pointer', background:'#fff', marginTop:6 }}
             >
               <option value="">— Select the state where the job happened —</option>
@@ -3742,7 +3774,7 @@ function InvoiceEditor({ initial, user, teamMembers = [], existingInvoices = [],
             </select>
             <div style={{ fontSize:12, color:C.muted, marginTop:8, lineHeight:1.5 }}>
               You operate in {userStates.length} states. Pick the one where THIS job
-              was performed — that's the state whose tax rate gets applied.
+              was performed — that's the state whose tax rate AND license number gets applied.
               {invoiceState && invoiceState !== userPrimaryState && (
                 <span style={{ display:'block', marginTop:6, color:'#9a3412', fontWeight:600 }}>
                   ⚠ Using {invoiceState} rates (not your primary state, {userPrimaryState}).
@@ -3751,6 +3783,26 @@ function InvoiceEditor({ initial, user, teamMembers = [], existingInvoices = [],
             </div>
           </div>
         )}
+
+        {/* License number for THIS invoice (migration 0037). Auto-
+            populated from the user's per-state license map; editable
+            for one-off jobs. Always shown (single + multi-state)
+            so the contractor can see what license is going to print. */}
+        <div style={{ marginTop:14 }}>
+          <label style={s.label}>License Number on This Invoice</label>
+          <input
+            type="text"
+            value={invoiceLicense}
+            onChange={e => setInvoiceLicense(e.target.value)}
+            placeholder={invoiceState ? `${invoiceState} license #` : 'License # (optional)'}
+            style={{ ...s.input, width:'100%', padding:'11px 12px', boxSizing:'border-box', fontSize:17, minHeight:48 }}
+          />
+          <div style={{ fontSize:12, color:C.muted, marginTop:6 }}>
+            {invoiceState && (user?.stateLicenses?.[invoiceState])
+              ? `Auto-filled from your ${invoiceState} license. Editable for one-off jobs.`
+              : 'Optional. Leave blank for jobs that don\'t require a license number.'}
+          </div>
+        </div>
 
         {/* Requested by / Approved by / Salesperson */}
         <div style={{ display:'grid', gridTemplateColumns:isTablet?'1fr':'1fr 1fr 1fr', gap:12, marginTop:14 }}>
@@ -4128,9 +4180,19 @@ function InvoiceDocument({ invoice, user, logo, payments, onEdit, onBack, onReco
               {user?.phone && <div>{user.phone}</div>}
               {(user?.states?.length>1 ? user.states.join(', ') : user?.state) && <div>{user?.states?.length>1 ? user.states.join(', ') : user?.state}</div>}
             </div>
-            {(user?.license || tradeConf.licenseNote) && (
-              <div style={{ marginTop:6, fontSize:15, color:'#888', fontStyle:'italic' }}>{user?.license || tradeConf.licenseNote}</div>
-            )}
+            {(() => {
+              // License resolution (migration 0037). Prefer the stamped
+              // per-invoice license; fall back to the contractor's
+              // per-state license map keyed by the invoice's state;
+              // then the legacy single license; then the trade's
+              // default note. Returns null if nothing matches so the
+              // block doesn't render an empty line.
+              const stamped   = invoice.licenseNumber;
+              const perState  = invoice.state && user?.stateLicenses?.[invoice.state];
+              const lic = stamped || perState || user?.license || tradeConf.licenseNote;
+              if (!lic) return null;
+              return <div style={{ marginTop:6, fontSize:15, color:'#888', fontStyle:'italic' }}>{lic}</div>;
+            })()}
           </div>
 
           <div style={{ textAlign:isTablet?'left':'right', marginTop:isTablet?16:0, display:'flex', flexDirection:'column', alignItems:isTablet?'flex-start':'flex-end' }}>
@@ -5135,9 +5197,17 @@ function QuoteDocument({ quote, client, user, logo, onRevise, onBack, onConvertT
               {user?.phone && <div>{user.phone}</div>}
               {user?.state && <div>{user.state}</div>}
             </div>
-            {(user?.license || tradeConf.licenseNote) && (
-              <div style={{ marginTop: 6, fontSize: 15, color: '#888', fontStyle: 'italic' }}>{user?.license || tradeConf.licenseNote}</div>
-            )}
+            {(() => {
+              // License resolution (migration 0037). Same fallback
+              // chain as InvoiceDocument: per-quote stamped license →
+              // per-state license map → legacy single license →
+              // trade default note.
+              const stamped  = quote.licenseNumber;
+              const perState = quote.state && user?.stateLicenses?.[quote.state];
+              const lic = stamped || perState || user?.license || tradeConf.licenseNote;
+              if (!lic) return null;
+              return <div style={{ marginTop: 6, fontSize: 15, color: '#888', fontStyle: 'italic' }}>{lic}</div>;
+            })()}
           </div>
           <div style={{ textAlign: isTablet ? 'left' : 'right', marginTop: isTablet ? 16 : 0, display: 'flex', flexDirection: 'column', alignItems: isTablet ? 'flex-start' : 'flex-end' }}>
             <div style={{ marginBottom: 20 }}>
@@ -5786,6 +5856,25 @@ function QuoteEditor({ initial, clients, existingQuotes = [], user, onSave, onAd
   const [quoteState, setQuoteState] = useState(
     initial?.state || userPrimaryState || ''
   );
+  // Same license-resolution machinery as InvoiceEditor — auto-pulls
+  // the matching per-state license from the contractor's profile,
+  // editable per quote, stamped on save so the quote (and the
+  // invoice it converts into) preserves the right license.
+  const licenseForQuoteState = (st) => {
+    const map = (user?.stateLicenses && typeof user.stateLicenses === 'object') ? user.stateLicenses : {};
+    return (st && map[st]) || user?.license || '';
+  };
+  const [quoteLicense, setQuoteLicense] = useState(
+    initial?.licenseNumber || licenseForQuoteState(initial?.state || userPrimaryState)
+  );
+  const handleQuoteStateChange = (newState) => {
+    setQuoteState(newState);
+    const map = (user?.stateLicenses && typeof user.stateLicenses === 'object') ? user.stateLicenses : {};
+    const knownLicenses = new Set(Object.values(map).filter(Boolean).concat([user?.license || '']));
+    if (knownLicenses.has(quoteLicense)) {
+      setQuoteLicense(licenseForQuoteState(newState));
+    }
+  };
   const recRef = useRef(null);
 
   // Trade selection.
@@ -5923,6 +6012,10 @@ function QuoteEditor({ initial, clients, existingQuotes = [], user, onSave, onAd
       // conversion (migration 0033). Multi-state contractors who
       // didn't explicitly pick get their primary state.
       state: quoteState || userPrimaryState || '',
+      // License snapshot (migration 0037) — carries onto the invoice
+      // on conversion so the same license number prints on both
+      // documents for the customer's records.
+      licenseNumber: quoteLicense || '',
     };
 
     setSaving(true);
@@ -6138,10 +6231,10 @@ function QuoteEditor({ initial, clients, existingQuotes = [], user, onSave, onAd
                 fontSize: 12, fontWeight: 800, letterSpacing: '0.1em',
                 textTransform: 'uppercase', color: C.muted,
                 fontFamily: "'Inter', sans-serif",
-              }}>Job State (drives tax rate)</label>
+              }}>Job State (drives tax rate + license)</label>
               <select
                 value={quoteState}
-                onChange={e => setQuoteState(e.target.value)}
+                onChange={e => handleQuoteStateChange(e.target.value)}
                 style={{ ...s.input, width:'100%', padding:'12px 14px', minHeight:48, cursor:'pointer', boxSizing:'border-box', fontSize:16, fontWeight:600, background:'#fff' }}
               >
                 <option value="">— Select the state where the job is —</option>
@@ -6150,7 +6243,7 @@ function QuoteEditor({ initial, clients, existingQuotes = [], user, onSave, onAd
                 ))}
               </select>
               <div style={{ fontSize:12, color:C.muted, marginTop:8, lineHeight:1.5 }}>
-                You operate in {userStates.length} states. Pick the one where THIS job will be performed — that's the state whose tax rate gets applied. Carries over to the invoice when you convert this quote.
+                You operate in {userStates.length} states. Pick the one where THIS job will be performed — that's the state whose tax rate AND license number gets applied. Carries over to the invoice on conversion.
                 {quoteState && quoteState !== userPrimaryState && (
                   <span style={{ display:'block', marginTop:6, color:'#9a3412', fontWeight:600 }}>
                     ⚠ Using {quoteState} rates (not your primary state, {userPrimaryState}).
@@ -6159,6 +6252,29 @@ function QuoteEditor({ initial, clients, existingQuotes = [], user, onSave, onAd
               </div>
             </div>
           )}
+
+          {/* License number on this quote (migration 0037). Auto-
+              populated from the user's per-state license map. */}
+          <div style={{ marginTop:14 }}>
+            <label style={{
+              display: 'block', marginBottom: 6,
+              fontSize: 12, fontWeight: 800, letterSpacing: '0.1em',
+              textTransform: 'uppercase', color: C.muted,
+              fontFamily: "'Inter', sans-serif",
+            }}>License Number on This Quote</label>
+            <input
+              type="text"
+              value={quoteLicense}
+              onChange={e => setQuoteLicense(e.target.value)}
+              placeholder={quoteState ? `${quoteState} license #` : 'License # (optional)'}
+              style={{ ...s.input, width:'100%', padding:'12px 14px', minHeight:48, boxSizing:'border-box', fontSize:16, fontWeight:600 }}
+            />
+            <div style={{ fontSize:12, color:C.muted, marginTop:6 }}>
+              {quoteState && (user?.stateLicenses?.[quoteState])
+                ? `Auto-filled from your ${quoteState} license. Editable for one-off jobs.`
+                : 'Optional. Leave blank for jobs that don\'t require a license number.'}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -6678,6 +6794,25 @@ function ProfileModal({ profile, onSave, onClose }) {
   const [uploadError,  setUploadError] = useState('');
   const [tagline,      setTagline]     = useState(profile.tagline      || '');
   const [license,      setLicense]     = useState(profile.license      || '');
+  // States the contractor operates in (migration 0037 introduces a
+  // proper multi-state editor in this modal). Seeded from the array;
+  // falls back to wrapping the legacy single `state` string in an
+  // array so accounts that never picked multi-state still have a
+  // working source of truth for the per-state license editor below.
+  const [statesList, setStatesList] = useState(() => {
+    if (Array.isArray(profile.states) && profile.states.length > 0) return [...profile.states];
+    if (profile.state) return [profile.state];
+    return [];
+  });
+  // Per-state license map (migration 0037). Object keyed by state
+  // name → license number string. Multi-state contractors need
+  // different license numbers per state — a Texas plumber doing
+  // Louisiana jobs has a different license # in LA than TX.
+  const [stateLicenses, setStateLicenses] = useState(() => {
+    const sl = profile.stateLicenses && typeof profile.stateLicenses === 'object' ? { ...profile.stateLicenses } : {};
+    return sl;
+  });
+  const [showAddState, setShowAddState] = useState(false);
   const [accentColor,  setAccentColor] = useState(profile.accentColor  || '');
   const [defaultTerms, setDefaultTerms]= useState(profile.defaultTerms || 'Quote valid for 30 days. 50% deposit required to schedule. Balance due upon completion.');
   // Google Business Profile review URL — appended to review-request emails
@@ -6733,11 +6868,43 @@ function ProfileModal({ profile, onSave, onClose }) {
     if (previous && previous.includes('/company-logos/')) deleteLogo(previous);
   };
 
+  // State + license editor handlers — keep the two arrays in sync so
+  // removing a state automatically drops its license, and adding a
+  // state initializes an empty license entry.
+  const handleAddState = (st) => {
+    if (!st) { setShowAddState(false); return; }
+    setStatesList(prev => prev.includes(st) ? prev : [...prev, st]);
+    setStateLicenses(prev => st in prev ? prev : { ...prev, [st]: '' });
+    setShowAddState(false);
+  };
+  const handleRemoveState = (st) => {
+    setStatesList(prev => prev.filter(s => s !== st));
+    setStateLicenses(prev => {
+      const next = { ...prev };
+      delete next[st];
+      return next;
+    });
+  };
+  const handleStateLicenseChange = (st, value) => {
+    setStateLicenses(prev => ({ ...prev, [st]: value }));
+  };
+
   const handleSave = () => {
     const finalColor = colorMode === 'trade' ? '' : colorMode === 'custom' ? accentColor : colorMode;
+    // Strip empty-string license entries so the JSONB stays clean.
+    const cleanLicenses = Object.fromEntries(
+      Object.entries(stateLicenses).filter(([_, v]) => v && v.trim())
+    );
     onSave({
       ...profile,
-      name, company, email, phone, state, logo, tagline, license,
+      // Persist multi-state arrays alongside the legacy single fields
+      // so the rest of the app (which still reads user.state in some
+      // places) keeps working. The first state in the list is the
+      // canonical "primary" state.
+      states: statesList,
+      state: statesList[0] || state,
+      stateLicenses: cleanLicenses,
+      name, company, email, phone, logo, tagline, license,
       accentColor: finalColor, defaultTerms,
       reviewLink: reviewLink.trim(),
       // Ship 2 — COI + default late fee policy
@@ -6800,7 +6967,69 @@ function ProfileModal({ profile, onSave, onClose }) {
             <F label="Email">{I(email, setEmail, 'john@company.com', 'email')}</F>
             <F label="Phone">{I(phone, setPhone, '(512) 555-0000', 'tel')}</F>
           </div>
-          <F label="State / Service Area">{I(state, setState, 'Texas, Louisiana')}</F>
+          {/* States you operate in — chip row + Add State picker
+              (migration 0037). Each chip has an X to remove it; the
+              license input for each state appears below in the same
+              block so they're paired visually. Adding a state here
+              also makes it available as a per-invoice state choice. */}
+          <div>
+            <label style={s.label}>States You Operate In</label>
+            <div style={{ fontSize: 13, color: C.dim, marginBottom: 8, marginTop: -4 }}>
+              Add every state you do work in. Each state can have its own license number below — the right one auto-applies to every invoice based on where the job is.
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
+              {statesList.length === 0 && (
+                <div style={{ fontSize: 13, color: C.dim, padding: '4px 0' }}>No states added yet.</div>
+              )}
+              {statesList.map(st => (
+                <div key={st} style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 6,
+                  background: C.orangeLo, color: C.orange,
+                  border: `1px solid ${C.orange}`, borderRadius: 18,
+                  padding: '6px 6px 6px 14px', fontSize: 14, fontWeight: 700,
+                }}>
+                  <span>{st}</span>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveState(st)}
+                    title={`Remove ${st}`}
+                    style={{
+                      background: 'transparent', border: 'none',
+                      color: C.orange, cursor: 'pointer', fontSize: 18, fontWeight: 700,
+                      lineHeight: 1, padding: '0 4px',
+                    }}
+                  >×</button>
+                </div>
+              ))}
+              {!showAddState && (
+                <button
+                  type="button"
+                  onClick={() => setShowAddState(true)}
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 6,
+                    background: C.raised, color: C.muted,
+                    border: `1.5px dashed ${C.border2}`, borderRadius: 18,
+                    padding: '6px 14px', fontSize: 14, fontWeight: 600,
+                    cursor: 'pointer', fontFamily: 'inherit',
+                  }}
+                >+ Add State</button>
+              )}
+              {showAddState && (
+                <select
+                  autoFocus
+                  defaultValue=""
+                  onChange={e => handleAddState(e.target.value)}
+                  onBlur={() => setShowAddState(false)}
+                  style={{ ...s.input, padding: '8px 14px', fontSize: 14, minHeight: 38, cursor: 'pointer', background: C.surface }}
+                >
+                  <option value="">— Select state —</option>
+                  {STATES.filter(st => !statesList.includes(st)).map(st => (
+                    <option key={st} value={st}>{st}</option>
+                  ))}
+                </select>
+              )}
+            </div>
+          </div>
 
           {/* Tagline */}
           <F label="Tagline" hint="Shows under your company name on documents — optional">
@@ -6808,8 +7037,42 @@ function ProfileModal({ profile, onSave, onClose }) {
               style={{ ...s.input, width: '100%', padding: '12px 14px', boxSizing: 'border-box', fontSize: 17, minHeight: 48 }} />
           </F>
 
-          {/* License number */}
-          <F label="License Number" hint="Shown under company info on quotes and invoices">
+          {/* Per-state license numbers (migration 0037). One row per
+              state in statesList. When the user creates an invoice
+              or quote for a given state, the matching license auto-
+              applies. The "Default License" field below is the
+              fallback for any state that doesn't have a specific
+              entry, or for one-off jobs in states the contractor
+              isn't formally licensed in. */}
+          {statesList.length > 0 && (
+            <div>
+              <label style={s.label}>Licenses By State</label>
+              <div style={{ fontSize: 13, color: C.dim, marginBottom: 10, marginTop: -4 }}>
+                Each state's license number auto-fills on invoices and quotes for jobs in that state. Leave blank if a state doesn't require one.
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {statesList.map(st => (
+                  <div key={st} style={{ display: 'grid', gridTemplateColumns: isTablet ? '1fr' : '140px 1fr', gap: 10, alignItems: 'center' }}>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: C.text, fontFamily: "'Inter', sans-serif" }}>{st}</div>
+                    <input
+                      type="text"
+                      value={stateLicenses[st] || ''}
+                      onChange={e => handleStateLicenseChange(st, e.target.value)}
+                      placeholder={`${st} license #`}
+                      style={{ ...s.input, width: '100%', padding: '11px 14px', boxSizing: 'border-box', fontSize: 16, minHeight: 44 }}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Default / fallback license — used on invoices in states
+              the contractor hasn't set a specific license for, or
+              on documents where no state was set. Backward-compatible
+              with single-state accounts that only ever filled in
+              this one field. */}
+          <F label={statesList.length > 1 ? 'Default License Number (fallback)' : 'License Number'} hint="Shown under company info on quotes and invoices. Used when no state-specific license matches.">
             <input value={license} onChange={e => setLicense(e.target.value)} placeholder="TX Lic. #M-12345 or Master Plumber #54321"
               style={{ ...s.input, width: '100%', padding: '12px 14px', boxSizing: 'border-box', fontSize: 17, minHeight: 48 }} />
           </F>
@@ -9444,6 +9707,13 @@ function TradevoiceApp() {
       // back to the contractor's primary state if the quote pre-dated
       // the migration and didn't stamp one.
       state:     quote.state || (Array.isArray(user?.states) ? user.states[0] : '') || user?.state || '',
+      // License (migration 0037) — carry the quote's license over so
+      // both documents show consistent credentials. Falls back to
+      // the state-specific license, then the legacy default.
+      licenseNumber: quote.licenseNumber
+        || (quote.state && user?.stateLicenses?.[quote.state])
+        || user?.license
+        || '',
       notes:     `Converted from ${quote.number}`,
       payments:  [],
       activity:  [
