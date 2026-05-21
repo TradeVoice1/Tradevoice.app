@@ -2836,7 +2836,15 @@ const calcInvoice = (inv, userState, customTaxRates) => {
   const equipT = (inv.equipment||[]).reduce((s,r)=>s+r.qty *r.rate,0);
   const mkBase = matsT + equipT;
   const mkAmt  = mkBase*(inv.markup||0)/100;
-  const stateTax = getStateTax(userState, customTaxRates);
+  // Per-invoice state (migration 0033) wins over the contractor's
+  // primary state. Multi-state contractors need this — a Texas plumber
+  // doing a job in Louisiana stamps state='Louisiana' on the invoice,
+  // so the tax math uses LA rates instead of TX. Falls back to the
+  // owner's primary state for legacy invoices created before the
+  // migration, and for invoices created from screens that don't yet
+  // surface the state picker (no behavior change there).
+  const effectiveState = inv.state || userState;
+  const stateTax = getStateTax(effectiveState, customTaxRates);
   // Use invoice's tax field, but apply to correct base based on state rules
   const taxRate = inv.tax != null ? inv.tax : stateTax.matTax;
   // Discount (Ship 2 / migration 0024) — first-class line so the contractor
@@ -3433,6 +3441,19 @@ function InvoiceEditor({ initial, user, teamMembers = [], existingInvoices = [],
   // Tech sign-off — checkbox flips signed_at + name in one tap.
   const [techSignedName, setTechSignedName] = useState(initial?.techSignedName || '');
   const [techSignedAt,   setTechSignedAt]   = useState(initial?.techSignedAt   || null);
+  // Per-invoice state (migration 0033). For single-state contractors
+  // we silently stamp their only state on save (no UI clutter). For
+  // multi-state contractors we expose a dropdown so they can pick the
+  // state where THIS job happened, which drives the tax rate. Defaults
+  // to the invoice's existing state, or — when creating a new invoice
+  // — to the user's primary state so it's pre-selected to the most
+  // common case. They can still change it before saving.
+  const userStates = Array.isArray(user?.states) ? user.states.filter(Boolean) : [];
+  const userPrimaryState = userStates[0] || user?.state || '';
+  const isMultiState = userStates.length > 1;
+  const [invoiceState, setInvoiceState] = useState(
+    initial?.state || userPrimaryState || ''
+  );
 
   const handleTermsChange = (newTerms) => {
     setTerms(newTerms);
@@ -3444,7 +3465,10 @@ function InvoiceEditor({ initial, user, teamMembers = [], existingInvoices = [],
   const updRow    = (setter,id,key,val)=>setter(a=>a.map(r=>r.id===id?{...r,[key]:val}:r));
   const delRow    = (setter,id)=>setter(a=>a.filter(r=>r.id!==id));
 
-  const calc = calcInvoice({ labor, materials, equipment, markup, tax:taxRate }, user?.state);
+  // Pass the chosen invoice state into the live calc so the tax line
+  // updates in real time when a multi-state contractor switches the
+  // state dropdown. Falls back to user.state for legacy callers.
+  const calc = calcInvoice({ labor, materials, equipment, markup, tax:taxRate, state: invoiceState }, user?.state);
 
   const [saving, setSaving] = useState(false);
   const handleSave = async (asDraft) => {
@@ -3496,6 +3520,10 @@ function InvoiceEditor({ initial, user, teamMembers = [], existingInvoices = [],
       salespersonName,
       servicePeriodStart: servicePeriodStart      || '',
       servicePeriodEnd:   servicePeriodEnd        || '',
+      // Per-invoice state (migration 0033). Always stamp so tax math
+      // is preserved over time even if the contractor later adds or
+      // removes states from their profile.
+      state:              invoiceState           || userPrimaryState || '',
       // Ship 2 (migration 0024)
       permitNumber:       permitNumber.trim()     || '',
       discountAmount:     Number(discountAmount)  || 0,
@@ -3684,6 +3712,39 @@ function InvoiceEditor({ initial, user, teamMembers = [], existingInvoices = [],
               style={{ ...s.input, width:'100%', padding:'11px 12px', boxSizing:'border-box', fontSize:17, minHeight:48, marginTop:8 }} />
           )}
         </div>
+
+        {/* Job state — multi-state contractors only (migration 0033).
+            Single-state contractors get the state stamped silently on
+            save from their primary state; no UI needed. For multi-
+            state contractors this dropdown determines WHICH state's
+            tax rate applies, so the choice is consequential. We
+            pre-select the primary state but show a callout when the
+            chosen state differs from the user's primary so the
+            contractor notices they're billing under a non-default rate. */}
+        {isMultiState && (
+          <div style={{ marginTop:14, padding:'14px 16px', background:'#fffaf3', border:'1px solid #fbeacf', borderRadius:10 }}>
+            <label style={s.label}>Job State (drives tax rate)</label>
+            <select
+              value={invoiceState}
+              onChange={e => setInvoiceState(e.target.value)}
+              style={{ ...s.input, width:'100%', padding:'11px 12px', boxSizing:'border-box', fontSize:17, minHeight:48, cursor:'pointer', background:'#fff', marginTop:6 }}
+            >
+              <option value="">— Select the state where the job happened —</option>
+              {userStates.map(st => (
+                <option key={st} value={st}>{st}</option>
+              ))}
+            </select>
+            <div style={{ fontSize:12, color:C.muted, marginTop:8, lineHeight:1.5 }}>
+              You operate in {userStates.length} states. Pick the one where THIS job
+              was performed — that's the state whose tax rate gets applied.
+              {invoiceState && invoiceState !== userPrimaryState && (
+                <span style={{ display:'block', marginTop:6, color:'#9a3412', fontWeight:600 }}>
+                  ⚠ Using {invoiceState} rates (not your primary state, {userPrimaryState}).
+                </span>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Requested by / Approved by / Salesperson */}
         <div style={{ display:'grid', gridTemplateColumns:isTablet?'1fr':'1fr 1fr 1fr', gap:12, marginTop:14 }}>
@@ -5709,6 +5770,16 @@ function QuoteEditor({ initial, clients, existingQuotes = [], user, onSave, onAd
   const [tax,      setTax]      = useState(initial?.tax      ?? 8.5);
   const [terms,    setTerms]    = useState(initial?.terms    || user?.defaultTerms || 'Quote valid for 30 days. 50% deposit required to schedule. Balance due upon completion.');
   const [expires,  setExpires]  = useState(initial?.expiresAt|| '');
+  // Per-quote state (migration 0033). Same UX rule as InvoiceEditor:
+  // single-state contractors get it silently stamped from their primary
+  // state; multi-state contractors see a picker so the quote — and the
+  // invoice it converts into — uses the right state's tax rate.
+  const userStates = Array.isArray(user?.states) ? user.states.filter(Boolean) : [];
+  const userPrimaryState = userStates[0] || user?.state || '';
+  const isMultiState = userStates.length > 1;
+  const [quoteState, setQuoteState] = useState(
+    initial?.state || userPrimaryState || ''
+  );
   const recRef = useRef(null);
 
   // Trade selection.
@@ -5842,6 +5913,10 @@ function QuoteEditor({ initial, clients, existingQuotes = [], user, onSave, onAd
       expiresAt: expires || new Date(Date.now() + 30*24*60*60*1000).toISOString().split('T')[0],
       revisionOf: initial?.revisionOf || null,
       revisionNumber: initial?.revisionNumber || 1,
+      // Always stamp the state so it carries into the invoice on
+      // conversion (migration 0033). Multi-state contractors who
+      // didn't explicitly pick get their primary state.
+      state: quoteState || userPrimaryState || '',
     };
 
     setSaving(true);
@@ -6045,6 +6120,39 @@ function QuoteEditor({ initial, clients, existingQuotes = [], user, onSave, onAd
             {/* Empty filler cell on desktop (3-col grid) so the layout stays balanced */}
             {!singleTrade && !isTablet && <div />}
           </div>
+
+          {/* Row 3: Job state — multi-state contractors only (migration 0033).
+              Determines which state's tax rate applies to this quote, and
+              carries onto the invoice on conversion. Single-state contractors
+              get it silently stamped from their primary state. */}
+          {isMultiState && (
+            <div style={{ marginTop:14, padding:'14px 16px', background:'#fffaf3', border:'1px solid #fbeacf', borderRadius:10 }}>
+              <label style={{
+                display: 'block', marginBottom: 6,
+                fontSize: 12, fontWeight: 800, letterSpacing: '0.1em',
+                textTransform: 'uppercase', color: C.muted,
+                fontFamily: "'Inter', sans-serif",
+              }}>Job State (drives tax rate)</label>
+              <select
+                value={quoteState}
+                onChange={e => setQuoteState(e.target.value)}
+                style={{ ...s.input, width:'100%', padding:'12px 14px', minHeight:48, cursor:'pointer', boxSizing:'border-box', fontSize:16, fontWeight:600, background:'#fff' }}
+              >
+                <option value="">— Select the state where the job is —</option>
+                {userStates.map(st => (
+                  <option key={st} value={st}>{st}</option>
+                ))}
+              </select>
+              <div style={{ fontSize:12, color:C.muted, marginTop:8, lineHeight:1.5 }}>
+                You operate in {userStates.length} states. Pick the one where THIS job will be performed — that's the state whose tax rate gets applied. Carries over to the invoice when you convert this quote.
+                {quoteState && quoteState !== userPrimaryState && (
+                  <span style={{ display:'block', marginTop:6, color:'#9a3412', fontWeight:600 }}>
+                    ⚠ Using {quoteState} rates (not your primary state, {userPrimaryState}).
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -9273,6 +9381,12 @@ function TradevoiceApp() {
       equipment: stripIfNotBundle(quote.equipment),
       markup:    quote.markup,
       tax:       quote.tax,
+      // Carry the quote's state onto the invoice (migration 0033) so a
+      // multi-state contractor who quoted a Louisiana job ends up with
+      // a Louisiana invoice — not their primary-state default. Falls
+      // back to the contractor's primary state if the quote pre-dated
+      // the migration and didn't stamp one.
+      state:     quote.state || (Array.isArray(user?.states) ? user.states[0] : '') || user?.state || '',
       notes:     `Converted from ${quote.number}`,
       payments:  [],
       activity:  [

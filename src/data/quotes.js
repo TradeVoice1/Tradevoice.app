@@ -24,6 +24,9 @@ const dbToQuote = (r) => ({
   revisionNumber: r.revision_number  ?? 1,
   // Public sharable link token (migration 0014). Mirrors invoices.
   shareToken:     r.share_token      ?? null,
+  // Per-quote state (migration 0033). Carries into the invoice when
+  // the quote is converted, so the tax rate stays consistent.
+  state:          r.state            ?? '',
 });
 
 const quoteToDb = (q) => ({
@@ -49,6 +52,7 @@ const quoteToDb = (q) => ({
   expires_at:       q.expiresAt      || null,
   revision_of:      q.revisionOf     ?? null,
   revision_number:  q.revisionNumber ?? 1,
+  state:            q.state          || null,
 });
 
 export async function listQuotes() {

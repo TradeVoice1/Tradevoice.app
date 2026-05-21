@@ -62,6 +62,10 @@ const dbToInvoice = (r) => ({
   techSignedAt:       r.tech_signed_at        ?? null,
   customerSignedName: r.customer_signed_name  ?? '',
   customerSignedAt:   r.customer_signed_at    ?? null,
+  // Per-invoice state (migration 0033). Drives which state's tax rate
+  // applies. NULL on rows from before the migration — front-end falls
+  // back to user.states[0] in calcInvoice when this is empty.
+  state:              r.state                 ?? '',
 });
 
 // Translate the front-end invoice shape into the DB column names. We do NOT include
@@ -117,6 +121,10 @@ const invoiceToDb = (inv) => ({
   late_fee_terms:       inv.lateFeeTerms       || null,
   tech_signed_name:     inv.techSignedName     || null,
   tech_signed_at:       inv.techSignedAt       || null,
+  // Per-invoice state — empty string coerces to null so Postgres
+  // doesn't store '' for a state name (which would never match the
+  // STATE_TAX_DEFAULTS lookup downstream anyway).
+  state:                inv.state              || null,
 });
 
 export async function listInvoices() {
