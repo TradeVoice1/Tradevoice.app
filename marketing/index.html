@@ -101,6 +101,16 @@
   .nav-cta { display: flex; align-items: center; gap: 12px; }
   .nav-signin { color: var(--muted); font-size: 15px; font-weight: 500; text-decoration: none; }
   .nav-signin:hover { color: var(--green); }
+  /* Secondary CTA — outlined dark green. Sits between the muted Sign in
+     link and the orange Request Early Access primary button so visitors
+     who want to dive straight into account setup have an obvious path
+     without it competing with the early-access positioning. */
+  .nav-create {
+    color: var(--green); font-size: 14px; font-weight: 700; text-decoration: none;
+    padding: 9px 18px; border: 1.5px solid var(--green); border-radius: 50px;
+    white-space: nowrap; transition: background 0.15s, color 0.15s;
+  }
+  .nav-create:hover { background: var(--green); color: #fff; }
 
   /* ── HERO ─────────────────────────────────────────────────────────────────── */
   .hero {
@@ -894,7 +904,14 @@
         <a href="#faq">FAQ</a>
       </div>
       <div class="nav-cta">
-        <a href="https://app.thetradevoice.com" class="nav-signin">Sign in</a>
+        <!-- ?signin=1 forces the app to clear any existing session and
+             render the login form. Without the query param, a visitor
+             with a remembered session would skip straight to Dashboard. -->
+        <a href="https://app.thetradevoice.com/?signin=1" class="nav-signin">Sign in</a>
+        <!-- ?signup=1 lands directly on the account-creation wizard
+             (Step 0: email + password) instead of bouncing through login
+             first. Mirrors Sign in's session-clear behavior. -->
+        <a href="https://app.thetradevoice.com/?signup=1" class="nav-create">Create Account</a>
         <a href="mailto:hello@thetradevoice.com?subject=Early%20Access%20Request%20—%20Tradevoice&body=Hi%20Tradevoice%2C%0A%0AI%27d%20like%20to%20request%20early%20access.%20A%20bit%20about%20me%3A%0A%0A-%20Name%3A%0A-%20Trade%2Fs%3A%0A-%20State%3A%0A-%20Crew%20size%3A%0A%0AThanks!" class="btn-primary" style="padding:11px 22px;font-size:14px;white-space:nowrap;border-radius:50px">Request Early Access</a>
       </div>
     </div>
@@ -2297,7 +2314,8 @@
         <div class="footer-col-title">Company</div>
         <ul class="footer-links">
           <li><a href="mailto:hello@thetradevoice.com">Contact</a></li>
-          <li><a href="https://app.thetradevoice.com">Sign in</a></li>
+          <li><a href="https://app.thetradevoice.com/?signin=1">Sign in</a></li>
+          <li><a href="https://app.thetradevoice.com/?signup=1">Create Account</a></li>
         </ul>
       </div>
     </div>

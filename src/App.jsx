@@ -8695,6 +8695,30 @@ function TradevoiceApp() {
 
     (async () => {
       try {
+        // Marketing-driven CTAs land here with ?signin=1 or ?signup=1 to
+        // force an explicit auth flow. If a previous session is still in
+        // localStorage, getSessionUser would silently restore it and route
+        // straight to Dashboard — bypassing the screen the visitor asked
+        // for. Sign out first so the visitor lands on the requested form,
+        // then strip the action params so refresh doesn't keep signing
+        // them out. The authScreen useState init (line ~9063) already
+        // read these params before this effect ran, so the right screen
+        // will be rendered after we clear the session.
+        if (typeof window !== 'undefined') {
+          const p = new URLSearchParams(window.location.search);
+          const wantsAuth = p.has('signin') || p.has('signup');
+          if (wantsAuth) {
+            try { await signOut(); } catch (_) {}
+            p.delete('signin');
+            p.delete('signup');
+            const newSearch = p.toString();
+            window.history.replaceState(
+              {}, '',
+              window.location.pathname + (newSearch ? `?${newSearch}` : '')
+            );
+          }
+        }
+
         const sessionUser = await getSessionUser();
         if (cancelled) return;
         if (sessionUser) {
@@ -9066,6 +9090,10 @@ function TradevoiceApp() {
     const path = window.location.pathname || '';
     if (params.has('signup') || path === '/signup' || path === '/start') return 'signup';
     if (params.has('join')   || path === '/join')                         return 'join';
+    // ?signin=1 (marketing site CTA) explicitly lands on the login form.
+    // Login is the default, but we name it so the contract is obvious to
+    // future readers and matches the marketing site link href.
+    if (params.has('signin') || path === '/signin')                       return 'login';
     return 'login';
   });
 
