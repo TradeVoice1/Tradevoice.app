@@ -131,6 +131,13 @@ export default function OwnerDashboard({ user }) {
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [expandedId, setExpandedId] = useState(null);
+  // Sort state — defaults to alphabetical-by-name ascending because
+  // that's the easiest way to FIND a specific contractor. Click any
+  // table header to flip the sort; click the active header again to
+  // reverse direction. The RPC returns newest-first, so we re-sort
+  // client-side regardless of how the data arrived.
+  const [sortBy,  setSortBy]  = useState('name');
+  const [sortDir, setSortDir] = useState('asc');
   // Phase 4 — per-account event timeline. Lazy-loaded when a row
   // expands so we don't fan out N RPC calls just to render a list.
   // Keyed by profile_id so cached timelines survive collapse + re-expand.
@@ -167,7 +174,7 @@ export default function OwnerDashboard({ user }) {
   // case-insensitively; status filter is a hard equality.
   const visibleAccounts = useMemo(() => {
     const needle = search.trim().toLowerCase();
-    return data.accounts.filter(a => {
+    const filtered = data.accounts.filter(a => {
       if (filterStatus !== 'all') {
         // "canceling" and "founder" are pseudo-statuses derived from
         // flags rather than literal subscription_status values, so
@@ -183,7 +190,62 @@ export default function OwnerDashboard({ user }) {
       if (!needle) return true;
       return (a.email + ' ' + a.name + ' ' + a.company).toLowerCase().includes(needle);
     });
-  }, [data.accounts, search, filterStatus]);
+
+    // Pull the sortable value for the active sort column. Strings are
+    // localeCompare'd (so 'a' < 'b' < 'á' ranks naturally); numbers/
+    // dates use numeric subtraction. Null/empty values always sort
+    // LAST regardless of direction so a contractor missing a field
+    // doesn't end up at the top of an A→Z list.
+    const valueOf = (a) => {
+      switch (sortBy) {
+        case 'name':       return (a.name || '').toLowerCase();
+        case 'company':    return (a.company || '').toLowerCase();
+        case 'email':      return (a.email || '').toLowerCase();
+        case 'plan':       return (a.plan || '').toLowerCase();
+        case 'status':     return a.isCanceling ? 'canceling' : (a.subscriptionStatus || '');
+        case 'trial':      return a.trialDaysLeft ?? -Infinity;
+        case 'seats':      return a.activeSeats ?? 0;
+        case 'monthly':    return a.monthlyRevenue ?? 0;
+        case 'lastSignIn': return a.lastSignInAt?.getTime() ?? 0;
+        case 'createdAt':  return a.createdAt?.getTime()   ?? 0;
+        default:           return '';
+      }
+    };
+    const dir = sortDir === 'asc' ? 1 : -1;
+    return [...filtered].sort((a, b) => {
+      const av = valueOf(a);
+      const bv = valueOf(b);
+      // Empty-string / null handling — always last, regardless of dir
+      const aEmpty = av === '' || av === null || av === undefined;
+      const bEmpty = bv === '' || bv === null || bv === undefined;
+      if (aEmpty && bEmpty) return 0;
+      if (aEmpty) return 1;
+      if (bEmpty) return -1;
+      if (typeof av === 'string') return av.localeCompare(bv) * dir;
+      return (av - bv) * dir;
+    });
+  }, [data.accounts, search, filterStatus, sortBy, sortDir]);
+
+  // Click handler for sortable column headers. Clicking the active
+  // column toggles direction; clicking a different column sets it as
+  // active in the default direction (asc for names, desc for dates +
+  // numbers since "most recent" / "highest" is usually what you want).
+  const handleSort = (col) => {
+    if (sortBy === col) {
+      setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(col);
+      const numericOrDate = ['trial', 'seats', 'monthly', 'lastSignIn', 'createdAt'].includes(col);
+      setSortDir(numericOrDate ? 'desc' : 'asc');
+    }
+  };
+
+  // Tiny arrow component for the active sort column header.
+  const sortArrow = (col) => sortBy !== col ? null : (
+    <span style={{ marginLeft: 4, fontSize: 10, color: C.green }}>
+      {sortDir === 'asc' ? '▲' : '▼'}
+    </span>
+  );
 
   // Guard: if the RPC returned NULL (caller isn't actually super_owner),
   // render a clean unauthorized state instead of a broken dashboard.
@@ -332,6 +394,32 @@ export default function OwnerDashboard({ user }) {
           <option value="canceled">Canceled</option>
           <option value="founder">Founder</option>
         </select>
+        {/* Sort shortcut — one-tap "A→Z" vs "newest first" since
+            those are the two most common views. Click any column
+            header in the table for finer control. */}
+        <select
+          value={`${sortBy}:${sortDir}`}
+          onChange={e => {
+            const [b, d] = e.target.value.split(':');
+            setSortBy(b);
+            setSortDir(d);
+          }}
+          style={{
+            padding: '10px 14px', border: `1px solid ${C.border}`, borderRadius: 8,
+            fontSize: 14, background: C.surface, cursor: 'pointer', fontFamily: 'inherit',
+          }}
+          title="Sort accounts"
+        >
+          <option value="name:asc">Sort: A → Z (Name)</option>
+          <option value="name:desc">Sort: Z → A (Name)</option>
+          <option value="company:asc">Sort: A → Z (Company)</option>
+          <option value="email:asc">Sort: A → Z (Email)</option>
+          <option value="createdAt:desc">Sort: Newest signups first</option>
+          <option value="createdAt:asc">Sort: Oldest signups first</option>
+          <option value="lastSignIn:desc">Sort: Recently active</option>
+          <option value="monthly:desc">Sort: Highest revenue first</option>
+          <option value="trial:asc">Sort: Trial ending soonest</option>
+        </select>
       </div>
 
       {/* Account table */}
@@ -350,14 +438,14 @@ export default function OwnerDashboard({ user }) {
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
               <thead>
                 <tr style={{ background: '#fafaf7', borderBottom: `1px solid ${C.border}` }}>
-                  <th style={th}>Email</th>
-                  <th style={th}>Name / Company</th>
-                  <th style={th}>Plan</th>
-                  <th style={th}>Status</th>
-                  <th style={{ ...th, textAlign: 'center' }}>Trial Left</th>
-                  <th style={{ ...th, textAlign: 'center' }}>Seats</th>
-                  <th style={{ ...th, textAlign: 'right' }}>Monthly</th>
-                  <th style={th}>Last Sign-In</th>
+                  <SortableTh col="email"      onSort={handleSort} arrow={sortArrow('email')}>Email</SortableTh>
+                  <SortableTh col="name"       onSort={handleSort} arrow={sortArrow('name')}>Name / Company</SortableTh>
+                  <SortableTh col="plan"       onSort={handleSort} arrow={sortArrow('plan')}>Plan</SortableTh>
+                  <SortableTh col="status"     onSort={handleSort} arrow={sortArrow('status')}>Status</SortableTh>
+                  <SortableTh col="trial"      onSort={handleSort} arrow={sortArrow('trial')}      align="center">Trial Left</SortableTh>
+                  <SortableTh col="seats"      onSort={handleSort} arrow={sortArrow('seats')}      align="center">Seats</SortableTh>
+                  <SortableTh col="monthly"    onSort={handleSort} arrow={sortArrow('monthly')}    align="right">Monthly</SortableTh>
+                  <SortableTh col="lastSignIn" onSort={handleSort} arrow={sortArrow('lastSignIn')}>Last Sign-In</SortableTh>
                 </tr>
               </thead>
               <tbody>
@@ -603,6 +691,26 @@ const th = {
   textTransform: 'uppercase', color: C.muted,
 };
 const td = { padding: '14px 14px', verticalAlign: 'top' };
+
+// Clickable column header that drives sort. Visually identical to the
+// old static <th> but the entire cell is a button that calls onSort
+// with this column's key. Active column gets the ▲/▼ arrow next to
+// the label so it's obvious which sort is current and which way.
+function SortableTh({ col, onSort, arrow, align = 'left', children }) {
+  return (
+    <th style={{
+      ...th,
+      textAlign: align,
+      cursor: 'pointer',
+      userSelect: 'none',
+    }}
+      onClick={() => onSort(col)}
+      title="Click to sort"
+    >
+      {children}{arrow}
+    </th>
+  );
+}
 
 function DetailField({ label, value, mono }) {
   return (
