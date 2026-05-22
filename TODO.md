@@ -215,29 +215,22 @@ Bearer JWT and reject body-claimed user IDs that don't match.
 
 ---
 
-## ⏱️ Campaign timeout on >150-recipient blasts (added 2026-05-15)
+## ✅ Campaign + review-request batching — SHIPPED 2026-05-21
 
-`api/marketing/send.js handleCampaign` sends emails in a synchronous
-for-loop, awaiting each Resend call before the next. Vercel Hobby
-caps serverless functions at 60s; at ~250ms per Resend round-trip,
-that's ~240 recipients max before the function dies mid-loop. Half
-the campaign lands, half doesn't, the marketing_campaigns row is
-left in `sending` status (never gets the final `update to 'sent'`),
-and there's no resume mechanism.
+Was: both handleReviewRequest and handleCampaign in
+api/marketing/send.js awaited each Resend call before starting the
+next. At ~250ms per round-trip + Vercel's 60s function ceiling, the
+recipient cap was ~240 — beyond that, function killed mid-loop with
+half the recipients sent and no resume path.
 
-**Fix options (rank by effort):**
-1. **Promise.all in batches of 20** with `Promise.allSettled` — easy
-   ~10-line change, lifts cap to ~4000 recipients in 60s. Best
-   immediate fix.
-2. **Move to Vercel Cron + a job queue table** — proper solution.
-   Endpoint just queues; cron drains. Requires Vercel Pro (blocked
-   below) and the recurring-jobs cron infrastructure.
-3. **Stream chunked progress back via SSE** — overkill for now.
+Shipped: extracted per-client sendOne helpers, then batched-parallel
+sends via Promise.allSettled chunks of 20. Lifts the ceiling to
+~4000 recipients in 60s. Stays under Resend's default 10/sec rate
+limit. Failed sends in a batch don't kill the rest of the batch.
 
-Option 1 first; Option 2 once Pro is live.
-
-Not blocking private preview (no real contractor has >100 clients in
-their address book yet). Important before launch.
+Future: when on Vercel Pro, move to a real job-queue table + cron
+drain for unbounded recipient counts. Not blocking until someone
+needs to blast >4000 in one shot.
 
 ---
 

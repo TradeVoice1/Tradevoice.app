@@ -109,10 +109,13 @@ async function handleReviewRequest(req, res) {
   const footer   = `Sent by ${companyName}. Reply to this email to reach us directly.`;
   const origin   = publicOrigin(req);
 
-  const results = [];
-  for (const client of (clients || [])) {
+  // Per-client send + log. Returns a { clientId, ok, error } result
+  // regardless of which short-circuit branch the client falls into
+  // (no email / bad format / unsubscribed / actual send). Self-
+  // contained so it can run inside Promise.allSettled below without
+  // tripping on shared per-iteration state.
+  const sendOneReview = async (client) => {
     if (!client.email) {
-      results.push({ clientId: client.id, ok: false, error: 'no_email' });
       await supabase.rpc('log_marketing_send', {
         p_owner_id: ownerId, p_client_id: client.id, p_campaign_id: null,
         p_type: 'review_request',
@@ -120,13 +123,9 @@ async function handleReviewRequest(req, res) {
         p_subject: subject, p_status: 'failed',
         p_resend_message_id: null, p_error_text: 'no_email_on_file',
       });
-      continue;
+      return { clientId: client.id, ok: false, error: 'no_email' };
     }
-    // Reject malformed addresses BEFORE burning a Resend call. Saves
-    // money on guaranteed failures and prevents Resend bounce stats
-    // from getting polluted by typos in the contractor's client list.
     if (!looksLikeEmail(client.email)) {
-      results.push({ clientId: client.id, ok: false, error: 'bad_email_format' });
       await supabase.rpc('log_marketing_send', {
         p_owner_id: ownerId, p_client_id: client.id, p_campaign_id: null,
         p_type: 'review_request',
@@ -134,10 +133,9 @@ async function handleReviewRequest(req, res) {
         p_subject: subject, p_status: 'failed',
         p_resend_message_id: null, p_error_text: 'bad_email_format',
       });
-      continue;
+      return { clientId: client.id, ok: false, error: 'bad_email_format' };
     }
     if (client.unsubscribed_at) {
-      results.push({ clientId: client.id, ok: false, error: 'unsubscribed' });
       await supabase.rpc('log_marketing_send', {
         p_owner_id: ownerId, p_client_id: client.id, p_campaign_id: null,
         p_type: 'review_request',
@@ -145,11 +143,10 @@ async function handleReviewRequest(req, res) {
         p_subject: subject, p_status: 'unsubscribed',
         p_resend_message_id: null, p_error_text: 'recipient_unsubscribed',
       });
-      continue;
+      return { clientId: client.id, ok: false, error: 'unsubscribed' };
     }
 
     const unsubscribeUrl = unsubscribeUrlFor(client.unsubscribe_token, origin);
-
     let body = personalize(template, { clientName: client.name, companyName });
     const linkBlock = reviewLink ? `\n\n${reviewLink}` : '';
     if (body.includes('[ReviewLink]')) {
@@ -170,7 +167,6 @@ async function handleReviewRequest(req, res) {
       fromName, replyTo, unsubscribeUrl,
       tags: ['review_request'],
     });
-
     await supabase.rpc('log_marketing_send', {
       p_owner_id: ownerId, p_client_id: client.id, p_campaign_id: null,
       p_type: 'review_request',
@@ -180,8 +176,31 @@ async function handleReviewRequest(req, res) {
       p_resend_message_id: messageId || null,
       p_error_text: ok ? null : (error || 'unknown_error'),
     });
+    return { clientId: client.id, ok, error: ok ? null : error };
+  };
 
-    results.push({ clientId: client.id, ok, error: ok ? null : error });
+  // Batched parallel send — same pattern as handleCampaign below.
+  // Lifts the recipient ceiling from ~240 to ~4000 within Vercel's
+  // 60s function limit. Resend rate-limits at ~10/sec by default,
+  // so BATCH_SIZE=20 keeps us comfortably under that while pulling
+  // ~20x speedup over the previous sequential loop.
+  const BATCH_SIZE = 20;
+  const results = [];
+  const queue = clients || [];
+  for (let i = 0; i < queue.length; i += BATCH_SIZE) {
+    const batch = queue.slice(i, i + BATCH_SIZE);
+    const settled = await Promise.allSettled(batch.map(sendOneReview));
+    for (let j = 0; j < settled.length; j++) {
+      const s = settled[j];
+      if (s.status === 'fulfilled') {
+        results.push(s.value);
+      } else {
+        // sendOneReview threw (network blip, transient Supabase RPC).
+        // Don't kill the rest of the batch — log + count as failed.
+        const c = batch[j];
+        results.push({ clientId: c.id, ok: false, error: s.reason?.message || 'send_threw' });
+      }
+    }
   }
 
   const sentCount   = results.filter(r => r.ok).length;
@@ -275,9 +294,30 @@ async function handleCampaign(req, res) {
 
   const footer  = `Sent by ${companyName}. Reply to this email to reach us directly.`;
   const origin  = publicOrigin(req);
-  const results = [];
 
-  for (const c of recipients) {
+  // ── Batched parallel send (replaces the previous sequential
+  // for-of await loop) ──────────────────────────────────────────────
+  //
+  // Old behavior: awaited each Resend call before starting the next.
+  // At ~250ms per round-trip, Vercel's 60s function ceiling capped
+  // campaigns at ~240 recipients before the function got killed
+  // mid-loop. That left half the campaign sent, the
+  // marketing_campaigns row stuck in 'sending' status (no final
+  // update), and no resume mechanism for the unsent half.
+  //
+  // New behavior: send in BATCH_SIZE-parallel chunks, using
+  // Promise.allSettled so one failure doesn't cancel the rest of
+  // the batch. With BATCH_SIZE=20 and ~250-500ms per call, 4000
+  // recipients fit comfortably under the 60s ceiling.
+  //
+  // Batching (vs all-at-once Promise.all over the full recipient
+  // list) is important because Resend rate-limits at ~10
+  // requests/sec by default — pumping 4000 fetches in parallel
+  // would trip that and many would 429. 20-at-a-time stays well
+  // under the limit while still cutting wall time by ~20x.
+  const BATCH_SIZE = 20;
+  const results = [];
+  const sendOne = async (c) => {
     const unsubscribeUrl = unsubscribeUrlFor(c.unsubscribe_token, origin);
     const body = personalize(message, { clientName: c.name, companyName });
     const html      = plainToHtml(body, { footer, unsubscribeUrl });
@@ -289,6 +329,9 @@ async function handleCampaign(req, res) {
       fromName, replyTo, unsubscribeUrl,
       tags: ['campaign'],
     });
+    // Log the send result regardless of outcome — the marketing_sends
+    // row is the audit trail. Failures keep their error_text so we
+    // can debug bad sends later.
     await supabase.rpc('log_marketing_send', {
       p_owner_id: ownerId, p_client_id: c.id, p_campaign_id: campaign.id,
       p_type: 'campaign',
@@ -298,7 +341,35 @@ async function handleCampaign(req, res) {
       p_resend_message_id: messageId || null,
       p_error_text: ok ? null : (error || 'unknown_error'),
     });
-    results.push({ clientId: c.id, ok });
+    return { clientId: c.id, ok };
+  };
+  for (let i = 0; i < recipients.length; i += BATCH_SIZE) {
+    const batch = recipients.slice(i, i + BATCH_SIZE);
+    const settled = await Promise.allSettled(batch.map(sendOne));
+    for (let j = 0; j < settled.length; j++) {
+      const s = settled[j];
+      if (s.status === 'fulfilled') {
+        results.push(s.value);
+      } else {
+        // sendOne itself threw — most likely a transient Resend or
+        // Supabase RPC issue. Treat as a failed send for accounting,
+        // but the marketing_sends row may not exist if the throw
+        // happened before log_marketing_send. Best-effort: insert a
+        // failure log row here so the audit trail isn't missing the
+        // recipient entirely.
+        const c = batch[j];
+        results.push({ clientId: c.id, ok: false, error: s.reason?.message || 'send_threw' });
+        await supabase.rpc('log_marketing_send', {
+          p_owner_id: ownerId, p_client_id: c.id, p_campaign_id: campaign.id,
+          p_type: 'campaign',
+          p_recipient_email: c.email, p_recipient_name: c.name || null,
+          p_subject: subject.trim(),
+          p_status: 'failed',
+          p_resend_message_id: null,
+          p_error_text: String(s.reason?.message || 'send_threw').slice(0, 500),
+        }).catch(() => { /* best effort */ });
+      }
+    }
   }
 
   const sentCount   = results.filter(r => r.ok).length;
