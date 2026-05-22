@@ -80,7 +80,13 @@ export default async function handler(req, res) {
     }
   }
   if (!event) {
-    console.error('[stripe webhook] signature verification failed against all configured secrets:', lastError?.message);
+    // Log only that verification failed; do NOT log the raw error
+    // message (which may include implementation details about the
+    // signing algorithm, expected secret length, or other internals
+    // useful to an attacker probing the endpoint).
+    // The 400 response is the same as before — no behavior change
+    // for legitimate retries.
+    console.warn('[stripe webhook] signature verification failed');
     return res.status(400).json({ error: 'invalid_signature' });
   }
 
