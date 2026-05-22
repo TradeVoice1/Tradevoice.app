@@ -5,6 +5,192 @@ to pick up cold. Update this as we go.
 
 ---
 
+## 🆕 Captured during 2026-05-21 testing + audit day
+
+A long session that shipped Phases 1-6 of the founder dashboard, the
+per-state license system, a comprehensive security audit + remediation,
+and a bunch of UX fixes. Listed here in priority order — new items
+surfaced during testing or by the audit:
+
+### 🟡 Webhook → DB pipeline gap on pre-migration-0035 accounts
+
+Jamie's first signup (before migration 0035 was run in production) ended
+up with `stripe_customer_id` and `stripe_subscription_id` populated but
+`current_period_end`, `cancel_at_period_end`, and `plan` all NULL. The
+webhook event existed in Stripe but our UPDATE silently no-op'd those
+columns because they didn't exist in the schema yet.
+
+After he signed up fresh post-migration the same fields populated
+correctly, so the pipeline is healthy going forward. But ANY account
+created between the Phase-3 launch and the migration 0035 deploy has
+this gap. Nothing breaks in the dashboard — those rows just show
+"—" everywhere — but cancellation tracking can't work on those old
+accounts.
+
+**Options:**
+1. Accept the gap (these are pre-launch test accounts; wipe them
+   manually as you find them). Lowest effort.
+2. Build a one-time Stripe Events API backfill script that hydrates
+   the missing columns for accounts where `current_period_end` is
+   NULL. ~1 hour. Worth doing if you have customers in this state
+   when you open the allowlist.
+
+### 🟡 Cron secret hard-fail (audit finding, MEDIUM)
+
+`api/cron/refresh-sales-tax.js` lines 315-323 check `CRON_SECRET` via
+header OR query-param fallback, but if the env var is unset the
+endpoint has no enforcement at all — it'd be publicly callable. Vercel
+cron always sets the header so it's theoretical in production, but
+worth tightening to a hard fail. ~10 min.
+
+### 🟡 Founder TOTP recovery flow
+
+If you lose your phone + the base32 secret backup, the only recovery
+path is direct SQL editor access (UPDATE the secret columns to NULL,
+re-enroll). Pre-launch when you're the only super-owner this is fine.
+Post-launch (if you ever delegate super-owner to a second person, or
+just want belt-and-suspenders) consider:
+
+1. **Backup codes** — generate 10 one-time codes at TOTP setup, store
+   bcrypt hashes on the profile, accept any unused code as a one-shot
+   unlock. ~1 hour.
+2. **Magic-link bypass** — Supabase emails a one-time link that
+   unlocks the gate. Tied to the auth email — if THAT's compromised
+   too you have bigger problems. ~45 min.
+
+### 🟢 URL validation on Google Review Link
+
+Settings → Edit Profile → Google Review Link accepts any string and
+sends it as-is in marketing emails. If a contractor pastes garbage
+they break their own customer emails (self-inflicted) but a regex
+check would catch the typo case. ~5 min.
+
+### 🟢 Webhook error log verbosity (audit finding, LOW)
+
+`api/stripe/webhook.js` logs raw error messages on signature
+verification failure. Minor info leak in your own Vercel logs only.
+~5 min cosmetic.
+
+### 🟢 Stripe callback O(N) state lookup (audit finding, LOW)
+
+`api/stripe/callback.js` verifies the OAuth state nonce by paginating
+across all users (acknowledged tech debt in a code comment). Works
+correctly today; scales poorly past ~10k accounts. Build the proper
+short-TTL state table when needed.
+
+### 🟢 Subscription events historical backfill
+
+`subscription_events` table only logs events from migration 0034
+onward. Old payment history isn't there. The dashboard timeline
+shows "no events recorded yet" for accounts whose history predates
+that migration. Stripe's Events API can fill this in — ~1 hour
+script. Skip unless you have customers asking for older history.
+
+### 🟢 Marketing send: server-side email format validation
+
+`api/marketing/send.js` doesn't validate that the recipient's
+client.email actually looks like an email. If a contractor's clients
+table has bad data, Resend will reject and the row gets logged as
+'failed'. Mild — adds a "tell me why before I burn the API call"
+check. ~10 min.
+
+### 🟢 Existing accounts missing state field
+
+The state-picker fix landed mid-session; accounts that signed up
+between the founder bypass shipping and the state-picker shipping
+might have empty `states` arrays. Query to find them:
+
+```sql
+select u.email, p.created_at
+  from public.profiles p
+  join auth.users u on u.id = p.id
+ where coalesce(p.role, 'owner') = 'owner'
+   and not p.is_super_owner
+   and (p.states is null or array_length(p.states, 1) is null);
+```
+
+If anyone shows up, either patch via SQL (`update profiles set
+states = ARRAY['Whatever'] where id = ...`) or wipe + ask them to
+re-sign-up. The state-picker is now enforced for new signups.
+
+---
+
+## ✅ Shipped 2026-05-21
+
+Today's wins, for the record:
+
+- **Founder dashboard end-to-end** — Phases 1-6 of the "god view":
+  - Migration 0030: `is_super_owner` flag + RLS extensions
+  - Migration 0031: dashboard data RPC
+  - Migration 0032: trigger lockdown on super-owner columns
+  - Migration 0034: subscription_events table + timeline RPC
+  - Migration 0035: cancel-clicked tracking + activity counts
+  - Migration 0036: revenue refocus (lifetime $, MRR, monthly $)
+  - Founder TOTP gate (Phase 2) — full-screen takeover before render
+  - Click-to-sort dashboard columns + alphabetical sort default
+  - Per-customer drill-down with full event timeline + revenue banner
+
+- **Per-state license + tax (multi-state contractors)** —
+  Migration 0033: per-invoice/per-quote `state` column.
+  Migration 0037: `profiles.state_licenses` JSONB + per-document
+  `license_number` snapshot. State picker in invoice/quote editor
+  auto-pulls the matching license. Profile editor has chip-based
+  multi-state picker + per-state license inputs.
+
+- **🔒 Auth correlation on body-driven endpoints (was in TODO 2026-05-15) — DONE.**
+  Built `api/_lib/requireAuth.js` + `src/lib/authedFetch.js`.
+  Applied to all 8 affected endpoints: stripe/disconnect, setup-intent,
+  connect-start, create-subscription (all 3 actions),
+  plan-checkout, plan-cancel-subscription, marketing/send (both
+  flows), library/parse-rate-table. Each endpoint now validates
+  the Bearer JWT, asserts body.userId matches the authenticated
+  user_id. IDOR loophole closed.
+
+- **Schedule UX improvements:**
+  - "Needs Rescheduling" sidebar section + header badge for overdue jobs
+  - Rich JobDatePicker (month grid + job-density dots) in both Add Job
+    AND Reschedule flows
+  - Drag-reschedule confirm prompt
+  - Monthly folders for past jobs in Jobs list
+  - JOB-XXXX numbers stamped on invoices (migration 0029)
+  - Quote → schedule-job flow (pendingJobDraft pattern)
+
+- **Signup state picker fix** — was hardcoded to 'Texas', no UI to
+  change it, no validation. Now shows a state dropdown on Step 1,
+  requires selection before Continue. Plus cleaned up the
+  `[user.state || 'Texas']` fallback in Settings → Tax Rates.
+
+- **Profile input focus loss (14 fields)** — `F` form wrapper was
+  defined inside ProfileModal, causing re-mount on every keystroke.
+  Hoisted to module scope. Click → type → move on, as intended.
+
+- **Marketing site Sign In / Create Account CTAs** — added /?signin=1
+  and /?signup=1 URL params that force a fresh auth flow (sign out
+  any existing session). New "Create Account" outlined button in
+  the marketing top nav + footer.
+
+- **Edit Profile full-page on laptop** — was a cramped 720px modal,
+  too small once the multi-state license editor landed. Now full-
+  viewport scrollable container with centered 1100px reading
+  column. Tablet/phone unchanged.
+
+- **Founder bypass for Billing page** — was displaying "Solo —
+  $49.99/mo" for the founder due to the `getPrice(trades.length ||
+  1)` fallback. Now shows clean "Founder Account · No plan · No
+  subscription · No charges" panel.
+
+- **State + License auto-pair on invoices/quotes** — switching the
+  Job State dropdown auto-fills the matching license number from
+  profile.stateLicenses. Manual override respected if you type
+  something custom.
+
+- **Comprehensive security audit** — full RLS + SECURITY DEFINER +
+  API endpoint scan. Zero database-layer holes found. Eight API
+  endpoint IDOR issues found and fixed (above). Remaining items
+  are MEDIUM/LOW severity polish (above).
+
+---
+
 ## 🚨 Scrub founder email fallback before public launch (added 2026-05-19)
 
 `src/App.jsx` has TWO hardcoded fallback values of
@@ -32,38 +218,17 @@ Don't forget to remove them too once this is resolved.
 
 ---
 
-## 🔒 Auth correlation on body-driven endpoints (added 2026-05-15)
+## ✅ Auth correlation on body-driven endpoints — SHIPPED 2026-05-21
 
-Several API endpoints accept `ownerId` (or `userId`) from the request
-body and trust it without correlating to the caller's auth session:
+Was: 8 API endpoints accepted `userId`/`ownerId` from request body
+without validating it matched the caller's JWT — IDOR risk that
+could allow disconnecting any Stripe Connect, spamming any owner's
+client list, or burning Claude API credits on someone else's
+behalf.
 
-- `api/marketing/send.js` — both handlers (review_request + campaign)
-- `api/library/parse-rate-table.js`
-- (Already-mitigated cousins: `api/stripe/setup-intent.js`, `create-subscription.js`,
-   `plan-checkout.js`, `disconnect.js` have the same pattern but the
-   blast radius is smaller — Stripe rejects invalid keys / sessions
-   downstream. The marketing + library endpoints are the real risk.)
-
-**Attack vector:** if an attacker obtains a real user's auth.users.id
-(a UUID — large keyspace, but UUIDs leak via various paths: server
-logs, an unrelated XSS, a future feature that exposes them), they can
-hit these endpoints with that ID and either fan out emails as that
-contractor (damages domain reputation) or burn Anthropic credits.
-
-**Fix (~30 min):**
-1. Add `api/_lib/auth.js` with a `requireUser(req)` helper that:
-   - Reads the `Authorization: Bearer <jwt>` header
-   - Validates it with `supabase.auth.getUser(jwt)`
-   - Returns `{ userId, email }` or throws 401
-2. Front-end already has the session — pass the JWT through
-   `Authorization` headers (existing supabase-js client auto-attaches
-   on `.functions.invoke` but our endpoints use plain fetch; add
-   the header manually in `src/data/*.js` helpers).
-3. In each endpoint, replace the `ownerId` body field with the value
-   from `requireUser(req).userId`. Reject if they don't match.
-
-Not blocking private preview (single trusted user), but should land
-before opening the allowlist past internal testing.
+Shipped during the 2026-05-21 audit (`api/_lib/requireAuth.js` +
+`src/lib/authedFetch.js`). All 8 affected endpoints now validate
+Bearer JWT and reject body-claimed user IDs that don't match.
 
 ---
 
