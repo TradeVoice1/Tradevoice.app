@@ -26,8 +26,12 @@ export default async function handler(req, res) {
   const auth = await requireAuth(req, { requireUserMatch: req.body?.userId });
   if (!auth.ok) return res.status(auth.status).json({ error: auth.error });
 
-  const { returnUrl } = req.body || {};
+  const { returnUrl, entityType } = req.body || {};
   const userId = auth.userId;
+  // Normalize the optional entityType. Stripe accepts only
+  // 'individual' or 'company' for stripe_user[business_type]; anything
+  // else gets dropped so the form just asks (which is also a fine UX).
+  const normalizedEntity = (entityType === 'individual' || entityType === 'company') ? entityType : null;
 
   const clientId = process.env.STRIPE_CONNECT_CLIENT_ID;
   if (!clientId) {
@@ -49,24 +53,24 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'could_not_persist_state' });
   }
 
-  // TODO(onboarding-UX): `business_type=company` prefills Stripe's
-  // onboarding form for incorporated businesses (LLC / Corp). Most one-
-  // person trades operate as sole proprietors and would prefer
-  // `individual` — which uses SSN + DOB instead of EIN + business
-  // address and skips a screen. The Stripe form is editable either way
-  // so this only affects the default; not a correctness bug. Fix:
-  // accept an `entityType` body param from the front-end (we already
-  // collect this on the Company step of signup as part of the LLC vs
-  // sole-prop decision) and pass it through. Skipping the prefill
-  // entirely (omit the param) lets Stripe ask — also acceptable.
+  // Build the OAuth authorize URL. When entityType is provided we
+  // prefill Stripe's onboarding form via stripe_user[business_type]:
+  //   'individual' → SSN + DOB, skips the company-address screen
+  //   'company'    → EIN + business address (LLC / Corp / S-Corp)
+  // If entityType isn't supplied (or is something unrecognized), we
+  // OMIT the param entirely so Stripe asks the contractor itself —
+  // safer than guessing wrong. The contractor can always flip the
+  // toggle on Stripe's page if our guess doesn't match their setup.
   const params = new URLSearchParams({
     response_type: 'code',
     client_id:     clientId,
     scope:         'read_write',
     state,
     redirect_uri:  `${publicAppUrl(req)}/api/stripe/callback`,
-    'stripe_user[business_type]': 'company',
   });
+  if (normalizedEntity) {
+    params.set('stripe_user[business_type]', normalizedEntity);
+  }
   const url = `https://connect.stripe.com/oauth/authorize?${params.toString()}`;
   return res.status(200).json({ url });
 }

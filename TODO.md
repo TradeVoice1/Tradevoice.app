@@ -241,20 +241,21 @@ their address book yet). Important before launch.
 
 ---
 
-## 🔧 Stripe Connect: pass entityType through to OAuth (added 2026-05-15)
+## ✅ Stripe Connect entity-type prefill — SHIPPED 2026-05-21
 
-`api/stripe/connect-start.js` hardcodes `stripe_user[business_type]=company`
-on the Stripe Connect OAuth URL. This prefills Stripe's onboarding for
-LLC/Corp contractors, but most one-person trades are sole proprietors —
-they'd see the wrong form by default (EIN + business address vs SSN + DOB).
+Was: hardcoded `stripe_user[business_type]=company` which prefilled
+LLC/Corp onboarding for everyone, even sole-prop contractors (who'd
+prefer SSN+DOB to EIN+business address).
 
-Fix: SignupScreen Step 1 already captures whether the contractor is
-filing as a company. Plumb that field through to connect-start as a
-body param, default to omitting the prefill (let Stripe ask) rather
-than guessing wrong. ~30 min change.
+Fix shipped: server now reads optional `entityType` from request body
+and only prefills when it's `'individual'` or `'company'`. Missing
+or unknown values → omit the prefill entirely so Stripe asks. Front-
+end doesn't currently send the param so we hit the safe "ask Stripe"
+path by default.
 
-Not blocking — the Stripe form is editable so users can flip
-individual ↔ company themselves. Just polish.
+Future enhancement (not tonight): collect business-entity type in a
+new Profile field, pass it through connect-start call. Until then,
+"Stripe asks" is the right default.
 
 ---
 
