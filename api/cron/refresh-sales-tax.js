@@ -308,18 +308,27 @@ async function refreshOne(supabase, anthropic, [stateName, url]) {
 
 // ── Handler ─────────────────────────────────────────────────────────────────
 export default async function handler(req, res) {
-  // Vercel Cron sends GET with an Authorization header it derives from
-  // process.env.CRON_SECRET. Reject anything else to keep this from being
-  // a public Claude-spending endpoint. If CRON_SECRET isn't set we fall
-  // back to a `?secret=` query param for local testing.
+  // Vercel Cron sends GET with an Authorization header derived from
+  // process.env.CRON_SECRET. Reject anything else to keep this from
+  // being a public Claude-spending endpoint.
+  //
+  // Hard-fail if CRON_SECRET isn't configured — the previous behavior
+  // ("if expected is unset, allow anyone") was a soft-fail that left
+  // this endpoint publicly callable whenever the env var got dropped.
+  // Vercel cron always sets the header, so the right answer is:
+  // require the secret to exist, and require the header to match it.
+  // Local testing should set CRON_SECRET in .env.local and call with
+  // the Authorization header (no more ?secret= query-param fallback —
+  // that pattern leaks the secret into Vercel access logs / browser
+  // history / referer chains).
   const expected = process.env.CRON_SECRET;
-  if (expected) {
-    const header = req.headers['authorization'] || '';
-    const query  = req.query?.secret;
-    const ok = header === `Bearer ${expected}` || query === expected;
-    if (!ok) {
-      return res.status(401).json({ error: 'unauthorized' });
-    }
+  if (!expected) {
+    console.error('[cron/refresh-sales-tax] CRON_SECRET env var not set; refusing to run');
+    return res.status(500).json({ error: 'cron_secret_not_configured' });
+  }
+  const header = req.headers['authorization'] || '';
+  if (header !== `Bearer ${expected}`) {
+    return res.status(401).json({ error: 'unauthorized' });
   }
 
   const supabase  = getServiceClient();
