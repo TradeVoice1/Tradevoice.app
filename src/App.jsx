@@ -7188,9 +7188,31 @@ function ProfileModal({ profile, onSave, onClose }) {
               style={{ ...s.input, width: '100%', padding: '12px 14px', boxSizing: 'border-box', resize: 'vertical', lineHeight: 1.65, fontSize: 15 }} />
           </F>
 
-          {/* Google review link — appended to Marketing → Review Request emails. */}
+          {/* Google review link — appended to Marketing → Review Request emails.
+              Inline URL validation so a typo doesn't ship in emails to
+              the contractor's clients. Accept anything starting with
+              http:// or https://; empty is OK (the field is optional
+              and Marketing screen already shows a "no link configured"
+              warning when sending). Anything else gets a red error
+              under the field as the contractor types. */}
           <F label="Google Review Link" hint="Get this from your Google Business Profile → 'Get more reviews' → Share. Used in Marketing review-request emails.">
-            {I(reviewLink, setReviewLink, 'https://g.page/r/...', 'url')}
+            <input
+              type="url"
+              value={reviewLink}
+              onChange={e => setReviewLink(e.target.value)}
+              placeholder="https://g.page/r/..."
+              style={{
+                ...s.input, width: '100%', padding: '12px 14px',
+                boxSizing: 'border-box', fontSize: 17, minHeight: 48,
+                borderColor: reviewLink && !/^https?:\/\//i.test(reviewLink.trim())
+                  ? '#dc2626' : C.border,
+              }}
+            />
+            {reviewLink && !/^https?:\/\//i.test(reviewLink.trim()) && (
+              <div style={{ fontSize: 13, color: '#dc2626', marginTop: 6, fontWeight: 600 }}>
+                Must start with http:// or https://. Paste the full URL from your Google Business Profile.
+              </div>
+            )}
           </F>
 
           {/* ── Certificate of Insurance (Ship 2) ──
