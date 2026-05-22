@@ -8964,12 +8964,13 @@ function Settings({ user, setUser, logo, onLogoChange, showProfileModal, setShow
 // Visible only when user.email is on the early-access list. Currently exposes
 // a single "Seed Demo Data" button. Place future internal dev tools here.
 function DeveloperPanel({ user }) {
-  // ⚠️ PRE-LAUNCH: remove the hardcoded yahoo fallback below before
-  // making the app publicly available. The env var VITE_EARLY_ACCESS_EMAILS
-  // is set in Vercel for both projects; the fallback only matters if that
-  // env var ever gets dropped. Tracked in TODO.md → "Scrub founder
-  // email fallback before public launch".
-  const DEV_EMAILS = (import.meta.env.VITE_EARLY_ACCESS_EMAILS || 'mattparnellburkes@yahoo.com')
+  // Dev panel visibility gates on VITE_EARLY_ACCESS_EMAILS. If the env
+  // var isn't set (misconfigured Vercel project, missed env on a
+  // branch), the panel just doesn't render — no hardcoded email
+  // fallback to leak personal info in client-side source. Set
+  // VITE_EARLY_ACCESS_EMAILS in Vercel for each environment where
+  // you want the dev panel visible.
+  const DEV_EMAILS = (import.meta.env.VITE_EARLY_ACCESS_EMAILS || '')
     .split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
   const isDev = DEV_EMAILS.includes(String(user?.email || '').trim().toLowerCase());
   if (!isDev) return null;
@@ -9685,12 +9686,6 @@ function TradevoiceApp() {
   // techs are provisioned by an already-signed-in owner, so the lockdown
   // doesn't apply to them.
   //
-  // ⚠️ PRE-LAUNCH: remove the hardcoded yahoo fallback below before making
-  // the app publicly available. The env var VITE_EARLY_ACCESS_EMAILS is
-  // set in Vercel; the fallback only matters if that env var ever gets
-  // dropped. Tracked in TODO.md → "Scrub founder email fallback before
-  // public launch".
-  //
   // 2026-05-19: added an "open mode" wildcard. Setting
   // VITE_EARLY_ACCESS_EMAILS to "*" (or including "*" in the comma-list)
   // disables the allowlist gate entirely — any email can complete
@@ -9699,7 +9694,14 @@ function TradevoiceApp() {
   // test email. The marketing site still says "Request Early Access"
   // — those are separate copy on the marketing project and aren't
   // affected by this flag.
-  const EARLY_ACCESS_RAW = (import.meta.env.VITE_EARLY_ACCESS_EMAILS || 'mattparnellburkes@yahoo.com');
+  //
+  // 2026-05-21: hardcoded founder-email fallback removed before
+  // public launch — was a privacy + reputation risk shipped in the
+  // client bundle. If VITE_EARLY_ACCESS_EMAILS is unset now, the
+  // allowlist is EMPTY (no one can complete signup). Set the env
+  // var in Vercel for every environment where signups should work
+  // (Production = '*' for open beta, or a comma-list of test emails).
+  const EARLY_ACCESS_RAW = (import.meta.env.VITE_EARLY_ACCESS_EMAILS || '');
   const EARLY_ACCESS_EMAILS = EARLY_ACCESS_RAW
     .split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
   const ALLOWLIST_OPEN = EARLY_ACCESS_EMAILS.includes('*');
