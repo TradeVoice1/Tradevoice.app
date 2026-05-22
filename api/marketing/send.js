@@ -36,6 +36,18 @@ If you had a great experience, would you take 30 seconds to leave us a Google re
 
 Either way, thanks again — and please reach out any time you need work done.`;
 
+// Loose RFC-5322-ish email format check. Matches anything that looks
+// like name@domain.tld with at least 2 chars in the TLD. Conservative
+// enough that contractor data entries like "smith@example" or "smith
+// at example.com" (yes, real) get rejected before we burn an API call
+// to Resend. NOT a full RFC parser — that's overkill and rejects
+// legitimate addresses with quirky local parts. The goal is just to
+// catch typos before the email goes out.
+function looksLikeEmail(s) {
+  if (typeof s !== 'string') return false;
+  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(s.trim());
+}
+
 function publicOrigin(req) {
   if (process.env.PUBLIC_APP_URL) return process.env.PUBLIC_APP_URL.replace(/\/$/, '');
   const proto = req.headers['x-forwarded-proto'] || 'https';
@@ -107,6 +119,20 @@ async function handleReviewRequest(req, res) {
         p_recipient_email: '(missing)', p_recipient_name: client.name || null,
         p_subject: subject, p_status: 'failed',
         p_resend_message_id: null, p_error_text: 'no_email_on_file',
+      });
+      continue;
+    }
+    // Reject malformed addresses BEFORE burning a Resend call. Saves
+    // money on guaranteed failures and prevents Resend bounce stats
+    // from getting polluted by typos in the contractor's client list.
+    if (!looksLikeEmail(client.email)) {
+      results.push({ clientId: client.id, ok: false, error: 'bad_email_format' });
+      await supabase.rpc('log_marketing_send', {
+        p_owner_id: ownerId, p_client_id: client.id, p_campaign_id: null,
+        p_type: 'review_request',
+        p_recipient_email: client.email, p_recipient_name: client.name || null,
+        p_subject: subject, p_status: 'failed',
+        p_resend_message_id: null, p_error_text: 'bad_email_format',
       });
       continue;
     }
@@ -213,7 +239,12 @@ async function handleCampaign(req, res) {
     return res.status(500).json({ error: 'client_fetch_failed' });
   }
 
-  let recipients = (allClients || []).filter(c => c.email);
+  // Filter for clients with a present AND syntactically-valid email.
+  // Previously only checked truthiness, so a typo like 'smith at gmail
+  // dot com' would slip through to Resend (guaranteed bounce + counts
+  // against the sender domain's reputation). looksLikeEmail rejects
+  // anything that doesn't match name@domain.tld.
+  let recipients = (allClients || []).filter(c => looksLikeEmail(c.email));
 
   if (tradeFilter && tradeFilter !== 'All' && recipients.length > 0) {
     const ids = recipients.map(c => c.id);
