@@ -67,7 +67,7 @@ const ELITE_CAPS = {
   maxStates:               50,        // all US states + DC
   includedTechSeats:       2,
   hasMultiStateLicenses:   true,
-  hasAiQuoteDrafting:      true,      // when built
+  hasAiQuoteDrafting:      true,      // ✓ shipped 2026-05-22 (Claude + Perplexity)
   hasWhiteLabelPortal:     true,      // when built
   hasApiAccess:            true,      // when built
   hasBulkImport:           true,      // when built

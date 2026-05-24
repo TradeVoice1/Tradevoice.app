@@ -5,6 +5,22 @@ to pick up cold. Update this as we go.
 
 ---
 
+## 🚨 Add PERPLEXITY_API_KEY to Vercel env vars (added 2026-05-22)
+
+Shipped the Elite-tier AI scope analyzer tonight (`/api/quotes/analyze-scope`)
+which chains Claude → Perplexity → Claude for PDF scope extraction. The
+Perplexity step needs `PERPLEXITY_API_KEY` set in Vercel Production
+(+ Preview if you want testing).
+
+Get a key at perplexity.ai/account → API tab. Sonar (online search)
+tier is fine; ~$0.05-0.10 per analysis depending on PDF size.
+
+Without this env var set, dropping a PDF will show a generic "Analysis
+failed" error in the UI. Backend logs will show "PERPLEXITY_API_KEY
+env var not set".
+
+---
+
 ## 🆕 Captured during 2026-05-21 testing + audit day
 
 A long session that shipped Phases 1-6 of the founder dashboard, the

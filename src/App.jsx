@@ -14,6 +14,10 @@ const BillingPaymentModal = lazy(() => import("./BillingPaymentModal").then(m =>
 // lazy-loaded so the main bundle isn't bloated for tech-mode users who
 // never open Settings.
 const RateLibraryPanel = lazy(() => import("./RateLibraryPanel"));
+// Elite-tier AI scope analyzer (Claude + Perplexity collab). Lazy
+// loaded so Solo/Pro accounts that never use it don't pay the
+// bundle cost.
+const ScopeAnalyzer    = lazy(() => import("./ScopeAnalyzer"));
 const MarketingScreen      = lazy(() => import("./MarketingScreen"));
 // Founder-only "god view" dashboard (migrations 0030 + 0031). Lazy-loaded
 // because most accounts never see this code path — only the super-owner
@@ -6312,6 +6316,18 @@ function QuoteEditor({ initial, clients, existingQuotes = [], user, onSave, onAd
             {/* ── SCOPE TAB ── */}
             {tab === 'scope' && (
               <div>
+                {/* AI scope analysis (Elite tier). Contractor drops a
+                    PDF; Claude + Perplexity collaborate to extract a
+                    precise scope. Solo/Pro see a teaser with upgrade
+                    prompt. The "Use This Scope" button appends into
+                    the scope textarea so any existing text the
+                    contractor wrote is preserved. */}
+                <ScopeAnalyzer
+                  user={user}
+                  onInsertScope={(synth) => {
+                    setScope(prev => prev ? `${prev}\n\n${synth}` : synth);
+                  }}
+                />
                 {/* Scope of work */}
                 <Label>Scope of Work (customer-facing)</Label>
                 <Input value={scope} onChange={setScope} rows={8}
