@@ -4,6 +4,7 @@ import {
   listCampaigns, listRecentSends,
   sendReviewRequests, sendCampaign, setClientReviewed,
 } from "./data/marketing";
+import { can, tierOf, tierLabel } from "./lib/tier";
 
 // ─── CONSTANTS ───────────────────────────────────────────────────────────────
 const C = {
@@ -475,18 +476,62 @@ export default function MarketingScreen({ user }) {
         </div>
       </div>
 
-      {/* Quick Actions */}
+      {/* Quick Actions — Campaign card gates to Pro+ for Solo accounts.
+          Solo sees the card with a Pro badge + locked styling instead
+          of the green CTA, so they understand the feature exists +
+          what unlocks it (vs hiding it and creating confusion). */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16, marginBottom: 24 }}>
         {[
-          { icon: '⭐', title: 'Request Reviews', desc: pendingReviews > 0 ? `${pendingReviews} clients haven't reviewed yet` : 'Ask happy customers for Google reviews', action: () => setShowReviewModal(true), btnText: 'Send Requests' },
-          { icon: '📧', title: 'New Campaign',    desc: 'Send a promotion to your clients',                                                                                              action: () => setShowCampaignModal(true), btnText: 'Create Campaign' },
-          { icon: '⚡', title: 'Automations',     desc: 'Trigger-based sends (coming soon)',                                                                                              action: () => setTab('automations'), btnText: 'View' },
+          { icon: '⭐', title: 'Request Reviews', desc: pendingReviews > 0 ? `${pendingReviews} clients haven't reviewed yet` : 'Ask happy customers for Google reviews', action: () => setShowReviewModal(true), btnText: 'Send Requests', locked: false },
+          {
+            icon: '📧',
+            title: 'New Campaign',
+            desc: can(user, 'hasMarketingCampaigns')
+              ? 'Send a promotion to your clients'
+              : 'Send promotions and announcements to your client list',
+            action: can(user, 'hasMarketingCampaigns')
+              ? () => setShowCampaignModal(true)
+              : null,
+            btnText: can(user, 'hasMarketingCampaigns') ? 'Create Campaign' : 'Upgrade to Pro',
+            locked: !can(user, 'hasMarketingCampaigns'),
+          },
+          { icon: '⚡', title: 'Automations',     desc: 'Trigger-based sends (coming soon)',                                                                                              action: () => setTab('automations'), btnText: 'View', locked: false },
         ].map((item, i) => (
-          <div key={i} style={{ background: '#fff', borderRadius: 12, border: '1px solid #e8e8e8', padding: '20px' }}>
+          <div key={i} style={{
+            background: '#fff', borderRadius: 12,
+            border: item.locked ? '1.5px solid #fde68a' : '1px solid #e8e8e8',
+            padding: '20px',
+            position: 'relative',
+          }}>
+            {item.locked && (
+              <span style={{
+                position: 'absolute', top: 12, right: 12,
+                fontSize: 10, fontWeight: 800, letterSpacing: '0.08em',
+                textTransform: 'uppercase', color: '#92400e',
+                background: '#fef3c7', border: '1px solid #fde68a',
+                padding: '2px 8px', borderRadius: 10,
+              }}>Pro</span>
+            )}
             <div style={{ fontSize: 28, marginBottom: 10 }}>{item.icon}</div>
             <div style={{ fontSize: 15, fontWeight: 700, color: '#111', marginBottom: 4 }}>{item.title}</div>
             <div style={{ fontSize: 13, color: '#888', marginBottom: 16, lineHeight: 1.5 }}>{item.desc}</div>
-            <button style={{ padding: '9px 16px', background: C.green, color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', width: '100%' }} onClick={item.action}>{item.btnText}</button>
+            <button
+              style={{
+                padding: '9px 16px',
+                background: item.locked ? '#fef3c7' : C.green,
+                color:      item.locked ? '#92400e' : '#fff',
+                border:     item.locked ? '1px solid #fde68a' : 'none',
+                borderRadius: 8, fontSize: 13, fontWeight: 700,
+                cursor: 'pointer', width: '100%',
+              }}
+              onClick={() => {
+                if (item.locked) {
+                  alert("Campaigns are a Pro feature. Upgrade in Settings → Billing to send promotions and announcements to your client list.\n\nYour Solo plan still includes review request emails.");
+                } else if (item.action) {
+                  item.action();
+                }
+              }}
+            >{item.btnText}</button>
           </div>
         ))}
       </div>
@@ -566,6 +611,39 @@ export default function MarketingScreen({ user }) {
 
   const renderCampaigns = () => (
     <>
+      {/* Tier gate — Solo accounts get a Pro upgrade prompt instead
+          of the table. Pro/Elite/founder see the normal flow. */}
+      {!can(user, 'hasMarketingCampaigns') ? (
+        <div style={{
+          background: '#fffbeb', border: '1.5px solid #fde68a',
+          borderRadius: 12, padding: '32px 28px', textAlign: 'center',
+        }}>
+          <div style={{ fontSize: 40, marginBottom: 12 }}>📧</div>
+          <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#92400e', marginBottom: 8 }}>
+            Pro feature
+          </div>
+          <div style={{ fontSize: 22, fontWeight: 800, color: '#111', marginBottom: 8 }}>
+            Send marketing campaigns to your clients
+          </div>
+          <div style={{ fontSize: 14, color: '#666', maxWidth: 480, margin: '0 auto 20px', lineHeight: 1.6 }}>
+            Promotions, seasonal announcements, service reminders — all sent from your business email with full unsubscribe handling, send tracking, and audience filtering by trade or recency. Available on Pro and Elite plans.
+          </div>
+          <div style={{ fontSize: 13, color: '#666', marginBottom: 20 }}>
+            Your <strong style={{ color: '#111' }}>{tierLabel(tierOf(user))}</strong> plan still includes Review Requests.
+          </div>
+          <a
+            href="#"
+            onClick={(e) => { e.preventDefault(); alert('Open Settings → Billing to upgrade your plan.'); }}
+            style={{
+              display: 'inline-block',
+              padding: '12px 24px', background: C.green, color: '#fff',
+              border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 700,
+              cursor: 'pointer', textDecoration: 'none',
+            }}
+          >Upgrade to Pro</a>
+        </div>
+      ) : (
+      <>
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
         <button style={{ padding: '10px 18px', background: C.green, color: '#fff', border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: 'pointer' }} onClick={() => setShowCampaignModal(true)}>
           + New Campaign
@@ -600,6 +678,8 @@ export default function MarketingScreen({ user }) {
           </div>
         ))}
       </div>
+      </>
+      )}
     </>
   );
 

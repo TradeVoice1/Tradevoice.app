@@ -41,6 +41,7 @@ import { invoicesToQbCsv, downloadCsv } from "./lib/qbExport";
 import { useBreakpoint } from "./lib/useBreakpoint";
 import { buildSocialLinks } from "./lib/socialHandles";
 import { authedFetch } from "./lib/authedFetch";
+import { can, caps, tierLabel, tierOf } from "./lib/tier";
 
 // ─── FONTS ─────────────────────────────────────────────────────────────────────
 // Inter for body/UI everywhere. Playfair Display for the signup brand
@@ -7031,7 +7032,41 @@ function ProfileModal({ profile, onSave, onClose }) {
               (migration 0037). Each chip has an X to remove it; the
               license input for each state appears below in the same
               block so they're paired visually. Adding a state here
-              also makes it available as a per-invoice state choice. */}
+              also makes it available as a per-invoice state choice.
+
+              Tier gate (2026-05-22): the MULTI-state version (chip
+              picker + per-state licenses) is Elite-only. Solo and Pro
+              accounts see a single-state dropdown — they pick the
+              one state they operate in. Existing multi-state data
+              isn't deleted, just the editor surface is simpler. */}
+          {!can(profile, 'hasMultiStateLicenses') && (
+            <div>
+              <label style={s.label}>State You Operate In</label>
+              <div style={{ fontSize: 13, color: C.dim, marginBottom: 8, marginTop: -4 }}>
+                Drives the tax rate + license number on your invoices. Need to work in multiple states with different licenses?{' '}
+                <strong style={{ color: '#92400e' }}>Upgrade to Elite</strong> for multi-state support.
+              </div>
+              <select
+                value={statesList[0] || ''}
+                onChange={e => {
+                  const v = e.target.value;
+                  setStatesList(v ? [v] : []);
+                  // If the user changes state, drop any old per-state
+                  // license entries that no longer apply.
+                  setStateLicenses(prev => {
+                    if (!v) return {};
+                    if (prev[v]) return { [v]: prev[v] };
+                    return {};
+                  });
+                }}
+                style={{ ...s.input, width: '100%', padding: '12px 14px', boxSizing: 'border-box', fontSize: 16, cursor: 'pointer', background: C.surface }}
+              >
+                <option value="">— Select your state —</option>
+                {STATES.map(st => <option key={st} value={st}>{st}</option>)}
+              </select>
+            </div>
+          )}
+          {can(profile, 'hasMultiStateLicenses') && (
           <div>
             <label style={s.label}>States You Operate In</label>
             <div style={{ fontSize: 13, color: C.dim, marginBottom: 8, marginTop: -4 }}>
@@ -7090,6 +7125,7 @@ function ProfileModal({ profile, onSave, onClose }) {
               )}
             </div>
           </div>
+          )}
 
           {/* Tagline */}
           <F label="Tagline" hint="Shows under your company name on documents — optional">
@@ -7103,8 +7139,10 @@ function ProfileModal({ profile, onSave, onClose }) {
               applies. The "Default License" field below is the
               fallback for any state that doesn't have a specific
               entry, or for one-off jobs in states the contractor
-              isn't formally licensed in. */}
-          {statesList.length > 0 && (
+              isn't formally licensed in.
+              Tier gate: Elite only. Solo/Pro use the single-state
+              dropdown above + the Default License field below. */}
+          {can(profile, 'hasMultiStateLicenses') && statesList.length > 0 && (
             <div>
               <label style={s.label}>Licenses By State</label>
               <div style={{ fontSize: 13, color: C.dim, marginBottom: 10, marginTop: -4 }}>
