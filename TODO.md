@@ -288,31 +288,29 @@ dispatcher to stay under the Vercel Hobby 12-function cap:
 
 ---
 
-## 🚨 Vercel Pro upgrade (deferred 2026-05-14)
+## ✅ Vercel Pro — ACTIVE 2026-05-22
 
-The Rate Library push (commit `cfaa3c7`) hit Vercel Hobby's **12 serverless
-function limit per deployment** — adding `api/library/parse-rate-table.js`
-pushed us to 13 and the deploy ERRORed at upload (build itself was clean).
-Worked around tonight by consolidating `send-review-request.js` +
-`send-campaign.js` into a single `api/marketing/send.js` with a `type`
-discriminator — back to 12 functions.
+Upgraded. Function cap removed, 300s timeouts available, unlimited
+crons unlocked.
 
-**Why upgrade ($20/mo per seat):**
-- Removes the function cap entirely
-- Unlocks **Vercel Cron** — required for two pending features:
-  - Recurring jobs auto-generation (plans → jobs when `nextDueAt` arrives)
-  - Marketing automations Phase 2 (trigger-based: "invoice paid → 2d → review request")
-- Longer function timeouts (300s vs 60s) — useful if Claude PDF parsing ever
-  needs more than 10s on a big rate sheet
-- Better build performance + more concurrent function executions
-- Pays for itself the first time we ship a cron-backed feature
+**Now buildable that wasn't before:**
+- Recurring jobs auto-generation (daily cron: plans → jobs when
+  nextDueAt arrives)
+- Marketing automations Phase 2 (trigger-based: invoice paid →
+  wait 2d → send review request)
+- Trial-ending warning email (daily cron at trial_ends_at - 3d)
+- Past-due dunning sequence (cron after past_due webhook)
+- Stale-invoice reminders (daily cron over unpaid past-due invoices)
 
-**When to do it:** before either of the cron-dependent features above. After
-the LLC is filed + business bank account is set up, billing under the LLC.
+**Optional cleanup (not blocking):**
+- Re-split `api/marketing/send.js` back into separate review-request
+  + campaign files now that the function cap is gone. Purely
+  cosmetic — the consolidated version works fine.
+- Re-split `api/stripe/create-subscription.js` into create / cancel /
+  sync_seats files. Same reasoning.
 
-**After upgrade:** can optionally re-split `api/marketing/send.js` back into
-two files if we want cleaner separation — but the consolidated version works
-fine indefinitely, so this is purely aesthetic.
+Existing cron (`/api/cron/refresh-sales-tax`, weekly Mondays 03:00 UTC)
+already works and is unaffected.
 
 ---
 
