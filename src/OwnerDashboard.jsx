@@ -22,6 +22,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { fetchSuperOwnerData, fetchAccountTimeline, PLAN_PRICES } from "./data/superOwner";
+import { useBreakpoint } from "./lib/useBreakpoint";
 
 // Mirrors App.jsx's COLORS so the founder view feels native, not a
 // bolted-on admin panel. If the main color palette ever shifts, move
@@ -125,6 +126,7 @@ function StatTile({ label, value, sub, accent, onClick }) {
 }
 
 export default function OwnerDashboard({ user }) {
+  const { isPhone } = useBreakpoint();
   const [data, setData] = useState({ accounts: [], summary: null, unauthorized: false });
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState(null);
@@ -263,7 +265,7 @@ export default function OwnerDashboard({ user }) {
   }
 
   return (
-    <div style={{ padding: '24px 24px 80px', maxWidth: 1400, margin: '0 auto', fontFamily: "'Inter', sans-serif" }}>
+    <div style={{ padding: isPhone ? '16px 12px 80px' : '24px 24px 80px', maxWidth: 1400, margin: '0 auto', fontFamily: "'Inter', sans-serif" }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
         <div>

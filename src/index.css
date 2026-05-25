@@ -18,6 +18,14 @@ html, body {
   padding: 0;
   width: 100%;
   min-height: 100dvh;
+  /* Lock horizontal overflow at the root. If any individual component
+     inside the app has wider intrinsic content (a wide calendar grid,
+     a long unbreakable URL, a table), the OFFENDING COMPONENT might
+     get clipped on the right edge but the rest of the page stays
+     sane — no whole-page horizontal scroll on phones.
+     `clip` is preferred over `hidden` because hidden disables
+     position: sticky on iOS Safari; clip doesn't. */
+  overflow-x: clip;
   /* Subtle radial vignette: a hint of brand tint at top, fading to flat. */
   background:
     radial-gradient(circle at 50% -120px, rgba(45, 106, 79, 0.045), transparent 600px),
@@ -29,6 +37,23 @@ html, body {
 #root {
   width: 100%;
   min-height: 100dvh;
+  /* Same protection at the #root level — components that need their
+     own horizontal scroll (week view calendar, wide tables) should
+     wrap their wide content in a div with overflow-x: auto. */
+  overflow-x: clip;
+}
+
+/* Break long unbreakable strings (URLs, stripe IDs, emails without
+   spaces) so they wrap instead of forcing horizontal scroll. */
+* {
+  word-wrap: break-word;
+  overflow-wrap: anywhere;
+}
+/* Re-allow normal wrapping for inputs and code — they should keep
+   their native sizing behavior. */
+input, textarea, select, pre, code {
+  overflow-wrap: normal;
+  word-wrap: normal;
 }
 
 /* Tabular numerics on every number-y element so $1,234.56 columns line up. */

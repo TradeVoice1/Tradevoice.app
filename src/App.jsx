@@ -453,12 +453,16 @@ const StatCard = ({ icon, label, value, color = C.orange, delta, sub }) => (
 // hug the card edges on big layouts.
 function AuthShell({ children, maxWidth = 420 }) {
   const wide = maxWidth >= 900;
+  const { isPhone } = useBreakpoint();
   return (
-    <div style={{ minHeight: '100dvh', background: C.bg, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px 16px', fontFamily: "'Inter', sans-serif" }}>
+    <div style={{ minHeight: '100dvh', background: C.bg, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: isPhone ? '16px 10px' : '24px 16px', fontFamily: "'Inter', sans-serif" }}>
       {/* Big logo on the auth screens — first impression for new sign-ups
           and a clear brand anchor for returning logins. */}
-      <div style={{ marginBottom: 36 }}><Logo size={80} /></div>
-      <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: wide ? '40px 48px' : '32px 28px', width: '100%', maxWidth, transition: 'max-width 0.25s ease, padding 0.25s ease' }}>
+      <div style={{ marginBottom: isPhone ? 20 : 36 }}><Logo size={isPhone ? 56 : 80} /></div>
+      {/* Inner card padding scales down on phone — 28px horizontal padding
+          on a 375px iPhone leaves only 319px for content, which is too
+          cramped for the trade picker + form fields. */}
+      <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: isPhone ? '24px 18px' : (wide ? '40px 48px' : '32px 28px'), width: '100%', maxWidth, transition: 'max-width 0.25s ease, padding 0.25s ease' }}>
         {children}
       </div>
     </div>
