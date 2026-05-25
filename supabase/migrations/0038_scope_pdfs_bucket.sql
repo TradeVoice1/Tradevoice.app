@@ -46,3 +46,13 @@ create policy "scope_pdfs_owner_insert"
 create policy "scope_pdfs_owner_delete"
   on storage.objects for delete
   using (bucket_id = 'scope-pdfs' and (storage.foldername(name))[1] = auth.uid()::text);
+
+-- ── AI Scope Analyzer consent timestamp ─────────────────────────────────────
+-- One-time consent gate (Terms section 10 "AI-Assisted Features"). The
+-- contractor agrees before first use that AI output is advisory, that
+-- they will verify all output before using, and that we're not liable
+-- for AI errors. After the timestamp is stamped, subsequent uses show
+-- a persistent inline reminder banner but don't re-prompt the full
+-- consent modal. NULL = never agreed yet → show the consent modal.
+alter table public.profiles
+  add column if not exists ai_scope_terms_accepted_at timestamptz;

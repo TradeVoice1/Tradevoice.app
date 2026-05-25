@@ -5822,7 +5822,7 @@ function QuickAddPanel({ library, onInsert, onSaveNew, onDelete, type }) {
 }
 
 
-function QuoteEditor({ initial, clients, existingQuotes = [], user, onSave, onAddClient, onCancel }) {
+function QuoteEditor({ initial, clients, existingQuotes = [], user, setUser, onSave, onAddClient, onCancel }) {
   const { isTablet } = useBreakpoint();
   const [tab,      setTab]      = useState('scope');
   const [title,    setTitle]    = useState(initial?.title    || '');
@@ -6324,6 +6324,7 @@ function QuoteEditor({ initial, clients, existingQuotes = [], user, onSave, onAd
                     contractor wrote is preserved. */}
                 <ScopeAnalyzer
                   user={user}
+                  setUser={setUser}
                   onInsertScope={(synth) => {
                     setScope(prev => prev ? `${prev}\n\n${synth}` : synth);
                   }}
@@ -7306,7 +7307,7 @@ function ProfileModal({ profile, onSave, onClose }) {
 // ══════════════════════════════════════════════════════════════════════════════
 // QUOTES
 // ══════════════════════════════════════════════════════════════════════════════
-function Quotes({ user, logo, taxRates, onConvertToInvoice, onScheduleJob }) {
+function Quotes({ user, setUser, logo, taxRates, onConvertToInvoice, onScheduleJob }) {
   const [clients,       setClients]    = useState([]);
   const [quotes,        setQuotes]     = useState([]);
   const [loading,       setLoading]    = useState(true);
@@ -7443,7 +7444,7 @@ function Quotes({ user, logo, taxRates, onConvertToInvoice, onScheduleJob }) {
       )}
       {view === 'editor' && (
         <QuoteEditor
-          initial={editingQuote} clients={clients} existingQuotes={quotes} user={user}
+          initial={editingQuote} clients={clients} existingQuotes={quotes} user={user} setUser={setUser}
           onSave={saveQuote}
           onAddClient={addClient}
           onCancel={() => setView(activeQuote ? 'document' : 'hub')}
@@ -9964,7 +9965,7 @@ function TradevoiceApp() {
     dashboard: <Dashboard    user={user} nav={navigateTo} invoices={sharedInvoices} plans={plans} onScheduleFromPlan={handleScheduleFromPlan} teamMembers={teamMembers} />,
     invoice:   <VoiceInvoice user={user} logo={logo} payments={payments} taxRates={taxRates} teamMembers={teamMembers} sharedInvoices={sharedInvoices} setSharedInvoices={setSharedInvoices} persistInvoice={persistInvoice} removeInvoice={removeInvoice} handleUnInvoice={handleUnInvoice} pendingInvoiceId={pendingInvoiceId} clearPendingInvoice={() => setPendingInvoiceId(null)} pendingMonthFilter={pendingMonthFilter} clearPendingMonthFilter={() => setPendingMonthFilter(null)} />,
     billing:   <Billing      user={user} setUser={setUser} payments={payments} />,
-    quotes:    <Quotes       user={user} logo={logo} taxRates={taxRates} onConvertToInvoice={handleConvertToInvoice} onScheduleJob={handleScheduleFromQuote} />,
+    quotes:    <Quotes       user={user} setUser={setUser} logo={logo} taxRates={taxRates} onConvertToInvoice={handleConvertToInvoice} onScheduleJob={handleScheduleFromQuote} />,
     schedule:  <ScheduleScreen user={user} team={teamMembers} onCreateInvoice={handleJobToInvoice} plans={plans} setPlans={setPlans} pendingJobDraft={pendingJobDraft} clearPendingJobDraft={() => setPendingJobDraft(null)} timeOff={timeOff} />,
     jobs:      <JobsScreen   user={user} team={teamMembers} onCreateInvoice={handleJobToInvoice} />,
     plans:     <PlansScreen  user={user} team={teamMembers} plans={plans} persistPlan={persistPlan} removePlan={removePlan} onScheduleFromPlan={handleScheduleFromPlan} />,

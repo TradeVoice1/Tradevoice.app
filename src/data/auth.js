@@ -25,6 +25,13 @@ const dbToProfile = (row) => row && ({
   // Falls back to the single `license` field above for any state
   // not explicitly mapped.
   stateLicenses:    row.state_licenses    ?? {},
+  // AI Scope Analyzer one-time consent (migration 0038). NULL until
+  // the contractor agrees to the AI advisory-only / verify-before-
+  // using / no-liability terms in the consent modal. After agreement
+  // the field holds the ISO timestamp of consent. The Terms section
+  // 10 ("AI-Assisted Features") is the underlying legal document
+  // they're agreeing to.
+  aiScopeTermsAcceptedAt: row.ai_scope_terms_accepted_at ?? null,
   accentColor:      row.accent_color      ?? '',
   defaultTerms:     row.default_terms     ?? '',
   plan:             row.plan              ?? '',
@@ -89,6 +96,7 @@ const profileToDb = (p) => ({
   tagline:            p.tagline           ?? null,
   license:            p.license           ?? null,
   state_licenses:     p.stateLicenses     ?? {},
+  ai_scope_terms_accepted_at: p.aiScopeTermsAcceptedAt ?? null,
   accent_color:       p.accentColor       ?? null,
   default_terms:      p.defaultTerms      ?? null,
   plan:               p.plan              ?? null,

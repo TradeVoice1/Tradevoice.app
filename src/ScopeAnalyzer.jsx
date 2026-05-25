@@ -19,10 +19,11 @@ import React, { useState } from "react";
 import { supabase } from "./supabase";
 import { authedFetch } from "./lib/authedFetch";
 import { can } from "./lib/tier";
+import { upsertProfile } from "./data/auth";
 
 const MAX_BYTES = 25 * 1024 * 1024; // 25MB — matches bucket limit in migration 0038
 
-export default function ScopeAnalyzer({ user, onInsertScope }) {
+export default function ScopeAnalyzer({ user, setUser, onInsertScope }) {
   // Gate: Elite tier only. Solo/Pro see a teaser with upgrade prompt
   // (calling out the feature so they know it exists). Founder
   // account is treated as Elite by the tier helper.
@@ -49,10 +50,10 @@ export default function ScopeAnalyzer({ user, onInsertScope }) {
     );
   }
 
-  return <ScopeAnalyzerActive user={user} onInsertScope={onInsertScope} />;
+  return <ScopeAnalyzerActive user={user} setUser={setUser} onInsertScope={onInsertScope} />;
 }
 
-function ScopeAnalyzerActive({ user, onInsertScope }) {
+function ScopeAnalyzerActive({ user, setUser, onInsertScope }) {
   // 'idle' | 'uploading' | 'analyzing' | 'ready' | 'error'
   const [phase, setPhase]   = useState('idle');
   const [error, setError]   = useState('');
@@ -62,6 +63,36 @@ function ScopeAnalyzerActive({ user, onInsertScope }) {
   // up if the contractor closes without inserting.
   const [storagePath, setStoragePath] = useState(null);
   const [fileName, setFileName]       = useState('');
+
+  // Consent gate — Terms section 10 "AI-Assisted Features" requires
+  // the contractor to acknowledge the advisory-only nature of AI
+  // output BEFORE first use. After agreement (stamps
+  // ai_scope_terms_accepted_at on the profile), the modal doesn't
+  // re-show; the persistent disclaimer banner stays visible above
+  // the drop zone as a continuous reminder.
+  const [showConsentModal, setShowConsentModal] = useState(false);
+  const hasAccepted = !!user?.aiScopeTermsAcceptedAt;
+  const [savingConsent, setSavingConsent] = useState(false);
+
+  const handleAcceptTerms = async () => {
+    if (savingConsent) return;
+    setSavingConsent(true);
+    try {
+      const now = new Date().toISOString();
+      // Persist to DB so the consent survives session restore.
+      const updated = await upsertProfile(user.id, {
+        ...user,
+        aiScopeTermsAcceptedAt: now,
+      });
+      // Reflect in app state so the modal closes without a refresh.
+      if (setUser) setUser(prev => prev ? { ...prev, ...updated, aiScopeTermsAcceptedAt: now } : prev);
+      setShowConsentModal(false);
+    } catch (e) {
+      alert(e?.message || 'Could not save your agreement. Try again.');
+    } finally {
+      setSavingConsent(false);
+    }
+  };
 
   // Cleanup helper — deletes the PDF from Supabase Storage. Best-
   // effort; we don't crash if it fails (orphaned files are cosmetic).
@@ -74,6 +105,17 @@ function ScopeAnalyzerActive({ user, onInsertScope }) {
 
   const handleFile = async (file) => {
     if (!file) return;
+    // Gate first use behind the consent modal. After agreement is
+    // stamped on the profile, subsequent uses skip this and go
+    // straight to upload. The persistent banner still reminds.
+    if (!hasAccepted) {
+      setShowConsentModal(true);
+      // Stash the file for after-consent retry? — actually, simpler
+      // UX: just have them re-drop after agreeing. One extra click
+      // for first-time use, zero risk of accidentally processing
+      // a file before consent was recorded.
+      return;
+    }
     setError('');
     // Validate type + size before uploading.
     if (file.type !== 'application/pdf') {
@@ -209,6 +251,92 @@ function ScopeAnalyzerActive({ user, onInsertScope }) {
   // ── Drop zone (idle / uploading / analyzing / error) ───────────
   return (
     <div style={{ marginBottom: 14 }}>
+      {/* Consent modal — Terms section 10 first-use gate. Renders
+          only when the contractor hasn't yet stamped
+          ai_scope_terms_accepted_at on their profile. */}
+      {showConsentModal && (
+        <div style={{
+          position: 'fixed', inset: 0, background: '#000000bb',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 1000, padding: 20,
+        }}>
+          <div style={{
+            background: '#fff', borderRadius: 14, padding: '28px 30px',
+            maxWidth: 580, width: '100%', maxHeight: '90vh', overflowY: 'auto',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+              <div style={{ fontSize: 32 }}>🤖</div>
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#92400e' }}>
+                  Before you use AI scope analysis
+                </div>
+                <div style={{ fontSize: 22, fontWeight: 800, color: '#111', marginTop: 2 }}>
+                  Please review and agree
+                </div>
+              </div>
+            </div>
+
+            <p style={{ fontSize: 14, color: '#222', lineHeight: 1.7, marginBottom: 14 }}>
+              The AI Scope Analyzer uses Anthropic Claude (PDF reading)
+              and Perplexity AI (code research) to draft a scope of work
+              for your review. <strong>It is not a substitute for your
+              professional judgment.</strong> By using this feature you
+              acknowledge and agree that:
+            </p>
+
+            <ul style={{ paddingLeft: 22, marginBottom: 14, color: '#222', fontSize: 14, lineHeight: 1.7 }}>
+              <li><strong>AI output is advisory only.</strong> It may contain errors, hallucinations, outdated code citations, wrong dimensions, or work items inappropriate for your jurisdiction or the actual job.</li>
+              <li><strong>You will review every line</strong> before using it in a quote, invoice, customer communication, or work decision.</li>
+              <li><strong>You will verify any code or standards reference</strong> against the cited source and your local jurisdiction before relying on it.</li>
+              <li><strong>You are solely responsible</strong> for the content of any quote, invoice, or scope of work you send to a customer — regardless of whether you used AI to draft it.</li>
+              <li><strong>TradeVoice, Tiny's Apps LLC, Anthropic, and Perplexity</strong> are not liable for damages, code violations, permit denials, customer disputes, fines, or other consequences arising from your use of or reliance on AI-generated content, even if the output contained errors.</li>
+              <li><strong>The PDF you upload</strong> is sent to Anthropic for processing and its extracted text to Perplexity for research. We delete the uploaded PDF after analysis. Don't upload documents with third-party PII without consent.</li>
+            </ul>
+
+            <p style={{ fontSize: 13, color: '#666', lineHeight: 1.6, marginBottom: 18 }}>
+              Full terms in section 10 of our{' '}
+              <a href="/terms" target="_blank" rel="noreferrer" style={{ color: '#2d6a4f', fontWeight: 700 }}>Terms of Service</a>.
+              Data handling in section 5 of our{' '}
+              <a href="/privacy" target="_blank" rel="noreferrer" style={{ color: '#2d6a4f', fontWeight: 700 }}>Privacy Policy</a>.
+            </p>
+
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+              <button
+                type="button"
+                onClick={() => setShowConsentModal(false)}
+                disabled={savingConsent}
+                style={ghostBtn}
+              >Cancel</button>
+              <button
+                type="button"
+                onClick={handleAcceptTerms}
+                disabled={savingConsent}
+                style={{ ...primaryBtn, opacity: savingConsent ? 0.6 : 1, cursor: savingConsent ? 'wait' : 'pointer' }}
+              >
+                {savingConsent ? 'Saving…' : 'I agree — continue'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Persistent disclaimer banner — visible on every use, even
+          after consent is stamped. Keeps the legal context in front
+          of the contractor's eyes without being a blocking modal. */}
+      {hasAccepted && (
+        <div style={{
+          background: '#fffbeb', border: '1px solid #fde68a',
+          borderRadius: 8, padding: '10px 14px', marginBottom: 10,
+          fontSize: 12, color: '#92400e', lineHeight: 1.55,
+        }}>
+          ⚠ AI output is advisory only. You agreed on{' '}
+          {new Date(user.aiScopeTermsAcceptedAt).toLocaleDateString()} to review
+          every line before using it. We are not liable for errors in AI-generated content.{' '}
+          <a href="/terms" target="_blank" rel="noreferrer" style={{ color: '#92400e', textDecoration: 'underline', fontWeight: 700 }}>Terms § 10</a>.
+        </div>
+      )}
+
       <label
         htmlFor="scope-pdf-upload"
         onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}

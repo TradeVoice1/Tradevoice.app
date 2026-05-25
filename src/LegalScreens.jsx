@@ -25,7 +25,7 @@ export function PrivacyPolicyScreen({ onBack }) {
       </div>
       <div style={s.body}>
         <div style={s.h1}>Privacy Policy</div>
-        <div style={s.updated}>Last updated: May 19, 2026</div>
+        <div style={s.updated}>Last updated: May 22, 2026</div>
 
         <div style={s.h2}>1. Who We Are</div>
         <p style={s.p}>TradeVoice ("we," "us," or "our") is a software product operated by Tiny's Apps LLC. We provide invoicing, quoting, client management, and payment processing tools for independent contractors and trade businesses, accessible at thetradevoice.com. References to "TradeVoice" in this policy describe the product; the legal entity behind the service is Tiny's Apps LLC.</p>
@@ -69,18 +69,23 @@ export function PrivacyPolicyScreen({ onBack }) {
           <li style={s.li}><strong>Supabase</strong> — database, authentication, file storage, and row-level security</li>
           <li style={s.li}><strong>Vercel</strong> — hosting, serverless functions, and edge networking</li>
           <li style={s.li}><strong>Resend</strong> — outbound transactional and marketing email delivery</li>
-          <li style={s.li}><strong>Anthropic (Claude)</strong> — AI processing of documents you upload for data extraction (e.g. rate sheets). See section 5 for details on what data is sent and how it is handled.</li>
+          <li style={s.li}><strong>Anthropic (Claude)</strong> — AI processing of documents you upload for data extraction (e.g. rate sheets, scope-of-work PDFs) and for AI-assisted scope-of-work synthesis on the Elite plan. See section 5 for details on what data is sent and how it is handled.</li>
+          <li style={s.li}><strong>Perplexity AI</strong> — used on the Elite plan to research current building codes and industry standards as part of the AI scope-of-work synthesis feature. Receives the text extracted from your uploaded document but never the original file. See section 5.</li>
           <li style={s.li}><strong>Google</strong> — optional Sign-In with Google. If you use this option, Google shares your name and email address with us. Use of Google services is also governed by Google's own Privacy Policy.</li>
         </ul>
         <p style={s.p}><strong>For legal reasons:</strong> We may disclose information if required by law, court order, or government request.</p>
 
         <div style={s.h2}>5. AI Document Processing</div>
-        <p style={s.p}>TradeVoice includes features that use artificial intelligence to extract structured data from documents you choose to upload (for example, parsing a contractor rate sheet PDF into labor, material, and equipment line items). When you use these features:</p>
+        <p style={s.p}>TradeVoice includes features that use artificial intelligence to extract structured data from documents you choose to upload, and to assist with drafting scope-of-work language. These features include the Rate Library PDF parser (available on all plans) and the AI Scope Analyzer (available on the Elite plan, which uses both Anthropic and Perplexity in sequence).</p>
+        <p style={s.p}><strong>How the AI Scope Analyzer works:</strong> When you drop a scope-of-work PDF into a quote on the Elite plan, the document is temporarily uploaded to our private Supabase storage bucket, then read by Anthropic's Claude API (vision) to extract what's actually in the document. The extracted text — not the original file — is then sent to Perplexity's online-search API to research current building codes, manufacturer specs, and industry standards, returning citations to authoritative sources. Both AI outputs are then synthesized by Claude into a recommended scope-of-work paragraph for your review.</p>
+        <p style={s.p}>When you use any AI feature:</p>
         <ul style={s.ul}>
-          <li style={s.li}>The document content is sent to Anthropic's Claude API for processing.</li>
-          <li style={s.li}>Anthropic processes the content to return structured output back to TradeVoice. Per Anthropic's API terms, customer inputs and outputs are <strong>not</strong> used to train Anthropic's models.</li>
-          <li style={s.li}>We do not store the raw uploaded file after processing — only the structured items you confirm and import into your rate library.</li>
-          <li style={s.li}>You should not upload documents containing sensitive personal information about third parties (e.g. employees' Social Security numbers) without their consent.</li>
+          <li style={s.li}>The document content is sent to Anthropic's Claude API for processing. Per Anthropic's API terms, customer inputs and outputs are <strong>not</strong> used to train Anthropic's models.</li>
+          <li style={s.li}>For the AI Scope Analyzer only: the text extracted from your document is also sent to Perplexity AI to research current codes and standards. Per Perplexity's API terms, API customer inputs are not used to train models. Perplexity's responses include citations to publicly indexed sources.</li>
+          <li style={s.li}>Uploaded PDFs are stored only as long as needed to complete the analysis and are deleted automatically after the synthesis output is inserted into your quote (or when you discard the analysis). We do not retain a permanent copy of the original document.</li>
+          <li style={s.li}>AI output is <strong>advisory only</strong>. It may contain errors, omissions, or inaccurate references to building codes, product specifications, or pricing. You are solely responsible for verifying every line of an AI-generated scope of work against your jurisdiction's actual requirements, your licensing, and the customer's project conditions before sending it to a customer or relying on it for a job. TradeVoice does <strong>not</strong> guarantee code compliance, completeness, or accuracy of any AI-generated content.</li>
+          <li style={s.li}>You should not upload documents containing sensitive personal information about third parties (e.g. employees' Social Security numbers, customer financial data) without their consent.</li>
+          <li style={s.li}>Using AI features is optional. You can write scope-of-work language entirely by hand and never trigger an AI call.</li>
         </ul>
 
         <div style={s.h2}>6. Data Retention</div>
@@ -139,7 +144,7 @@ export function TermsScreen({ onBack }) {
       </div>
       <div style={s.body}>
         <div style={s.h1}>Terms and Conditions</div>
-        <div style={s.updated}>Last updated: May 19, 2026</div>
+        <div style={s.updated}>Last updated: May 22, 2026</div>
 
         <div style={s.h2}>1. Acceptance of Terms</div>
         <p style={s.p}>By creating an account or using the TradeVoice platform ("Service"), you agree to be bound by these Terms and Conditions. If you do not agree to these Terms, do not use the Service.</p>
@@ -187,16 +192,35 @@ export function TermsScreen({ onBack }) {
         <div style={s.h2}>9. Contractor Licensing</div>
         <p style={s.p}>TradeVoice displays contractor license codes and information as reference data only. You are solely responsible for maintaining valid licenses and permits required to operate your business in your jurisdiction.</p>
 
-        <div style={s.h2}>10. Disclaimer of Warranties</div>
-        <p style={s.p}>THE SERVICE IS PROVIDED "AS IS" WITHOUT WARRANTIES OF ANY KIND. TRADEVOICE DOES NOT WARRANT THAT THE SERVICE WILL BE UNINTERRUPTED OR ERROR-FREE.</p>
+        <div style={s.h2}>10. AI-Assisted Features</div>
+        <p style={s.p}>TradeVoice offers optional features that use artificial intelligence ("AI Features") to assist with drafting and data entry, including:</p>
+        <ul style={s.ul}>
+          <li style={s.li}><strong>Rate Library PDF Parser</strong> — extracts line items from rate sheets you upload.</li>
+          <li style={s.li}><strong>AI Scope Analyzer</strong> (Elite plan) — reads a scope-of-work PDF you upload, researches current codes and standards via Anthropic Claude and Perplexity AI, and proposes a synthesized scope-of-work paragraph for your review.</li>
+        </ul>
+        <div style={s.warning}>
+          ⚠️ <strong>AI output is advisory only.</strong> AI-generated content may contain errors, omissions, outdated information, hallucinated code citations, incorrect dimensions, or work items inappropriate for your jurisdiction, your licensing, or the actual job conditions. You must review every AI-generated output before using it in any quote, invoice, customer communication, or work decision. By using any AI Feature, you acknowledge and agree that:
+        </div>
+        <ul style={s.ul}>
+          <li style={s.li}>You will independently verify all AI-generated content against authoritative sources (your local building authority, your licensing board, the manufacturer's documentation, and the actual site conditions) before relying on it.</li>
+          <li style={s.li}>TradeVoice, Tiny's Apps LLC, and our AI service providers (Anthropic, Perplexity) make <strong>no warranty</strong> as to the accuracy, completeness, code compliance, or fitness for purpose of any AI-generated content.</li>
+          <li style={s.li}>You are <strong>solely responsible</strong> for the content of any quote, invoice, scope of work, or other document you send to a customer, regardless of whether you used AI to draft it.</li>
+          <li style={s.li}>TradeVoice is <strong>not liable</strong> for any damages, losses, code violations, permit denials, customer disputes, claims, fines, or other consequences arising from your use of or reliance on AI-generated content, even if the AI output contained errors.</li>
+          <li style={s.li}>You will not upload documents to AI Features that contain sensitive personal information about third parties without those parties' consent.</li>
+          <li style={s.li}>Citations and references to building codes, manufacturer specifications, or industry standards returned by AI Features point to sources that may have been updated, withdrawn, or misquoted by the AI. You will confirm any such citation directly with the cited source before relying on it.</li>
+        </ul>
+        <p style={s.p}>Using AI Features is entirely optional. You may write all scope-of-work language, parse rate sheets, and produce all customer-facing content manually without ever invoking an AI Feature.</p>
 
-        <div style={s.h2}>11. Limitation of Liability</div>
-        <p style={s.p}>TO THE MAXIMUM EXTENT PERMITTED BY LAW, TRADEVOICE SHALL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, OR CONSEQUENTIAL DAMAGES. OUR TOTAL LIABILITY SHALL NOT EXCEED THE AMOUNT YOU PAID TO TRADEVOICE IN THE PRECEDING 12 MONTHS.</p>
+        <div style={s.h2}>11. Disclaimer of Warranties</div>
+        <p style={s.p}>THE SERVICE IS PROVIDED "AS IS" WITHOUT WARRANTIES OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION ANY WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, NON-INFRINGEMENT, OR ACCURACY. TRADEVOICE DOES NOT WARRANT THAT THE SERVICE WILL BE UNINTERRUPTED, ERROR-FREE, OR THAT ANY AI-GENERATED CONTENT WILL BE ACCURATE OR COMPLETE.</p>
 
-        <div style={s.h2}>12. Governing Law</div>
+        <div style={s.h2}>12. Limitation of Liability</div>
+        <p style={s.p}>TO THE MAXIMUM EXTENT PERMITTED BY LAW, TRADEVOICE AND TINY'S APPS LLC SHALL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, CONSEQUENTIAL, SPECIAL, OR PUNITIVE DAMAGES, INCLUDING WITHOUT LIMITATION DAMAGES ARISING FROM YOUR USE OF OR RELIANCE ON AI-GENERATED CONTENT, LOST PROFITS, LOST REVENUE, CODE VIOLATIONS, PERMIT DENIALS, OR CUSTOMER DISPUTES. OUR TOTAL CUMULATIVE LIABILITY UNDER THESE TERMS SHALL NOT EXCEED THE AMOUNT YOU PAID TO TRADEVOICE IN THE PRECEDING 12 MONTHS.</p>
+
+        <div style={s.h2}>13. Governing Law</div>
         <p style={s.p}>These Terms are governed by the laws of the State of Texas. Any disputes shall be resolved in the courts of Texas.</p>
 
-        <div style={s.h2}>13. Changes to Terms</div>
+        <div style={s.h2}>14. Changes to Terms</div>
         <p style={s.p}>We may update these Terms at any time with 14 days advance notice by email or in-platform notification. Continued use after changes constitutes acceptance.</p>
 
         <div style={s.contact}>
