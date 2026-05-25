@@ -1061,13 +1061,13 @@
       <div class="wn-card">
         <div class="wn-tag">New</div>
         <div class="wn-title">AI Rate Library</div>
-        <div class="wn-desc">Drop your rate sheet PDF and Claude parses every labor, material, and equipment item into your library in seconds. No more retyping prices from a 12-page document. Photos of a paper rate sheet work too.</div>
+        <div class="wn-desc">Drop your rate sheet PDF and Claude reads it, pulling labor, material, and equipment items into your library in seconds. You review what was extracted before it imports — no more retyping prices from a 12-page document. Photos of a paper rate sheet work too.</div>
       </div>
 
       <div class="wn-card">
         <div class="wn-tag">New</div>
         <div class="wn-title">Review request emails &amp; campaigns</div>
-        <div class="wn-desc">Pick the clients you want a Google review from, hit send. Or compose a one-shot campaign and blast your whole list. RFC-compliant one-click unsubscribe, your company name in the From line, replies come straight to you.</div>
+        <div class="wn-desc">Pick the clients you want a Google review from, hit send. Or compose a one-shot campaign and blast your whole list. One-click unsubscribe handled per CAN-SPAM requirements, your company name in the From line, replies come straight to you.</div>
       </div>
 
       <div class="wn-card">
@@ -1092,6 +1092,30 @@
         <div class="wn-tag">New</div>
         <div class="wn-title">Sign in with Google</div>
         <div class="wn-desc">Skip the password. Sign up or sign in with your work Gmail in two clicks. Card-on-file, plan picker, and trial setup follow the same flow — you land in the app in under 60 seconds.</div>
+      </div>
+
+      <!-- 2026-05-22: AI Scope Analyzer added as an Elite-tier
+           differentiator. Two AIs collaborating (Claude reads PDF +
+           Perplexity researches codes) is the headline. Copy
+           explicitly mentions "advisory only" + "review before
+           sending" so the marketing-to-Terms-§10 expectations
+           align — no contractor should sign up expecting a
+           push-button compliance machine. -->
+      <div class="wn-card">
+        <div class="wn-tag">Elite</div>
+        <div class="wn-title">AI Scope Analyzer</div>
+        <div class="wn-desc">Drop a customer's scope PDF (blueprints, bid doc, work order). Claude reads it. Perplexity researches current codes and standards with citations. Both AIs synthesize a draft scope of work for the contractor to review and edit before sending. Advisory only — always review the AI output against your jurisdiction.</div>
+      </div>
+
+      <!-- 2026-05-22: Multi-state licenses (migration 0037) — real
+           compliance fix for contractors who work across state lines.
+           The wrong license printing on an out-of-state invoice has
+           been a real liability risk for years; this fixes it. Elite
+           only because multi-state operators tend to be larger shops. -->
+      <div class="wn-card">
+        <div class="wn-tag">Elite</div>
+        <div class="wn-title">Multi-state licenses</div>
+        <div class="wn-desc">Operate in more than one state? Store your license number for each, and Tradevoice automatically prints the right one on every invoice based on where the job is. The job state also drives the tax rate, so a Louisiana job stops getting taxed at Texas rates.</div>
       </div>
 
     </div>
@@ -1811,12 +1835,16 @@
         <tr><td>Customer e-signature on the public invoice link</td><td class="tv-col"><span class="check-y">✓</span></td><td><span class="check-n">—</span></td><td><span class="check-n">—</span></td><td><span class="check-n">—</span></td></tr>
         <tr><td>Public quote link — customer accepts without an account</td><td class="tv-col"><span class="check-y">✓</span></td><td><span class="check-y">✓</span></td><td><span class="check-y">✓</span></td><td><span class="check-n">—</span></td></tr>
 
-        <!-- AI + automation features — added 2026-05-19. Rate Library
-             (Claude PDF parse) is unique to Tradevoice today. Review
-             request automation exists at competitors so we mark them ✓. -->
+        <!-- AI + automation features — added 2026-05-19, expanded
+             2026-05-22 with the new Elite AI Scope Analyzer and
+             multi-state license features. Rate Library and Scope
+             Analyzer are both unique to Tradevoice today; competitors
+             don't ship contractor-specific AI of this kind. -->
         <tr><td>AI Rate Library — drop a PDF, auto-import line items</td><td class="tv-col"><span class="check-y">✓</span></td><td><span class="check-n">—</span></td><td><span class="check-n">—</span></td><td><span class="check-n">—</span></td></tr>
+        <tr><td>AI Scope Analyzer (Elite) — drop a scope PDF, get a draft scope of work</td><td class="tv-col"><span class="check-y">Elite</span></td><td><span class="check-n">—</span></td><td><span class="check-n">—</span></td><td><span class="check-n">—</span></td></tr>
+        <tr><td>Per-state licenses (Elite) — right license auto-prints based on job state</td><td class="tv-col"><span class="check-y">Elite</span></td><td><span class="check-n">—</span></td><td><span class="check-n">—</span></td><td><span class="check-n">—</span></td></tr>
         <tr><td>Google review request emails to clients</td><td class="tv-col"><span class="check-y">✓</span></td><td><span class="check-y">✓</span></td><td><span class="check-y">✓</span></td><td><span class="check-n">—</span></td></tr>
-        <tr><td>One-shot email campaigns to your client list</td><td class="tv-col"><span class="check-y">✓</span></td><td><span class="check-limited">Higher tier</span></td><td><span class="check-y">✓</span></td><td><span class="check-n">—</span></td></tr>
+        <tr><td>One-shot email campaigns to your client list (Pro+)</td><td class="tv-col"><span class="check-y">Pro+</span></td><td><span class="check-limited">Higher tier</span></td><td><span class="check-y">✓</span></td><td><span class="check-n">—</span></td></tr>
 
         <!-- Platform / integrations — be honest about gaps -->
         <tr><td>Works fully in any browser (iPad / Surface / laptop / desktop)</td><td class="tv-col"><span class="check-y">✓</span></td><td><span class="check-limited">Limited</span></td><td><span class="check-limited">Limited</span></td><td><span class="check-y">✓</span></td></tr>
@@ -2021,8 +2049,9 @@
           <li>Everything in Solo</li>
           <li>Up to 3 trades on one account</li>
           <li>Multi-trade quotes</li>
+          <li><strong>1 tech seat included</strong> (additional $19.99/mo each)</li>
+          <li><strong>Email campaigns</strong> to your full client list</li>
           <li>Priority support</li>
-          <li>Early access to new features</li>
         </ul>
         <a href="mailto:hello@thetradevoice.com?subject=Early%20Access%20Request%20—%20Tradevoice&body=Hi%20Tradevoice%2C%0A%0AI%27d%20like%20to%20request%20early%20access.%20A%20bit%20about%20me%3A%0A%0A-%20Name%3A%0A-%20Trade%2Fs%3A%0A-%20State%3A%0A-%20Crew%20size%3A%0A%0AThanks!" class="plan-btn" style="display:block;text-decoration:none">Request Early Access</a>
       </div>
@@ -2033,10 +2062,11 @@
         <ul class="plan-features">
           <li>Everything in Pro</li>
           <li>All 56 trades on one account</li>
-          <li><strong>2 tech seats included</strong> (additional $19.99/mo)</li>
+          <li><strong>2 tech seats included</strong> (additional $19.99/mo each)</li>
+          <li><strong>AI Scope Analyzer</strong> — drop a PDF, get a draft scope of work</li>
+          <li><strong>Multi-state licenses</strong> — right license per state, automatically</li>
           <li>Bundle quotes across trades</li>
           <li>Dedicated onboarding call</li>
-          <li>Custom QuickAdd library setup</li>
         </ul>
         <a href="mailto:hello@thetradevoice.com?subject=Early%20Access%20Request%20—%20Tradevoice&body=Hi%20Tradevoice%2C%0A%0AI%27d%20like%20to%20request%20early%20access.%20A%20bit%20about%20me%3A%0A%0A-%20Name%3A%0A-%20Trade%2Fs%3A%0A-%20State%3A%0A-%20Crew%20size%3A%0A%0AThanks!" class="plan-btn" style="display:block;text-decoration:none">Request Early Access</a>
       </div>
@@ -2071,9 +2101,9 @@
         <p>Tradevoice is built on enterprise-grade infrastructure. Your client data, payment info, and business records are protected at every step.</p>
       </div>
       <div class="security-badges">
-        <div class="sec-badge"><div class="sec-icon"></div><div><div class="sec-title">Bank-level encryption</div><div class="sec-desc">All data encrypted in transit and at rest using AES-256.</div></div></div>
-        <div class="sec-badge"><div class="sec-icon"></div><div><div class="sec-title">Stripe-powered payments</div><div class="sec-desc">PCI-DSS compliant. We never store card numbers.</div></div></div>
-        <div class="sec-badge"><div class="sec-icon"></div><div><div class="sec-title">We don't sell your data</div><div class="sec-desc">Your clients, your invoices, your business. Always.</div></div></div>
+        <div class="sec-badge"><div class="sec-icon"></div><div><div class="sec-title">AES-256 encryption</div><div class="sec-desc">All data encrypted in transit (TLS 1.2+) and at rest (AES-256) by our infrastructure providers.</div></div></div>
+        <div class="sec-badge"><div class="sec-icon"></div><div><div class="sec-title">Stripe-powered payments</div><div class="sec-desc">Payments go through Stripe, which is PCI-DSS Level 1 certified. Tradevoice never sees or stores your clients' card numbers.</div></div></div>
+        <div class="sec-badge"><div class="sec-icon"></div><div><div class="sec-title">We don't sell your data</div><div class="sec-desc">Your clients, your invoices, your business — yours to keep and export anytime.</div></div></div>
         <div class="sec-badge"><div class="sec-icon"></div><div><div class="sec-title">Automatic backups</div><div class="sec-desc">Daily backups handled by our database provider. Export your records anytime.</div></div></div>
       </div>
     </div>
@@ -2088,7 +2118,7 @@
     <p class="sub">If it's not here, email us at <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="bfd7dad3d3d0ffcbd7dacbcddedbdac9d0d6dcda91dcd0d2">[email&#160;protected]</a></p>
     <div class="faq-list">
       <div class="faq-item"><button class="faq-q" onclick="toggleFAQ(this)">Does it work without internet on a job site? <span class="faq-arrow">+</span></button><div class="faq-a"><p>Offline mode is on our roadmap and coming soon. For now you need a data connection — most job sites have cell signal. We recommend building quotes before you lose signal.</p></div></div>
-      <div class="faq-item"><button class="faq-q" onclick="toggleFAQ(this)">Can my client pay by card? <span class="faq-arrow">+</span></button><div class="faq-a"><p>Yes. Stripe is built in. Your client gets a payment link on their invoice and pays by card, Apple Pay, or Google Pay. You keep 100% of the invoice amount — the 3.9% + $0.30 fee is added to the client's total and shown clearly on the invoice.</p></div></div>
+      <div class="faq-item"><button class="faq-q" onclick="toggleFAQ(this)">Can my client pay by card? <span class="faq-arrow">+</span></button><div class="faq-a"><p>Yes. Stripe is built in. Your client gets a payment link on their invoice and pays by card, Apple Pay, or Google Pay. You keep 100% of the invoice amount — the 2.9% + $0.30 Stripe fee plus a 1% Tradevoice fee is added to the client's total and shown clearly on the invoice before they pay.</p></div></div>
       <div class="faq-item"><button class="faq-q" onclick="toggleFAQ(this)">Is there a contract or long-term commitment? <span class="faq-arrow">+</span></button><div class="faq-a"><p>No contract. Month-to-month on all plans. Cancel any time from your account settings. Annual plans are billed upfront and save 20%, but are non-refundable after 30 days.</p></div></div>
       <div class="faq-item"><button class="faq-q" onclick="toggleFAQ(this)">Do you store my clients' payment info? <span class="faq-arrow">+</span></button><div class="faq-a"><p>No. All payment processing goes through Stripe, which is PCI-DSS Level 1 certified. Tradevoice never sees or stores your clients' card numbers.</p></div></div>
       <div class="faq-item"><button class="faq-q" onclick="toggleFAQ(this)">How do the tax rates work? <span class="faq-arrow">+</span></button><div class="faq-a"><p>Tradevoice ships with default state-level sales-tax rates for all 50 states plus contractor-labor rules for the states where labor is taxable (Texas, Kansas, Mississippi, etc.). The defaults are refreshed weekly from each state's official tax-authority page. You can override any rate in Settings → Tax Rates. Final tax responsibility is always yours — see our Terms of Service.</p></div></div>
@@ -2130,7 +2160,7 @@
       <div class="tax-calendar">
         <div class="cal-month">All 50 States</div>
         <div class="cal-num" style="font-family:'DM Sans',sans-serif;font-size:72px;font-weight:800;color:var(--green-dark);line-height:1;letter-spacing:-0.03em;font-variant-numeric:tabular-nums;">50</div>
-        <div class="cal-label">State-level defaults shipping today; rooftop accuracy on the roadmap</div>
+        <div class="cal-label">State-level defaults shipping today; finer per-city / per-county lookups on the roadmap</div>
         <span class="cal-badge">Included in every plan</span>
       </div>
     </div>
