@@ -1014,7 +1014,7 @@
       </div>
 
       <div class="why-card">
-        <div class="why-title">56 trades, day one</div>
+        <div class="why-title">56+ trades, day one</div>
         <div class="why-desc">From plumbing and electrical to chimney sweep, restoration, roofing, and audio-video — Tradevoice ships with pre-built quote sheets, material libraries, and labor rate defaults for 56 of the most common contractor trades.</div>
       </div>
 
@@ -1789,7 +1789,13 @@
     <span class="section-tag" style="background:rgba(255,255,255,0.15);color:#fff">How we stack up</span>
     <h2>Tradevoice vs the rest</h2>
     <p class="sub">We built what they should have built years ago.</p>
-    <table class="compare-table">
+    <!-- Horizontal-scroll wrapper for phones. The table has 5 columns
+         × 4 service brands × 18+ feature rows — fits comfortably on
+         tablet/laptop but overflows on a 375px iPhone. Wrapping in
+         overflow-x:auto means phone users can swipe the table left/
+         right to see all columns without breaking the page layout. -->
+    <div style="overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0 -24px; padding: 0 24px;">
+    <table class="compare-table" style="min-width: 720px;">
       <thead>
         <tr>
           <th></th>
@@ -1854,7 +1860,8 @@
         <tr><td>Offline mode (build quotes without signal)</td><td class="tv-col"><span class="check-soon">Coming Soon</span></td><td><span class="check-y">✓</span></td><td><span class="check-y">✓</span></td><td><span class="check-n">—</span></td></tr>
       </tbody>
     </table>
-    <p class="compare-note">* Competitor pricing and features as of January 2026. Subject to change. "Coming Soon" items are on our active roadmap.</p>
+    </div>
+    <p class="compare-note">* Competitor pricing and features as of January 2026. Subject to change. "Coming Soon" items are on our active roadmap. On phones, swipe the table left/right to see all columns.</p>
   </div>
 </section>
 
@@ -2058,10 +2065,10 @@
       <div class="plan-card">
         <div class="plan-name">Elite</div>
         <div class="plan-price" id="all-price">$199<span>.99/mo</span></div>
-        <div class="plan-trades">All 56 trades — for full-service contractors</div>
+        <div class="plan-trades">All 56+ trades — for full-service contractors</div>
         <ul class="plan-features">
           <li>Everything in Pro</li>
-          <li>All 56 trades on one account</li>
+          <li>All 56+ trades on one account</li>
           <li><strong>2 tech seats included</strong> (additional $19.99/mo each)</li>
           <li><strong>AI Scope Analyzer</strong> — drop a PDF, get a draft scope of work</li>
           <li><strong>Multi-state licenses</strong> — right license per state, automatically</li>
@@ -2123,7 +2130,7 @@
       <div class="faq-item"><button class="faq-q" onclick="toggleFAQ(this)">Do you store my clients' payment info? <span class="faq-arrow">+</span></button><div class="faq-a"><p>No. All payment processing goes through Stripe, which is PCI-DSS Level 1 certified. Tradevoice never sees or stores your clients' card numbers.</p></div></div>
       <div class="faq-item"><button class="faq-q" onclick="toggleFAQ(this)">How do the tax rates work? <span class="faq-arrow">+</span></button><div class="faq-a"><p>Tradevoice ships with default state-level sales-tax rates for all 50 states plus contractor-labor rules for the states where labor is taxable (Texas, Kansas, Mississippi, etc.). The defaults are refreshed weekly from each state's official tax-authority page. You can override any rate in Settings → Tax Rates. Final tax responsibility is always yours — see our Terms of Service.</p></div></div>
       <div class="faq-item"><button class="faq-q" onclick="toggleFAQ(this)">Can I use my own company logo? <span class="faq-arrow">+</span></button><div class="faq-a"><p>Yes. Upload your logo in Settings → Profile and it appears on every quote and invoice your clients receive. You can also choose your own accent color to match your brand.</p></div></div>
-      <div class="faq-item"><button class="faq-q" onclick="toggleFAQ(this)">What's the difference between Solo, Pro, and Elite? <span class="faq-arrow">+</span></button><div class="faq-a"><p>The difference is the number of trades you can add to your account. Solo supports 1 trade (like Plumber only). Pro supports up to 3. Elite gives you access to all 56 trades — every construction and service trade we cover — and includes 2 tech seats so your first two employees ride free. All plans include every feature.</p></div></div>
+      <div class="faq-item"><button class="faq-q" onclick="toggleFAQ(this)">What's the difference between Solo, Pro, and Elite? <span class="faq-arrow">+</span></button><div class="faq-a"><p>The difference is the number of trades you can add to your account. Solo supports 1 trade (like Plumber only). Pro supports up to 3. Elite gives you access to all 56+ trades — every construction and service trade we cover — and includes 2 tech seats so your first two employees ride free. All plans include every feature.</p></div></div>
       <div class="faq-item"><button class="faq-q" onclick="toggleFAQ(this)">Does it connect to QuickBooks? <span class="faq-arrow">+</span></button><div class="faq-a"><p>QuickBooks integration is planned for a future release. Our invoice structure is already aligned with QuickBooks' 7-status system so the import will be clean when it launches. For now, you can export invoices as PDFs.</p></div></div>
     </div>
   </div>
@@ -2228,7 +2235,7 @@
             </div>
           </div>
         </div>
-        <div style="font-size:12px;color:#aaa;text-align:center;margin-top:12px">All 50 states · 56 trades · Residential & Commercial</div>
+        <div style="font-size:12px;color:#aaa;text-align:center;margin-top:12px">All 50 states · 56+ trades · Residential & Commercial</div>
       </div>
     </div>
     <!-- Inline fine-print footnote — replaced the previous amber warning
