@@ -91,14 +91,14 @@ export function QuoteCustomerPage({ token }) {
 
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', background: C.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+      <div style={{ minHeight: '100dvh', background: C.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
         <div style={{ fontSize: 14, color: C.muted, fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase' }}>Loading…</div>
       </div>
     );
   }
   if (error || !data) {
     return (
-      <div style={{ minHeight: '100vh', background: C.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+      <div style={{ minHeight: '100dvh', background: C.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, fontFamily: 'system-ui, -apple-system, sans-serif' }}>
         <div style={{ background: C.surface, border: `1px solid ${C.border2}`, borderRadius: 12, padding: 28, maxWidth: 460, textAlign: 'center' }}>
           <div style={{ fontSize: 18, fontWeight: 800, color: C.text, marginBottom: 8 }}>Quote not found</div>
           <div style={{ fontSize: 14, color: C.muted, lineHeight: 1.6 }}>{error || 'This quote is no longer available.'}</div>
@@ -138,7 +138,7 @@ export function QuoteCustomerPage({ token }) {
     : C.warn;
 
   return (
-    <div style={{ minHeight: '100vh', background: C.bg, padding: '24px 16px', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+    <div style={{ minHeight: '100dvh', background: C.bg, padding: '24px 16px', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
       <div style={{ maxWidth: 720, margin: '0 auto' }}>
         <div style={{ background: C.surface, borderRadius: 14, overflow: 'hidden', boxShadow: '0 8px 24px rgba(15, 23, 42, 0.06), 0 2px 6px rgba(15, 23, 42, 0.04)' }}>
 

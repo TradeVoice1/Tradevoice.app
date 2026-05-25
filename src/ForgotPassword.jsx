@@ -30,7 +30,7 @@ export function ForgotPasswordScreen({ onBack }) {
   };
 
   const s = {
-    wrap: { minHeight: '100vh', background: '#f7f7f5', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: "'Inter', sans-serif", padding: '24px' },
+    wrap: { minHeight: '100dvh', background: '#f7f7f5', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: "'Inter', sans-serif", padding: '24px' },
     card: { background: '#fff', borderRadius: 12, border: '1px solid #e8e8e8', padding: '40px 36px', width: '100%', maxWidth: 420 },
     logo: { textAlign: 'center', marginBottom: 28 },
     h1: { fontSize: 22, fontWeight: 800, color: '#111', marginBottom: 8, textAlign: 'center' },
@@ -143,7 +143,7 @@ export function ResetPasswordScreen({ onBack }) {
   };
 
   const s = {
-    wrap: { minHeight: '100vh', background: '#f7f7f5', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: "'Inter', sans-serif", padding: '24px' },
+    wrap: { minHeight: '100dvh', background: '#f7f7f5', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: "'Inter', sans-serif", padding: '24px' },
     card: { background: '#fff', borderRadius: 12, border: '1px solid #e8e8e8', padding: '40px 36px', width: '100%', maxWidth: 420 },
     logo: { textAlign: 'center', marginBottom: 28 },
     h1: { fontSize: 22, fontWeight: 800, color: '#111', marginBottom: 8, textAlign: 'center' },

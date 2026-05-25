@@ -3,7 +3,7 @@ import React, { useState } from "react";
 // ─── PRIVACY POLICY SCREEN ──────────────────────────────────────────────────
 export function PrivacyPolicyScreen({ onBack }) {
   const s = {
-    container: { minHeight: '100vh', background: '#f7f7f5', fontFamily: "'Inter', sans-serif" },
+    container: { minHeight: '100dvh', background: '#f7f7f5', fontFamily: "'Inter', sans-serif" },
     header: { background: '#fff', borderBottom: '1px solid #e8e8e8', padding: '16px 24px', display: 'flex', alignItems: 'center', gap: 12, position: 'sticky', top: 0, zIndex: 10 },
     backBtn: { background: 'none', border: 'none', fontSize: 14, color: '#2d6a4f', fontWeight: 600, cursor: 'pointer', padding: '4px 0' },
     title: { fontSize: 18, fontWeight: 700, color: '#111' },
@@ -118,7 +118,7 @@ export function PrivacyPolicyScreen({ onBack }) {
 // ─── TERMS AND CONDITIONS SCREEN ────────────────────────────────────────────
 export function TermsScreen({ onBack }) {
   const s = {
-    container: { minHeight: '100vh', background: '#f7f7f5', fontFamily: "'Inter', sans-serif" },
+    container: { minHeight: '100dvh', background: '#f7f7f5', fontFamily: "'Inter', sans-serif" },
     header: { background: '#fff', borderBottom: '1px solid #e8e8e8', padding: '16px 24px', display: 'flex', alignItems: 'center', gap: 12, position: 'sticky', top: 0, zIndex: 10 },
     backBtn: { background: 'none', border: 'none', fontSize: 14, color: '#2d6a4f', fontWeight: 600, cursor: 'pointer', padding: '4px 0' },
     title: { fontSize: 18, fontWeight: 700, color: '#111' },

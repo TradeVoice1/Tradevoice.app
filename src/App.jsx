@@ -454,7 +454,7 @@ const StatCard = ({ icon, label, value, color = C.orange, delta, sub }) => (
 function AuthShell({ children, maxWidth = 420 }) {
   const wide = maxWidth >= 900;
   return (
-    <div style={{ minHeight: '100vh', background: C.bg, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px 16px', fontFamily: "'Inter', sans-serif" }}>
+    <div style={{ minHeight: '100dvh', background: C.bg, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px 16px', fontFamily: "'Inter', sans-serif" }}>
       {/* Big logo on the auth screens — first impression for new sign-ups
           and a clear brand anchor for returning logins. */}
       <div style={{ marginBottom: 36 }}><Logo size={80} /></div>
@@ -668,7 +668,7 @@ function LoginScreen({ onLogin, onSignup, onForgot }) {
 function SignupShell({ children, isTablet, step, steps }) {
   if (isTablet) {
     return (
-      <div style={{ minHeight: '100vh', background: C.bg, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px 16px', fontFamily: "'Inter', sans-serif" }}>
+      <div style={{ minHeight: '100dvh', background: C.bg, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px 16px', fontFamily: "'Inter', sans-serif" }}>
         <div style={{ marginBottom: 36 }}><Logo size={80} /></div>
         <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: '32px 28px', width: '100%', maxWidth: step === 2 ? 920 : 480, transition: 'max-width 0.25s ease' }}>
           {children}
@@ -688,7 +688,7 @@ function SignupShell({ children, isTablet, step, steps }) {
   const sc = stepCopy[step] || stepCopy[0];
 
   return (
-    <div style={{ minHeight: '100vh', display: 'grid', gridTemplateColumns: '520px 1fr', background: '#f5f0eb', fontFamily: "'Inter', sans-serif" }}>
+    <div style={{ minHeight: '100dvh', display: 'grid', gridTemplateColumns: '520px 1fr', background: '#f5f0eb', fontFamily: "'Inter', sans-serif" }}>
       {/* LEFT — green marketing hero panel ────────────────────────────── */}
       <aside style={{
         background: 'linear-gradient(160deg, #1b4332 0%, #2d6a4f 60%, #40916c 100%)',
@@ -698,7 +698,7 @@ function SignupShell({ children, isTablet, step, steps }) {
         flexDirection: 'column',
         position: 'sticky',
         top: 0,
-        height: '100vh',
+        height: '100dvh',
         boxSizing: 'border-box',
       }}>
         {/* Brand lockup — the full Tradevoice logo asset (lion + wordmark
@@ -1736,7 +1736,7 @@ function SubscriptionLockedScreen({ user, onSignOut }) {
     : 'We\'ll reactivate your account within 1 business day. One-tap resubscribe directly from the app is on our roadmap.';
 
   return (
-    <div style={{ minHeight: '100vh', background: C.bg, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px 16px', fontFamily: "'Inter', sans-serif" }}>
+    <div style={{ minHeight: '100dvh', background: C.bg, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px 16px', fontFamily: "'Inter', sans-serif" }}>
       <div style={{ marginBottom: 32 }}><Logo size={64} /></div>
       <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 16, padding: '40px 32px', width: '100%', maxWidth: 480, textAlign: 'center', boxShadow: C.shadow1 }}>
         <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: isPaymentFailure ? C.errorBold : C.muted, marginBottom: 8 }}>{eyebrow}</div>
@@ -1890,7 +1890,7 @@ function Onboarding({ onComplete }) {
     : `$${getPrice(data.trades.length)}/mo`;
 
   return (
-    <div style={{ minHeight: '100vh', background: C.bg, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: "'Inter', sans-serif", padding: isTablet ? '24px 16px' : 24 }}>
+    <div style={{ minHeight: '100dvh', background: C.bg, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: "'Inter', sans-serif", padding: isTablet ? '24px 16px' : 24 }}>
       <div style={{ marginBottom: 12 }}><Logo size={52} /></div>
       <div style={{ fontSize: 14, color: C.muted, marginBottom: 32, textAlign: 'center', lineHeight: 1.5, maxWidth: 340 }}>
         From first estimate to final payment.
@@ -9142,14 +9142,14 @@ export default function Tradevoice() {
 
   if (publicInvoiceToken) {
     return (
-      <Suspense fallback={<div style={{ minHeight: '100vh', background: C.bg }} />}>
+      <Suspense fallback={<div style={{ minHeight: '100dvh', background: C.bg }} />}>
         <InvoicePaymentPage token={publicInvoiceToken} />
       </Suspense>
     );
   }
   if (publicQuoteToken) {
     return (
-      <Suspense fallback={<div style={{ minHeight: '100vh', background: C.bg }} />}>
+      <Suspense fallback={<div style={{ minHeight: '100dvh', background: C.bg }} />}>
         <QuoteCustomerPage token={publicQuoteToken} />
       </Suspense>
     );
@@ -9778,7 +9778,7 @@ function TradevoiceApp() {
   // First-load auth check — show a small loader while we ask Supabase if there's a session.
   if (authChecking) {
     return (
-      <div style={{ minHeight: '100vh', background: C.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Inter', sans-serif" }}>
+      <div style={{ minHeight: '100dvh', background: C.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Inter', sans-serif" }}>
         <div style={{ fontSize: 13, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 700 }}>Loading…</div>
       </div>
     );
@@ -9805,7 +9805,7 @@ function TradevoiceApp() {
     // Legacy 'join' route — redirect to login. The proper tech sign-in lives
     // inside the LoginScreen as a mode toggle now (Owner / Tech sign in).
     if (authScreen === 'join')     { setAuthScreen('login'); return null; }
-    if (authScreen === 'forgot')   return <Suspense fallback={<div style={{ minHeight: '100vh', background: C.bg }} />}><ForgotPasswordScreen onBack={() => setAuthScreen('login')} /></Suspense>;
+    if (authScreen === 'forgot')   return <Suspense fallback={<div style={{ minHeight: '100dvh', background: C.bg }} />}><ForgotPasswordScreen onBack={() => setAuthScreen('login')} /></Suspense>;
     if (authScreen === 'onboarding') return <Onboarding  onComplete={data => { setUser({ ...data, state: data.states?.join(', '), role: 'owner', companyCode: 'TV-' + Math.random().toString(36).slice(2,8).toUpperCase() }); setAuthScreen(null); }} />;
     return <LoginScreen onLogin={u => { setUser(u); setAuthScreen(null); }} onSignup={() => setAuthScreen('signup')} onForgot={() => setAuthScreen('forgot')} />;
   }
@@ -10133,7 +10133,7 @@ function TradevoiceApp() {
   if (user?.isSuperOwner && !founderTotpReady) {
     const totpMode = !user.superOwnerTotpEnabledAt ? 'setup' : 'unlock';
     return (
-      <Suspense fallback={<div style={{ minHeight: '100vh', background: '#0f172a' }} />}>
+      <Suspense fallback={<div style={{ minHeight: '100dvh', background: '#0f172a' }} />}>
         <TotpScreen
           user={user}
           mode={totpMode}
@@ -10159,7 +10159,7 @@ function TradevoiceApp() {
   // pages (like ScheduleScreen) can fill it via height: 100%.
   if (isTablet) {
     return (
-      <div style={{ height: '100vh', background: C.bg, fontFamily: "'Inter', sans-serif", display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <div style={{ height: '100dvh', background: C.bg, fontFamily: "'Inter', sans-serif", display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         {TopBar}
         {MenuOverlay}
 
@@ -10204,13 +10204,13 @@ function TradevoiceApp() {
 
   // ── LAPTOP: top bar + sidebar (nav only) + content ─────────────────────────
   return (
-    <div style={{ minHeight: '100vh', background: C.bg, fontFamily: "'Inter', sans-serif", display: 'flex', flexDirection: 'column' }}>
+    <div style={{ minHeight: '100dvh', background: C.bg, fontFamily: "'Inter', sans-serif", display: 'flex', flexDirection: 'column' }}>
       {TopBar}
       {MenuOverlay}
 
       <div style={{ flex: 1, display: 'flex', minHeight: 0 }}>
         {/* Sidebar — nav only (logo and profile now live in the top bar) */}
-        <div style={{ width: 210, background: C.surface, borderRight: `1px solid ${C.border}`, display: 'flex', flexDirection: 'column', position: 'sticky', top: TOP_H, height: `calc(100vh - ${TOP_H}px)`, flexShrink: 0 }}>
+        <div style={{ width: 210, background: C.surface, borderRight: `1px solid ${C.border}`, display: 'flex', flexDirection: 'column', position: 'sticky', top: TOP_H, height: `calc(100dvh - ${TOP_H}px)`, flexShrink: 0 }}>
           <nav style={{ flex: 1, padding: '20px 12px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6 }}>
             {navItems.map(item => {
               const active = section === item.id;

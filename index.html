@@ -3,7 +3,24 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- viewport-fit=cover enables env(safe-area-inset-*) on notched
+         devices so the bottom nav doesn't get clipped by the home
+         indicator. user-scalable=yes keeps accessibility zoom available;
+         interactive-widget=resizes-content makes the iOS keyboard push
+         content up instead of overlaying it (fixes "I can't see the
+         submit button" on form pages). -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content" />
+    <!-- Browser chrome theme color. Matches the brand green so the
+         iOS Safari address bar + Android Chrome status bar pick up
+         the brand tint instead of plain white. -->
+    <meta name="theme-color" content="#2d6a4f" />
+    <!-- Apple touch icon — what shows up when a contractor "Add to
+         Home Screen"s the app on iOS. Reusing the favicon for now;
+         we'll generate proper 180x180 PNG icons as part of the
+         Capacitor app-store assets pass. -->
+    <link rel="apple-touch-icon" href="/favicon.svg" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <title>tradevoice</title>
   </head>
   <body>

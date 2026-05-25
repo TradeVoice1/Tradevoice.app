@@ -398,7 +398,7 @@ export default function MarketingScreen({ user }) {
   };
 
   const s = {
-    wrap: { minHeight: '100vh', background: '#f7f7f5', fontFamily: "'Inter', sans-serif" },
+    wrap: { minHeight: '100dvh', background: '#f7f7f5', fontFamily: "'Inter', sans-serif" },
     header: { background: '#fff', borderBottom: '1px solid #e8e8e8', padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
     title: { fontSize: 20, fontWeight: 800, color: '#111' },
     tabs: { background: '#fff', borderBottom: '1px solid #e8e8e8', padding: '0 20px', display: 'flex', gap: 0, overflowX: 'auto' },

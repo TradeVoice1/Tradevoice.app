@@ -172,7 +172,7 @@ export function InvoicePaymentPage({ token }) {
 
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', background: C.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Inter', sans-serif" }}>
+      <div style={{ minHeight: '100dvh', background: C.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Inter', sans-serif" }}>
         <div style={{ fontSize: 14, color: C.muted, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase' }}>Loading invoice…</div>
       </div>
     );
@@ -180,7 +180,7 @@ export function InvoicePaymentPage({ token }) {
 
   if (error || !data) {
     return (
-      <div style={{ minHeight: '100vh', background: C.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, fontFamily: "'Inter', sans-serif" }}>
+      <div style={{ minHeight: '100dvh', background: C.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, fontFamily: "'Inter', sans-serif" }}>
         <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: '32px 28px', maxWidth: 460, textAlign: 'center', boxShadow: '0 4px 24px rgba(0,0,0,0.06)' }}>
           <div style={{ fontSize: 22, fontWeight: 800, color: C.text, marginBottom: 8 }}>Invoice not found</div>
           <div style={{ fontSize: 14, color: C.muted, lineHeight: 1.6 }}>{error || "We couldn't find an invoice with that link."}</div>
@@ -196,7 +196,7 @@ export function InvoicePaymentPage({ token }) {
   const isVoid = inv.status === 'void';
 
   return (
-    <div style={{ minHeight: '100vh', background: C.bg, padding: '24px 16px', fontFamily: "'Inter', sans-serif" }}>
+    <div style={{ minHeight: '100dvh', background: C.bg, padding: '24px 16px', fontFamily: "'Inter', sans-serif" }}>
       <div style={{ maxWidth: 760, margin: '0 auto' }}>
         {/* Top status banner */}
         {isVoid && (

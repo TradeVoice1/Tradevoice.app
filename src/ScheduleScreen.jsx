@@ -1591,7 +1591,7 @@ export default function ScheduleScreen({
     // and the calendar fills the rest of the screen below the chrome.
     wrap: isTablet
       ? { height: '100%', background: '#f7f7f5', fontFamily: "'Inter', sans-serif", display: 'flex', flexDirection: 'column', margin: '-14px -16px' }
-      : { minHeight: '100vh', background: '#f7f7f5', fontFamily: "'Inter', sans-serif" },
+      : { minHeight: '100dvh', background: '#f7f7f5', fontFamily: "'Inter', sans-serif" },
     header: { background: '#fff', borderBottom: '1px solid #e8e8e8', padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 },
     title: { fontSize: 20, fontWeight: 800, color: '#111' },
     addBtn: { padding: '10px 18px', minHeight: 44, background: COLORS.green, color: '#fff', border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 700, cursor: 'pointer' },
@@ -1600,7 +1600,7 @@ export default function ScheduleScreen({
     dateLabel: { fontSize: 15, fontWeight: 700, color: '#111', minWidth: 200, textAlign: 'center' },
     viewBtns: { display: 'flex', gap: 4 },
     viewBtn: (active) => ({ padding: '10px 14px', minHeight: 44, borderRadius: 8, border: 'none', background: active ? COLORS.green : '#f0f0f0', color: active ? '#fff' : '#666', fontSize: 13, fontWeight: active ? 700 : 500, cursor: 'pointer' }),
-    // Body — laptop uses calc(100vh - chrome). Tablet uses flex: 1 to fill
+    // Body — laptop uses calc(100dvh - chrome). Tablet uses flex: 1 to fill
     // whatever's left under the combined header bar.
     body: {
       display: 'grid',
@@ -1608,7 +1608,7 @@ export default function ScheduleScreen({
       gap: 0,
       ...(isTablet
         ? { flex: 1, minHeight: 0 }
-        : { height: 'calc(100vh - 200px)' }),
+        : { height: 'calc(100dvh - 200px)' }),
       position: 'relative',
     },
     calendar: { background: '#fff', overflow: 'auto', borderRight: '1px solid #e8e8e8' },

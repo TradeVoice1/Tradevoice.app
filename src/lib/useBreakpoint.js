@@ -14,6 +14,17 @@
 import { useState, useEffect } from "react";
 
 const LAPTOP_BREAKPOINT = 1280;
+// Phone vs tablet split — anything below 560px is treated as a
+// phone for layout purposes (modals scale to 95vw instead of fixed
+// widths, grids collapse to single column more aggressively,
+// nav labels can be hidden in favor of icons, etc.). 560 was
+// picked because:
+//   • iPhone 14 Pro Max ≈ 430px (clearly phone)
+//   • iPhone Pro landscape ≈ 932px (tablet-ish but rare)
+//   • Smallest iPad (mini in portrait) ≈ 744px (tablet)
+//   • Anything 560-768 is awkward foldables / split screens
+// Components that don't care can keep using just isTablet.
+const PHONE_BREAKPOINT  = 560;
 
 const detectCoarse = () => {
   if (typeof window === 'undefined' || !window.matchMedia) return false;
@@ -39,5 +50,10 @@ export function useBreakpoint() {
     };
   }, []);
 
-  return { isTablet: w < LAPTOP_BREAKPOINT || coarse, w, coarse };
+  return {
+    isTablet: w < LAPTOP_BREAKPOINT || coarse,
+    isPhone:  w < PHONE_BREAKPOINT,
+    w,
+    coarse,
+  };
 }

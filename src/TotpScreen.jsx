@@ -90,7 +90,7 @@ export default function TotpScreen({ user, mode = 'unlock', onUnlocked, onSignOu
 
   return (
     <div style={{
-      minHeight: '100vh', background: C.bg, color: C.text,
+      minHeight: '100dvh', background: C.bg, color: C.text,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       padding: 24, fontFamily: "'Inter', sans-serif",
     }}>
