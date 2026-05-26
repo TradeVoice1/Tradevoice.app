@@ -1908,7 +1908,7 @@
       <div class="ts-step">
         <div class="ts-step-num">3</div>
         <div class="ts-step-title">Hand them a Tech ID</div>
-        <div class="ts-step-desc">We generate a unique Tech ID for each technician — looks like <code>TV-T-K3M9R7</code>. They sign in with that ID and a password you set. No email required. Their phone, their login.</div>
+        <div class="ts-step-desc">We generate a unique Tech ID for each technician — short, easy to type, and tied to your account. They sign in with that ID and a password you set. No personal email required, no app store account, no extra paperwork. You hand it over and they're working.</div>
       </div>
 
     </div>
@@ -1954,6 +1954,14 @@
           <div class="ts-plan-extra">Additional seats <span class="ts-plan-extra-price">$19.99/mo each</span></div>
         </div>
 
+      </div>
+      <!-- Plan claims disclaimer — every bullet above is a commercial
+           promise (free seats included, pro-rated billing, per-tech
+           features), so footnote that the binding details live in
+           the Terms of Service. Protects us if pricing or seat counts
+           change for new signups while preserving the marketing punch. -->
+      <div style="margin-top:18px; padding:14px 18px; background:#fff; border:1px solid var(--border); border-radius:10px; font-size:13px; color:var(--muted); line-height:1.55; text-align:center;">
+        Plans, seat allotments, and pricing shown above are current at the time of viewing and may change with notice. Free seats apply to active paid subscriptions only and are subject to fair-use limits. Full subscription terms, billing rules, and seat policies are in our <a href="https://app.thetradevoice.com/legal/terms" style="color:var(--green);font-weight:700;text-decoration:underline;">Terms of Service</a>.
       </div>
     </div>
 
@@ -2159,8 +2167,8 @@
     <div class="tax-inner">
       <div>
         <span class="section-tag">Built-in defaults</span>
-        <h2>Sales tax handled. Every state. Every job.</h2>
-        <p>TradeVoice ships with default sales-tax rates for all 50 states and reasonable rules for contractor labor, prefilled on every invoice and quote. You stay in control — override any rate per invoice, and TradeVoice remembers your preference for next time. Final responsibility for collecting and remitting the right tax is always yours; we strongly recommend confirming with a tax professional for your specific jurisdiction.</p>
+        <h2>Sales-tax defaults for every state. Less guesswork on every invoice.</h2>
+        <p>TradeVoice ships with default state-level sales-tax rates for all 50 states and reasonable starting rules for contractor labor, prefilled on every invoice and quote. You stay in control — override any rate per invoice, and TradeVoice remembers your preference for next time. <strong>This is reference data, not tax advice.</strong> Final responsibility for collecting, remitting, and reporting the right tax to the right authority is always yours. Rates and exemptions change — we strongly recommend confirming with a licensed tax professional or your state's department of revenue before relying on a default for a specific job. Full terms in our <a href="https://app.thetradevoice.com/legal/terms" style="color:var(--green);font-weight:700;text-decoration:underline;">Terms of Service</a>.</p>
         <div class="tax-steps">
           <div class="tax-step"><div class="tax-num">1</div><div class="tax-step-text">You enter the job address on an invoice or quote</div></div>
           <div class="tax-step"><div class="tax-num">2</div><div class="tax-step-text">TradeVoice prefills the state's default rate and any contractor-labor exemptions we ship with</div></div>
@@ -2258,7 +2266,7 @@
          to a prospect just discovering the feature. Same legal
          protection, less defensive presentation. -->
     <div style="margin-top:36px;font-size: 15px;color:var(--muted);line-height:1.65;text-align:center;max-width:760px;margin-left:auto;margin-right:auto">
-      Reference data, kept current from official state board sources. Always confirm current requirements with your state board before bidding — full terms in our <a href="/terms" style="color:var(--green);font-weight:600;text-decoration:underline">Terms of Service</a>.
+      Reference data only — not legal advice. Licensing rules change; always verify current requirements with your state board, local jurisdiction, and (where applicable) your attorney before bidding or pulling permits. Full terms in our <a href="https://app.thetradevoice.com/legal/terms" style="color:var(--green);font-weight:600;text-decoration:underline">Terms of Service</a>.
     </div>
   </div>
 </section>
@@ -2267,18 +2275,17 @@
 <section class="app-download">
   <div class="container">
     <span class="section-tag" style="background:rgba(255,255,255,0.15);color:#fff">Take it on the job</span>
-    <h2>Built for tablet and laptop. Anywhere there's a browser.</h2>
-    <p>Tradevoice runs in your browser — built for iPad, Surface, laptops, and desktops where contractors actually do the paperwork. Native iPhone and Android apps are on the roadmap.</p>
+    <h2>Built for phone, tablet, and laptop. Anywhere there's a browser.</h2>
+    <p>Tradevoice runs in your browser — laid out for iPad, Surface, laptops, and desktops where contractors do the paperwork, and a responsive phone view for when you're standing in the driveway and need to check the next job. Native iPhone and Android apps are on the roadmap.</p>
     <div class="store-btns">
-      <!-- Native phone apps not shipped yet. Until they ship, we don't
-           claim "Works on iPhone, Android" in the headline — the web app
-           technically loads on a phone but isn't optimized for phone-
-           sized screens. The truthful pitch right now is iPad / Surface /
-           laptop / desktop browsers, with native phone apps explicitly
-           on the roadmap. -->
+      <!-- The web app now has a tuned phone breakpoint (isPhone in
+           useBreakpoint), so the "Available Now" pitch fairly covers
+           phone, tablet, and laptop browsers. Native phone apps still
+           on the roadmap — once they ship the Coming Soon tiles flip
+           to live App Store / Google Play links. -->
       <a href="https://app.thetradevoice.com" class="store-btn">
         <span class="store-icon"></span>
-        <div><div class="store-sub">Open now in any browser</div><div class="store-name">thetradevoice.com</div><div style="font-size: 13px;color:#4ade80;font-weight:600;margin-top:4px">Available Now · iPad &amp; Laptop</div></div>
+        <div><div class="store-sub">Open now in any browser</div><div class="store-name">thetradevoice.com</div><div style="font-size: 13px;color:#4ade80;font-weight:600;margin-top:4px">Available Now · Phone, iPad &amp; Laptop</div></div>
       </a>
       <span class="store-btn" style="opacity:0.6;cursor:default" aria-disabled="true">
         <span class="store-icon"></span>
