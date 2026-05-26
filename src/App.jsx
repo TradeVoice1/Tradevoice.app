@@ -352,6 +352,24 @@ const SPECIALTY_TYPES = [
   'Insulation',
   'Other Specialty',
 ];
+// Canonical unit-of-measure list for materials + equipment line items.
+// Grouped by category in the rendered dropdown so contractors can find
+// the right unit faster. Order within each category roughly matches
+// usage frequency — "ea" first because most generic, then dimensional,
+// then volumetric, then time-based. Adding a new unit? Add it here in
+// the right group and every line-item dropdown in the app picks it up.
+const UNIT_GROUPS = [
+  { label: 'Count',     units: ['ea', 'pcs', 'pair', 'set', 'lot', 'sheet', 'roll', 'box', 'case', 'pkg', 'bag', 'bndl', 'pallet'] },
+  { label: 'Length',    units: ['in', 'ft', 'yd', 'lf', 'mi'] },
+  { label: 'Area',      units: ['sf', 'sy', 'sq'] },
+  { label: 'Volume',    units: ['cf', 'cy', 'gal', 'qt', 'pt', 'oz', 'fl oz', 'L', 'mL'] },
+  { label: 'Weight',    units: ['lb', 'oz (wt)', 'ton'] },
+  { label: 'Time',      units: ['hr', 'day', 'wk', 'mo', 'visit', 'trip'] },
+];
+// Flat list for backward compatibility with anywhere the codebase
+// reads units as a simple array.
+const UNITS = UNIT_GROUPS.flatMap(g => g.units);
+
 const STATES = [
   'Alabama','Alaska','Arizona','Arkansas','California','Colorado','Connecticut',
   'Delaware','Florida','Georgia','Hawaii','Idaho','Illinois','Indiana','Iowa',
@@ -3961,7 +3979,11 @@ function InvoiceEditor({ initial, user, teamMembers = [], existingInvoices = [],
                         <td style={{ padding:'5px 5px', width:80 }}>
                           <select value={r.unit} onChange={e=>updRow(setMaterials,r.id,'unit',e.target.value)}
                             style={{ ...s.input, width:80, padding:'9px 5px', minHeight:44 }}>
-                            {['ea','ft','lf','sf','lb','gal','box','roll','lot','set'].map(u=><option key={u}>{u}</option>)}
+                            {UNIT_GROUPS.map(g => (
+                              <optgroup key={g.label} label={g.label}>
+                                {g.units.map(u => <option key={u} value={u}>{u}</option>)}
+                              </optgroup>
+                            ))}
                           </select>
                         </td>
                         <td style={{ padding:'5px 5px', width:90  }}>{NI(r.cost,v=>updRow(setMaterials,r.id,'cost',v),90)}</td>
@@ -5716,7 +5738,11 @@ function QuickAddPanel({ library, onInsert, onSaveNew, onDelete, type }) {
                 <label style={{ ...s.label, marginBottom: 4 }}>Unit</label>
                 <select value={newUnit} onChange={e => setNewUnit(e.target.value)}
                   style={{ ...s.input, width: '100%', padding: '9px 5px', minHeight: 44 }}>
-                  {['ea','ft','in','lb','gal','box','roll','bag','pcs','lot','hr'].map(u => <option key={u}>{u}</option>)}
+                  {UNIT_GROUPS.map(g => (
+                    <optgroup key={g.label} label={g.label}>
+                      {g.units.map(u => <option key={u} value={u}>{u}</option>)}
+                    </optgroup>
+                  ))}
                 </select>
               </div>
               <div>
@@ -6215,8 +6241,20 @@ function QuoteEditor({ initial, clients, existingQuotes = [], user, setUser, onS
                     borderColor: tradeConf.color + '88',
                     borderWidth: 1.5,
                   }}>
-                  {user?.trades?.map(t => (
-                    <option key={t} value={t}>{t === 'Specialty' ? 'Specialty Trades' : `${t} Only`}</option>
+                  {/* If the contractor has trades configured on their profile,
+                      list those (their trade catalog). If they don't —
+                      typically the founder account that bypassed signup, or
+                      a legacy account from before trade-selection was
+                      required — fall back to the FULL 56-trade catalog so
+                      they can still pick something. Bug fix 2026-05-22:
+                      the dropdown previously rendered EMPTY for accounts
+                      with no trades, making the quote editor unusable. */}
+                  {(user?.trades?.length > 0 ? user.trades : ALL_TRADES).map(t => (
+                    <option key={t} value={t}>
+                      {(user?.trades?.length > 0)
+                        ? (t === 'Specialty' ? 'Specialty Trades' : `${t} Only`)
+                        : (TRADE_CONFIG[t]?.label || t)}
+                    </option>
                   ))}
                   {multiTrade && <option value="bundle">Multi-Trade Job ({user.trades.length} trades)</option>}
                 </select>
@@ -6436,7 +6474,11 @@ function QuoteEditor({ initial, clients, existingQuotes = [], user, setUser, onS
                           <td style={{ padding: '5px 5px', width: 70 }}>
                             <select value={r.unit} onChange={e => updRow(setMats, r.id, 'unit', e.target.value)}
                               style={{ ...s.input, width: 70, padding: '8px 5px', minHeight: 44 }}>
-                              {['ea','ft','in','lb','gal','box','roll','bag','pcs','lot','hr'].map(u => <option key={u}>{u}</option>)}
+                              {UNIT_GROUPS.map(g => (
+                    <optgroup key={g.label} label={g.label}>
+                      {g.units.map(u => <option key={u} value={u}>{u}</option>)}
+                    </optgroup>
+                  ))}
                             </select>
                           </td>
                           <td style={{ padding: '5px 5px', width: 80 }}>{NI(r.cost, v => updRow(setMats, r.id, 'cost', v), 96, '$')}</td>
