@@ -96,10 +96,15 @@
   }
   .nav-logo-text { font-family: 'Playfair Display', serif; font-size: 24px; font-weight: 900; color: var(--green-dark); }
   .nav-links { display: flex; align-items: center; gap: 28px; }
-  .nav-links a { color: var(--muted); text-decoration: none; font-size: 17px; font-weight: 500; transition: color 0.15s; }
+  /* `white-space: nowrap` on every nav anchor is non-negotiable — these are
+     all 1–2 word labels and must NEVER wrap mid-phrase ("Sign\nin",
+     "Early\nAccess"). Without it, a slightly narrow viewport + a 2px size
+     bump was enough to break "Sign in" onto two lines. Fix this once at
+     the rule level so future size tweaks can't reintroduce the squish. */
+  .nav-links a { color: var(--muted); text-decoration: none; font-size: 17px; font-weight: 500; transition: color 0.15s; white-space: nowrap; }
   .nav-links a:hover { color: var(--green); }
   .nav-cta { display: flex; align-items: center; gap: 12px; }
-  .nav-signin { color: var(--muted); font-size: 17px; font-weight: 500; text-decoration: none; }
+  .nav-signin { color: var(--muted); font-size: 17px; font-weight: 500; text-decoration: none; white-space: nowrap; }
   .nav-signin:hover { color: var(--green); }
   /* Secondary CTA — outlined dark green. Sits between the muted Sign in
      link and the orange Request Early Access primary button so visitors
@@ -1017,7 +1022,7 @@
       </div>
 
       <div class="why-card">
-        <div class="why-title">56+ trades, day one</div>
+        <div class="why-title">56+ trades</div>
         <div class="why-desc">From plumbing and electrical to chimney sweep, restoration, roofing, and audio-video — Tradevoice ships with pre-built quote sheets, material libraries, and labor rate defaults for 56 of the most common contractor trades.</div>
       </div>
 
@@ -1064,7 +1069,7 @@
       <div class="wn-card">
         <div class="wn-tag">New</div>
         <div class="wn-title">AI Rate Library</div>
-        <div class="wn-desc">Drop your rate sheet PDF and Claude reads it, pulling labor, material, and equipment items into your library in seconds. You review what was extracted before it imports — no more retyping prices from a 12-page document. Photos of a paper rate sheet work too.</div>
+        <div class="wn-desc">Drop your rate sheet PDF and our AI reads it, pulling labor, material, and equipment items into your library in seconds. You review what was extracted before it imports — no more retyping prices from a 12-page document. Photos of a paper rate sheet work too.</div>
       </div>
 
       <div class="wn-card">
@@ -1107,7 +1112,7 @@
       <div class="wn-card">
         <div class="wn-tag">Elite</div>
         <div class="wn-title">AI Scope Analyzer</div>
-        <div class="wn-desc">Drop a customer's scope PDF (blueprints, bid doc, work order). Claude reads it. Perplexity researches current codes and standards with citations. Both AIs synthesize a draft scope of work for the contractor to review and edit before sending. Advisory only — always review the AI output against your jurisdiction.</div>
+        <div class="wn-desc">Drop a customer's scope PDF (blueprints, bid doc, work order). Our AI reads it. A second AI researches current codes and standards with citations. Both models synthesize a draft scope of work for the contractor to review and edit before sending. Advisory only — always review the AI output against your jurisdiction.</div>
       </div>
 
       <!-- 2026-05-22: Multi-state licenses (migration 0037) — real
@@ -1150,8 +1155,8 @@
 
       <div class="ai-step">
         <div class="ai-step-num">2</div>
-        <div class="ai-step-title">Claude reads it</div>
-        <div class="ai-step-desc">Claude (the same AI that powers Anthropic's enterprise tools) parses every labor, material, and equipment line into structured items. It separates trades, recognizes units, and flags anything it isn't sure about.</div>
+        <div class="ai-step-title">Our AI reads it</div>
+        <div class="ai-step-desc">A frontier large-language model parses every labor, material, and equipment line into structured items. It separates trades, recognizes units, and flags anything it isn't sure about — and you review the extraction before anything imports.</div>
       </div>
 
       <div class="ai-step">

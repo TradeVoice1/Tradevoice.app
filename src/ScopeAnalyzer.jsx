@@ -43,7 +43,7 @@ export default function ScopeAnalyzer({ user, setUser, onInsertScope }) {
             AI scope analysis — drop a PDF, get a precise scope of work
           </div>
           <div style={{ fontSize: 15, color: '#92400e', marginTop: 4 }}>
-            Claude reads the document, Perplexity researches current codes + standards, both AIs collaborate on a synthesized scope you can paste into the quote. Available on the Elite plan.
+            Our AI reads the document, a second AI researches current codes + standards, and the two collaborate on a synthesized scope you can paste into the quote. Available on the Elite plan.
           </div>
         </div>
       </div>
@@ -220,10 +220,10 @@ function ScopeAnalyzerActive({ user, setUser, onInsertScope }) {
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 12 }}>
-          <Panel title="1. What's in the document" subtitle="Claude vision" body={result.extraction} />
+          <Panel title="1. What's in the document" subtitle="AI document reader" body={result.extraction} />
           <Panel
             title="2. Code + standards context"
-            subtitle="Perplexity online research"
+            subtitle="AI online research"
             body={result.research}
             citations={result.citations}
           />
@@ -368,7 +368,7 @@ function ScopeAnalyzerActive({ user, setUser, onInsertScope }) {
               Drop a scope PDF or click to upload
             </div>
             <div style={{ fontSize: 14, color: '#666', lineHeight: 1.55 }}>
-              Claude + Perplexity will read it, research current codes and standards, and write a precise scope-of-work for this quote. Max 25 MB. ~20-45 seconds.
+              Our AI reads it, a second AI researches current codes and standards, and together they draft a precise scope-of-work for this quote. Max 25 MB. ~20-45 seconds.
             </div>
           </>
         )}
@@ -381,7 +381,7 @@ function ScopeAnalyzerActive({ user, setUser, onInsertScope }) {
               Analyzing {fileName}…
             </div>
             <div style={{ fontSize: 14, color: '#666', lineHeight: 1.55 }}>
-              Claude is reading the PDF, then Perplexity researches current codes, then both AIs collaborate on the scope. This usually takes 20-45 seconds — don't close the tab.
+              The AI is reading the PDF, then a second AI researches current codes, then the two collaborate on the scope. This usually takes 20-45 seconds — don't close the tab.
             </div>
           </>
         )}

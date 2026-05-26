@@ -236,7 +236,7 @@ function DropZone({ onFile, parsing, error }) {
       </div>
       <div style={{ fontSize: 15, color: C.muted, lineHeight: 1.5 }}>
         {parsing
-          ? 'Claude is extracting labor, materials, and equipment. ~5-15 seconds.'
+          ? 'AI is extracting labor, materials, and equipment. ~5-15 seconds.'
           : 'PDF, PNG, or JPEG (up to 8 MB). Or click to pick a file.'}
       </div>
       {error && (
