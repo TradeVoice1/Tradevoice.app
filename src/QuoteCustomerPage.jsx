@@ -92,7 +92,7 @@ export function QuoteCustomerPage({ token }) {
   if (loading) {
     return (
       <div style={{ minHeight: '100dvh', background: C.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
-        <div style={{ fontSize: 14, color: C.muted, fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase' }}>Loading…</div>
+        <div style={{ fontSize: 16, color: C.muted, fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase' }}>Loading…</div>
       </div>
     );
   }
@@ -100,8 +100,8 @@ export function QuoteCustomerPage({ token }) {
     return (
       <div style={{ minHeight: '100dvh', background: C.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, fontFamily: 'system-ui, -apple-system, sans-serif' }}>
         <div style={{ background: C.surface, border: `1px solid ${C.border2}`, borderRadius: 12, padding: 28, maxWidth: 460, textAlign: 'center' }}>
-          <div style={{ fontSize: 18, fontWeight: 800, color: C.text, marginBottom: 8 }}>Quote not found</div>
-          <div style={{ fontSize: 14, color: C.muted, lineHeight: 1.6 }}>{error || 'This quote is no longer available.'}</div>
+          <div style={{ fontSize: 20, fontWeight: 800, color: C.text, marginBottom: 8 }}>Quote not found</div>
+          <div style={{ fontSize: 16, color: C.muted, lineHeight: 1.6 }}>{error || 'This quote is no longer available.'}</div>
         </div>
       </div>
     );
@@ -146,27 +146,27 @@ export function QuoteCustomerPage({ token }) {
           <div style={{ background: `linear-gradient(135deg, ${accent} 0%, ${accent}dd 100%)`, color: '#fff', padding: '28px 32px' }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
               <div>
-                <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', opacity: 0.85 }}>Quote</div>
-                <div style={{ fontFamily: '"Playfair Display", Georgia, serif', fontSize: 28, fontWeight: 900, marginTop: 4 }}>{q.number}</div>
-                <div style={{ fontSize: 14, opacity: 0.9, marginTop: 6 }}>{q.title || 'Project quote'}</div>
+                <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', opacity: 0.85 }}>Quote</div>
+                <div style={{ fontFamily: '"Playfair Display", Georgia, serif', fontSize: 30, fontWeight: 900, marginTop: 4 }}>{q.number}</div>
+                <div style={{ fontSize: 16, opacity: 0.9, marginTop: 6 }}>{q.title || 'Project quote'}</div>
               </div>
               <div style={{ textAlign: 'right' }}>
                 {profile?.logoUrl && (
                   <img src={profile.logoUrl} alt={profile?.company || profile?.name || ''} style={{ maxHeight: 56, maxWidth: 180, objectFit: 'contain', marginBottom: 8 }} />
                 )}
-                <div style={{ fontSize: 16, fontWeight: 800 }}>{profile?.company || profile?.name || 'Contractor'}</div>
-                {profile?.phone && <div style={{ fontSize: 13, opacity: 0.85, marginTop: 2 }}>{profile.phone}</div>}
-                {profile?.license && <div style={{ fontSize: 12, opacity: 0.75, marginTop: 2 }}>License {profile.license}</div>}
+                <div style={{ fontSize: 18, fontWeight: 800 }}>{profile?.company || profile?.name || 'Contractor'}</div>
+                {profile?.phone && <div style={{ fontSize: 15, opacity: 0.85, marginTop: 2 }}>{profile.phone}</div>}
+                {profile?.license && <div style={{ fontSize: 14, opacity: 0.75, marginTop: 2 }}>License {profile.license}</div>}
               </div>
             </div>
           </div>
 
           {/* Status banner */}
           <div style={{ padding: '14px 32px', background: statusBg, borderBottom: `1px solid ${C.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-            <div style={{ fontSize: 13, fontWeight: 800, color: statusFg, letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+            <div style={{ fontSize: 15, fontWeight: 800, color: statusFg, letterSpacing: '0.05em', textTransform: 'uppercase' }}>
               {statusLabel}
             </div>
-            <div style={{ fontSize: 12, color: C.muted, fontWeight: 600 }}>
+            <div style={{ fontSize: 14, color: C.muted, fontWeight: 600 }}>
               {q.expiresAt && !isAccepted && !isDeclined && !isInvoiced && (
                 <>Valid until {q.expiresAt}</>
               )}
@@ -175,13 +175,13 @@ export function QuoteCustomerPage({ token }) {
 
           {/* Big total */}
           <div style={{ padding: '28px 32px', textAlign: 'center', borderBottom: `1px solid ${C.border}` }}>
-            <div style={{ fontSize: 11, fontWeight: 800, color: C.muted, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 6 }}>Quote Total</div>
-            <div style={{ fontFamily: '"Playfair Display", Georgia, serif', fontSize: 44, fontWeight: 900, color: accent, lineHeight: 1, fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.02em' }}>
+            <div style={{ fontSize: 13, fontWeight: 800, color: C.muted, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 6 }}>Quote Total</div>
+            <div style={{ fontFamily: '"Playfair Display", Georgia, serif', fontSize: 46, fontWeight: 900, color: accent, lineHeight: 1, fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.02em' }}>
               {fmt(totals.total)}
             </div>
             {q.scope && (
-              <div style={{ marginTop: 18, fontSize: 14, color: C.muted, lineHeight: 1.65, textAlign: 'left', maxWidth: 580, marginLeft: 'auto', marginRight: 'auto' }}>
-                <div style={{ fontSize: 11, fontWeight: 800, color: C.dim, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 6, textAlign: 'left' }}>Scope of work</div>
+              <div style={{ marginTop: 18, fontSize: 16, color: C.muted, lineHeight: 1.65, textAlign: 'left', maxWidth: 580, marginLeft: 'auto', marginRight: 'auto' }}>
+                <div style={{ fontSize: 13, fontWeight: 800, color: C.dim, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 6, textAlign: 'left' }}>Scope of work</div>
                 {q.scope}
               </div>
             )}
@@ -220,15 +220,15 @@ export function QuoteCustomerPage({ token }) {
             {totals.mkAmt > 0 && <Totline label={`Markup ${q.markup}%`} value={fmt(totals.mkAmt)} />}
             {totals.txAmt > 0 && <Totline label={`Tax ${q.tax}%`} value={fmt(totals.txAmt)} />}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, marginTop: 8, borderTop: `1.5px solid ${C.border}` }}>
-              <div style={{ fontSize: 16, fontWeight: 800, color: C.text }}>Total</div>
-              <div style={{ fontSize: 22, fontWeight: 900, color: accent, fontFamily: '"Playfair Display", Georgia, serif', fontVariantNumeric: 'tabular-nums' }}>{fmt(totals.total)}</div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: C.text }}>Total</div>
+              <div style={{ fontSize: 24, fontWeight: 900, color: accent, fontFamily: '"Playfair Display", Georgia, serif', fontVariantNumeric: 'tabular-nums' }}>{fmt(totals.total)}</div>
             </div>
           </div>
 
           {/* Accept block */}
           {canAccept && (
             <div style={{ padding: '22px 32px', borderTop: `1.5px solid ${C.border}` }}>
-              <div style={{ fontSize: 11, fontWeight: 800, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 10 }}>Ready to move forward?</div>
+              <div style={{ fontSize: 13, fontWeight: 800, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 10 }}>Ready to move forward?</div>
               <button
                 onClick={handleAccept}
                 disabled={accepting}
@@ -237,7 +237,7 @@ export function QuoteCustomerPage({ token }) {
                   background: accent, color: '#fff',
                   border: 'none', borderRadius: 10,
                   padding: '16px',
-                  fontSize: 17, fontWeight: 800, letterSpacing: '0.02em',
+                  fontSize: 19, fontWeight: 800, letterSpacing: '0.02em',
                   cursor: accepting ? 'wait' : 'pointer',
                   opacity: accepting ? 0.6 : 1,
                   boxShadow: `0 2px 8px ${accent}55`,
@@ -245,12 +245,12 @@ export function QuoteCustomerPage({ token }) {
               >
                 {accepting ? 'Accepting…' : `Accept Quote — ${fmt(totals.total)}`}
               </button>
-              <div style={{ fontSize: 12, color: C.dim, marginTop: 10, textAlign: 'center', lineHeight: 1.5 }}>
+              <div style={{ fontSize: 14, color: C.dim, marginTop: 10, textAlign: 'center', lineHeight: 1.5 }}>
                 Tapping Accept tells {profile?.company || profile?.name || 'your contractor'} you'd like to move forward.
                 {profile?.phone && <> Questions? Call <strong style={{ color: C.muted }}>{profile.phone}</strong>.</>}
               </div>
               {acceptError && (
-                <div style={{ marginTop: 10, padding: '10px 14px', background: '#fef2f2', border: `1px solid ${C.error}55`, borderRadius: 6, fontSize: 13, color: C.error }}>
+                <div style={{ marginTop: 10, padding: '10px 14px', background: '#fef2f2', border: `1px solid ${C.error}55`, borderRadius: 6, fontSize: 15, color: C.error }}>
                   {acceptError}
                 </div>
               )}
@@ -260,8 +260,8 @@ export function QuoteCustomerPage({ token }) {
           {/* Already-accepted confirmation */}
           {isAccepted && (
             <div style={{ padding: '22px 32px', borderTop: `1.5px solid ${C.border}`, background: '#f0fdf4' }}>
-              <div style={{ fontSize: 14, fontWeight: 800, color: C.success, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Quote Accepted</div>
-              <div style={{ fontSize: 14, color: C.muted, lineHeight: 1.6, marginTop: 6 }}>
+              <div style={{ fontSize: 16, fontWeight: 800, color: C.success, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Quote Accepted</div>
+              <div style={{ fontSize: 16, color: C.muted, lineHeight: 1.6, marginTop: 6 }}>
                 Thanks — {profile?.company || profile?.name || 'your contractor'} will reach out to schedule next steps.
               </div>
             </div>
@@ -269,10 +269,10 @@ export function QuoteCustomerPage({ token }) {
 
           {/* Footer */}
           <div style={{ padding: '12px 32px', background: '#f4f4f4', borderTop: '1px solid #e8e8e8', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{ fontSize: 11, color: '#bbb', fontStyle: 'italic' }}>{q.number} · {q.createdAt}</div>
+            <div style={{ fontSize: 13, color: '#bbb', fontStyle: 'italic' }}>{q.number} · {q.createdAt}</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-              <span style={{ fontSize: 10, color: '#ccc', textTransform: 'uppercase', letterSpacing: '0.07em', fontWeight: 600 }}>Powered by</span>
-              <span style={{ fontSize: 12, fontWeight: 900, letterSpacing: '0.04em', lineHeight: 1 }}>
+              <span style={{ fontSize: 12, color: '#ccc', textTransform: 'uppercase', letterSpacing: '0.07em', fontWeight: 600 }}>Powered by</span>
+              <span style={{ fontSize: 14, fontWeight: 900, letterSpacing: '0.04em', lineHeight: 1 }}>
                 <span style={{ color: C.green }}>TRADE</span><span style={{ color: '#bbb' }}>VOICE</span>
               </span>
             </div>
@@ -287,14 +287,14 @@ export function QuoteCustomerPage({ token }) {
 function Section({ title, children }) {
   return (
     <div style={{ padding: '16px 32px', borderBottom: `1px solid ${C.border}` }}>
-      <div style={{ fontSize: 11, fontWeight: 800, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 10 }}>{title}</div>
+      <div style={{ fontSize: 13, fontWeight: 800, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 10 }}>{title}</div>
       <div>{children}</div>
     </div>
   );
 }
 function Row({ desc, qty, rate, total }) {
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 70px 90px 90px', gap: 12, padding: '8px 0', fontSize: 13, alignItems: 'center', color: C.text }}>
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 70px 90px 90px', gap: 12, padding: '8px 0', fontSize: 15, alignItems: 'center', color: C.text }}>
       <div style={{ fontWeight: 600 }}>{desc}</div>
       <div style={{ color: C.muted, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{qty}</div>
       <div style={{ color: C.muted, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{rate}</div>
@@ -304,7 +304,7 @@ function Row({ desc, qty, rate, total }) {
 }
 function Totline({ label, value }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: 13, color: C.muted }}>
+    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: 15, color: C.muted }}>
       <span>{label}</span>
       <span style={{ fontVariantNumeric: 'tabular-nums' }}>{value}</span>
     </div>

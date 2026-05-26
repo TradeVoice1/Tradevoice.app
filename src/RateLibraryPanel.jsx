@@ -88,14 +88,14 @@ function ImportPreviewModal({ ownerId, parsed, onClose, onImported }) {
       padding: '11px 18px', borderRadius: 8, border: primary ? 'none' : `1px solid ${C.border}`,
       background: primary ? C.green : '#fff',
       color: primary ? '#fff' : C.muted,
-      fontSize: 14, fontWeight: 600,
+      fontSize: 16, fontWeight: 600,
       cursor: disabled ? 'not-allowed' : 'pointer',
       opacity: disabled ? 0.5 : 1,
       minHeight: 44,
     }),
-    th: { padding: '8px 6px', fontSize: 11, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: C.muted, textAlign: 'left', background: '#fafafa', borderBottom: `1px solid ${C.border}`, whiteSpace: 'nowrap' },
-    td: { padding: '6px', fontSize: 14, borderBottom: '1px solid #f3f3f3', verticalAlign: 'top' },
-    input: { width: '100%', padding: '7px 8px', fontSize: 14, border: `1px solid ${C.border}`, borderRadius: 5, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' },
+    th: { padding: '8px 6px', fontSize: 13, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: C.muted, textAlign: 'left', background: '#fafafa', borderBottom: `1px solid ${C.border}`, whiteSpace: 'nowrap' },
+    td: { padding: '6px', fontSize: 16, borderBottom: '1px solid #f3f3f3', verticalAlign: 'top' },
+    input: { width: '100%', padding: '7px 8px', fontSize: 16, border: `1px solid ${C.border}`, borderRadius: 5, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' },
   };
 
   const renderRows = () => KIND_ORDER.map(kind => {
@@ -104,7 +104,7 @@ function ImportPreviewModal({ ownerId, parsed, onClose, onImported }) {
     return (
       <React.Fragment key={kind}>
         <tr>
-          <td colSpan={6} style={{ padding: '12px 6px 4px', fontSize: 12, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.green, background: C.greenLo }}>
+          <td colSpan={6} style={{ padding: '12px 6px 4px', fontSize: 14, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.green, background: C.greenLo }}>
             {KIND_LABEL[kind]} — {group.length}
           </td>
         </tr>
@@ -137,28 +137,28 @@ function ImportPreviewModal({ ownerId, parsed, onClose, onImported }) {
       <div style={s.modal} onClick={e => e.stopPropagation()}>
         <div style={s.header}>
           <div>
-            <div style={{ fontSize: 17, fontWeight: 700, color: '#fff' }}>Review extracted items</div>
-            <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.85)', marginTop: 2 }}>
+            <div style={{ fontSize: 19, fontWeight: 700, color: '#fff' }}>Review extracted items</div>
+            <div style={{ fontSize: 15, color: 'rgba(255,255,255,0.85)', marginTop: 2 }}>
               {parsed.counts.labor} labor · {parsed.counts.materials} material · {parsed.counts.equipment} equipment
               {parsed.tradeHint ? ` · trade hint: ${parsed.tradeHint}` : ''}
             </div>
           </div>
-          <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', width: 32, height: 32, borderRadius: '50%', cursor: 'pointer', fontSize: 18 }}>×</button>
+          <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', width: 32, height: 32, borderRadius: '50%', cursor: 'pointer', fontSize: 20 }}>×</button>
         </div>
 
         <div style={s.body}>
           {parsed.notes && (
-            <div style={{ marginBottom: 14, padding: '10px 14px', background: C.warnLo, border: `1px solid ${C.warn}33`, borderRadius: 8, fontSize: 13, color: C.warn }}>
+            <div style={{ marginBottom: 14, padding: '10px 14px', background: C.warnLo, border: `1px solid ${C.warn}33`, borderRadius: 8, fontSize: 15, color: C.warn }}>
               <strong>Parser notes:</strong> {parsed.notes}
             </div>
           )}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-            <div style={{ fontSize: 14, color: C.muted }}>
+            <div style={{ fontSize: 16, color: C.muted }}>
               <strong>{pickedCount}</strong> of {items.length} selected. Uncheck anything that looks wrong; edit any field inline.
             </div>
             <div style={{ display: 'flex', gap: 8 }}>
-              <button onClick={() => setAll(true)}  style={{ background: 'none', border: 'none', color: C.green, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Select all</button>
-              <button onClick={() => setAll(false)} style={{ background: 'none', border: 'none', color: C.muted, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Select none</button>
+              <button onClick={() => setAll(true)}  style={{ background: 'none', border: 'none', color: C.green, fontSize: 15, fontWeight: 600, cursor: 'pointer' }}>Select all</button>
+              <button onClick={() => setAll(false)} style={{ background: 'none', border: 'none', color: C.muted, fontSize: 15, fontWeight: 600, cursor: 'pointer' }}>Select none</button>
             </div>
           </div>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -173,7 +173,7 @@ function ImportPreviewModal({ ownerId, parsed, onClose, onImported }) {
             <tbody>{renderRows()}</tbody>
           </table>
           {error && (
-            <div style={{ marginTop: 14, padding: '10px 14px', background: C.errorLo, border: `1px solid ${C.error}33`, borderRadius: 8, fontSize: 13, color: C.errorBold }}>
+            <div style={{ marginTop: 14, padding: '10px 14px', background: C.errorLo, border: `1px solid ${C.error}33`, borderRadius: 8, fontSize: 15, color: C.errorBold }}>
               {error}
             </div>
           )}
@@ -230,17 +230,17 @@ function DropZone({ onFile, parsing, error }) {
         disabled={parsing}
         style={{ display: 'none' }}
       />
-      <div style={{ fontSize: 40, marginBottom: 8 }}>📄</div>
-      <div style={{ fontSize: 17, fontWeight: 700, color: C.text, marginBottom: 4 }}>
+      <div style={{ fontSize: 42, marginBottom: 8 }}>📄</div>
+      <div style={{ fontSize: 19, fontWeight: 700, color: C.text, marginBottom: 4 }}>
         {parsing ? 'Reading your rate sheet…' : 'Drop your rate sheet here'}
       </div>
-      <div style={{ fontSize: 13, color: C.muted, lineHeight: 1.5 }}>
+      <div style={{ fontSize: 15, color: C.muted, lineHeight: 1.5 }}>
         {parsing
           ? 'Claude is extracting labor, materials, and equipment. ~5-15 seconds.'
           : 'PDF, PNG, or JPEG (up to 8 MB). Or click to pick a file.'}
       </div>
       {error && (
-        <div style={{ marginTop: 14, padding: '10px 14px', background: C.errorLo, border: `1px solid ${C.error}33`, borderRadius: 8, fontSize: 13, color: C.errorBold, textAlign: 'left' }}>
+        <div style={{ marginTop: 14, padding: '10px 14px', background: C.errorLo, border: `1px solid ${C.error}33`, borderRadius: 8, fontSize: 15, color: C.errorBold, textAlign: 'left' }}>
           {error}
         </div>
       )}
@@ -317,12 +317,12 @@ export default function RateLibraryPanel({ user }) {
 
   return (
     <div style={{ marginBottom: 28 }}>
-      <div style={{ fontSize: 15, fontWeight: 800, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12, fontFamily: "'Inter', sans-serif" }}>
+      <div style={{ fontSize: 17, fontWeight: 800, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12, fontFamily: "'Inter', sans-serif" }}>
         Rate Library
       </div>
 
       <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 4, padding: '18px 22px', marginBottom: 14 }}>
-        <div style={{ fontSize: 14, color: C.muted, lineHeight: 1.6, marginBottom: 14 }}>
+        <div style={{ fontSize: 16, color: C.muted, lineHeight: 1.6, marginBottom: 14 }}>
           Drop a PDF or photo of your rate sheet — Tradevoice reads it with AI and drops every labor, material, and equipment item into the right place. These items show up in the quote / invoice editor's <strong>Quick Add</strong> menu so you can build line items with one click.
         </div>
 
@@ -332,7 +332,7 @@ export default function RateLibraryPanel({ user }) {
       {/* Library list */}
       <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 4, overflow: 'hidden' }}>
         <div style={{ padding: '14px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${C.border}`, flexWrap: 'wrap', gap: 12 }}>
-          <div style={{ fontSize: 15, fontWeight: 700, color: C.text }}>
+          <div style={{ fontSize: 17, fontWeight: 700, color: C.text }}>
             {counts.all} item{counts.all === 1 ? '' : 's'} in your library
           </div>
           <div style={{ display: 'flex', gap: 6 }}>
@@ -343,7 +343,7 @@ export default function RateLibraryPanel({ user }) {
               { id: 'equipment', label: 'Equipment', n: counts.equipment },
             ].map(f => (
               <button key={f.id} onClick={() => setFilter(f.id)} style={{
-                padding: '7px 12px', borderRadius: 6, fontSize: 13, fontWeight: 600,
+                padding: '7px 12px', borderRadius: 6, fontSize: 15, fontWeight: 600,
                 background: filter === f.id ? C.green : '#fff',
                 color:      filter === f.id ? '#fff'    : C.muted,
                 border: filter === f.id ? 'none' : `1px solid ${C.border}`,
@@ -356,10 +356,10 @@ export default function RateLibraryPanel({ user }) {
         </div>
 
         {loading && (
-          <div style={{ padding: 24, textAlign: 'center', color: C.dim, fontSize: 14 }}>Loading library…</div>
+          <div style={{ padding: 24, textAlign: 'center', color: C.dim, fontSize: 16 }}>Loading library…</div>
         )}
         {!loading && counts.all === 0 && (
-          <div style={{ padding: '36px 24px', textAlign: 'center', color: C.muted, fontSize: 14, lineHeight: 1.6 }}>
+          <div style={{ padding: '36px 24px', textAlign: 'center', color: C.muted, fontSize: 16, lineHeight: 1.6 }}>
             Your library is empty. Drop a rate sheet above to populate it — or add items one at a time from the Quick Add menu in the quote / invoice editor.
           </div>
         )}
@@ -367,37 +367,37 @@ export default function RateLibraryPanel({ user }) {
           <div>
             {KIND_ORDER.filter(k => grouped[k].length > 0).map(kind => (
               <div key={kind}>
-                <div style={{ padding: '10px 18px 6px', fontSize: 11, fontWeight: 900, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.green, background: C.greenLo }}>
+                <div style={{ padding: '10px 18px 6px', fontSize: 13, fontWeight: 900, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.green, background: C.greenLo }}>
                   {KIND_LABEL[kind]}
                 </div>
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                   <thead>
                     <tr>
-                      <th style={{ padding: '8px 18px', textAlign: 'left',  fontSize: 11, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: C.muted, borderBottom: `1px solid ${C.border}` }}>Description</th>
-                      <th style={{ padding: '8px 12px', textAlign: 'left',  fontSize: 11, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: C.muted, borderBottom: `1px solid ${C.border}`, width: 100 }}>Unit</th>
-                      <th style={{ padding: '8px 12px', textAlign: 'right', fontSize: 11, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: C.muted, borderBottom: `1px solid ${C.border}`, width: 110 }}>{kind === 'material' ? 'Cost' : 'Rate'}</th>
-                      <th style={{ padding: '8px 18px', textAlign: 'right', fontSize: 11, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: C.muted, borderBottom: `1px solid ${C.border}`, width: 90 }} />
+                      <th style={{ padding: '8px 18px', textAlign: 'left',  fontSize: 13, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: C.muted, borderBottom: `1px solid ${C.border}` }}>Description</th>
+                      <th style={{ padding: '8px 12px', textAlign: 'left',  fontSize: 13, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: C.muted, borderBottom: `1px solid ${C.border}`, width: 100 }}>Unit</th>
+                      <th style={{ padding: '8px 12px', textAlign: 'right', fontSize: 13, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: C.muted, borderBottom: `1px solid ${C.border}`, width: 110 }}>{kind === 'material' ? 'Cost' : 'Rate'}</th>
+                      <th style={{ padding: '8px 18px', textAlign: 'right', fontSize: 13, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: C.muted, borderBottom: `1px solid ${C.border}`, width: 90 }} />
                     </tr>
                   </thead>
                   <tbody>
                     {grouped[kind].map(it => (
                       <tr key={it.id}>
-                        <td style={{ padding: '10px 18px', fontSize: 14, color: C.text, borderBottom: '1px solid #f6f6f6' }}>
+                        <td style={{ padding: '10px 18px', fontSize: 16, color: C.text, borderBottom: '1px solid #f6f6f6' }}>
                           {it.description}
                           {it.source === 'pdf_import' && (
-                            <span style={{ marginLeft: 8, fontSize: 11, color: C.dim, fontStyle: 'italic' }}>
+                            <span style={{ marginLeft: 8, fontSize: 13, color: C.dim, fontStyle: 'italic' }}>
                               from {it.sourceRef || 'rate sheet'}
                             </span>
                           )}
                         </td>
-                        <td style={{ padding: '10px 12px', fontSize: 14, color: C.muted, borderBottom: '1px solid #f6f6f6' }}>{it.unit || '—'}</td>
-                        <td style={{ padding: '10px 12px', fontSize: 14, color: C.text, fontWeight: 600, textAlign: 'right', borderBottom: '1px solid #f6f6f6', fontVariantNumeric: 'tabular-nums' }}>
+                        <td style={{ padding: '10px 12px', fontSize: 16, color: C.muted, borderBottom: '1px solid #f6f6f6' }}>{it.unit || '—'}</td>
+                        <td style={{ padding: '10px 12px', fontSize: 16, color: C.text, fontWeight: 600, textAlign: 'right', borderBottom: '1px solid #f6f6f6', fontVariantNumeric: 'tabular-nums' }}>
                           {kind === 'material' ? fmtMoney(it.cost) : fmtMoney(it.rate)}
                         </td>
                         <td style={{ padding: '10px 18px', textAlign: 'right', borderBottom: '1px solid #f6f6f6' }}>
                           <button onClick={() => handleDelete(it.id)} style={{
                             background: 'transparent', border: `1px solid ${C.error}33`, color: C.error,
-                            fontSize: 12, fontWeight: 600, padding: '5px 10px', borderRadius: 5, cursor: 'pointer',
+                            fontSize: 14, fontWeight: 600, padding: '5px 10px', borderRadius: 5, cursor: 'pointer',
                           }}>Delete</button>
                         </td>
                       </tr>

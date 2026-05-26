@@ -48,21 +48,21 @@ function CustomerSignBlock({ token, invoice, onSigned, accent }) {
 
   return (
     <div style={{ padding: '20px 32px', borderTop: `1.5px solid ${C.border}`, background: '#fff' }}>
-      <div style={{ fontSize: 12, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#aaa', marginBottom: 10 }}>
+      <div style={{ fontSize: 14, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#aaa', marginBottom: 10 }}>
         Acknowledge Receipt
       </div>
       {signedDisplayAt ? (
         <div style={{ padding: '14px 16px', background: C.greenLo, border: `1px solid ${C.green}33`, borderRadius: 8 }}>
-          <div style={{ fontSize: 14, color: C.green, fontWeight: 700, marginBottom: 4 }}>
+          <div style={{ fontSize: 16, color: C.green, fontWeight: 700, marginBottom: 4 }}>
             ✓ Signed by {invoice.customerSignedName || name}
           </div>
-          <div style={{ fontSize: 12, color: C.muted }}>
+          <div style={{ fontSize: 14, color: C.muted }}>
             {new Date(signedDisplayAt).toLocaleString()}
           </div>
         </div>
       ) : (
         <>
-          <div style={{ fontSize: 14, color: '#555', lineHeight: 1.6, marginBottom: 12 }}>
+          <div style={{ fontSize: 16, color: '#555', lineHeight: 1.6, marginBottom: 12 }}>
             Confirm that the work described above was completed. This sign-off doesn't replace payment — it documents acceptance of the work for both parties.
           </div>
           <input
@@ -71,12 +71,12 @@ function CustomerSignBlock({ token, invoice, onSigned, accent }) {
             value={name}
             onChange={e => setName(e.target.value)}
             style={{
-              width: '100%', padding: '12px 14px', fontSize: 16, minHeight: 44,
+              width: '100%', padding: '12px 14px', fontSize: 18, minHeight: 44,
               border: `1px solid ${C.border2}`, borderRadius: 8, outline: 'none',
               fontFamily: 'inherit', boxSizing: 'border-box', marginBottom: 10,
             }}
           />
-          <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer', fontSize: 14, color: '#555', lineHeight: 1.5 }}>
+          <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer', fontSize: 16, color: '#555', lineHeight: 1.5 }}>
             <input
               type="checkbox"
               checked={agreed}
@@ -86,7 +86,7 @@ function CustomerSignBlock({ token, invoice, onSigned, accent }) {
             <span>I confirm the work described on this invoice was completed and acknowledge receipt.</span>
           </label>
           {error && (
-            <div style={{ marginTop: 10, padding: '8px 12px', background: C.errorLo, border: `1px solid ${C.error}33`, borderRadius: 6, fontSize: 13, color: C.errorBold }}>
+            <div style={{ marginTop: 10, padding: '8px 12px', background: C.errorLo, border: `1px solid ${C.error}33`, borderRadius: 6, fontSize: 15, color: C.errorBold }}>
               {error}
             </div>
           )}
@@ -96,7 +96,7 @@ function CustomerSignBlock({ token, invoice, onSigned, accent }) {
             style={{
               marginTop: 12, padding: '12px 22px', minHeight: 44,
               background: accent || C.green, color: '#fff', border: 'none',
-              borderRadius: 8, fontSize: 15, fontWeight: 700,
+              borderRadius: 8, fontSize: 17, fontWeight: 700,
               cursor: busy ? 'wait' : 'pointer', opacity: busy ? 0.5 : 1,
               fontFamily: 'inherit',
             }}
@@ -173,7 +173,7 @@ export function InvoicePaymentPage({ token }) {
   if (loading) {
     return (
       <div style={{ minHeight: '100dvh', background: C.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Inter', sans-serif" }}>
-        <div style={{ fontSize: 14, color: C.muted, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase' }}>Loading invoice…</div>
+        <div style={{ fontSize: 16, color: C.muted, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase' }}>Loading invoice…</div>
       </div>
     );
   }
@@ -182,8 +182,8 @@ export function InvoicePaymentPage({ token }) {
     return (
       <div style={{ minHeight: '100dvh', background: C.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, fontFamily: "'Inter', sans-serif" }}>
         <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: '32px 28px', maxWidth: 460, textAlign: 'center', boxShadow: '0 4px 24px rgba(0,0,0,0.06)' }}>
-          <div style={{ fontSize: 22, fontWeight: 800, color: C.text, marginBottom: 8 }}>Invoice not found</div>
-          <div style={{ fontSize: 14, color: C.muted, lineHeight: 1.6 }}>{error || "We couldn't find an invoice with that link."}</div>
+          <div style={{ fontSize: 24, fontWeight: 800, color: C.text, marginBottom: 8 }}>Invoice not found</div>
+          <div style={{ fontSize: 16, color: C.muted, lineHeight: 1.6 }}>{error || "We couldn't find an invoice with that link."}</div>
         </div>
       </div>
     );
@@ -200,12 +200,12 @@ export function InvoicePaymentPage({ token }) {
       <div style={{ maxWidth: 760, margin: '0 auto' }}>
         {/* Top status banner */}
         {isVoid && (
-          <div style={{ background: C.errorLo, border: `1px solid ${C.error}33`, color: C.errorBold, padding: '14px 18px', borderRadius: 10, marginBottom: 16, fontSize: 15, fontWeight: 600 }}>
+          <div style={{ background: C.errorLo, border: `1px solid ${C.error}33`, color: C.errorBold, padding: '14px 18px', borderRadius: 10, marginBottom: 16, fontSize: 17, fontWeight: 600 }}>
             This invoice has been voided.
           </div>
         )}
         {isPaid && !isVoid && (
-          <div style={{ background: '#f0fdf4', border: `1px solid ${C.success}33`, color: C.success, padding: '14px 18px', borderRadius: 10, marginBottom: 16, fontSize: 15, fontWeight: 700 }}>
+          <div style={{ background: '#f0fdf4', border: `1px solid ${C.success}33`, color: C.success, padding: '14px 18px', borderRadius: 10, marginBottom: 16, fontSize: 17, fontWeight: 700 }}>
             ✓ This invoice is paid. Thank you!
           </div>
         )}
@@ -220,23 +220,23 @@ export function InvoicePaymentPage({ token }) {
               {profile?.logoUrl ? (
                 <img src={profile.logoUrl} alt={profile.company || 'Logo'} style={{ maxHeight: 64, maxWidth: 220, objectFit: 'contain', display: 'block', marginBottom: 12 }} />
               ) : (
-                <div style={{ fontSize: 22, fontWeight: 900, color: accent, marginBottom: 6, letterSpacing: '-0.01em' }}>{profile?.company || profile?.name || 'Tradevoice'}</div>
+                <div style={{ fontSize: 24, fontWeight: 900, color: accent, marginBottom: 6, letterSpacing: '-0.01em' }}>{profile?.company || profile?.name || 'Tradevoice'}</div>
               )}
-              <div style={{ fontSize: 18, fontWeight: 700, color: '#222', marginBottom: 2 }}>{profile?.company || profile?.name || ''}</div>
-              {profile?.tagline && <div style={{ fontSize: 13, color: accent, fontWeight: 600, marginBottom: 4 }}>{profile.tagline}</div>}
-              <div style={{ fontSize: 14, color: '#777', lineHeight: 1.7 }}>
+              <div style={{ fontSize: 20, fontWeight: 700, color: '#222', marginBottom: 2 }}>{profile?.company || profile?.name || ''}</div>
+              {profile?.tagline && <div style={{ fontSize: 15, color: accent, fontWeight: 600, marginBottom: 4 }}>{profile.tagline}</div>}
+              <div style={{ fontSize: 16, color: '#777', lineHeight: 1.7 }}>
                 {profile?.phone && <div>{profile.phone}</div>}
               </div>
-              {profile?.license && <div style={{ marginTop: 6, fontSize: 13, color: '#888', fontStyle: 'italic' }}>{profile.license}</div>}
+              {profile?.license && <div style={{ marginTop: 6, fontSize: 15, color: '#888', fontStyle: 'italic' }}>{profile.license}</div>}
             </div>
             <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: 36, fontWeight: 900, color: '#111', letterSpacing: '0.04em', lineHeight: 1 }}>INVOICE</div>
-              <div style={{ fontSize: 22, fontWeight: 900, color: accent, letterSpacing: '0.08em', marginTop: 6 }}>{inv.number}</div>
+              <div style={{ fontSize: 38, fontWeight: 900, color: '#111', letterSpacing: '0.04em', lineHeight: 1 }}>INVOICE</div>
+              <div style={{ fontSize: 24, fontWeight: 900, color: accent, letterSpacing: '0.08em', marginTop: 6 }}>{inv.number}</div>
               <div style={{ marginTop: 18, display: 'inline-grid', gridTemplateColumns: 'auto auto', gap: '4px 16px', textAlign: 'right' }}>
-                <span style={{ fontSize: 12, fontWeight: 800, color: '#bbb', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Date</span>
-                <span style={{ fontSize: 14, color: '#222', fontWeight: 600 }}>{inv.createdAt || '—'}</span>
-                <span style={{ fontSize: 12, fontWeight: 800, color: '#bbb', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Due</span>
-                <span style={{ fontSize: 14, color: inv.status === 'overdue' ? C.error : '#222', fontWeight: 600 }}>{inv.dueAt || 'On receipt'}</span>
+                <span style={{ fontSize: 14, fontWeight: 800, color: '#bbb', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Date</span>
+                <span style={{ fontSize: 16, color: '#222', fontWeight: 600 }}>{inv.createdAt || '—'}</span>
+                <span style={{ fontSize: 14, fontWeight: 800, color: '#bbb', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Due</span>
+                <span style={{ fontSize: 16, color: inv.status === 'overdue' ? C.error : '#222', fontWeight: 600 }}>{inv.dueAt || 'On receipt'}</span>
               </div>
             </div>
           </div>
@@ -244,18 +244,18 @@ export function InvoicePaymentPage({ token }) {
           {/* Bill To + Job */}
           <div style={{ padding: '18px 32px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, background: '#f9f9f9', borderBottom: `1.5px solid ${C.border}` }}>
             <div>
-              <div style={{ fontSize: 12, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#bbb', marginBottom: 6 }}>Bill To</div>
-              <div style={{ fontSize: 17, fontWeight: 700, color: '#111' }}>{inv.clientName || '—'}</div>
-              {inv.clientAddress && <div style={{ fontSize: 14, color: '#777', marginTop: 2, lineHeight: 1.5 }}>{inv.clientAddress}</div>}
-              {inv.clientEmail && <div style={{ fontSize: 14, color: '#777' }}>{inv.clientEmail}</div>}
-              {inv.clientPhone && <div style={{ fontSize: 14, color: '#777' }}>{inv.clientPhone}</div>}
+              <div style={{ fontSize: 14, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#bbb', marginBottom: 6 }}>Bill To</div>
+              <div style={{ fontSize: 19, fontWeight: 700, color: '#111' }}>{inv.clientName || '—'}</div>
+              {inv.clientAddress && <div style={{ fontSize: 16, color: '#777', marginTop: 2, lineHeight: 1.5 }}>{inv.clientAddress}</div>}
+              {inv.clientEmail && <div style={{ fontSize: 16, color: '#777' }}>{inv.clientEmail}</div>}
+              {inv.clientPhone && <div style={{ fontSize: 16, color: '#777' }}>{inv.clientPhone}</div>}
             </div>
             <div>
-              <div style={{ fontSize: 12, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#bbb', marginBottom: 6 }}>Job</div>
-              <div style={{ fontSize: 17, fontWeight: 700, color: '#111', lineHeight: 1.4 }}>{inv.title}</div>
+              <div style={{ fontSize: 14, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#bbb', marginBottom: 6 }}>Job</div>
+              <div style={{ fontSize: 19, fontWeight: 700, color: '#111', lineHeight: 1.4 }}>{inv.title}</div>
               {inv.techName && (
-                <div style={{ marginTop: 6, fontSize: 13, color: '#666' }}>
-                  <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#bbb' }}>Performed by </span>
+                <div style={{ marginTop: 6, fontSize: 15, color: '#666' }}>
+                  <span style={{ fontSize: 13, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#bbb' }}>Performed by </span>
                   <span style={{ fontWeight: 700, color: '#222' }}>{inv.techName}</span>
                 </div>
               )}
@@ -270,7 +270,7 @@ export function InvoicePaymentPage({ token }) {
               { label: 'Equipment & Rental',   rows: inv.equipment, type: 'equipment' },
             ].filter(s => s.rows?.length > 0).map(({ label, rows, type }) => (
               <div key={label}>
-                <div style={{ padding: '14px 0 6px', fontSize: 14, fontWeight: 900, color: accent, textTransform: 'uppercase', letterSpacing: '0.1em', borderTop: '1px solid #eee' }}>{label}</div>
+                <div style={{ padding: '14px 0 6px', fontSize: 16, fontWeight: 900, color: accent, textTransform: 'uppercase', letterSpacing: '0.1em', borderTop: '1px solid #eee' }}>{label}</div>
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                   <thead>
                     <tr style={{ borderBottom: '1.5px solid #222' }}>
@@ -278,26 +278,26 @@ export function InvoicePaymentPage({ token }) {
                         ? ['Description', 'Hrs', '$/Hr', 'Amount']
                         : ['Description', 'Qty', 'Unit', 'Rate', 'Amount']
                       ).map((h, i) => (
-                        <th key={h} style={{ padding: '8px 8px', textAlign: i === 0 ? 'left' : 'right', fontSize: 12, fontWeight: 900, color: '#999', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{h}</th>
+                        <th key={h} style={{ padding: '8px 8px', textAlign: i === 0 ? 'left' : 'right', fontSize: 14, fontWeight: 900, color: '#999', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
                     {rows.map((r, i) => (
                       <tr key={r.id || i} style={{ background: i % 2 === 0 ? '#fff' : '#fafafa', borderBottom: '1px solid #f0f0f0' }}>
-                        <td style={{ padding: '11px 8px', fontSize: 15, color: '#222' }}>{r.desc}</td>
+                        <td style={{ padding: '11px 8px', fontSize: 17, color: '#222' }}>{r.desc}</td>
                         {type === 'labor' ? (
                           <>
-                            <td style={{ padding: '11px 8px', textAlign: 'right', fontSize: 15, color: '#555' }}>{r.hrs}</td>
-                            <td style={{ padding: '11px 8px', textAlign: 'right', fontSize: 15, color: '#555' }}>{fmt(r.rate)}</td>
-                            <td style={{ padding: '11px 8px', textAlign: 'right', fontSize: 15, fontWeight: 700, color: '#111' }}>{fmt((r.hrs || 0) * (r.rate || 0))}</td>
+                            <td style={{ padding: '11px 8px', textAlign: 'right', fontSize: 17, color: '#555' }}>{r.hrs}</td>
+                            <td style={{ padding: '11px 8px', textAlign: 'right', fontSize: 17, color: '#555' }}>{fmt(r.rate)}</td>
+                            <td style={{ padding: '11px 8px', textAlign: 'right', fontSize: 17, fontWeight: 700, color: '#111' }}>{fmt((r.hrs || 0) * (r.rate || 0))}</td>
                           </>
                         ) : (
                           <>
-                            <td style={{ padding: '11px 8px', textAlign: 'right', fontSize: 15, color: '#555' }}>{r.qty}</td>
-                            <td style={{ padding: '11px 8px', textAlign: 'right', fontSize: 14, color: '#aaa', fontStyle: 'italic' }}>{r.unit}</td>
-                            <td style={{ padding: '11px 8px', textAlign: 'right', fontSize: 15, color: '#555' }}>{fmt(type === 'materials' ? r.cost : r.rate)}</td>
-                            <td style={{ padding: '11px 8px', textAlign: 'right', fontSize: 15, fontWeight: 700, color: '#111' }}>
+                            <td style={{ padding: '11px 8px', textAlign: 'right', fontSize: 17, color: '#555' }}>{r.qty}</td>
+                            <td style={{ padding: '11px 8px', textAlign: 'right', fontSize: 16, color: '#aaa', fontStyle: 'italic' }}>{r.unit}</td>
+                            <td style={{ padding: '11px 8px', textAlign: 'right', fontSize: 17, color: '#555' }}>{fmt(type === 'materials' ? r.cost : r.rate)}</td>
+                            <td style={{ padding: '11px 8px', textAlign: 'right', fontSize: 17, fontWeight: 700, color: '#111' }}>
                               {fmt((r.qty || 0) * (type === 'materials' ? r.cost : r.rate || 0))}
                             </td>
                           </>
@@ -319,20 +319,20 @@ export function InvoicePaymentPage({ token }) {
                   [`Markup (${inv.markup || 0}%)`, fmt(calc.mkAmt)],
                   [`Tax (${inv.tax || 0}%)`,       fmt(calc.txAmt)],
                 ].filter(([, v]) => v !== '$0.00').map(([label, val]) => (
-                  <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 16px', fontSize: 14, color: '#777', borderBottom: '1px solid #e8e8e8' }}>
+                  <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 16px', fontSize: 16, color: '#777', borderBottom: '1px solid #e8e8e8' }}>
                     <span>{label}</span><span style={{ fontWeight: 600, color: '#444' }}>{val}</span>
                   </div>
                 ))}
                 {calc.paid > 0 && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 16px', fontSize: 14, color: C.success, borderBottom: '1px solid #e8e8e8' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 16px', fontSize: 16, color: C.success, borderBottom: '1px solid #e8e8e8' }}>
                     <span>Paid</span><span style={{ fontWeight: 700 }}>−{fmt(calc.paid)}</span>
                   </div>
                 )}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 16px', background: isPaid ? C.success : accent }}>
-                  <span style={{ fontSize: 14, fontWeight: 900, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#fff' }}>
+                  <span style={{ fontSize: 16, fontWeight: 900, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#fff' }}>
                     {isPaid ? 'Paid' : 'Total Due'}
                   </span>
-                  <span style={{ fontSize: 26, fontWeight: 900, color: '#fff', lineHeight: 1 }}>
+                  <span style={{ fontSize: 28, fontWeight: 900, color: '#fff', lineHeight: 1 }}>
                     {fmt(isPaid ? calc.total : calc.balance)}
                   </span>
                 </div>
@@ -362,7 +362,7 @@ export function InvoicePaymentPage({ token }) {
 
             if (methods.length === 0) {
               return (
-                <div style={{ padding: '20px 32px', borderTop: `1.5px solid ${C.border}`, background: '#fafafa', fontSize: 14, color: '#777', lineHeight: 1.6 }}>
+                <div style={{ padding: '20px 32px', borderTop: `1.5px solid ${C.border}`, background: '#fafafa', fontSize: 16, color: '#777', lineHeight: 1.6 }}>
                   Contact {profile?.company || profile?.name || 'your contractor'} for payment instructions.
                   {profile?.phone && <> · <strong style={{ color: '#222' }}>{profile.phone}</strong></>}
                 </div>
@@ -370,16 +370,16 @@ export function InvoicePaymentPage({ token }) {
             }
             return (
               <div style={{ padding: '20px 32px 26px', borderTop: `1.5px solid ${C.border}`, background: '#fafafa' }}>
-                <div style={{ fontSize: 12, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#aaa', marginBottom: 12 }}>How to Pay</div>
+                <div style={{ fontSize: 14, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#aaa', marginBottom: 12 }}>How to Pay</div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '10px 24px' }}>
                   {methods.map(m => (
                     <div key={m.label}>
-                      <div style={{ fontSize: 14, fontWeight: 800, color: '#333' }}>{m.label}</div>
-                      <div style={{ fontSize: 13, color: '#777', marginTop: 2, lineHeight: 1.5 }}>{m.detail}</div>
+                      <div style={{ fontSize: 16, fontWeight: 800, color: '#333' }}>{m.label}</div>
+                      <div style={{ fontSize: 15, color: '#777', marginTop: 2, lineHeight: 1.5 }}>{m.detail}</div>
                     </div>
                   ))}
                 </div>
-                <div style={{ marginTop: 12, fontSize: 12, color: '#aaa', fontStyle: 'italic' }}>
+                <div style={{ marginTop: 12, fontSize: 14, color: '#aaa', fontStyle: 'italic' }}>
                   After paying, your contractor will mark this invoice paid. Questions?
                   {profile?.phone && <> Call <strong style={{ color: '#666' }}>{profile.phone}</strong>.</>}
                 </div>
@@ -395,9 +395,9 @@ export function InvoicePaymentPage({ token }) {
             if (!links.length) return null;
             return (
               <div style={{ padding: '16px 32px', borderTop: `1.5px solid ${C.border}`, background: '#fff', display: 'flex', alignItems: 'center', gap: 18, flexWrap: 'wrap' }}>
-                <div style={{ fontSize: 12, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#aaa' }}>Follow us</div>
+                <div style={{ fontSize: 14, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#aaa' }}>Follow us</div>
                 {links.map(l => (
-                  <a key={l.platform} href={l.url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, fontWeight: 700, color: accent, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                  <a key={l.platform} href={l.url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 15, fontWeight: 700, color: accent, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 5 }}>
                     <span aria-hidden="true">{l.icon}</span>
                     <span>{l.display}</span>
                   </a>
@@ -430,8 +430,8 @@ export function InvoicePaymentPage({ token }) {
           {/* Notes */}
           {inv.notes && (
             <div style={{ padding: '16px 32px 22px', borderTop: `1.5px solid ${C.border}`, background: '#fafafa' }}>
-              <div style={{ fontSize: 12, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#aaa', marginBottom: 5 }}>Notes</div>
-              <div style={{ fontSize: 14, color: '#666', lineHeight: 1.6 }}>{inv.notes}</div>
+              <div style={{ fontSize: 14, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#aaa', marginBottom: 5 }}>Notes</div>
+              <div style={{ fontSize: 16, color: '#666', lineHeight: 1.6 }}>{inv.notes}</div>
             </div>
           )}
 
@@ -442,14 +442,14 @@ export function InvoicePaymentPage({ token }) {
             <div style={{ padding: '14px 32px', background: '#fafafa', borderTop: '1px solid #eee', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18 }}>
               {inv.lateFeeTerms && (
                 <div>
-                  <div style={{ fontSize: 11, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#aaa', marginBottom: 4 }}>Payment Terms</div>
-                  <div style={{ fontSize: 13, color: '#666', lineHeight: 1.6 }}>{inv.lateFeeTerms}</div>
+                  <div style={{ fontSize: 13, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#aaa', marginBottom: 4 }}>Payment Terms</div>
+                  <div style={{ fontSize: 15, color: '#666', lineHeight: 1.6 }}>{inv.lateFeeTerms}</div>
                 </div>
               )}
               {profile?.coiCarrier && (
                 <div>
-                  <div style={{ fontSize: 11, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#aaa', marginBottom: 4 }}>Insurance</div>
-                  <div style={{ fontSize: 13, color: '#666', lineHeight: 1.6 }}>
+                  <div style={{ fontSize: 13, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#aaa', marginBottom: 4 }}>Insurance</div>
+                  <div style={{ fontSize: 15, color: '#666', lineHeight: 1.6 }}>
                     {profile.coiCarrier}
                     {profile.coiPolicyNumber && <> · Policy {profile.coiPolicyNumber}</>}
                     {profile.coiExpiresAt && <> · Exp {profile.coiExpiresAt}</>}
@@ -461,17 +461,17 @@ export function InvoicePaymentPage({ token }) {
 
           {/* Footer — small Tradevoice branding */}
           <div style={{ padding: '12px 32px', background: '#f4f4f4', borderTop: '1px solid #e8e8e8', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{ fontSize: 11, color: '#bbb', fontStyle: 'italic' }}>{inv.number} · {inv.createdAt}</div>
+            <div style={{ fontSize: 13, color: '#bbb', fontStyle: 'italic' }}>{inv.number} · {inv.createdAt}</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-              <span style={{ fontSize: 10, color: '#ccc', textTransform: 'uppercase', letterSpacing: '0.07em', fontWeight: 600 }}>Powered by</span>
-              <span style={{ fontSize: 12, fontWeight: 900, letterSpacing: '0.04em', lineHeight: 1 }}>
+              <span style={{ fontSize: 12, color: '#ccc', textTransform: 'uppercase', letterSpacing: '0.07em', fontWeight: 600 }}>Powered by</span>
+              <span style={{ fontSize: 14, fontWeight: 900, letterSpacing: '0.04em', lineHeight: 1 }}>
                 <span style={{ color: C.green }}>TRADE</span><span style={{ color: '#bbb' }}>VOICE</span>
               </span>
             </div>
           </div>
         </div>
 
-        <div style={{ marginTop: 14, textAlign: 'center', fontSize: 12, color: C.dim }}>
+        <div style={{ marginTop: 14, textAlign: 'center', fontSize: 14, color: C.dim }}>
           This invoice was sent via <a href="https://thetradevoice.com" style={{ color: C.green, fontWeight: 700, textDecoration: 'none' }}>Tradevoice</a>
         </div>
       </div>

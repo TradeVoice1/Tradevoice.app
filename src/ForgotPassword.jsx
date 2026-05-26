@@ -33,18 +33,18 @@ export function ForgotPasswordScreen({ onBack }) {
     wrap: { minHeight: '100dvh', background: '#f7f7f5', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: "'Inter', sans-serif", padding: '24px' },
     card: { background: '#fff', borderRadius: 12, border: '1px solid #e8e8e8', padding: '40px 36px', width: '100%', maxWidth: 420 },
     logo: { textAlign: 'center', marginBottom: 28 },
-    h1: { fontSize: 22, fontWeight: 800, color: '#111', marginBottom: 8, textAlign: 'center' },
-    sub: { fontSize: 14, color: '#888', textAlign: 'center', marginBottom: 28, lineHeight: 1.6 },
-    label: { fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.1em', color: '#888', marginBottom: 6, display: 'block' },
-    input: { width: '100%', padding: '12px 14px', fontSize: 15, border: '1px solid #ddd', borderRadius: 8, outline: 'none', fontFamily: "'Inter', sans-serif", boxSizing: 'border-box', marginBottom: 16 },
-    btn: { width: '100%', padding: '14px', background: '#2d6a4f', color: '#fff', border: 'none', borderRadius: 8, fontSize: 15, fontWeight: 700, cursor: 'pointer', letterSpacing: '.04em' },
-    btnDisabled: { width: '100%', padding: '14px', background: '#a0c4b4', color: '#fff', border: 'none', borderRadius: 8, fontSize: 15, fontWeight: 700, cursor: 'not-allowed', letterSpacing: '.04em' },
-    error: { background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 8, padding: '12px 14px', fontSize: 14, color: '#b91c1c', marginBottom: 16 },
+    h1: { fontSize: 24, fontWeight: 800, color: '#111', marginBottom: 8, textAlign: 'center' },
+    sub: { fontSize: 16, color: '#888', textAlign: 'center', marginBottom: 28, lineHeight: 1.6 },
+    label: { fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.1em', color: '#888', marginBottom: 6, display: 'block' },
+    input: { width: '100%', padding: '12px 14px', fontSize: 17, border: '1px solid #ddd', borderRadius: 8, outline: 'none', fontFamily: "'Inter', sans-serif", boxSizing: 'border-box', marginBottom: 16 },
+    btn: { width: '100%', padding: '14px', background: '#2d6a4f', color: '#fff', border: 'none', borderRadius: 8, fontSize: 17, fontWeight: 700, cursor: 'pointer', letterSpacing: '.04em' },
+    btnDisabled: { width: '100%', padding: '14px', background: '#a0c4b4', color: '#fff', border: 'none', borderRadius: 8, fontSize: 17, fontWeight: 700, cursor: 'not-allowed', letterSpacing: '.04em' },
+    error: { background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 8, padding: '12px 14px', fontSize: 16, color: '#b91c1c', marginBottom: 16 },
     success: { background: '#f0f7f4', border: '1px solid #a7d9be', borderRadius: 8, padding: '20px', textAlign: 'center' },
-    successIcon: { fontSize: 32, marginBottom: 8 },
-    successTitle: { fontSize: 16, fontWeight: 700, color: '#2d6a4f', marginBottom: 6 },
-    successText: { fontSize: 14, color: '#555', lineHeight: 1.6 },
-    backLink: { display: 'block', textAlign: 'center', marginTop: 20, fontSize: 14, color: '#2d6a4f', fontWeight: 600, cursor: 'pointer', background: 'none', border: 'none' },
+    successIcon: { fontSize: 34, marginBottom: 8 },
+    successTitle: { fontSize: 18, fontWeight: 700, color: '#2d6a4f', marginBottom: 6 },
+    successText: { fontSize: 16, color: '#555', lineHeight: 1.6 },
+    backLink: { display: 'block', textAlign: 'center', marginTop: 20, fontSize: 16, color: '#2d6a4f', fontWeight: 600, cursor: 'pointer', background: 'none', border: 'none' },
   };
 
   if (status === 'sent') {
@@ -52,7 +52,7 @@ export function ForgotPasswordScreen({ onBack }) {
       <div style={s.wrap}>
         <div style={s.card}>
           <div style={s.logo}>
-            <span style={{ fontSize: 16, fontWeight: 900, color: '#1b4332', letterSpacing: '.1em' }}>TRADEVOICE</span>
+            <span style={{ fontSize: 18, fontWeight: 900, color: '#1b4332', letterSpacing: '.1em' }}>TRADEVOICE</span>
           </div>
           <div style={s.success}>
             <div style={s.successIcon}>✉️</div>
@@ -61,7 +61,7 @@ export function ForgotPasswordScreen({ onBack }) {
               We sent a password reset link to <strong>{email}</strong>. Check your inbox and follow the link to reset your password.
             </div>
           </div>
-          <div style={{ fontSize: 13, color: '#aaa', textAlign: 'center', marginTop: 16, lineHeight: 1.6 }}>
+          <div style={{ fontSize: 15, color: '#aaa', textAlign: 'center', marginTop: 16, lineHeight: 1.6 }}>
             Didn't receive it? Check your spam folder or{' '}
             <span style={{ color: '#2d6a4f', cursor: 'pointer', fontWeight: 600 }} onClick={() => setStatus('idle')}>try again</span>.
           </div>
@@ -75,7 +75,7 @@ export function ForgotPasswordScreen({ onBack }) {
     <div style={s.wrap}>
       <div style={s.card}>
         <div style={s.logo}>
-          <span style={{ fontSize: 16, fontWeight: 900, color: '#1b4332', letterSpacing: '.1em' }}>TRADEVOICE</span>
+          <span style={{ fontSize: 18, fontWeight: 900, color: '#1b4332', letterSpacing: '.1em' }}>TRADEVOICE</span>
         </div>
         <div style={s.h1}>Forgot your password?</div>
         <div style={s.sub}>Enter your email address and we'll send you a link to reset your password.</div>
@@ -146,17 +146,17 @@ export function ResetPasswordScreen({ onBack }) {
     wrap: { minHeight: '100dvh', background: '#f7f7f5', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: "'Inter', sans-serif", padding: '24px' },
     card: { background: '#fff', borderRadius: 12, border: '1px solid #e8e8e8', padding: '40px 36px', width: '100%', maxWidth: 420 },
     logo: { textAlign: 'center', marginBottom: 28 },
-    h1: { fontSize: 22, fontWeight: 800, color: '#111', marginBottom: 8, textAlign: 'center' },
-    sub: { fontSize: 14, color: '#888', textAlign: 'center', marginBottom: 28, lineHeight: 1.6 },
-    label: { fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.1em', color: '#888', marginBottom: 6, display: 'block' },
-    input: { width: '100%', padding: '12px 14px', fontSize: 15, border: '1px solid #ddd', borderRadius: 8, outline: 'none', fontFamily: "'Inter', sans-serif", boxSizing: 'border-box', marginBottom: 16 },
-    btn: { width: '100%', padding: '14px', background: '#2d6a4f', color: '#fff', border: 'none', borderRadius: 8, fontSize: 15, fontWeight: 700, cursor: 'pointer', letterSpacing: '.04em' },
-    btnDisabled: { width: '100%', padding: '14px', background: '#a0c4b4', color: '#fff', border: 'none', borderRadius: 8, fontSize: 15, fontWeight: 700, cursor: 'not-allowed', letterSpacing: '.04em' },
-    error: { background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 8, padding: '12px 14px', fontSize: 14, color: '#b91c1c', marginBottom: 16 },
+    h1: { fontSize: 24, fontWeight: 800, color: '#111', marginBottom: 8, textAlign: 'center' },
+    sub: { fontSize: 16, color: '#888', textAlign: 'center', marginBottom: 28, lineHeight: 1.6 },
+    label: { fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.1em', color: '#888', marginBottom: 6, display: 'block' },
+    input: { width: '100%', padding: '12px 14px', fontSize: 17, border: '1px solid #ddd', borderRadius: 8, outline: 'none', fontFamily: "'Inter', sans-serif", boxSizing: 'border-box', marginBottom: 16 },
+    btn: { width: '100%', padding: '14px', background: '#2d6a4f', color: '#fff', border: 'none', borderRadius: 8, fontSize: 17, fontWeight: 700, cursor: 'pointer', letterSpacing: '.04em' },
+    btnDisabled: { width: '100%', padding: '14px', background: '#a0c4b4', color: '#fff', border: 'none', borderRadius: 8, fontSize: 17, fontWeight: 700, cursor: 'not-allowed', letterSpacing: '.04em' },
+    error: { background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 8, padding: '12px 14px', fontSize: 16, color: '#b91c1c', marginBottom: 16 },
     success: { background: '#f0f7f4', border: '1px solid #a7d9be', borderRadius: 8, padding: '20px', textAlign: 'center' },
-    successTitle: { fontSize: 16, fontWeight: 700, color: '#2d6a4f', marginBottom: 6 },
-    successText: { fontSize: 14, color: '#555', lineHeight: 1.6 },
-    backLink: { display: 'block', textAlign: 'center', marginTop: 20, fontSize: 14, color: '#2d6a4f', fontWeight: 600, cursor: 'pointer', background: 'none', border: 'none' },
+    successTitle: { fontSize: 18, fontWeight: 700, color: '#2d6a4f', marginBottom: 6 },
+    successText: { fontSize: 16, color: '#555', lineHeight: 1.6 },
+    backLink: { display: 'block', textAlign: 'center', marginTop: 20, fontSize: 16, color: '#2d6a4f', fontWeight: 600, cursor: 'pointer', background: 'none', border: 'none' },
   };
 
   if (status === 'done') {
@@ -164,7 +164,7 @@ export function ResetPasswordScreen({ onBack }) {
       <div style={s.wrap}>
         <div style={s.card}>
           <div style={s.logo}>
-            <span style={{ fontSize: 16, fontWeight: 900, color: '#1b4332', letterSpacing: '.1em' }}>TRADEVOICE</span>
+            <span style={{ fontSize: 18, fontWeight: 900, color: '#1b4332', letterSpacing: '.1em' }}>TRADEVOICE</span>
           </div>
           <div style={s.success}>
             <div style={s.successTitle}>Password updated!</div>
@@ -180,7 +180,7 @@ export function ResetPasswordScreen({ onBack }) {
     <div style={s.wrap}>
       <div style={s.card}>
         <div style={s.logo}>
-          <span style={{ fontSize: 16, fontWeight: 900, color: '#1b4332', letterSpacing: '.1em' }}>TRADEVOICE</span>
+          <span style={{ fontSize: 18, fontWeight: 900, color: '#1b4332', letterSpacing: '.1em' }}>TRADEVOICE</span>
         </div>
         <div style={s.h1}>Set new password</div>
         <div style={s.sub}>Choose a strong password for your TradeVoice account.</div>

@@ -127,18 +127,18 @@ function PlanModal({ initial, clients, team, trades, onClose, onSave }) {
     modal:   { background: '#fff', borderRadius: 14, width: '100%', maxWidth: isTablet ? 520 : 640, maxHeight: '90vh', overflow: 'auto', boxShadow: '0 20px 60px rgba(15, 23, 42, 0.2)' },
     header:  { background: C.green, padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0 },
     body:    { padding: '20px 24px' },
-    label:   { fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.1em', color: C.muted, marginBottom: 6, display: 'block', marginTop: 14 },
+    label:   { fontSize: 14, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.1em', color: C.muted, marginBottom: 6, display: 'block', marginTop: 14 },
     // 16px font + 44px min height — iOS Safari otherwise zooms the page on
     // input focus, and tap targets <44pt are unreliable on touch.
-    input:   { width: '100%', padding: '12px 14px', fontSize: 16, minHeight: 44, border: `1px solid ${C.border}`, borderRadius: 8, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' },
-    select:  { width: '100%', padding: '12px 14px', fontSize: 16, minHeight: 44, border: `1px solid ${C.border}`, borderRadius: 8, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', background: '#fff' },
+    input:   { width: '100%', padding: '12px 14px', fontSize: 18, minHeight: 44, border: `1px solid ${C.border}`, borderRadius: 8, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' },
+    select:  { width: '100%', padding: '12px 14px', fontSize: 18, minHeight: 44, border: `1px solid ${C.border}`, borderRadius: 8, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', background: '#fff' },
     row2:    { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 },
     footer:  { padding: '16px 24px', borderTop: `1px solid ${C.border}`, display: 'flex', gap: 10, position: 'sticky', bottom: 0, background: '#fff' },
     btn: (primary, disabled) => ({
       flex: 1, padding: '12px', borderRadius: 8, border: primary ? 'none' : `1px solid ${C.border}`,
       background: primary ? C.green : '#fff',
       color: primary ? '#fff' : C.muted,
-      fontSize: 14, fontWeight: 600,
+      fontSize: 16, fontWeight: 600,
       cursor: disabled ? 'not-allowed' : 'pointer',
       opacity: disabled ? 0.5 : 1,
     }),
@@ -148,8 +148,8 @@ function PlanModal({ initial, clients, team, trades, onClose, onSave }) {
     <div style={s.overlay} onClick={onClose}>
       <div style={s.modal} onClick={e => e.stopPropagation()}>
         <div style={s.header}>
-          <span style={{ fontSize: 18, fontWeight: 700, color: '#fff', letterSpacing: '-0.01em' }}>{initial ? 'Edit Plan' : 'New Maintenance Plan'}</span>
-          <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', width: 28, height: 28, borderRadius: '50%', cursor: 'pointer', fontSize: 16 }}>×</button>
+          <span style={{ fontSize: 20, fontWeight: 700, color: '#fff', letterSpacing: '-0.01em' }}>{initial ? 'Edit Plan' : 'New Maintenance Plan'}</span>
+          <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', width: 28, height: 28, borderRadius: '50%', cursor: 'pointer', fontSize: 18 }}>×</button>
         </div>
 
         <div style={s.body}>
@@ -200,7 +200,7 @@ function PlanModal({ initial, clients, team, trades, onClose, onSave }) {
 
           <label style={s.label}>Start Date</label>
           <input type="date" style={s.input} value={startedAt} onChange={e => setStartedAt(e.target.value)} />
-          <div style={{ fontSize: 12, color: C.muted, marginTop: 4 }}>
+          <div style={{ fontSize: 14, color: C.muted, marginTop: 4 }}>
             First service due {formatDate(startedAt)} → recurring {frequencyLabel(frequencyMonths).toLowerCase()}
           </div>
 
@@ -212,15 +212,15 @@ function PlanModal({ initial, clients, team, trades, onClose, onSave }) {
               but bill per visit via invoices). Fill in to make it a
               recurring revenue product the customer pays monthly/yearly. */}
           <div style={{ marginTop: 22, padding: '14px 16px', background: '#f0fdf4', border: `1px solid ${C.green}33`, borderRadius: 10 }}>
-            <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.green, marginBottom: 4 }}>Service Contract Pricing (Optional)</div>
-            <div style={{ fontSize: 13, color: C.muted, lineHeight: 1.5, marginBottom: 10 }}>
+            <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.green, marginBottom: 4 }}>Service Contract Pricing (Optional)</div>
+            <div style={{ fontSize: 15, color: C.muted, lineHeight: 1.5, marginBottom: 10 }}>
               Leave blank for service-only plans (bill per visit). Fill in to make this a recurring revenue product — customers subscribe at this rate.
             </div>
             <div style={s.row2}>
               <div>
                 <label style={s.label}>Subscription Price</label>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span style={{ fontSize: 16, color: C.muted, fontWeight: 700 }}>$</span>
+                  <span style={{ fontSize: 18, color: C.muted, fontWeight: 700 }}>$</span>
                   <input
                     type="number"
                     min="0"
@@ -248,7 +248,7 @@ function PlanModal({ initial, clients, team, trades, onClose, onSave }) {
               placeholder="e.g. 2 tune-ups per year · 10% off all repairs · Priority scheduling · Free filter changes"
             />
             {billingAmount && Number(billingAmount) > 0 && (
-              <div style={{ marginTop: 10, padding: '8px 12px', background: '#fff', border: `1px solid ${C.green}44`, borderRadius: 6, fontSize: 12, color: C.muted, lineHeight: 1.5 }}>
+              <div style={{ marginTop: 10, padding: '8px 12px', background: '#fff', border: `1px solid ${C.green}44`, borderRadius: 6, fontSize: 14, color: C.muted, lineHeight: 1.5 }}>
                 <strong style={{ color: C.green }}>Recurring revenue preview:</strong>{' '}
                 10 customers × ${Number(billingAmount).toFixed(2)}/{billingInterval === 'year' ? 'yr' : 'mo'} ={' '}
                 <strong style={{ color: C.green }}>
@@ -302,26 +302,26 @@ function PlanRow({ plan, subs = [], clients = [], ownerId, expanded, onToggleExp
     }}>
       <div style={{ minWidth: 0 }}>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 4, flexWrap: 'wrap' }}>
-          <div style={{ fontSize: 16, fontWeight: 700, color: C.text, letterSpacing: '-0.01em' }}>{plan.title}</div>
+          <div style={{ fontSize: 18, fontWeight: 700, color: C.text, letterSpacing: '-0.01em' }}>{plan.title}</div>
           <span style={{
-            display: 'inline-block', fontSize: 10, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase',
+            display: 'inline-block', fontSize: 12, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase',
             padding: '3px 8px', borderRadius: 4, background: statusPill.bg, color: statusPill.fg, whiteSpace: 'nowrap',
           }}>{statusPill.label}</span>
           {/* Contract pricing badge — appears only when this plan has
               billing terms set, so service-only plans don't see clutter. */}
           {isContract && (
             <span style={{
-              display: 'inline-block', fontSize: 10, fontWeight: 800, letterSpacing: '0.06em', textTransform: 'uppercase',
+              display: 'inline-block', fontSize: 12, fontWeight: 800, letterSpacing: '0.06em', textTransform: 'uppercase',
               padding: '3px 8px', borderRadius: 4, background: C.green, color: '#fff', whiteSpace: 'nowrap',
             }}>
               ${Number(plan.billingAmount).toFixed(2)}/{plan.billingInterval === 'year' ? 'yr' : 'mo'}
             </span>
           )}
         </div>
-        <div style={{ fontSize: 13, color: C.muted, marginBottom: 2 }}>
+        <div style={{ fontSize: 15, color: C.muted, marginBottom: 2 }}>
           {plan.clientName || 'Unknown client'} · {plan.trade} · {frequencyLabel(plan.frequencyMonths)}
         </div>
-        <div style={{ fontSize: 12, color: C.dim }}>
+        <div style={{ fontSize: 14, color: C.dim }}>
           Last serviced {formatDate(plan.lastServicedAt)} · Next due {formatDate(plan.nextDueAt)}
         </div>
         {/* Subscriber stats — only on contract plans. Clicking expands the
@@ -331,7 +331,7 @@ function PlanRow({ plan, subs = [], clients = [], ownerId, expanded, onToggleExp
             onClick={() => onToggleExpanded?.(plan.id)}
             style={{
               background: 'none', border: 'none', padding: 0, marginTop: 4,
-              fontSize: 12, color: C.muted, cursor: 'pointer', textAlign: 'left',
+              fontSize: 14, color: C.muted, cursor: 'pointer', textAlign: 'left',
             }}
           >
             <strong style={{ color: C.green }}>{activeSubCount}</strong> active subscriber{activeSubCount === 1 ? '' : 's'}
@@ -348,7 +348,7 @@ function PlanRow({ plan, subs = [], clients = [], ownerId, expanded, onToggleExp
         {isContract && (
           <button onClick={() => onEnroll?.(plan)} style={{
             padding: '11px 16px', minHeight: 44, borderRadius: 6, border: 'none',
-            background: C.green, color: '#fff', fontSize: 14, fontWeight: 600,
+            background: C.green, color: '#fff', fontSize: 16, fontWeight: 600,
             cursor: 'pointer', whiteSpace: 'nowrap',
           }}>Enroll Customer</button>
         )}
@@ -357,26 +357,26 @@ function PlanRow({ plan, subs = [], clients = [], ownerId, expanded, onToggleExp
           border: isContract ? `1px solid ${C.border}` : 'none',
           background: isContract ? '#fff' : C.green,
           color:      isContract ? C.muted : '#fff',
-          fontSize: 14, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
+          fontSize: 16, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
         }}>Schedule Job</button>
         <button onClick={() => onEdit(plan)} style={{
           padding: '11px 14px', minHeight: 44, borderRadius: 6, border: `1px solid ${C.border}`, background: '#fff', color: C.muted,
-          fontSize: 14, fontWeight: 600, cursor: 'pointer',
+          fontSize: 16, fontWeight: 600, cursor: 'pointer',
         }}>Edit</button>
         <button onClick={() => onTogglePause(plan)} style={{
           padding: '11px 14px', minHeight: 44, borderRadius: 6, border: `1px solid ${C.border}`, background: '#fff', color: C.muted,
-          fontSize: 14, fontWeight: 600, cursor: 'pointer',
+          fontSize: 16, fontWeight: 600, cursor: 'pointer',
         }}>{plan.active ? 'Pause' : 'Resume'}</button>
         <button onClick={() => onDelete(plan)} style={{
           padding: '11px 14px', minHeight: 44, borderRadius: 6, border: `1px solid ${C.error}33`, background: '#fff', color: C.error,
-          fontSize: 14, fontWeight: 600, cursor: 'pointer',
+          fontSize: 16, fontWeight: 600, cursor: 'pointer',
         }}>Delete</button>
       </div>
 
       {/* Expanded subscribers panel — spans both grid columns. */}
       {isContract && expanded && (
         <div style={{ gridColumn: '1 / -1', marginTop: 8, paddingTop: 12, borderTop: `1px solid ${C.border}` }}>
-          <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.muted, marginBottom: 8 }}>
+          <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.muted, marginBottom: 8 }}>
             Subscribers ({planSubs.length})
           </div>
           <SubscribersPanel
@@ -460,15 +460,15 @@ function EnrollModal({ plan, clients, ownerId, onClose, onCreated }) {
     modal:   { background: '#fff', borderRadius: 14, width: '100%', maxWidth: isTablet ? 520 : 640, maxHeight: '90vh', overflow: 'auto', boxShadow: '0 20px 60px rgba(15, 23, 42, 0.2)' },
     header:  { background: C.green, padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0 },
     body:    { padding: '20px 24px' },
-    label:   { fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.1em', color: C.muted, marginBottom: 6, display: 'block', marginTop: 14 },
-    input:   { width: '100%', padding: '12px 14px', fontSize: 16, minHeight: 44, border: `1px solid ${C.border}`, borderRadius: 8, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' },
-    select:  { width: '100%', padding: '12px 14px', fontSize: 16, minHeight: 44, border: `1px solid ${C.border}`, borderRadius: 8, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', background: '#fff' },
+    label:   { fontSize: 14, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.1em', color: C.muted, marginBottom: 6, display: 'block', marginTop: 14 },
+    input:   { width: '100%', padding: '12px 14px', fontSize: 18, minHeight: 44, border: `1px solid ${C.border}`, borderRadius: 8, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' },
+    select:  { width: '100%', padding: '12px 14px', fontSize: 18, minHeight: 44, border: `1px solid ${C.border}`, borderRadius: 8, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', background: '#fff' },
     footer:  { padding: '16px 24px', borderTop: `1px solid ${C.border}`, display: 'flex', gap: 10, position: 'sticky', bottom: 0, background: '#fff' },
     btn: (primary, disabled) => ({
       flex: 1, padding: '12px', borderRadius: 8, border: primary ? 'none' : `1px solid ${C.border}`,
       background: primary ? C.green : '#fff',
       color: primary ? '#fff' : C.muted,
-      fontSize: 14, fontWeight: 600,
+      fontSize: 16, fontWeight: 600,
       cursor: disabled ? 'not-allowed' : 'pointer',
       opacity: disabled ? 0.5 : 1,
     }),
@@ -481,16 +481,16 @@ function EnrollModal({ plan, clients, ownerId, onClose, onCreated }) {
     <div style={s.overlay} onClick={onClose}>
       <div style={s.modal} onClick={e => e.stopPropagation()}>
         <div style={s.header}>
-          <span style={{ fontSize: 18, fontWeight: 700, color: '#fff', letterSpacing: '-0.01em' }}>
+          <span style={{ fontSize: 20, fontWeight: 700, color: '#fff', letterSpacing: '-0.01em' }}>
             Enroll customer — {plan.title}
           </span>
-          <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', width: 28, height: 28, borderRadius: '50%', cursor: 'pointer', fontSize: 16 }}>×</button>
+          <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', width: 28, height: 28, borderRadius: '50%', cursor: 'pointer', fontSize: 18 }}>×</button>
         </div>
 
         <div style={s.body}>
           {!checkout ? (
             <>
-              <div style={{ padding: '10px 14px', background: C.greenLo, borderRadius: 8, fontSize: 13, color: C.muted, lineHeight: 1.5, marginBottom: 4 }}>
+              <div style={{ padding: '10px 14px', background: C.greenLo, borderRadius: 8, fontSize: 15, color: C.muted, lineHeight: 1.5, marginBottom: 4 }}>
                 Subscribing at <strong style={{ color: C.green }}>{priceLabel}</strong>
                 {plan.customerBenefits && <> · {plan.customerBenefits}</>}
               </div>
@@ -517,7 +517,7 @@ function EnrollModal({ plan, clients, ownerId, onClose, onCreated }) {
                 value={email}
                 onChange={e => { setEmail(e.target.value); setClientId(''); }}
               />
-              <div style={{ fontSize: 11, color: C.dim, marginTop: 4 }}>
+              <div style={{ fontSize: 13, color: C.dim, marginTop: 4 }}>
                 Stripe will pre-fill this on the Checkout page so the customer doesn't re-type it.
               </div>
 
@@ -530,7 +530,7 @@ function EnrollModal({ plan, clients, ownerId, onClose, onCreated }) {
               />
 
               {error && (
-                <div style={{ marginTop: 14, padding: '10px 14px', background: C.errorLo, border: `1px solid ${C.error}33`, borderRadius: 8, fontSize: 13, color: C.errorBold, lineHeight: 1.5 }}>
+                <div style={{ marginTop: 14, padding: '10px 14px', background: C.errorLo, border: `1px solid ${C.error}33`, borderRadius: 8, fontSize: 15, color: C.errorBold, lineHeight: 1.5 }}>
                   {error}
                 </div>
               )}
@@ -538,10 +538,10 @@ function EnrollModal({ plan, clients, ownerId, onClose, onCreated }) {
           ) : (
             <>
               <div style={{ padding: '14px 16px', background: C.greenLo, border: `1px solid ${C.green}33`, borderRadius: 10, marginBottom: 12 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: C.green, marginBottom: 4 }}>
+                <div style={{ fontSize: 15, fontWeight: 700, color: C.green, marginBottom: 4 }}>
                   ✓ Checkout link ready
                 </div>
-                <div style={{ fontSize: 13, color: C.muted, lineHeight: 1.5 }}>
+                <div style={{ fontSize: 15, color: C.muted, lineHeight: 1.5 }}>
                   Send this to the customer or open it now to enter their card together. Once they pay, the subscription becomes active automatically.
                 </div>
               </div>
@@ -550,15 +550,15 @@ function EnrollModal({ plan, clients, ownerId, onClose, onCreated }) {
               <textarea
                 readOnly
                 value={checkout.checkoutUrl}
-                style={{ ...s.input, minHeight: 96, fontFamily: 'monospace', fontSize: 12, resize: 'vertical' }}
+                style={{ ...s.input, minHeight: 96, fontFamily: 'monospace', fontSize: 14, resize: 'vertical' }}
                 onFocus={e => e.target.select()}
               />
 
               <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-                <button onClick={copyUrl} style={{ flex: 1, padding: '11px', borderRadius: 8, border: `1px solid ${C.border}`, background: '#fff', color: C.text, fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>
+                <button onClick={copyUrl} style={{ flex: 1, padding: '11px', borderRadius: 8, border: `1px solid ${C.border}`, background: '#fff', color: C.text, fontSize: 16, fontWeight: 600, cursor: 'pointer' }}>
                   {copied ? '✓ Copied' : 'Copy link'}
                 </button>
-                <a href={checkout.checkoutUrl} target="_blank" rel="noopener noreferrer" style={{ flex: 1, padding: '11px', borderRadius: 8, border: 'none', background: C.green, color: '#fff', fontSize: 14, fontWeight: 600, textAlign: 'center', textDecoration: 'none' }}>
+                <a href={checkout.checkoutUrl} target="_blank" rel="noopener noreferrer" style={{ flex: 1, padding: '11px', borderRadius: 8, border: 'none', background: C.green, color: '#fff', fontSize: 16, fontWeight: 600, textAlign: 'center', textDecoration: 'none' }}>
                   Open in new tab
                 </a>
               </div>
@@ -636,7 +636,7 @@ function SubscribersPanel({ plan, subs, clients, ownerId, onChanged }) {
 
   if (subs.length === 0) {
     return (
-      <div style={{ padding: '10px 12px', fontSize: 12, color: C.dim, fontStyle: 'italic' }}>
+      <div style={{ padding: '10px 12px', fontSize: 14, color: C.dim, fontStyle: 'italic' }}>
         No subscribers yet. Click <strong>Enroll Customer</strong> above to send a Stripe Checkout link.
       </div>
     );
@@ -656,15 +656,15 @@ function SubscribersPanel({ plan, subs, clients, ownerId, onChanged }) {
           }}>
             <div style={{ minWidth: 0, flex: 1 }}>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-                <span style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{clientName(sub)}</span>
+                <span style={{ fontSize: 15, fontWeight: 600, color: C.text }}>{clientName(sub)}</span>
                 <span style={{
-                  display: 'inline-block', fontSize: 10, fontWeight: 800,
+                  display: 'inline-block', fontSize: 12, fontWeight: 800,
                   letterSpacing: '0.08em', textTransform: 'uppercase',
                   padding: '2px 7px', borderRadius: 4,
                   background: pill.bg, color: pill.fg,
                 }}>{pill.label}</span>
               </div>
-              <div style={{ fontSize: 11, color: C.dim, marginTop: 2 }}>
+              <div style={{ fontSize: 13, color: C.dim, marginTop: 2 }}>
                 ${Number(sub.billingAmount).toFixed(2)}/{sub.billingInterval === 'year' ? 'yr' : 'mo'}
                 {sub.startedAt && <> · since {formatDate(sub.startedAt)}</>}
                 {sub.currentPeriodEnd && sub.status !== 'canceled' && <> · renews {formatDate(sub.currentPeriodEnd)}</>}
@@ -677,7 +677,7 @@ function SubscribersPanel({ plan, subs, clients, ownerId, onChanged }) {
                 style={{
                   padding: '7px 12px', minHeight: 36, borderRadius: 6,
                   border: `1px solid ${C.error}33`, background: '#fff',
-                  color: C.error, fontSize: 12, fontWeight: 600,
+                  color: C.error, fontSize: 14, fontWeight: 600,
                   cursor: busy ? 'wait' : 'pointer', opacity: busy ? 0.5 : 1,
                   whiteSpace: 'nowrap',
                 }}>
@@ -813,14 +813,14 @@ export default function PlansScreen({
       {/* Header */}
       <div style={{ marginBottom: 22, paddingBottom: 16, borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: 28, fontWeight: 700, color: C.text, letterSpacing: '-0.025em' }}>Maintenance Plans</h1>
-          <p style={{ margin: '6px 0 0', fontSize: 15, color: C.muted, fontWeight: 500 }}>
+          <h1 style={{ margin: 0, fontSize: 30, fontWeight: 700, color: C.text, letterSpacing: '-0.025em' }}>Maintenance Plans</h1>
+          <p style={{ margin: '6px 0 0', fontSize: 17, color: C.muted, fontWeight: 500 }}>
             {counts.all} plan{counts.all === 1 ? '' : 's'}
             {counts.due > 0 && <> · <strong style={{ color: C.warn }}>{counts.due} due soon</strong></>}
           </p>
         </div>
         <button onClick={() => setShowNew(true)} style={{
-          padding: '12px 22px', fontSize: 15, fontWeight: 700,
+          padding: '12px 22px', fontSize: 17, fontWeight: 700,
           background: C.green, color: '#fff', border: 'none', borderRadius: 8,
           cursor: 'pointer', minHeight: 46,
           boxShadow: '0 1px 2px rgba(45, 106, 79, 0.25)',
@@ -836,12 +836,12 @@ export default function PlansScreen({
           borderRadius: 10, display: 'flex', justifyContent: 'space-between',
           alignItems: 'center', gap: 12,
         }}>
-          <div style={{ fontSize: 13, color: returnBanner.kind === 'ok' ? C.green : C.warn, fontWeight: 600, lineHeight: 1.5 }}>
+          <div style={{ fontSize: 15, color: returnBanner.kind === 'ok' ? C.green : C.warn, fontWeight: 600, lineHeight: 1.5 }}>
             {returnBanner.text}
           </div>
           <button onClick={() => setReturnBanner(null)} style={{
             background: 'transparent', border: 'none', color: C.muted,
-            cursor: 'pointer', fontSize: 18, lineHeight: 1, padding: 4,
+            cursor: 'pointer', fontSize: 20, lineHeight: 1, padding: 4,
           }}>×</button>
         </div>
       )}
@@ -855,44 +855,44 @@ export default function PlansScreen({
         <div style={{ marginBottom: 20, padding: '18px 22px', background: `linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%)`, border: `1px solid ${C.green}33`, borderRadius: 14 }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 14 }}>
             <div style={{ flex: 1, minWidth: 200 }}>
-              <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.green, marginBottom: 6 }}>
+              <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.green, marginBottom: 6 }}>
                 Recurring Revenue · Service Contracts
               </div>
               <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
                 <div>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: C.muted, letterSpacing: '0.06em', textTransform: 'uppercase' }}>MRR</div>
-                  <div style={{ fontFamily: 'Inter, system-ui, sans-serif', fontSize: 30, fontWeight: 900, color: C.green, lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: C.muted, letterSpacing: '0.06em', textTransform: 'uppercase' }}>MRR</div>
+                  <div style={{ fontFamily: 'Inter, system-ui, sans-serif', fontSize: 32, fontWeight: 900, color: C.green, lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>
                     ${mrr.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </div>
-                  <div style={{ fontSize: 11, color: C.dim, marginTop: 2 }}>per month</div>
+                  <div style={{ fontSize: 13, color: C.dim, marginTop: 2 }}>per month</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: C.muted, letterSpacing: '0.06em', textTransform: 'uppercase' }}>ARR</div>
-                  <div style={{ fontFamily: 'Inter, system-ui, sans-serif', fontSize: 22, fontWeight: 800, color: C.text, lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: C.muted, letterSpacing: '0.06em', textTransform: 'uppercase' }}>ARR</div>
+                  <div style={{ fontFamily: 'Inter, system-ui, sans-serif', fontSize: 24, fontWeight: 800, color: C.text, lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>
                     ${arr.toLocaleString('en-US', { maximumFractionDigits: 0 })}
                   </div>
-                  <div style={{ fontSize: 11, color: C.dim, marginTop: 2 }}>annualized</div>
+                  <div style={{ fontSize: 13, color: C.dim, marginTop: 2 }}>annualized</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: C.muted, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Active Subs</div>
-                  <div style={{ fontFamily: 'Inter, system-ui, sans-serif', fontSize: 22, fontWeight: 800, color: C.text, lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: C.muted, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Active Subs</div>
+                  <div style={{ fontFamily: 'Inter, system-ui, sans-serif', fontSize: 24, fontWeight: 800, color: C.text, lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>
                     {subCounts.active}
                   </div>
-                  <div style={{ fontSize: 11, color: C.dim, marginTop: 2 }}>customers</div>
+                  <div style={{ fontSize: 13, color: C.dim, marginTop: 2 }}>customers</div>
                 </div>
                 {subCounts.past_due > 0 && (
                   <div>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: C.error, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Past Due</div>
-                    <div style={{ fontFamily: 'Inter, system-ui, sans-serif', fontSize: 22, fontWeight: 800, color: C.error, lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: C.error, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Past Due</div>
+                    <div style={{ fontFamily: 'Inter, system-ui, sans-serif', fontSize: 24, fontWeight: 800, color: C.error, lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>
                       {subCounts.past_due}
                     </div>
-                    <div style={{ fontSize: 11, color: C.dim, marginTop: 2 }}>need attention</div>
+                    <div style={{ fontSize: 13, color: C.dim, marginTop: 2 }}>need attention</div>
                   </div>
                 )}
               </div>
             </div>
           </div>
-          <div style={{ marginTop: 12, fontSize: 12, color: C.muted, lineHeight: 1.5 }}>
+          <div style={{ marginTop: 12, fontSize: 14, color: C.muted, lineHeight: 1.5 }}>
             Click <strong style={{ color: C.green }}>Enroll Customer</strong> on a priced plan below to send a Stripe Checkout link — Stripe auto-bills the card on file each {hasContractPlans ? 'period' : 'month/year'}.
           </div>
         </div>
@@ -907,7 +907,7 @@ export default function PlansScreen({
           { id: 'paused', label: 'Paused',      count: counts.paused },
         ].map(f => (
           <button key={f.id} onClick={() => setFilter(f.id)} style={{
-            padding: '7px 14px', borderRadius: 50, fontSize: 13, fontWeight: 600,
+            padding: '7px 14px', borderRadius: 50, fontSize: 15, fontWeight: 600,
             background: filter === f.id ? C.green : '#fff',
             color:      filter === f.id ? '#fff'    : C.muted,
             border: filter === f.id ? 'none' : `1px solid ${C.border}`,
@@ -919,13 +919,13 @@ export default function PlansScreen({
       </div>
 
       {/* List */}
-      {loading && <div style={{ padding: '24px 0', color: C.dim, fontSize: 14, textAlign: 'center' }}>Loading plans…</div>}
+      {loading && <div style={{ padding: '24px 0', color: C.dim, fontSize: 16, textAlign: 'center' }}>Loading plans…</div>}
       {!loading && filtered.length === 0 && (
         <div style={{ padding: '32px 24px', background: C.surface, border: `1px dashed ${C.border}`, borderRadius: 10, textAlign: 'center', color: C.muted }}>
-          <div style={{ fontSize: 16, fontWeight: 600, color: C.text, marginBottom: 6 }}>
+          <div style={{ fontSize: 18, fontWeight: 600, color: C.text, marginBottom: 6 }}>
             {filter === 'all' ? 'No maintenance plans yet' : `No plans match the "${filter}" filter`}
           </div>
-          <div style={{ fontSize: 14, lineHeight: 1.6, maxWidth: 460, margin: '0 auto' }}>
+          <div style={{ fontSize: 16, lineHeight: 1.6, maxWidth: 460, margin: '0 auto' }}>
             Set up recurring maintenance for your customers (annual HVAC tune-ups, quarterly inspections, monthly pool service)
             and the system will track when each is due — auto-fill reminders, pre-fill the tech, and link the resulting job
             back to the plan.

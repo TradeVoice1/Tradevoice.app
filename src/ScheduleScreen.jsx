@@ -212,7 +212,7 @@ function PhotoTile({ photo, onView, onCycleLabel, onSetCaption, onDelete }) {
           style={{
             position: 'absolute', top: 6, left: 6,
             background: labelInfo.bg, color: labelInfo.fg,
-            fontSize: 10, fontWeight: 800, letterSpacing: '0.05em', textTransform: 'uppercase',
+            fontSize: 12, fontWeight: 800, letterSpacing: '0.05em', textTransform: 'uppercase',
             padding: '4px 9px', borderRadius: 4, border: 'none', cursor: 'pointer',
             boxShadow: '0 1px 3px rgba(0,0,0,0.18)',
           }}
@@ -229,7 +229,7 @@ function PhotoTile({ photo, onView, onCycleLabel, onSetCaption, onDelete }) {
             // via padding so the icon still looks compact.
             width: 44, height: 44, borderRadius: '50%',
             background: 'rgba(15, 23, 42, 0.75)', color: '#fff',
-            border: 'none', cursor: 'pointer', fontSize: 20, fontWeight: 700,
+            border: 'none', cursor: 'pointer', fontSize: 22, fontWeight: 700,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             padding: 0, lineHeight: 1,
           }}
@@ -252,7 +252,7 @@ function PhotoTile({ photo, onView, onCycleLabel, onSetCaption, onDelete }) {
             }}
             style={{
               width: '100%', border: 'none', outline: 'none',
-              fontSize: 12, fontFamily: 'inherit', color: '#333',
+              fontSize: 14, fontFamily: 'inherit', color: '#333',
               padding: 0, background: 'transparent',
             }}
           />
@@ -262,7 +262,7 @@ function PhotoTile({ photo, onView, onCycleLabel, onSetCaption, onDelete }) {
             title="Tap to add a caption"
             style={{
               width: '100%', cursor: 'text',
-              fontSize: 12,
+              fontSize: 14,
               color: photo.caption ? '#333' : '#aaa',
               fontStyle: photo.caption ? 'normal' : 'italic',
               fontWeight: photo.caption ? 500 : 400,
@@ -404,11 +404,11 @@ function JobPermitsSection({ permits = [], onChange, userId, sLabel, readOnly = 
   };
 
   // Field styles — share across the add/edit form.
-  const fieldLabel = { fontSize: 10, fontWeight: 800, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: 4 };
+  const fieldLabel = { fontSize: 12, fontWeight: 800, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: 4 };
   const fieldInput = {
     width: '100%', padding: '10px 12px', minHeight: 40,
     border: '1.5px solid #e5e7eb', borderRadius: 6,
-    fontSize: 16, // 16px keeps iOS Safari from zooming on focus
+    fontSize: 18, // 16px keeps iOS Safari from zooming on focus
     fontFamily: 'inherit', background: '#fff', boxSizing: 'border-box',
   };
 
@@ -417,7 +417,7 @@ function JobPermitsSection({ permits = [], onChange, userId, sLabel, readOnly = 
       background: '#fbfdfc', border: `1.5px solid ${COLORS.greenBorder}`,
       borderRadius: 8, padding: 14, marginBottom: 12,
     }}>
-      <div style={{ fontSize: 13, fontWeight: 800, color: COLORS.green, marginBottom: 12 }}>
+      <div style={{ fontSize: 15, fontWeight: 800, color: COLORS.green, marginBottom: 12 }}>
         {adding ? 'Add permit' : 'Edit permit'}
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
@@ -496,7 +496,7 @@ function JobPermitsSection({ permits = [], onChange, userId, sLabel, readOnly = 
           onClick={cancel}
           style={{
             flex: 1, padding: '10px', border: '1.5px solid #d1d5db', background: '#fff',
-            color: '#6b7280', borderRadius: 6, fontSize: 14, fontWeight: 700, cursor: 'pointer',
+            color: '#6b7280', borderRadius: 6, fontSize: 16, fontWeight: 700, cursor: 'pointer',
             minHeight: 44, fontFamily: 'inherit',
           }}
         >
@@ -507,7 +507,7 @@ function JobPermitsSection({ permits = [], onChange, userId, sLabel, readOnly = 
           onClick={save}
           style={{
             flex: 2, padding: '10px', border: 'none', background: COLORS.green,
-            color: '#fff', borderRadius: 6, fontSize: 14, fontWeight: 800, cursor: 'pointer',
+            color: '#fff', borderRadius: 6, fontSize: 16, fontWeight: 800, cursor: 'pointer',
             minHeight: 44, fontFamily: 'inherit',
           }}
         >
@@ -529,7 +529,7 @@ function JobPermitsSection({ permits = [], onChange, userId, sLabel, readOnly = 
             onClick={startAdd}
             style={{
               background: COLORS.green, color: '#fff', border: 'none', borderRadius: 6,
-              padding: '6px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer',
+              padding: '6px 12px', fontSize: 14, fontWeight: 700, cursor: 'pointer',
               fontFamily: 'inherit',
             }}
           >
@@ -541,7 +541,7 @@ function JobPermitsSection({ permits = [], onChange, userId, sLabel, readOnly = 
       {(adding || editing) && draft && renderForm()}
 
       {permits.length === 0 && !adding ? (
-        <div style={{ fontSize: 13, color: '#999', fontStyle: 'italic' }}>
+        <div style={{ fontSize: 15, color: '#999', fontStyle: 'italic' }}>
           No permits attached yet. Add building / electrical / plumbing
           permits as you pull them so expirations don't sneak up on you.
         </div>
@@ -571,28 +571,28 @@ function JobPermitsSection({ permits = [], onChange, userId, sLabel, readOnly = 
               >
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, marginBottom: 6 }}>
                   <div style={{ minWidth: 0, flex: 1 }}>
-                    <div style={{ fontSize: 11, fontWeight: 800, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>
+                    <div style={{ fontSize: 13, fontWeight: 800, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>
                       {p.type || 'Permit'}
                     </div>
-                    <div style={{ fontSize: 15, fontWeight: 800, color: '#0f172a', wordBreak: 'break-all' }}>
+                    <div style={{ fontSize: 17, fontWeight: 800, color: '#0f172a', wordBreak: 'break-all' }}>
                       {p.number}
                     </div>
                     {p.issuingAuthority && (
-                      <div style={{ fontSize: 12, color: '#4b5563', marginTop: 2 }}>
+                      <div style={{ fontSize: 14, color: '#4b5563', marginTop: 2 }}>
                         {p.issuingAuthority}
                       </div>
                     )}
                   </div>
                   <span style={{
                     display: 'inline-block', padding: '4px 10px', borderRadius: 20,
-                    fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em',
+                    fontSize: 13, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em',
                     background: palette.bg, color: palette.fg,
                     border: `1px solid ${palette.border}`, whiteSpace: 'nowrap',
                   }}>
                     {palette.label}
                   </span>
                 </div>
-                <div style={{ display: 'flex', gap: 14, fontSize: 12, color: '#475569', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', gap: 14, fontSize: 14, color: '#475569', flexWrap: 'wrap' }}>
                   <div>
                     <span style={{ fontWeight: 700, color: '#6b7280' }}>Issued:</span>{' '}
                     {formatPermitDate(p.issueDate)}
@@ -608,7 +608,7 @@ function JobPermitsSection({ permits = [], onChange, userId, sLabel, readOnly = 
                   </div>
                 </div>
                 {p.notes && (
-                  <div style={{ fontSize: 13, color: '#374151', marginTop: 8, lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>
+                  <div style={{ fontSize: 15, color: '#374151', marginTop: 8, lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>
                     {p.notes}
                   </div>
                 )}
@@ -619,7 +619,7 @@ function JobPermitsSection({ permits = [], onChange, userId, sLabel, readOnly = 
                       onClick={() => startEdit(p)}
                       style={{
                         padding: '6px 12px', border: '1.5px solid #d1d5db', background: '#fff',
-                        color: '#374151', borderRadius: 6, fontSize: 12, fontWeight: 700,
+                        color: '#374151', borderRadius: 6, fontSize: 14, fontWeight: 700,
                         cursor: 'pointer', fontFamily: 'inherit', minHeight: 36,
                       }}
                     >
@@ -630,7 +630,7 @@ function JobPermitsSection({ permits = [], onChange, userId, sLabel, readOnly = 
                       onClick={() => remove(p)}
                       style={{
                         padding: '6px 12px', border: '1.5px solid #fecaca', background: '#fff',
-                        color: '#b91c1c', borderRadius: 6, fontSize: 12, fontWeight: 700,
+                        color: '#b91c1c', borderRadius: 6, fontSize: 14, fontWeight: 700,
                         cursor: 'pointer', fontFamily: 'inherit', minHeight: 36,
                       }}
                     >
@@ -771,16 +771,16 @@ export function JobDetailModal({ job, techs, jobs = [], onClose, onStatusChange,
     overlay: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 },
     modal: { background: '#fff', borderRadius: 14, width: '100%', maxWidth: isTablet ? 520 : 640, maxHeight: '90vh', overflow: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' },
     header: { background: COLORS.green, padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', position: 'sticky', top: 0, zIndex: 1 },
-    closeBtn: { background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', width: 44, height: 44, borderRadius: '50%', cursor: 'pointer', fontSize: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+    closeBtn: { background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', width: 44, height: 44, borderRadius: '50%', cursor: 'pointer', fontSize: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
     body: { padding: '20px 24px' },
     row: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '10px 0', borderBottom: '1px solid #f5f5f5' },
-    label: { fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.1em', color: '#aaa', marginBottom: 3 },
-    value: { fontSize: 14, color: '#333', fontWeight: 500 },
-    badge: { display: 'inline-block', padding: '4px 10px', borderRadius: 20, fontSize: 12, fontWeight: 700, background: sc.bg, color: sc.text, border: `1px solid ${sc.border}` },
+    label: { fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.1em', color: '#aaa', marginBottom: 3 },
+    value: { fontSize: 16, color: '#333', fontWeight: 500 },
+    badge: { display: 'inline-block', padding: '4px 10px', borderRadius: 20, fontSize: 14, fontWeight: 700, background: sc.bg, color: sc.text, border: `1px solid ${sc.border}` },
     statusBtns: { display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 16 },
-    statusBtn: (active, color) => ({ padding: '8px 14px', borderRadius: 8, border: `1px solid ${color}`, background: active ? color : '#fff', color: active ? '#fff' : color, fontSize: 13, fontWeight: 600, cursor: 'pointer' }),
+    statusBtn: (active, color) => ({ padding: '8px 14px', borderRadius: 8, border: `1px solid ${color}`, background: active ? color : '#fff', color: active ? '#fff' : color, fontSize: 15, fontWeight: 600, cursor: 'pointer' }),
     actionBtns: { display: 'flex', gap: 10, padding: '16px 24px', borderTop: '1px solid #f0f0f0' },
-    btn: { flex: 1, padding: '12px', borderRadius: 8, border: 'none', fontSize: 14, fontWeight: 600, cursor: 'pointer' },
+    btn: { flex: 1, padding: '12px', borderRadius: 8, border: 'none', fontSize: 16, fontWeight: 600, cursor: 'pointer' },
   };
 
   return (
@@ -788,9 +788,9 @@ export function JobDetailModal({ job, techs, jobs = [], onClose, onStatusChange,
       <div style={s.modal} onClick={e => e.stopPropagation()}>
         <div style={s.header}>
           <div>
-            <div style={{ fontSize: 11, color: 'rgba(255,255,255,.6)', textTransform: 'uppercase', letterSpacing: '.1em', marginBottom: 4 }}>{job.trade}</div>
-            <div style={{ fontSize: 20, fontWeight: 800, color: '#fff', marginBottom: 4 }}>{job.title}</div>
-            <div style={{ fontSize: 14, color: 'rgba(255,255,255,.8)' }}>{job.clientName}</div>
+            <div style={{ fontSize: 13, color: 'rgba(255,255,255,.6)', textTransform: 'uppercase', letterSpacing: '.1em', marginBottom: 4 }}>{job.trade}</div>
+            <div style={{ fontSize: 22, fontWeight: 800, color: '#fff', marginBottom: 4 }}>{job.title}</div>
+            <div style={{ fontSize: 16, color: 'rgba(255,255,255,.8)' }}>{job.clientName}</div>
           </div>
           <button style={s.closeBtn} onClick={onClose}>×</button>
         </div>
@@ -814,7 +814,7 @@ export function JobDetailModal({ job, techs, jobs = [], onClose, onStatusChange,
                     style={{
                       background: 'transparent', border: 'none',
                       color: COLORS.green, cursor: 'pointer',
-                      fontSize: 12, fontWeight: 800, letterSpacing: '0.06em',
+                      fontSize: 14, fontWeight: 800, letterSpacing: '0.06em',
                       textTransform: 'uppercase', padding: '2px 4px',
                       WebkitTapHighlightColor: 'transparent',
                     }}
@@ -834,7 +834,7 @@ export function JobDetailModal({ job, techs, jobs = [], onClose, onStatusChange,
                       out of the density view so it doesn't show as a
                       conflict on its own current date. */}
                   <div>
-                    <span style={{ fontSize: 10, fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: 6 }}>Date</span>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: 6 }}>Date</span>
                     <JobDatePicker
                       value={new Date(reDate + 'T12:00:00')}
                       onChange={d => {
@@ -853,21 +853,21 @@ export function JobDetailModal({ job, techs, jobs = [], onClose, onStatusChange,
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                     <label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                      <span style={{ fontSize: 10, fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Start</span>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Start</span>
                       <select
                         value={reHour}
                         onChange={e => setReHour(parseInt(e.target.value, 10))}
-                        style={{ padding: '8px 10px', border: '1.5px solid #ddd', borderRadius: 6, fontSize: 14, minHeight: 40, background: '#fff' }}
+                        style={{ padding: '8px 10px', border: '1.5px solid #ddd', borderRadius: 6, fontSize: 16, minHeight: 40, background: '#fff' }}
                       >
                         {HOURS.map(h => <option key={h} value={h}>{formatTime(h)}</option>)}
                       </select>
                     </label>
                     <label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                      <span style={{ fontSize: 10, fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Duration</span>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Duration</span>
                       <select
                         value={reDuration}
                         onChange={e => setReDuration(parseInt(e.target.value, 10))}
-                        style={{ padding: '8px 10px', border: '1.5px solid #ddd', borderRadius: 6, fontSize: 14, minHeight: 40, background: '#fff' }}
+                        style={{ padding: '8px 10px', border: '1.5px solid #ddd', borderRadius: 6, fontSize: 16, minHeight: 40, background: '#fff' }}
                       >
                         {DURATIONS.map(d => <option key={d} value={d}>{d} hr{d === 1 ? '' : 's'}</option>)}
                       </select>
@@ -878,7 +878,7 @@ export function JobDetailModal({ job, techs, jobs = [], onClose, onStatusChange,
                       type="button"
                       onClick={cancelReschedule}
                       disabled={reSaving}
-                      style={{ flex: 1, padding: '10px', border: '1.5px solid #ddd', background: '#fff', color: '#666', borderRadius: 6, fontSize: 13, fontWeight: 700, cursor: 'pointer', minHeight: 40 }}
+                      style={{ flex: 1, padding: '10px', border: '1.5px solid #ddd', background: '#fff', color: '#666', borderRadius: 6, fontSize: 15, fontWeight: 700, cursor: 'pointer', minHeight: 40 }}
                     >
                       Cancel
                     </button>
@@ -886,7 +886,7 @@ export function JobDetailModal({ job, techs, jobs = [], onClose, onStatusChange,
                       type="button"
                       onClick={saveReschedule}
                       disabled={reSaving}
-                      style={{ flex: 2, padding: '10px', border: 'none', background: COLORS.green, color: '#fff', borderRadius: 6, fontSize: 13, fontWeight: 800, cursor: reSaving ? 'wait' : 'pointer', opacity: reSaving ? 0.6 : 1, minHeight: 40 }}
+                      style={{ flex: 2, padding: '10px', border: 'none', background: COLORS.green, color: '#fff', borderRadius: 6, fontSize: 15, fontWeight: 800, cursor: reSaving ? 'wait' : 'pointer', opacity: reSaving ? 0.6 : 1, minHeight: 40 }}
                     >
                       {reSaving ? 'Saving…' : 'Save New Time'}
                     </button>
@@ -909,7 +909,7 @@ export function JobDetailModal({ job, techs, jobs = [], onClose, onStatusChange,
           {job.notes && (
             <div style={{ padding: '10px 0' }}>
               <div style={s.label}>Notes</div>
-              <div style={{ fontSize: 14, color: '#555', lineHeight: 1.6, marginTop: 4 }}>{job.notes}</div>
+              <div style={{ fontSize: 16, color: '#555', lineHeight: 1.6, marginTop: 4 }}>{job.notes}</div>
             </div>
           )}
           </div>
@@ -928,7 +928,7 @@ export function JobDetailModal({ job, techs, jobs = [], onClose, onStatusChange,
                 disabled={uploading}
                 style={{
                   background: COLORS.green, color: '#fff', border: 'none', borderRadius: 6,
-                  padding: '6px 12px', fontSize: 12, fontWeight: 700, cursor: uploading ? 'wait' : 'pointer',
+                  padding: '6px 12px', fontSize: 14, fontWeight: 700, cursor: uploading ? 'wait' : 'pointer',
                   opacity: uploading ? 0.7 : 1,
                 }}
               >
@@ -943,9 +943,9 @@ export function JobDetailModal({ job, techs, jobs = [], onClose, onStatusChange,
                 onChange={handlePickFiles}
               />
             </div>
-            {uploadErr && <div style={{ fontSize: 12, color: '#b91c1c', marginBottom: 8 }}>{uploadErr}</div>}
+            {uploadErr && <div style={{ fontSize: 14, color: '#b91c1c', marginBottom: 8 }}>{uploadErr}</div>}
             {photos.length === 0 && !uploading ? (
-              <div style={{ fontSize: 13, color: '#999', fontStyle: 'italic' }}>
+              <div style={{ fontSize: 15, color: '#999', fontStyle: 'italic' }}>
                 No photos yet. Snap before/after shots to attach to the eventual invoice.
               </div>
             ) : (
@@ -1131,7 +1131,7 @@ function JobDatePicker({ value, onChange, jobs = [], techs = [], selectedHour, s
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
         <button type="button" onClick={() => setMonth(m => new Date(m.getFullYear(), m.getMonth() - 1, 1))}
           style={{ border: '1px solid #ddd', background: '#fff', borderRadius: 6, width: 32, height: 32, cursor: 'pointer', fontWeight: 700, color: '#555' }}>‹</button>
-        <div style={{ fontWeight: 700, fontSize: 15, color: '#111' }}>
+        <div style={{ fontWeight: 700, fontSize: 17, color: '#111' }}>
           {MONTHS[month.getMonth()]} {month.getFullYear()}
         </div>
         <button type="button" onClick={() => setMonth(m => new Date(m.getFullYear(), m.getMonth() + 1, 1))}
@@ -1141,7 +1141,7 @@ function JobDatePicker({ value, onChange, jobs = [], techs = [], selectedHour, s
       {/* Day-of-week labels */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4, marginBottom: 4 }}>
         {DAYS.map(d => (
-          <div key={d} style={{ textAlign: 'center', fontSize: 11, fontWeight: 700, color: '#999', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{d}</div>
+          <div key={d} style={{ textAlign: 'center', fontSize: 13, fontWeight: 700, color: '#999', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{d}</div>
         ))}
       </div>
 
@@ -1178,7 +1178,7 @@ function JobDatePicker({ value, onChange, jobs = [], techs = [], selectedHour, s
                 position: 'relative',
               }}
             >
-              <div style={{ fontSize: 14, fontWeight: isToday || isSelected ? 800 : 600, alignSelf: 'flex-end' }}>{d.getDate()}</div>
+              <div style={{ fontSize: 16, fontWeight: isToday || isSelected ? 800 : 600, alignSelf: 'flex-end' }}>{d.getDate()}</div>
               {/* Up to 4 dots; overflow renders as "+N more" */}
               {dayJobs.length > 0 && (
                 <div style={{ display: 'flex', gap: 2, flexWrap: 'wrap', justifyContent: 'center', width: '100%' }}>
@@ -1186,7 +1186,7 @@ function JobDatePicker({ value, onChange, jobs = [], techs = [], selectedHour, s
                     <span key={k} style={{ width: 6, height: 6, borderRadius: '50%', background: dotColor(j.status) }} />
                   ))}
                   {dayJobs.length > 4 && (
-                    <span style={{ fontSize: 9, color: '#666', fontWeight: 700 }}>+{dayJobs.length - 4}</span>
+                    <span style={{ fontSize: 11, color: '#666', fontWeight: 700 }}>+{dayJobs.length - 4}</span>
                   )}
                 </div>
               )}
@@ -1197,7 +1197,7 @@ function JobDatePicker({ value, onChange, jobs = [], techs = [], selectedHour, s
 
       {/* Existing-jobs panel for the selected day */}
       <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid #e5e7eb' }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: '#888', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 6 }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: '#888', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 6 }}>
           {selectedDayJobs.length === 0
             ? 'No jobs scheduled for this day'
             : `${selectedDayJobs.length} job${selectedDayJobs.length === 1 ? '' : 's'} on this day${selectedTechId ? ' (assigned tech)' : ''}`}
@@ -1212,7 +1212,7 @@ function JobDatePicker({ value, onChange, jobs = [], techs = [], selectedHour, s
                   display: 'flex', alignItems: 'center', gap: 10, padding: '6px 10px',
                   background: conflict ? '#fef2f2' : '#fff',
                   border: `1px solid ${conflict ? '#fecaca' : '#e5e7eb'}`,
-                  borderRadius: 6, fontSize: 12,
+                  borderRadius: 6, fontSize: 14,
                 }}>
                   <span style={{ width: 8, height: 8, borderRadius: '50%', background: STATUS_COLORS[j.status]?.text || '#888', flexShrink: 0 }} />
                   <span
@@ -1225,7 +1225,7 @@ function JobDatePicker({ value, onChange, jobs = [], techs = [], selectedHour, s
                   <span style={{ color: '#666', flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {j.title || 'Job'}{j.clientName ? ` · ${j.clientName}` : ''}
                   </span>
-                  {techName && <span style={{ color: '#888', fontSize: 11 }}>{techName}</span>}
+                  {techName && <span style={{ color: '#888', fontSize: 13 }}>{techName}</span>}
                 </div>
               );
             })}
@@ -1328,14 +1328,14 @@ function AddJobModal({ techs, jobs = [], onClose, onAdd, defaultDate, prefill = 
     // on one side and photos/status on the other. Falls back to single
     // column on tablet via grid-template-columns: 1fr.
     bodyGrid: { display: 'grid', gridTemplateColumns: isTablet ? '1fr' : '1fr 1fr', gap: isTablet ? 0 : 32 },
-    label: { fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.1em', color: '#888', marginBottom: 6, display: 'block', marginTop: 14 },
+    label: { fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.1em', color: '#888', marginBottom: 6, display: 'block', marginTop: 14 },
     // 16px font + 44px min height — iOS Safari otherwise zooms the page on
     // input focus, and tap targets <44pt are unreliable with gloved fingers.
-    input: { width: '100%', padding: '12px 14px', fontSize: 16, minHeight: 44, border: '1px solid #ddd', borderRadius: 8, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' },
-    select: { width: '100%', padding: '12px 14px', fontSize: 16, minHeight: 44, border: '1px solid #ddd', borderRadius: 8, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box', background: '#fff' },
+    input: { width: '100%', padding: '12px 14px', fontSize: 18, minHeight: 44, border: '1px solid #ddd', borderRadius: 8, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' },
+    select: { width: '100%', padding: '12px 14px', fontSize: 18, minHeight: 44, border: '1px solid #ddd', borderRadius: 8, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box', background: '#fff' },
     row2: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 },
     footer: { padding: '16px 24px', borderTop: '1px solid #f0f0f0', display: 'flex', gap: 10, position: 'sticky', bottom: 0, background: '#fff' },
-    btn: (primary) => ({ flex: 1, padding: '12px', borderRadius: 8, border: primary ? 'none' : '1px solid #ddd', background: primary ? COLORS.green : '#fff', color: primary ? '#fff' : '#666', fontSize: 14, fontWeight: 600, cursor: 'pointer' }),
+    btn: (primary) => ({ flex: 1, padding: '12px', borderRadius: 8, border: primary ? 'none' : '1px solid #ddd', background: primary ? COLORS.green : '#fff', color: primary ? '#fff' : '#666', fontSize: 16, fontWeight: 600, cursor: 'pointer' }),
   };
 
   const handleAdd = () => {
@@ -1348,21 +1348,21 @@ function AddJobModal({ techs, jobs = [], onClose, onAdd, defaultDate, prefill = 
     <div style={s.overlay} onClick={onClose}>
       <div style={s.modal} onClick={e => e.stopPropagation()}>
         <div style={s.header}>
-          <span style={{ fontSize: 17, fontWeight: 700, color: '#fff' }}>Schedule New Job</span>
-          <button style={{ background: 'rgba(255,255,255,.2)', border: 'none', color: '#fff', width: 44, height: 44, borderRadius: '50%', cursor: 'pointer', fontSize: 22, flexShrink: 0 }} onClick={onClose}>×</button>
+          <span style={{ fontSize: 19, fontWeight: 700, color: '#fff' }}>Schedule New Job</span>
+          <button style={{ background: 'rgba(255,255,255,.2)', border: 'none', color: '#fff', width: 44, height: 44, borderRadius: '50%', cursor: 'pointer', fontSize: 24, flexShrink: 0 }} onClick={onClose}>×</button>
         </div>
         <div style={s.body}>
           <label style={s.label}>Job Title</label>
           <input style={s.input} placeholder="e.g. Faucet Repair" value={form.title} onChange={e => update('title', e.target.value)} />
           {avgDurationForTitle && !durationDirty.current && (
-            <div style={{ fontSize: 12, color: COLORS.green, marginTop: 4 }}>
+            <div style={{ fontSize: 14, color: COLORS.green, marginTop: 4 }}>
               Auto-set duration to {avgDurationForTitle} hr (avg of similar jobs)
             </div>
           )}
           <label style={s.label}>Client Name</label>
           <input style={s.input} placeholder="John Miller" value={form.clientName} onChange={e => update('clientName', e.target.value)} />
           {lastTechName && !techDirty.current && (
-            <div style={{ fontSize: 12, color: COLORS.green, marginTop: 4 }}>
+            <div style={{ fontSize: 14, color: COLORS.green, marginTop: 4 }}>
               Last serviced by {lastTechName} on {lastJobDate} — auto-assigned
             </div>
           )}
@@ -1401,7 +1401,7 @@ function AddJobModal({ techs, jobs = [], onClose, onAdd, defaultDate, prefill = 
                   .toISOString().split('T')[0];
                 return isTechOffOn(timeOff, form.techUserId, dayIso);
               })() && (
-                <div style={{ fontSize: 12, color: '#b91c1c', marginTop: 4, fontWeight: 600 }}>
+                <div style={{ fontSize: 14, color: '#b91c1c', marginTop: 4, fontWeight: 600 }}>
                   This tech is off on the selected date.
                 </div>
               )}
@@ -1506,7 +1506,7 @@ function WeekView({ weekDays, jobs, techs, onJobClick, filterTech, onReschedule,
         {/* Time rows */}
         {HOURS.map(hour => (
           <React.Fragment key={`row-${hour}`}>
-            <div style={{ ...s.timeCol, height: 56, display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end', paddingRight: 8, paddingTop: 4, fontSize: 11, color: '#bbb', borderRight: '1px solid #e8e8e8', borderBottom: '1px solid #f8f8f8' }}>
+            <div style={{ ...s.timeCol, height: 56, display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end', paddingRight: 8, paddingTop: 4, fontSize: 13, color: '#bbb', borderRight: '1px solid #e8e8e8', borderBottom: '1px solid #f8f8f8' }}>
               {formatTime(hour)}
             </div>
             {weekDays.map((day, di) => {
@@ -1561,8 +1561,8 @@ function WeekView({ weekDays, jobs, techs, onJobClick, filterTech, onReschedule,
                         }}
                         onClick={wrapClick(() => onJobClick(job))}
                       >
-                        <div style={{ fontSize: 11, fontWeight: 800, color: titleColor, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{job.title}</div>
-                        <div style={{ fontSize: 10, fontWeight: 600, color: subtleColor, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{job.clientName}</div>
+                        <div style={{ fontSize: 13, fontWeight: 800, color: titleColor, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{job.title}</div>
+                        <div style={{ fontSize: 12, fontWeight: 600, color: subtleColor, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{job.clientName}</div>
                       </div>
                     );
                   })}
@@ -1584,7 +1584,7 @@ function WeekView({ weekDays, jobs, techs, onJobClick, filterTech, onReschedule,
           color: '#fff',
           borderRadius: 6,
           padding: '6px 10px',
-          fontSize: 12,
+          fontSize: 14,
           fontWeight: 700,
           pointerEvents: 'none',
           zIndex: 2000,
@@ -1611,7 +1611,7 @@ function DayView({ date, jobs, techs, onJobClick, filterTech }) {
 
   const s = {
     wrap: { display: 'grid', gridTemplateColumns: '60px 1fr' },
-    timeCol: { borderRight: '1px solid #e8e8e8', paddingRight: 8, paddingTop: 4, fontSize: 11, color: '#bbb', textAlign: 'right', height: 72, display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end', borderBottom: '1px solid #f5f5f5' },
+    timeCol: { borderRight: '1px solid #e8e8e8', paddingRight: 8, paddingTop: 4, fontSize: 13, color: '#bbb', textAlign: 'right', height: 72, display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end', borderBottom: '1px solid #f5f5f5' },
     cell: { position: 'relative', height: 72, borderBottom: '1px solid #f5f5f5' },
     jobBlock: (color) => ({ position: 'absolute', left: 8, right: 8, background: color, borderRadius: 8, padding: '8px 12px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', zIndex: 1 }),
   };
@@ -1645,13 +1645,13 @@ function DayView({ date, jobs, techs, onJobClick, filterTech }) {
                     ...(isInProgress ? { background: '#fffbeb', borderLeft: '3px solid #d97706' } : {}),
                   }} onClick={() => onJobClick(job)}>
                     <div>
-                      <div style={{ fontSize: 14, fontWeight: 800, color: titleColor, marginBottom: 2 }}>{job.title}</div>
-                      <div style={{ fontSize: 12, fontWeight: 600, color: subtleColor }}>{job.clientName} · {job.address.split(',')[0]}</div>
-                      <div style={{ fontSize: 11, fontWeight: 600, color: dimColor, marginTop: 2 }}>{formatTime(job.startHour)} — {formatTime(job.startHour + job.duration)}</div>
+                      <div style={{ fontSize: 16, fontWeight: 800, color: titleColor, marginBottom: 2 }}>{job.title}</div>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: subtleColor }}>{job.clientName} · {job.address.split(',')[0]}</div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: dimColor, marginTop: 2 }}>{formatTime(job.startHour)} — {formatTime(job.startHour + job.duration)}</div>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
-                      <div style={{ width: 28, height: 28, borderRadius: '50%', background: initialsBg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: titleColor }}>{tech?.initials}</div>
-                      <div style={{ fontSize: 10, fontWeight: 700, color: dimColor, background: chipBg, padding: '2px 6px', borderRadius: 4 }}>{job.trade}</div>
+                      <div style={{ width: 28, height: 28, borderRadius: '50%', background: initialsBg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: titleColor }}>{tech?.initials}</div>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: dimColor, background: chipBg, padding: '2px 6px', borderRadius: 4 }}>{job.trade}</div>
                     </div>
                   </div>
                 );
@@ -1678,10 +1678,10 @@ function MonthView({ date, jobs, techs, onJobClick, filterTech, onDayClick }) {
 
   const s = {
     grid: { display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)' },
-    dayHeader: { padding: '8px 4px', textAlign: 'center', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.1em', color: '#aaa', borderBottom: '1px solid #e8e8e8' },
+    dayHeader: { padding: '8px 4px', textAlign: 'center', fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.1em', color: '#aaa', borderBottom: '1px solid #e8e8e8' },
     cell: (isCurrentMonth, isToday) => ({ minHeight: 90, padding: '6px', border: '1px solid #f0f0f0', background: isToday ? COLORS.greenLight : isCurrentMonth ? '#fff' : '#fafafa', cursor: 'pointer' }),
-    dayNum: (isToday) => ({ fontSize: 13, fontWeight: isToday ? 800 : 500, color: isToday ? COLORS.green : '#333', marginBottom: 4, width: 24, height: 24, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: isToday ? 'rgba(45,106,79,.15)' : 'transparent' }),
-    jobDot: (color) => ({ fontSize: 11, color: '#fff', background: color, borderRadius: 4, padding: '2px 5px', marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', cursor: 'pointer' }),
+    dayNum: (isToday) => ({ fontSize: 15, fontWeight: isToday ? 800 : 500, color: isToday ? COLORS.green : '#333', marginBottom: 4, width: 24, height: 24, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: isToday ? 'rgba(45,106,79,.15)' : 'transparent' }),
+    jobDot: (color) => ({ fontSize: 13, color: '#fff', background: color, borderRadius: 4, padding: '2px 5px', marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', cursor: 'pointer' }),
   };
 
   return (
@@ -1714,7 +1714,7 @@ function MonthView({ date, jobs, techs, onJobClick, filterTech, onDayClick }) {
                 </div>
               );
             })}
-            {dayJobs.length > 3 && <div style={{ fontSize: 11, color: '#aaa', marginTop: 2 }}>+{dayJobs.length - 3} more</div>}
+            {dayJobs.length > 3 && <div style={{ fontSize: 13, color: '#aaa', marginTop: 2 }}>+{dayJobs.length - 3} more</div>}
           </div>
         );
       })}
@@ -1995,13 +1995,13 @@ export default function ScheduleScreen({
       ? { height: '100%', background: '#f7f7f5', fontFamily: "'Inter', sans-serif", display: 'flex', flexDirection: 'column', margin: '-14px -16px' }
       : { minHeight: '100dvh', background: '#f7f7f5', fontFamily: "'Inter', sans-serif" },
     header: { background: '#fff', borderBottom: '1px solid #e8e8e8', padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 },
-    title: { fontSize: 20, fontWeight: 800, color: '#111' },
-    addBtn: { padding: '10px 18px', minHeight: 44, background: COLORS.green, color: '#fff', border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 700, cursor: 'pointer' },
+    title: { fontSize: 22, fontWeight: 800, color: '#111' },
+    addBtn: { padding: '10px 18px', minHeight: 44, background: COLORS.green, color: '#fff', border: 'none', borderRadius: 8, fontSize: 16, fontWeight: 700, cursor: 'pointer' },
     toolbar: { background: '#fff', borderBottom: '1px solid #e8e8e8', padding: '10px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 },
-    navBtn: { background: 'none', border: '1px solid #e0e0e0', borderRadius: 8, padding: '8px 12px', minHeight: 44, minWidth: 44, cursor: 'pointer', fontSize: 16, color: '#666' },
-    dateLabel: { fontSize: 15, fontWeight: 700, color: '#111', minWidth: 200, textAlign: 'center' },
+    navBtn: { background: 'none', border: '1px solid #e0e0e0', borderRadius: 8, padding: '8px 12px', minHeight: 44, minWidth: 44, cursor: 'pointer', fontSize: 18, color: '#666' },
+    dateLabel: { fontSize: 17, fontWeight: 700, color: '#111', minWidth: 200, textAlign: 'center' },
     viewBtns: { display: 'flex', gap: 4 },
-    viewBtn: (active) => ({ padding: '10px 14px', minHeight: 44, borderRadius: 8, border: 'none', background: active ? COLORS.green : '#f0f0f0', color: active ? '#fff' : '#666', fontSize: 13, fontWeight: active ? 700 : 500, cursor: 'pointer' }),
+    viewBtn: (active) => ({ padding: '10px 14px', minHeight: 44, borderRadius: 8, border: 'none', background: active ? COLORS.green : '#f0f0f0', color: active ? '#fff' : '#666', fontSize: 15, fontWeight: active ? 700 : 500, cursor: 'pointer' }),
     // Body — laptop uses calc(100dvh - chrome). Tablet uses flex: 1 to fill
     // whatever's left under the combined header bar.
     body: {
@@ -2016,13 +2016,13 @@ export default function ScheduleScreen({
     calendar: { background: '#fff', overflow: 'auto', borderRight: '1px solid #e8e8e8' },
     sidebar: { background: '#fff', overflowY: 'auto', padding: '20px 16px' },
     sideSection: { marginBottom: 24 },
-    sideTitle: { fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.12em', color: '#aaa', marginBottom: 12 },
+    sideTitle: { fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.12em', color: '#aaa', marginBottom: 12 },
     techBtn: (active, color) => ({ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', borderRadius: 8, border: `1px solid ${active ? color : '#e8e8e8'}`, background: active ? `${color}15` : '#fff', cursor: 'pointer', marginBottom: 6, width: '100%' }),
     techDot: (color) => ({ width: 10, height: 10, borderRadius: '50%', background: color, flexShrink: 0 }),
-    techName: { fontSize: 13, fontWeight: 500, color: '#333' },
+    techName: { fontSize: 15, fontWeight: 500, color: '#333' },
     upcomingJob: { padding: '10px 12px', borderRadius: 8, border: '1px solid #f0f0f0', marginBottom: 8, cursor: 'pointer' },
-    upcomingTitle: { fontSize: 13, fontWeight: 700, color: '#111', marginBottom: 2 },
-    upcomingMeta: { fontSize: 12, color: '#888' },
+    upcomingTitle: { fontSize: 15, fontWeight: 700, color: '#111', marginBottom: 2 },
+    upcomingMeta: { fontSize: 14, color: '#888' },
   };
 
   return (
@@ -2035,7 +2035,7 @@ export default function ScheduleScreen({
           padding: '8px 12px', display: 'flex', flexWrap: 'wrap',
           alignItems: 'center', gap: 6, flexShrink: 0,
         }}>
-          <span style={{ fontSize: 17, fontWeight: 800, color: '#111', marginRight: 4 }}>
+          <span style={{ fontSize: 19, fontWeight: 800, color: '#111', marginRight: 4 }}>
             {isTech ? 'My Schedule' : 'Schedule'}
           </span>
           {overdueJobs.length > 0 && (
@@ -2048,7 +2048,7 @@ export default function ScheduleScreen({
               style={{
                 padding: '6px 10px', minHeight: 32, borderRadius: 14,
                 background: '#fef2f2', color: '#991b1b',
-                border: '1px solid #fecaca', fontSize: 12, fontWeight: 700,
+                border: '1px solid #fecaca', fontSize: 14, fontWeight: 700,
                 cursor: 'pointer', whiteSpace: 'nowrap',
               }}
               title="Jobs that need rescheduling"
@@ -2057,9 +2057,9 @@ export default function ScheduleScreen({
             </button>
           )}
           <button style={s.navBtn} onClick={() => navigate(-1)}>‹</button>
-          <button style={{ ...s.navBtn, fontSize: 13, padding: '8px 12px' }} onClick={() => setCurrentDate(new Date())}>Today</button>
+          <button style={{ ...s.navBtn, fontSize: 15, padding: '8px 12px' }} onClick={() => setCurrentDate(new Date())}>Today</button>
           <button style={s.navBtn} onClick={() => navigate(1)}>›</button>
-          <span style={{ fontSize: 14, fontWeight: 700, color: '#111', flex: 1, textAlign: 'center', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 80 }}>
+          <span style={{ fontSize: 16, fontWeight: 700, color: '#111', flex: 1, textAlign: 'center', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 80 }}>
             {headerTitle()}
           </span>
           <div style={s.viewBtns}>
@@ -2077,12 +2077,12 @@ export default function ScheduleScreen({
               padding: '10px 12px', minHeight: 44,
               background: sidebarOpen ? COLORS.green : '#f0f0f0',
               color: sidebarOpen ? '#fff' : '#666',
-              border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700,
+              border: 'none', borderRadius: 8, fontSize: 15, fontWeight: 700,
               cursor: 'pointer', whiteSpace: 'nowrap',
             }}
           >{sidebarOpen ? 'Hide ✕' : 'Details'}</button>
           {!isTech && (
-            <button style={{ ...s.addBtn, padding: '10px 14px', fontSize: 13, marginLeft: 4 }} onClick={() => { setAddJobDate(currentDate); setShowAddJob(true); }}>Schedule Job</button>
+            <button style={{ ...s.addBtn, padding: '10px 14px', fontSize: 15, marginLeft: 4 }} onClick={() => { setAddJobDate(currentDate); setShowAddJob(true); }}>Schedule Job</button>
           )}
         </div>
       ) : (
@@ -2093,7 +2093,7 @@ export default function ScheduleScreen({
               <div>
                 <div style={s.title}>{isTech ? 'My Schedule' : 'Schedule'}</div>
                 {isTech && (
-                  <div style={{ fontSize: 13, color: '#666', marginTop: 2 }}>
+                  <div style={{ fontSize: 15, color: '#666', marginTop: 2 }}>
                     Jobs assigned to you · {jobs.length} this {view === 'day' ? 'day' : view}
                   </div>
                 )}
@@ -2108,7 +2108,7 @@ export default function ScheduleScreen({
                   style={{
                     padding: '8px 14px', borderRadius: 18,
                     background: '#fef2f2', color: '#991b1b',
-                    border: '1px solid #fecaca', fontSize: 13, fontWeight: 700,
+                    border: '1px solid #fecaca', fontSize: 15, fontWeight: 700,
                     cursor: 'pointer', whiteSpace: 'nowrap',
                   }}
                   title="Jobs that need rescheduling — click to view"
@@ -2126,7 +2126,7 @@ export default function ScheduleScreen({
           <div style={s.toolbar}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <button style={s.navBtn} onClick={() => navigate(-1)}>‹</button>
-              <button style={{ ...s.navBtn, fontSize: 13 }} onClick={() => setCurrentDate(new Date())}>Today</button>
+              <button style={{ ...s.navBtn, fontSize: 15 }} onClick={() => setCurrentDate(new Date())}>Today</button>
               <button style={s.navBtn} onClick={() => navigate(1)}>›</button>
               <span style={s.dateLabel}>{headerTitle()}</span>
             </div>
@@ -2167,7 +2167,7 @@ export default function ScheduleScreen({
               <button style={s.techBtn(!filterTech, COLORS.green)} onClick={() => setFilterTech(null)}>
                 <div style={s.techDot('#aaa')} />
                 <span style={s.techName}>All Technicians</span>
-                <span style={{ marginLeft: 'auto', fontSize: 12, color: '#888', fontWeight: 700 }}>{allJobs.length}</span>
+                <span style={{ marginLeft: 'auto', fontSize: 14, color: '#888', fontWeight: 700 }}>{allJobs.length}</span>
               </button>
               {techs.map(tech => {
                 const count = allJobs.filter(j => j.techUserId === tech.id).length;
@@ -2187,12 +2187,12 @@ export default function ScheduleScreen({
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', flex: 1, minWidth: 0 }}>
                       <span style={s.techName}>{tech.name}</span>
                       {offThisWeek.length > 0 && (
-                        <span style={{ fontSize: 11, color: '#b91c1c', fontWeight: 700, marginTop: 1 }}>
+                        <span style={{ fontSize: 13, color: '#b91c1c', fontWeight: 700, marginTop: 1 }}>
                           Off {offThisWeek.map(t => `${fmtMd(t.startDate)}–${fmtMd(t.endDate)}`).join(', ')}
                         </span>
                       )}
                     </div>
-                    <span style={{ marginLeft: 'auto', fontSize: 12, color: '#888', fontWeight: 700 }}>{count}</span>
+                    <span style={{ marginLeft: 'auto', fontSize: 14, color: '#888', fontWeight: 700 }}>{count}</span>
                   </button>
                 );
               })}
@@ -2217,7 +2217,7 @@ export default function ScheduleScreen({
             >
               <div style={{ ...s.sideTitle, color: '#991b1b', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
                 <span>⚠ Needs Rescheduling</span>
-                <span style={{ marginLeft: 'auto', background: '#dc2626', color: '#fff', borderRadius: 10, padding: '1px 8px', fontSize: 11 }}>
+                <span style={{ marginLeft: 'auto', background: '#dc2626', color: '#fff', borderRadius: 10, padding: '1px 8px', fontSize: 13 }}>
                   {overdueJobs.length}
                 </span>
               </div>
@@ -2238,17 +2238,17 @@ export default function ScheduleScreen({
                     }}
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 6 }}>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: '#111', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <div style={{ fontSize: 15, fontWeight: 700, color: '#111', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {job.title || 'Job'}
                       </div>
-                      <span style={{ fontSize: 11, fontWeight: 700, color: '#991b1b', whiteSpace: 'nowrap' }}>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: '#991b1b', whiteSpace: 'nowrap' }}>
                         {daysLate}d late
                       </span>
                     </div>
-                    <div style={{ fontSize: 12, color: '#666', marginTop: 2 }}>
+                    <div style={{ fontSize: 14, color: '#666', marginTop: 2 }}>
                       {job.clientName || '—'}{techName ? ` · ${techName}` : ''}
                     </div>
-                    <div style={{ fontSize: 11, color: '#888', marginTop: 2 }}>
+                    <div style={{ fontSize: 13, color: '#888', marginTop: 2 }}>
                       Was {formatDate(job.date)} at {formatTime(job.startHour)} · tap to reschedule
                     </div>
                   </div>
@@ -2260,14 +2260,14 @@ export default function ScheduleScreen({
           {/* Today's Jobs */}
           <div style={s.sideSection}>
             <div style={s.sideTitle}>Today — {todayJobs.length} jobs</div>
-            {todayJobs.length === 0 && <div style={{ fontSize: 13, color: '#aaa' }}>No jobs today</div>}
+            {todayJobs.length === 0 && <div style={{ fontSize: 15, color: '#aaa' }}>No jobs today</div>}
             {todayJobs.map(job => {
               const sc = STATUS_COLORS[job.status] || STATUS_COLORS.scheduled;
               return (
                 <div key={job.id} style={s.upcomingJob} onClick={() => setSelectedJob(job)}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <div style={s.upcomingTitle}>{job.title}</div>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: sc.text, background: sc.bg, padding: '2px 6px', borderRadius: 4 }}>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: sc.text, background: sc.bg, padding: '2px 6px', borderRadius: 4 }}>
                       {job.status.replace('-', ' ')}
                     </span>
                   </div>

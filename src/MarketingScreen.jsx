@@ -81,19 +81,19 @@ function ReviewRequestModal({ clients, ownerId, reviewLink, onClose, onSent }) {
     clientRow: (sel) => ({ display: 'flex', alignItems: 'center', gap: 12, padding: '12px', borderRadius: 8, border: `1px solid ${sel ? C.greenBorder : '#e8e8e8'}`, background: sel ? C.greenLight : '#fff', cursor: 'pointer', marginBottom: 8 }),
     checkbox: (sel) => ({ width: 18, height: 18, borderRadius: 4, border: `2px solid ${sel ? C.green : '#ddd'}`, background: sel ? C.green : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }),
     footer: { padding: '16px 24px', borderTop: '1px solid #f0f0f0', display: 'flex', gap: 10, position: 'sticky', bottom: 0, background: '#fff' },
-    btn: (primary, disabled) => ({ flex: 1, padding: '12px', borderRadius: 8, border: primary ? 'none' : '1px solid #ddd', background: primary ? C.green : '#fff', color: primary ? '#fff' : '#666', fontSize: 14, fontWeight: 600, cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.5 : 1 }),
+    btn: (primary, disabled) => ({ flex: 1, padding: '12px', borderRadius: 8, border: primary ? 'none' : '1px solid #ddd', background: primary ? C.green : '#fff', color: primary ? '#fff' : '#666', fontSize: 16, fontWeight: 600, cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.5 : 1 }),
   };
 
   if (result) {
     return (
       <div style={s.overlay}>
         <div style={{ ...s.modal, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 40, textAlign: 'center' }}>
-          <div style={{ fontSize: 48, marginBottom: 16 }}>⭐</div>
-          <div style={{ fontSize: 20, fontWeight: 800, color: '#111', marginBottom: 8 }}>
+          <div style={{ fontSize: 50, marginBottom: 16 }}>⭐</div>
+          <div style={{ fontSize: 22, fontWeight: 800, color: '#111', marginBottom: 8 }}>
             {result.sentCount} review request{result.sentCount === 1 ? '' : 's'} sent
           </div>
           {result.failedCount > 0 && (
-            <div style={{ fontSize: 13, color: '#b91c1c', marginBottom: 12 }}>
+            <div style={{ fontSize: 15, color: '#b91c1c', marginBottom: 12 }}>
               {result.failedCount} couldn't be sent (check the client's email address)
             </div>
           )}
@@ -107,33 +107,33 @@ function ReviewRequestModal({ clients, ownerId, reviewLink, onClose, onSent }) {
     <div style={s.overlay} onClick={onClose}>
       <div style={s.modal} onClick={e => e.stopPropagation()}>
         <div style={s.header}>
-          <span style={{ fontSize: 17, fontWeight: 700, color: '#fff' }}>Send Review Requests</span>
-          <button style={{ background: 'rgba(255,255,255,.2)', border: 'none', color: '#fff', width: 28, height: 28, borderRadius: '50%', cursor: 'pointer', fontSize: 16 }} onClick={onClose}>×</button>
+          <span style={{ fontSize: 19, fontWeight: 700, color: '#fff' }}>Send Review Requests</span>
+          <button style={{ background: 'rgba(255,255,255,.2)', border: 'none', color: '#fff', width: 28, height: 28, borderRadius: '50%', cursor: 'pointer', fontSize: 18 }} onClick={onClose}>×</button>
         </div>
         <div style={s.body}>
-          <div style={{ fontSize: 14, color: '#666', marginBottom: 16, lineHeight: 1.6 }}>
+          <div style={{ fontSize: 16, color: '#666', marginBottom: 16, lineHeight: 1.6 }}>
             Select clients to email. Only clients with an email address who haven't been marked reviewed are shown.
           </div>
-          <div style={{ background: '#f7f7f5', borderRadius: 8, padding: '12px 16px', marginBottom: 16, fontSize: 13, color: '#555', lineHeight: 1.6 }}>
+          <div style={{ background: '#f7f7f5', borderRadius: 8, padding: '12px 16px', marginBottom: 16, fontSize: 15, color: '#555', lineHeight: 1.6 }}>
             <strong>Preview:</strong> "Hi [FirstName], thanks for choosing {`{your company}`}. If you had a great experience, would you take 30 seconds to leave a Google review? It really helps."
             {!reviewLink && (
-              <div style={{ marginTop: 8, color: '#b45309', fontSize: 12 }}>
+              <div style={{ marginTop: 8, color: '#b45309', fontSize: 14 }}>
                 ⚠ No Google review link set in Settings yet — the email will go without one. Add yours in Settings → Profile.
               </div>
             )}
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
-            <span style={{ fontSize: 13, fontWeight: 600, color: '#333' }}>
+            <span style={{ fontSize: 15, fontWeight: 600, color: '#333' }}>
               {eligible.length} client{eligible.length === 1 ? '' : 's'} eligible
             </span>
             {eligible.length > 0 && (
-              <button style={{ background: 'none', border: 'none', color: C.green, fontSize: 13, fontWeight: 600, cursor: 'pointer' }} onClick={() => setSelected(eligible.map(c => c.id))}>
+              <button style={{ background: 'none', border: 'none', color: C.green, fontSize: 15, fontWeight: 600, cursor: 'pointer' }} onClick={() => setSelected(eligible.map(c => c.id))}>
                 Select all
               </button>
             )}
           </div>
           {eligible.length === 0 && (
-            <div style={{ padding: '20px', textAlign: 'center', color: '#888', fontSize: 14, background: '#fafafa', borderRadius: 8 }}>
+            <div style={{ padding: '20px', textAlign: 'center', color: '#888', fontSize: 16, background: '#fafafa', borderRadius: 8 }}>
               Every client with an email on file has been reviewed (or doesn't have an email).
             </div>
           )}
@@ -141,10 +141,10 @@ function ReviewRequestModal({ clients, ownerId, reviewLink, onClose, onSent }) {
             const sel = selected.includes(client.id);
             return (
               <div key={client.id} style={s.clientRow(sel)} onClick={() => toggleSelect(client.id)}>
-                <div style={s.checkbox(sel)}>{sel && <span style={{ color: '#fff', fontSize: 12 }}>✓</span>}</div>
+                <div style={s.checkbox(sel)}>{sel && <span style={{ color: '#fff', fontSize: 14 }}>✓</span>}</div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: '#111' }}>{client.name}</div>
-                  <div style={{ fontSize: 12, color: '#888', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  <div style={{ fontSize: 16, fontWeight: 600, color: '#111' }}>{client.name}</div>
+                  <div style={{ fontSize: 14, color: '#888', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {client.email}
                     {client.reviewRequestedAt && <> · last asked {timeAgo(client.reviewRequestedAt)}</>}
                   </div>
@@ -153,7 +153,7 @@ function ReviewRequestModal({ clients, ownerId, reviewLink, onClose, onSent }) {
             );
           })}
           {error && (
-            <div style={{ marginTop: 14, padding: '10px 14px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, fontSize: 13, color: '#b91c1c', lineHeight: 1.5 }}>
+            <div style={{ marginTop: 14, padding: '10px 14px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, fontSize: 15, color: '#b91c1c', lineHeight: 1.5 }}>
               {error}
             </div>
           )}
@@ -190,13 +190,13 @@ function NewCampaignModal({ ownerId, onClose, onSent }) {
     modal: { background: '#fff', borderRadius: 14, width: '100%', maxWidth: 720, maxHeight: '90vh', overflow: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' },
     header: { background: C.green, padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0 },
     body: { padding: '20px 24px' },
-    label: { fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.1em', color: '#888', marginBottom: 6, display: 'block', marginTop: 14 },
-    input: { width: '100%', padding: '11px 14px', fontSize: 15, border: '1px solid #ddd', borderRadius: 8, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' },
-    select: { width: '100%', padding: '11px 14px', fontSize: 15, border: '1px solid #ddd', borderRadius: 8, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box', background: '#fff' },
-    textarea: { width: '100%', padding: '11px 14px', fontSize: 14, border: '1px solid #ddd', borderRadius: 8, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box', height: 160, resize: 'vertical', lineHeight: 1.7 },
+    label: { fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.1em', color: '#888', marginBottom: 6, display: 'block', marginTop: 14 },
+    input: { width: '100%', padding: '11px 14px', fontSize: 17, border: '1px solid #ddd', borderRadius: 8, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' },
+    select: { width: '100%', padding: '11px 14px', fontSize: 17, border: '1px solid #ddd', borderRadius: 8, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box', background: '#fff' },
+    textarea: { width: '100%', padding: '11px 14px', fontSize: 16, border: '1px solid #ddd', borderRadius: 8, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box', height: 160, resize: 'vertical', lineHeight: 1.7 },
     templateCard: (active) => ({ padding: '14px', border: `1px solid ${active ? C.green : '#e8e8e8'}`, borderRadius: 10, cursor: 'pointer', marginBottom: 10, background: active ? C.greenLight : '#fff' }),
     footer: { padding: '16px 24px', borderTop: '1px solid #f0f0f0', display: 'flex', gap: 10, position: 'sticky', bottom: 0, background: '#fff' },
-    btn: (primary, disabled) => ({ flex: 1, padding: '12px', borderRadius: 8, border: primary ? 'none' : '1px solid #ddd', background: primary ? C.green : '#fff', color: primary ? '#fff' : '#666', fontSize: 14, fontWeight: 600, cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.5 : 1 }),
+    btn: (primary, disabled) => ({ flex: 1, padding: '12px', borderRadius: 8, border: primary ? 'none' : '1px solid #ddd', background: primary ? C.green : '#fff', color: primary ? '#fff' : '#666', fontSize: 16, fontWeight: 600, cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.5 : 1 }),
   };
 
   const handleSend = async () => {
@@ -224,16 +224,16 @@ function NewCampaignModal({ ownerId, onClose, onSent }) {
     return (
       <div style={s.overlay}>
         <div style={{ ...s.modal, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 40, textAlign: 'center' }}>
-          <div style={{ fontSize: 48, marginBottom: 16 }}>📧</div>
-          <div style={{ fontSize: 20, fontWeight: 800, color: '#111', marginBottom: 8 }}>
+          <div style={{ fontSize: 50, marginBottom: 16 }}>📧</div>
+          <div style={{ fontSize: 22, fontWeight: 800, color: '#111', marginBottom: 8 }}>
             Campaign sent
           </div>
-          <div style={{ fontSize: 15, color: '#666', marginBottom: 12 }}>
+          <div style={{ fontSize: 17, color: '#666', marginBottom: 12 }}>
             Delivered to {result.sentCount} client{result.sentCount === 1 ? '' : 's'}
             {result.failedCount > 0 && <span style={{ color: '#b91c1c' }}> · {result.failedCount} failed</span>}.
           </div>
           {result.sentCount === 0 && result.detail === 'no_matching_clients' && (
-            <div style={{ fontSize: 13, color: '#b45309', marginBottom: 12, padding: '10px 14px', background: '#fef9c3', borderRadius: 8 }}>
+            <div style={{ fontSize: 15, color: '#b45309', marginBottom: 12, padding: '10px 14px', background: '#fef9c3', borderRadius: 8 }}>
               No clients matched the "{form.trade}" filter. Try "All Clients" or add jobs first.
             </div>
           )}
@@ -247,25 +247,25 @@ function NewCampaignModal({ ownerId, onClose, onSent }) {
     <div style={s.overlay} onClick={onClose}>
       <div style={s.modal} onClick={e => e.stopPropagation()}>
         <div style={s.header}>
-          <span style={{ fontSize: 17, fontWeight: 700, color: '#fff' }}>{step === 1 ? 'Choose a Template' : 'Customize Campaign'}</span>
-          <button style={{ background: 'rgba(255,255,255,.2)', border: 'none', color: '#fff', width: 28, height: 28, borderRadius: '50%', cursor: 'pointer', fontSize: 16 }} onClick={onClose}>×</button>
+          <span style={{ fontSize: 19, fontWeight: 700, color: '#fff' }}>{step === 1 ? 'Choose a Template' : 'Customize Campaign'}</span>
+          <button style={{ background: 'rgba(255,255,255,.2)', border: 'none', color: '#fff', width: 28, height: 28, borderRadius: '50%', cursor: 'pointer', fontSize: 18 }} onClick={onClose}>×</button>
         </div>
 
         {step === 1 && (
           <div style={s.body}>
-            <div style={{ fontSize: 14, color: '#666', marginBottom: 16 }}>Pick a starting template or start from scratch.</div>
+            <div style={{ fontSize: 16, color: '#666', marginBottom: 16 }}>Pick a starting template or start from scratch.</div>
             {TEMPLATES.map(t => (
               <div key={t.id} style={s.templateCard(form.name === t.name)} onClick={() => { update('name', t.name); update('subject', t.subject); update('message', t.message); update('trade', t.trade); }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: '#111' }}>{t.name}</div>
-                  <span style={{ fontSize: 11, fontWeight: 700, color: C.green, background: C.greenLight, padding: '2px 8px', borderRadius: 4 }}>{t.trade}</span>
+                  <div style={{ fontSize: 17, fontWeight: 700, color: '#111' }}>{t.name}</div>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: C.green, background: C.greenLight, padding: '2px 8px', borderRadius: 4 }}>{t.trade}</span>
                 </div>
-                <div style={{ fontSize: 13, color: '#888' }}>{t.subject}</div>
+                <div style={{ fontSize: 15, color: '#888' }}>{t.subject}</div>
               </div>
             ))}
             <div style={s.templateCard(form.name === 'custom')} onClick={() => { update('name', 'custom'); update('subject', ''); update('message', ''); }}>
-              <div style={{ fontSize: 15, fontWeight: 700, color: '#111' }}>Start from scratch</div>
-              <div style={{ fontSize: 13, color: '#888' }}>Write your own subject and message</div>
+              <div style={{ fontSize: 17, fontWeight: 700, color: '#111' }}>Start from scratch</div>
+              <div style={{ fontSize: 15, color: '#888' }}>Write your own subject and message</div>
             </div>
           </div>
         )}
@@ -284,11 +284,11 @@ function NewCampaignModal({ ownerId, onClose, onSent }) {
             <input style={s.input} value={form.subject} onChange={e => update('subject', e.target.value)} placeholder="Subject line..." />
             <label style={s.label}>Message</label>
             <textarea style={s.textarea} value={form.message} onChange={e => update('message', e.target.value)} placeholder="Write your message here. Use [FirstName] and [Company] to personalize." />
-            <div style={{ fontSize: 12, color: '#aaa', marginTop: 6 }}>
+            <div style={{ fontSize: 14, color: '#aaa', marginTop: 6 }}>
               Tokens: <code>[FirstName]</code> · <code>[Name]</code> · <code>[Company]</code>
             </div>
             {error && (
-              <div style={{ marginTop: 14, padding: '10px 14px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, fontSize: 13, color: '#b91c1c', lineHeight: 1.5 }}>
+              <div style={{ marginTop: 14, padding: '10px 14px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, fontSize: 15, color: '#b91c1c', lineHeight: 1.5 }}>
                 {error}
               </div>
             )}
@@ -400,21 +400,21 @@ export default function MarketingScreen({ user }) {
   const s = {
     wrap: { minHeight: '100dvh', background: '#f7f7f5', fontFamily: "'Inter', sans-serif" },
     header: { background: '#fff', borderBottom: '1px solid #e8e8e8', padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
-    title: { fontSize: 20, fontWeight: 800, color: '#111' },
+    title: { fontSize: 22, fontWeight: 800, color: '#111' },
     tabs: { background: '#fff', borderBottom: '1px solid #e8e8e8', padding: '0 20px', display: 'flex', gap: 0, overflowX: 'auto' },
-    tab: (active) => ({ padding: '12px 16px', fontSize: 13, fontWeight: active ? 700 : 400, color: active ? C.green : '#888', cursor: 'pointer', whiteSpace: 'nowrap', background: 'none', border: 'none', borderBottom: `2px solid ${active ? C.green : 'transparent'}` }),
+    tab: (active) => ({ padding: '12px 16px', fontSize: 15, fontWeight: active ? 700 : 400, color: active ? C.green : '#888', cursor: 'pointer', whiteSpace: 'nowrap', background: 'none', border: 'none', borderBottom: `2px solid ${active ? C.green : 'transparent'}` }),
     body: { padding: '24px 20px', maxWidth: 900, margin: '0 auto' },
     statGrid: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 },
     statCard: { background: '#fff', borderRadius: 12, border: '1px solid #e8e8e8', padding: '20px', textAlign: 'center' },
-    statNum: { fontSize: 32, fontWeight: 900, color: '#111', marginBottom: 4 },
-    statLabel: { fontSize: 13, color: '#888' },
+    statNum: { fontSize: 34, fontWeight: 900, color: '#111', marginBottom: 4 },
+    statLabel: { fontSize: 15, color: '#888' },
     card: { background: '#fff', borderRadius: 12, border: '1px solid #e8e8e8', overflow: 'hidden', marginBottom: 20 },
     cardHeader: { padding: '16px 20px', borderBottom: '1px solid #f0f0f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
-    cardTitle: { fontSize: 15, fontWeight: 700, color: '#111' },
-    tableHead: { display: 'grid', padding: '10px 20px', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.1em', color: '#aaa', background: '#fafafa', borderBottom: '1px solid #f0f0f0' },
+    cardTitle: { fontSize: 17, fontWeight: 700, color: '#111' },
+    tableHead: { display: 'grid', padding: '10px 20px', fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.1em', color: '#aaa', background: '#fafafa', borderBottom: '1px solid #f0f0f0' },
     tableRow: { display: 'grid', padding: '14px 20px', borderBottom: '1px solid #f8f8f8', alignItems: 'center' },
-    badge: (color, bg) => ({ display: 'inline-block', padding: '3px 10px', borderRadius: 20, fontSize: 12, fontWeight: 700, color, background: bg }),
-    emptyState: { padding: '40px 20px', textAlign: 'center', color: '#888', fontSize: 14, background: '#fff' },
+    badge: (color, bg) => ({ display: 'inline-block', padding: '3px 10px', borderRadius: 20, fontSize: 14, fontWeight: 700, color, background: bg }),
+    emptyState: { padding: '40px 20px', textAlign: 'center', color: '#888', fontSize: 16, background: '#fff' },
   };
 
   // ── Guard: signed-out / not-yet-loaded ────────────────────────────────────
@@ -439,18 +439,18 @@ export default function MarketingScreen({ user }) {
     const failNote = entry.status === 'failed' ? ' — failed' : '';
     return (
       <div key={entry.id || i} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 20px', borderBottom: '1px solid #f8f8f8' }}>
-        <div style={{ width: 36, height: 36, borderRadius: '50%', background: `${meta.color}20`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>{meta.icon}</div>
-        <div style={{ flex: 1, fontSize: 14, color: '#333', minWidth: 0 }}>
+        <div style={{ width: 36, height: 36, borderRadius: '50%', background: `${meta.color}20`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>{meta.icon}</div>
+        <div style={{ flex: 1, fontSize: 16, color: '#333', minWidth: 0 }}>
           <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {verb} sent to <strong>{target}</strong>{failNote}
           </div>
           {entry.subject && (
-            <div style={{ fontSize: 12, color: '#888', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <div style={{ fontSize: 14, color: '#888', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {entry.subject}
             </div>
           )}
         </div>
-        <div style={{ fontSize: 12, color: '#aaa', whiteSpace: 'nowrap' }}>{timeAgo(entry.createdAt)}</div>
+        <div style={{ fontSize: 14, color: '#aaa', whiteSpace: 'nowrap' }}>{timeAgo(entry.createdAt)}</div>
       </div>
     );
   };
@@ -506,22 +506,22 @@ export default function MarketingScreen({ user }) {
             {item.locked && (
               <span style={{
                 position: 'absolute', top: 12, right: 12,
-                fontSize: 10, fontWeight: 800, letterSpacing: '0.08em',
+                fontSize: 12, fontWeight: 800, letterSpacing: '0.08em',
                 textTransform: 'uppercase', color: '#92400e',
                 background: '#fef3c7', border: '1px solid #fde68a',
                 padding: '2px 8px', borderRadius: 10,
               }}>Pro</span>
             )}
-            <div style={{ fontSize: 28, marginBottom: 10 }}>{item.icon}</div>
-            <div style={{ fontSize: 15, fontWeight: 700, color: '#111', marginBottom: 4 }}>{item.title}</div>
-            <div style={{ fontSize: 13, color: '#888', marginBottom: 16, lineHeight: 1.5 }}>{item.desc}</div>
+            <div style={{ fontSize: 30, marginBottom: 10 }}>{item.icon}</div>
+            <div style={{ fontSize: 17, fontWeight: 700, color: '#111', marginBottom: 4 }}>{item.title}</div>
+            <div style={{ fontSize: 15, color: '#888', marginBottom: 16, lineHeight: 1.5 }}>{item.desc}</div>
             <button
               style={{
                 padding: '9px 16px',
                 background: item.locked ? '#fef3c7' : C.green,
                 color:      item.locked ? '#92400e' : '#fff',
                 border:     item.locked ? '1px solid #fde68a' : 'none',
-                borderRadius: 8, fontSize: 13, fontWeight: 700,
+                borderRadius: 8, fontSize: 15, fontWeight: 700,
                 cursor: 'pointer', width: '100%',
               }}
               onClick={() => {
@@ -555,18 +555,18 @@ export default function MarketingScreen({ user }) {
       <>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
           <div style={{ background: C.greenLight, border: `1px solid ${C.greenBorder}`, borderRadius: 12, padding: '20px', display: 'flex', alignItems: 'center', gap: 16 }}>
-            <div style={{ fontSize: 40 }}>⭐</div>
+            <div style={{ fontSize: 42 }}>⭐</div>
             <div>
-              <div style={{ fontSize: 32, fontWeight: 900, color: C.green }}>{reviewedList.length}</div>
-              <div style={{ fontSize: 14, color: C.green }}>Reviews logged</div>
+              <div style={{ fontSize: 34, fontWeight: 900, color: C.green }}>{reviewedList.length}</div>
+              <div style={{ fontSize: 16, color: C.green }}>Reviews logged</div>
             </div>
           </div>
           <div style={{ background: '#fff', border: '1px solid #e8e8e8', borderRadius: 12, padding: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div>
-              <div style={{ fontSize: 32, fontWeight: 900, color: '#f59e0b' }}>{pendingList.length}</div>
-              <div style={{ fontSize: 14, color: '#888' }}>Pending</div>
+              <div style={{ fontSize: 34, fontWeight: 900, color: '#f59e0b' }}>{pendingList.length}</div>
+              <div style={{ fontSize: 16, color: '#888' }}>Pending</div>
             </div>
-            <button style={{ padding: '10px 16px', background: C.green, color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer' }} onClick={() => setShowReviewModal(true)}>
+            <button style={{ padding: '10px 16px', background: C.green, color: '#fff', border: 'none', borderRadius: 8, fontSize: 15, fontWeight: 600, cursor: 'pointer' }} onClick={() => setShowReviewModal(true)}>
               Request Reviews
             </button>
           </div>
@@ -581,13 +581,13 @@ export default function MarketingScreen({ user }) {
           {clients.map(c => (
             <div key={c.id} style={{ ...s.tableRow, gridTemplateColumns: '1.5fr 1.5fr 120px 120px' }}>
               <div>
-                <div style={{ fontSize: 14, fontWeight: 600, color: '#111' }}>{c.name}</div>
-                <div style={{ fontSize: 12, color: '#aaa' }}>{c.company || c.phone}</div>
+                <div style={{ fontSize: 16, fontWeight: 600, color: '#111' }}>{c.name}</div>
+                <div style={{ fontSize: 14, color: '#aaa' }}>{c.company || c.phone}</div>
               </div>
-              <div style={{ fontSize: 13, color: '#555', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              <div style={{ fontSize: 15, color: '#555', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {c.email || <span style={{ color: '#aaa' }}>—</span>}
               </div>
-              <div style={{ fontSize: 12, color: '#888' }}>
+              <div style={{ fontSize: 14, color: '#888' }}>
                 {c.reviewRequestedAt ? timeAgo(c.reviewRequestedAt) : '—'}
               </div>
               <div>
@@ -618,17 +618,17 @@ export default function MarketingScreen({ user }) {
           background: '#fffbeb', border: '1.5px solid #fde68a',
           borderRadius: 12, padding: '32px 28px', textAlign: 'center',
         }}>
-          <div style={{ fontSize: 40, marginBottom: 12 }}>📧</div>
-          <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#92400e', marginBottom: 8 }}>
+          <div style={{ fontSize: 42, marginBottom: 12 }}>📧</div>
+          <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#92400e', marginBottom: 8 }}>
             Pro feature
           </div>
-          <div style={{ fontSize: 22, fontWeight: 800, color: '#111', marginBottom: 8 }}>
+          <div style={{ fontSize: 24, fontWeight: 800, color: '#111', marginBottom: 8 }}>
             Send marketing campaigns to your clients
           </div>
-          <div style={{ fontSize: 14, color: '#666', maxWidth: 480, margin: '0 auto 20px', lineHeight: 1.6 }}>
+          <div style={{ fontSize: 16, color: '#666', maxWidth: 480, margin: '0 auto 20px', lineHeight: 1.6 }}>
             Promotions, seasonal announcements, service reminders — all sent from your business email with full unsubscribe handling, send tracking, and audience filtering by trade or recency. Available on Pro and Elite plans.
           </div>
-          <div style={{ fontSize: 13, color: '#666', marginBottom: 20 }}>
+          <div style={{ fontSize: 15, color: '#666', marginBottom: 20 }}>
             Your <strong style={{ color: '#111' }}>{tierLabel(tierOf(user))}</strong> plan still includes Review Requests.
           </div>
           <a
@@ -637,7 +637,7 @@ export default function MarketingScreen({ user }) {
             style={{
               display: 'inline-block',
               padding: '12px 24px', background: C.green, color: '#fff',
-              border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 700,
+              border: 'none', borderRadius: 8, fontSize: 16, fontWeight: 700,
               cursor: 'pointer', textDecoration: 'none',
             }}
           >Upgrade to Pro</a>
@@ -645,7 +645,7 @@ export default function MarketingScreen({ user }) {
       ) : (
       <>
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
-        <button style={{ padding: '10px 18px', background: C.green, color: '#fff', border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: 'pointer' }} onClick={() => setShowCampaignModal(true)}>
+        <button style={{ padding: '10px 18px', background: C.green, color: '#fff', border: 'none', borderRadius: 8, fontSize: 16, fontWeight: 600, cursor: 'pointer' }} onClick={() => setShowCampaignModal(true)}>
           + New Campaign
         </button>
       </div>
@@ -660,14 +660,14 @@ export default function MarketingScreen({ user }) {
         {!loading && campaigns.map(c => (
           <div key={c.id} style={{ ...s.tableRow, gridTemplateColumns: '2fr 1fr 80px 1fr 100px' }}>
             <div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: '#111' }}>{c.name}</div>
-              <div style={{ fontSize: 12, color: '#aaa', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.subject}</div>
+              <div style={{ fontSize: 16, fontWeight: 600, color: '#111' }}>{c.name}</div>
+              <div style={{ fontSize: 14, color: '#aaa', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.subject}</div>
             </div>
-            <div style={{ fontSize: 13, color: '#666' }}>
+            <div style={{ fontSize: 15, color: '#666' }}>
               {c.sentAt ? new Date(c.sentAt).toLocaleDateString() : new Date(c.createdAt).toLocaleDateString()}
             </div>
-            <div style={{ fontSize: 14, fontWeight: 600, color: '#333' }}>{c.sentCount}</div>
-            <div style={{ fontSize: 13, color: '#666' }}>{c.tradeFilter || 'All'}</div>
+            <div style={{ fontSize: 16, fontWeight: 600, color: '#333' }}>{c.sentCount}</div>
+            <div style={{ fontSize: 15, color: '#666' }}>{c.tradeFilter || 'All'}</div>
             <div>
               {c.status === 'sent'     && <span style={s.badge('#166534', '#dcfce7')}>Sent</span>}
               {c.status === 'draft'    && <span style={s.badge('#6b7280', '#f3f4f6')}>Draft</span>}
@@ -685,7 +685,7 @@ export default function MarketingScreen({ user }) {
 
   const renderAutomations = () => (
     <>
-      <div style={{ background: '#fef9c3', border: '1px solid #fde68a', borderRadius: 10, padding: '14px 18px', marginBottom: 20, fontSize: 14, color: '#854d0e', lineHeight: 1.6 }}>
+      <div style={{ background: '#fef9c3', border: '1px solid #fde68a', borderRadius: 10, padding: '14px 18px', marginBottom: 20, fontSize: 16, color: '#854d0e', lineHeight: 1.6 }}>
         ⏳ <strong>Coming soon.</strong> Trigger-based automations (e.g. "invoice paid → wait 2 days → send review request") need a scheduled background job. We'll add this once Vercel Cron is wired. For now, use <strong>Request Reviews</strong> or <strong>New Campaign</strong> for manual sends.
       </div>
       <div style={s.card}>
@@ -693,14 +693,14 @@ export default function MarketingScreen({ user }) {
           <div key={auto.id} style={{ padding: '18px 20px', borderBottom: '1px solid #f5f5f5', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
             <div style={{ flex: 1 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-                <span style={{ fontSize: 15, fontWeight: 700, color: '#111' }}>{auto.name}</span>
+                <span style={{ fontSize: 17, fontWeight: 700, color: '#111' }}>{auto.name}</span>
                 <span style={s.badge('#6b7280', '#f3f4f6')}>paused</span>
               </div>
-              <div style={{ fontSize: 13, color: '#888' }}>
+              <div style={{ fontSize: 15, color: '#888' }}>
                 Trigger: <strong style={{ color: '#555' }}>{auto.trigger}</strong> · Sends: <strong style={{ color: '#555' }}>{auto.delay}</strong>
               </div>
             </div>
-            <button disabled style={{ padding: '6px 12px', borderRadius: 20, border: 'none', background: '#f3f4f6', color: '#9ca3af', fontSize: 12, fontWeight: 600, cursor: 'not-allowed' }}>
+            <button disabled style={{ padding: '6px 12px', borderRadius: 20, border: 'none', background: '#f3f4f6', color: '#9ca3af', fontSize: 14, fontWeight: 600, cursor: 'not-allowed' }}>
               Not yet
             </button>
           </div>
@@ -723,11 +723,11 @@ export default function MarketingScreen({ user }) {
       {clients.map(c => (
         <div key={c.id} style={{ ...s.tableRow, gridTemplateColumns: '1.5fr 1.5fr 1fr 100px' }}>
           <div>
-            <div style={{ fontSize: 14, fontWeight: 600, color: '#111' }}>{c.name}</div>
-            <div style={{ fontSize: 12, color: '#aaa' }}>{c.company || '—'}</div>
+            <div style={{ fontSize: 16, fontWeight: 600, color: '#111' }}>{c.name}</div>
+            <div style={{ fontSize: 14, color: '#aaa' }}>{c.company || '—'}</div>
           </div>
-          <div style={{ fontSize: 13, color: '#555', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.email || '—'}</div>
-          <div style={{ fontSize: 13, color: '#666' }}>{c.phone || '—'}</div>
+          <div style={{ fontSize: 15, color: '#555', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.email || '—'}</div>
+          <div style={{ fontSize: 15, color: '#666' }}>{c.phone || '—'}</div>
           <div>
             {c.reviewedAt
               ? <span style={s.badge('#166534', '#dcfce7')}>⭐</span>
@@ -743,7 +743,7 @@ export default function MarketingScreen({ user }) {
     <div style={s.wrap}>
       <div style={s.header}>
         <div style={s.title}>Marketing</div>
-        <div style={{ fontSize: 13, color: '#888' }}>Grow your business with reviews & campaigns</div>
+        <div style={{ fontSize: 15, color: '#888' }}>Grow your business with reviews & campaigns</div>
       </div>
 
       <div style={s.tabs}>

@@ -144,33 +144,33 @@ export function BillingPaymentModal({ user, plan, onClose, onSaved }) {
       }}>
         <div style={{ padding: '20px 24px', background: '#2d6a4f', color: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', opacity: 0.85 }}>Activate Subscription</div>
-            <div style={{ fontSize: 19, fontWeight: 700, marginTop: 2 }}>Add Payment Method</div>
+            <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', opacity: 0.85 }}>Activate Subscription</div>
+            <div style={{ fontSize: 21, fontWeight: 700, marginTop: 2 }}>Add Payment Method</div>
           </div>
-          <button onClick={onClose} style={{ width: 44, height: 44, borderRadius: '50%', background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', fontSize: 22, cursor: 'pointer' }}>×</button>
+          <button onClick={onClose} style={{ width: 44, height: 44, borderRadius: '50%', background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', fontSize: 24, cursor: 'pointer' }}>×</button>
         </div>
 
         <div style={{ padding: '20px 24px' }}>
           {phase === 'success' ? (
             <div style={{ padding: '24px 0', textAlign: 'center' }}>
-              <div style={{ fontSize: 16, fontWeight: 800, color: '#15803d', marginBottom: 6 }}>✓ Subscription Active</div>
-              <div style={{ fontSize: 14, color: '#475569', lineHeight: 1.6 }}>
+              <div style={{ fontSize: 18, fontWeight: 800, color: '#15803d', marginBottom: 6 }}>✓ Subscription Active</div>
+              <div style={{ fontSize: 16, color: '#475569', lineHeight: 1.6 }}>
                 Your card is saved. Tradevoice won't charge until your 28-day trial ends, then it auto-renews monthly.
               </div>
-              <button onClick={onClose} style={{ marginTop: 16, padding: '12px 28px', background: '#2d6a4f', color: '#fff', border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>Done</button>
+              <button onClick={onClose} style={{ marginTop: 16, padding: '12px 28px', background: '#2d6a4f', color: '#fff', border: 'none', borderRadius: 8, fontSize: 16, fontWeight: 700, cursor: 'pointer' }}>Done</button>
             </div>
           ) : (
             <>
-              <div style={{ fontSize: 13, color: '#475569', lineHeight: 1.55, marginBottom: 14 }}>
+              <div style={{ fontSize: 15, color: '#475569', lineHeight: 1.55, marginBottom: 14 }}>
                 Add a card to continue using Tradevoice after your trial ends. We'll <strong style={{ color: '#1f2937' }}>start the 28-day trial now</strong> and only charge when it expires. Cancel anytime.
               </div>
 
               <div ref={cardMountRef} style={{ minHeight: 160, marginBottom: 16 }}>
-                {phase === 'loading' && <div style={{ padding: '40px 0', textAlign: 'center', color: '#94a3b8', fontSize: 13 }}>Loading secure card form…</div>}
+                {phase === 'loading' && <div style={{ padding: '40px 0', textAlign: 'center', color: '#94a3b8', fontSize: 15 }}>Loading secure card form…</div>}
               </div>
 
               {error && (
-                <div style={{ padding: '10px 14px', background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 6, fontSize: 13, color: '#991b1b', marginBottom: 14 }}>
+                <div style={{ padding: '10px 14px', background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 6, fontSize: 15, color: '#991b1b', marginBottom: 14 }}>
                   {error}
                 </div>
               )}
@@ -182,14 +182,14 @@ export function BillingPaymentModal({ user, plan, onClose, onSaved }) {
                   width: '100%', padding: '14px',
                   background: '#2d6a4f', color: '#fff',
                   border: 'none', borderRadius: 8,
-                  fontSize: 16, fontWeight: 800, letterSpacing: '0.02em',
+                  fontSize: 18, fontWeight: 800, letterSpacing: '0.02em',
                   cursor: phase === 'submitting' ? 'wait' : 'pointer',
                   opacity: (phase !== 'ready' && phase !== 'submitting') ? 0.5 : 1,
                 }}
               >
                 {phase === 'submitting' ? 'Saving…' : 'Save Card & Start 28-Day Trial'}
               </button>
-              <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 8, textAlign: 'center' }}>
+              <div style={{ fontSize: 13, color: '#94a3b8', marginTop: 8, textAlign: 'center' }}>
                 Card processed securely by Stripe. Your details never touch our servers.
               </div>
             </>

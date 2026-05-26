@@ -124,10 +124,10 @@ export function StripePayPanel({ shareToken, accentColor }) {
         borderRadius: 10, marginBottom: 16, color: '#166534',
         display: 'flex', flexDirection: 'column', gap: 4,
       }}>
-        <div style={{ fontSize: 14, fontWeight: 800, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+        <div style={{ fontSize: 16, fontWeight: 800, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
           Payment Received
         </div>
-        <div style={{ fontSize: 15, lineHeight: 1.5 }}>
+        <div style={{ fontSize: 17, lineHeight: 1.5 }}>
           Thanks — {amount ? fmtMoney(amount) : 'your payment'} has been received. A receipt was emailed to you.
         </div>
       </div>
@@ -141,10 +141,10 @@ export function StripePayPanel({ shareToken, accentColor }) {
     }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, gap: 12, flexWrap: 'wrap' }}>
         <div>
-          <div style={{ fontSize: 12, fontWeight: 800, color: accent, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+          <div style={{ fontSize: 14, fontWeight: 800, color: accent, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
             Pay Online
           </div>
-          <div style={{ fontSize: 14, color: '#666', marginTop: 4 }}>
+          <div style={{ fontSize: 16, color: '#666', marginTop: 4 }}>
             Card, ACH, Apple Pay, Google Pay — secured by Stripe.
           </div>
         </div>
@@ -154,7 +154,7 @@ export function StripePayPanel({ shareToken, accentColor }) {
             style={{
               background: accent, color: '#fff', border: 'none',
               padding: '12px 26px', borderRadius: 8, cursor: 'pointer',
-              fontSize: 15, fontWeight: 800, letterSpacing: '0.02em',
+              fontSize: 17, fontWeight: 800, letterSpacing: '0.02em',
               boxShadow: `0 2px 6px ${accent}55`,
             }}
           >
@@ -162,7 +162,7 @@ export function StripePayPanel({ shareToken, accentColor }) {
           </button>
         )}
         {phase === 'loading' && (
-          <span style={{ fontSize: 14, color: '#666', fontStyle: 'italic' }}>Loading…</span>
+          <span style={{ fontSize: 16, color: '#666', fontStyle: 'italic' }}>Loading…</span>
         )}
       </div>
 
@@ -176,13 +176,13 @@ export function StripePayPanel({ shareToken, accentColor }) {
               width: '100%', background: accent, color: '#fff', border: 'none',
               padding: '14px', borderRadius: 8,
               cursor: phase === 'submitting' ? 'wait' : 'pointer',
-              fontSize: 16, fontWeight: 800, letterSpacing: '0.02em',
+              fontSize: 18, fontWeight: 800, letterSpacing: '0.02em',
               opacity: phase === 'submitting' ? 0.6 : 1,
             }}
           >
             {phase === 'submitting' ? 'Processing…' : `Pay ${amount ? fmtMoney(amount) : ''}`}
           </button>
-          <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 8, textAlign: 'center' }}>
+          <div style={{ fontSize: 13, color: '#9ca3af', marginTop: 8, textAlign: 'center' }}>
             Your payment is processed securely by Stripe. Your card details never touch our servers.
           </div>
         </>
@@ -192,7 +192,7 @@ export function StripePayPanel({ shareToken, accentColor }) {
         <div style={{
           marginTop: 12, padding: '10px 14px', background: '#fef2f2',
           border: '1px solid #fca5a5', borderRadius: 6,
-          fontSize: 13, color: '#991b1b',
+          fontSize: 15, color: '#991b1b',
         }}>
           {error}
         </div>

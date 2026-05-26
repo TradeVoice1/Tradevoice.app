@@ -13,15 +13,15 @@ export function PrivacyPolicyScreen({ onBack }) {
   const s = {
     container: { minHeight: '100dvh', background: '#f7f7f5', fontFamily: "'Inter', sans-serif" },
     header: { background: '#fff', borderBottom: '1px solid #e8e8e8', padding: '16px 24px', display: 'flex', alignItems: 'center', gap: 12, position: 'sticky', top: 0, zIndex: 10 },
-    backBtn: { background: 'none', border: 'none', fontSize: 14, color: '#2d6a4f', fontWeight: 600, cursor: 'pointer', padding: '4px 0' },
-    title: { fontSize: 18, fontWeight: 700, color: '#111' },
+    backBtn: { background: 'none', border: 'none', fontSize: 16, color: '#2d6a4f', fontWeight: 600, cursor: 'pointer', padding: '4px 0' },
+    title: { fontSize: 20, fontWeight: 700, color: '#111' },
     body: { maxWidth: 720, margin: '0 auto', padding: '32px 24px 80px' },
-    h1: { fontSize: 26, fontWeight: 800, color: '#111', marginBottom: 4 },
-    updated: { fontSize: 13, color: '#999', marginBottom: 32 },
-    h2: { fontSize: 16, fontWeight: 700, color: '#111', marginTop: 28, marginBottom: 8 },
-    p: { fontSize: 15, color: '#444', lineHeight: 1.8, marginBottom: 12 },
+    h1: { fontSize: 28, fontWeight: 800, color: '#111', marginBottom: 4 },
+    updated: { fontSize: 15, color: '#999', marginBottom: 32 },
+    h2: { fontSize: 18, fontWeight: 700, color: '#111', marginTop: 28, marginBottom: 8 },
+    p: { fontSize: 17, color: '#444', lineHeight: 1.8, marginBottom: 12 },
     ul: { paddingLeft: 20, marginBottom: 12 },
-    li: { fontSize: 15, color: '#444', lineHeight: 1.8, marginBottom: 4 },
+    li: { fontSize: 17, color: '#444', lineHeight: 1.8, marginBottom: 4 },
     contact: { background: '#f0f7f4', border: '1px solid #c8e6d4', borderRadius: 8, padding: '16px 20px', marginTop: 32 },
   };
 
@@ -177,8 +177,8 @@ export function PrivacyPolicyScreen({ onBack }) {
         <p style={s.p}>We may update this Privacy Policy from time to time. For material changes that affect your rights, we will notify you by email or by a prominent notice in the platform at least 14 days before the change takes effect. The "Last updated" date at the top of this policy reflects the date of the most recent revision.</p>
 
         <div style={s.contact}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: '#2d6a4f', marginBottom: 4 }}>Questions about your privacy?</div>
-          <div style={{ fontSize: 14, color: '#444' }}>Contact us at <strong>privacy@thetradevoice.com</strong> — Tiny's Apps LLC · thetradevoice.com</div>
+          <div style={{ fontSize: 16, fontWeight: 700, color: '#2d6a4f', marginBottom: 4 }}>Questions about your privacy?</div>
+          <div style={{ fontSize: 16, color: '#444' }}>Contact us at <strong>privacy@thetradevoice.com</strong> — Tiny's Apps LLC · thetradevoice.com</div>
         </div>
       </div>
     </div>
@@ -200,19 +200,19 @@ export function TermsScreen({ onBack }) {
   const s = {
     container: { minHeight: '100dvh', background: '#f7f7f5', fontFamily: "'Inter', sans-serif" },
     header: { background: '#fff', borderBottom: '1px solid #e8e8e8', padding: '16px 24px', display: 'flex', alignItems: 'center', gap: 12, position: 'sticky', top: 0, zIndex: 10 },
-    backBtn: { background: 'none', border: 'none', fontSize: 14, color: '#2d6a4f', fontWeight: 600, cursor: 'pointer', padding: '4px 0' },
-    title: { fontSize: 18, fontWeight: 700, color: '#111' },
+    backBtn: { background: 'none', border: 'none', fontSize: 16, color: '#2d6a4f', fontWeight: 600, cursor: 'pointer', padding: '4px 0' },
+    title: { fontSize: 20, fontWeight: 700, color: '#111' },
     body: { maxWidth: 720, margin: '0 auto', padding: '32px 24px 80px' },
-    h1: { fontSize: 26, fontWeight: 800, color: '#111', marginBottom: 4 },
-    updated: { fontSize: 13, color: '#999', marginBottom: 32 },
-    h2: { fontSize: 16, fontWeight: 700, color: '#111', marginTop: 28, marginBottom: 8 },
-    p: { fontSize: 15, color: '#444', lineHeight: 1.8, marginBottom: 12 },
+    h1: { fontSize: 28, fontWeight: 800, color: '#111', marginBottom: 4 },
+    updated: { fontSize: 15, color: '#999', marginBottom: 32 },
+    h2: { fontSize: 18, fontWeight: 700, color: '#111', marginTop: 28, marginBottom: 8 },
+    p: { fontSize: 17, color: '#444', lineHeight: 1.8, marginBottom: 12 },
     ul: { paddingLeft: 20, marginBottom: 12 },
-    li: { fontSize: 15, color: '#444', lineHeight: 1.8, marginBottom: 4 },
+    li: { fontSize: 17, color: '#444', lineHeight: 1.8, marginBottom: 4 },
     table: { width: '100%', borderCollapse: 'collapse', marginBottom: 16 },
-    th: { textAlign: 'left', fontSize: 13, fontWeight: 700, color: '#888', padding: '8px 12px', borderBottom: '1px solid #e0e0e0', textTransform: 'uppercase', letterSpacing: '.06em' },
-    td: { fontSize: 14, color: '#444', padding: '10px 12px', borderBottom: '1px solid #f0f0f0' },
-    warning: { background: '#fff8f0', border: '1px solid #f5d5a0', borderRadius: 8, padding: '14px 18px', marginTop: 16, fontSize: 14, color: '#7a4f1a', lineHeight: 1.7 },
+    th: { textAlign: 'left', fontSize: 15, fontWeight: 700, color: '#888', padding: '8px 12px', borderBottom: '1px solid #e0e0e0', textTransform: 'uppercase', letterSpacing: '.06em' },
+    td: { fontSize: 16, color: '#444', padding: '10px 12px', borderBottom: '1px solid #f0f0f0' },
+    warning: { background: '#fff8f0', border: '1px solid #f5d5a0', borderRadius: 8, padding: '14px 18px', marginTop: 16, fontSize: 16, color: '#7a4f1a', lineHeight: 1.7 },
     contact: { background: '#f0f7f4', border: '1px solid #c8e6d4', borderRadius: 8, padding: '16px 20px', marginTop: 32 },
   };
 
@@ -417,8 +417,8 @@ export function TermsScreen({ onBack }) {
         </ul>
 
         <div style={s.contact}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: '#2d6a4f', marginBottom: 4 }}>Questions?</div>
-          <div style={{ fontSize: 14, color: '#444' }}>Contact us at <strong>legal@thetradevoice.com</strong> — Tiny's Apps LLC · thetradevoice.com</div>
+          <div style={{ fontSize: 16, fontWeight: 700, color: '#2d6a4f', marginBottom: 4 }}>Questions?</div>
+          <div style={{ fontSize: 16, color: '#444' }}>Contact us at <strong>legal@thetradevoice.com</strong> — Tiny's Apps LLC · thetradevoice.com</div>
         </div>
       </div>
     </div>

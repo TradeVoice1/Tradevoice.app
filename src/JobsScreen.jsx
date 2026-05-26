@@ -53,7 +53,7 @@ function renderTechSelector({ job, tech, isTech, techs, handleTechChange, C, ful
     return (
       <span style={{
         display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: 14, fontWeight: 700, color: tech?.color || C.muted,
+        fontSize: 16, fontWeight: 700, color: tech?.color || C.muted,
         padding: '10px 14px', minHeight: 44,
         background: (tech?.color || C.muted) + '15',
         borderRadius: 6, minWidth: 100, textAlign: 'center',
@@ -73,7 +73,7 @@ function renderTechSelector({ job, tech, isTech, techs, handleTechChange, C, ful
       style={{
         padding: '10px 14px',
         // 16px so iOS Safari doesn't zoom the page on focus.
-        fontSize: 16, fontWeight: 600, fontFamily: 'inherit',
+        fontSize: 18, fontWeight: 600, fontFamily: 'inherit',
         border: `1px solid ${C.border}`, borderRadius: 6, cursor: 'pointer',
         background: tech ? tech.color + '15' : C.bg,
         color:      tech ? tech.color        : C.muted,
@@ -92,7 +92,7 @@ function renderPhotosBadge({ photos, C, large = false }) {
   return (
     <span style={{
       display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-      fontSize: 13, fontWeight: 700,
+      fontSize: 15, fontWeight: 700,
       padding: large ? '10px 14px' : '7px 11px',
       minHeight: large ? 44 : 36,
       borderRadius: 6,
@@ -129,7 +129,7 @@ function renderPermitsBadge({ permits, C, large = false }) {
   return (
     <span style={{
       display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-      fontSize: 12, fontWeight: 700,
+      fontSize: 14, fontWeight: 700,
       padding: large ? '10px 12px' : '7px 10px',
       minHeight: large ? 44 : 36,
       borderRadius: 6,
@@ -145,7 +145,7 @@ function renderStatusPill({ sc, large = false }) {
   return (
     <span style={{
       display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-      fontSize: 12, fontWeight: 800, letterSpacing: '0.06em', textTransform: 'uppercase',
+      fontSize: 14, fontWeight: 800, letterSpacing: '0.06em', textTransform: 'uppercase',
       padding: large ? '10px 14px' : '6px 11px',
       minHeight: large ? 44 : 32,
       borderRadius: 4,
@@ -426,23 +426,23 @@ export default function JobsScreen({ user, team = [], onCreateInvoice }) {
         }}>
           {/* Date + time micro-block */}
           <div style={{ minWidth: 64, textAlign: 'center', paddingRight: 12, borderRight: `1px solid ${C.border}` }}>
-            <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.06em', textTransform: 'uppercase', color: C.muted }}>
+            <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: '0.06em', textTransform: 'uppercase', color: C.muted }}>
               {date.toLocaleDateString('en-US', { weekday: 'short' })}
             </div>
-            <div style={{ fontSize: 19, fontWeight: 900, color: C.text, lineHeight: 1, margin: '2px 0' }}>
+            <div style={{ fontSize: 21, fontWeight: 900, color: C.text, lineHeight: 1, margin: '2px 0' }}>
               {date.getDate()}
             </div>
-            <div style={{ fontSize: 12, color: C.dim, fontWeight: 600 }}>
+            <div style={{ fontSize: 14, color: C.dim, fontWeight: 600 }}>
               {formatTime(job.startHour)}
             </div>
           </div>
 
           {/* Title + client + address */}
           <div style={{ minWidth: 0 }}>
-            <div style={{ fontSize: 16, fontWeight: 700, color: C.text, marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <div style={{ fontSize: 18, fontWeight: 700, color: C.text, marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {job.title || '(no title)'}
             </div>
-            <div style={{ fontSize: 13, color: C.muted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <div style={{ fontSize: 15, color: C.muted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {job.clientName || 'No client'}
               {job.address ? ` · ${job.address.split(',')[0]}` : ''}
             </div>
@@ -491,10 +491,10 @@ export default function JobsScreen({ user, team = [], onCreateInvoice }) {
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12,
       }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: 28, fontWeight: 700, color: C.text, letterSpacing: '-0.025em' }}>
+          <h1 style={{ margin: 0, fontSize: 30, fontWeight: 700, color: C.text, letterSpacing: '-0.025em' }}>
             {isTech ? 'My Jobs' : 'Jobs'}
           </h1>
-          <p style={{ margin: '6px 0 0', fontSize: 14, color: C.muted, fontWeight: 500 }}>
+          <p style={{ margin: '6px 0 0', fontSize: 16, color: C.muted, fontWeight: 500 }}>
             {loading
               ? 'Loading…'
               : `${totalVisible} job${totalVisible === 1 ? '' : 's'}${totalVisible !== jobs.length ? ` (of ${jobs.length} total)` : ''}`}
@@ -511,7 +511,7 @@ export default function JobsScreen({ user, team = [], onCreateInvoice }) {
           onChange={e => setSearch(e.target.value)}
           style={{
             flex: '1 1 240px', minWidth: 200, padding: '11px 14px', minHeight: 44,
-            border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 16,
+            border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 18,
             background: C.surface, fontFamily: 'inherit', boxSizing: 'border-box',
           }}
         />
@@ -519,7 +519,7 @@ export default function JobsScreen({ user, team = [], onCreateInvoice }) {
           <select value={filterTech} onChange={e => setFilterTech(e.target.value)}
             style={{
               padding: '11px 14px', minHeight: 44, border: `1px solid ${C.border}`,
-              borderRadius: 8, fontSize: 16, background: C.surface,
+              borderRadius: 8, fontSize: 18, background: C.surface,
               cursor: 'pointer', fontFamily: 'inherit', boxSizing: 'border-box',
             }}>
             <option value="all">All techs</option>
@@ -530,7 +530,7 @@ export default function JobsScreen({ user, team = [], onCreateInvoice }) {
         <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}
           style={{
             padding: '11px 14px', minHeight: 44, border: `1px solid ${C.border}`,
-            borderRadius: 8, fontSize: 16, background: C.surface,
+            borderRadius: 8, fontSize: 18, background: C.surface,
             cursor: 'pointer', fontFamily: 'inherit', boxSizing: 'border-box',
           }}>
           <option value="all">All status</option>
@@ -544,7 +544,7 @@ export default function JobsScreen({ user, team = [], onCreateInvoice }) {
             onClick={() => { setFilterTech('all'); setFilterStatus('all'); setSearch(''); }}
             style={{
               padding: '11px 14px', minHeight: 44, border: `1px solid ${C.border}`,
-              borderRadius: 8, fontSize: 15, background: C.surface,
+              borderRadius: 8, fontSize: 17, background: C.surface,
               cursor: 'pointer', color: C.muted, fontFamily: 'inherit',
             }}>
             Clear filters
@@ -553,13 +553,13 @@ export default function JobsScreen({ user, team = [], onCreateInvoice }) {
       </div>
 
       {/* Body */}
-      {loading && <div style={{ padding: 24, textAlign: 'center', color: C.dim, fontSize: 14 }}>Loading jobs…</div>}
+      {loading && <div style={{ padding: 24, textAlign: 'center', color: C.dim, fontSize: 16 }}>Loading jobs…</div>}
       {!loading && totalVisible === 0 && (
         <div style={{ padding: '32px 24px', background: C.surface, border: `1px dashed ${C.border}`, borderRadius: 10, textAlign: 'center', color: C.muted }}>
-          <div style={{ fontSize: 16, fontWeight: 600, color: C.text, marginBottom: 6 }}>
+          <div style={{ fontSize: 18, fontWeight: 600, color: C.text, marginBottom: 6 }}>
             {jobs.length === 0 ? 'No jobs yet' : 'No jobs match these filters'}
           </div>
-          <div style={{ fontSize: 14, lineHeight: 1.6, maxWidth: 460, margin: '0 auto' }}>
+          <div style={{ fontSize: 16, lineHeight: 1.6, maxWidth: 460, margin: '0 auto' }}>
             {jobs.length === 0
               ? (isTech ? 'When the owner schedules a job for you, it shows up here.' : 'Open the Schedule view and click a calendar slot to create your first job.')
               : 'Adjust the search or filters above to see more.'}
@@ -570,14 +570,14 @@ export default function JobsScreen({ user, team = [], onCreateInvoice }) {
         list.length === 0 ? null : (
           <div key={label} style={{ marginBottom: 22 }}>
             <div style={{
-              fontSize: 13, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase',
+              fontSize: 15, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase',
               color: label === 'Overdue' ? C.errorBold : label === 'Today' ? C.green : C.muted,
               marginBottom: 8, paddingBottom: 6,
               borderBottom: `1px solid ${label === 'Overdue' ? C.errorBold + '44' : C.border}`,
               display: 'flex', alignItems: 'center', gap: 8,
             }}>
               {label}
-              <span style={{ fontSize: 11, color: C.dim, fontWeight: 600, letterSpacing: 0 }}>
+              <span style={{ fontSize: 13, color: C.dim, fontWeight: 600, letterSpacing: 0 }}>
                 {list.length} job{list.length === 1 ? '' : 's'}
               </span>
             </div>

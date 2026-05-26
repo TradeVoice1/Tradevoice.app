@@ -75,7 +75,7 @@ const StatusBadge = ({ status, isSuperOwner, isCanceling }) => {
 const Pill = ({ bg, fg, children }) => (
   <span style={{
     display: 'inline-block', padding: '3px 10px', borderRadius: 12,
-    fontSize: 11, fontWeight: 700, background: bg, color: fg,
+    fontSize: 13, fontWeight: 700, background: bg, color: fg,
     textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap',
   }}>{children}</span>
 );
@@ -112,14 +112,14 @@ function StatTile({ label, value, sub, accent, onClick }) {
         boxShadow: '0 1px 2px rgba(15, 23, 42, 0.02)',
       }}
     >
-      <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: C.muted, marginBottom: 6 }}>
+      <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: C.muted, marginBottom: 6 }}>
         {label}
       </div>
-      <div style={{ fontSize: 26, fontWeight: 800, color: accent || C.text, lineHeight: 1 }}>
+      <div style={{ fontSize: 28, fontWeight: 800, color: accent || C.text, lineHeight: 1 }}>
         {value}
       </div>
       {sub && (
-        <div style={{ fontSize: 12, color: C.dim, marginTop: 6 }}>{sub}</div>
+        <div style={{ fontSize: 14, color: C.dim, marginTop: 6 }}>{sub}</div>
       )}
     </button>
   );
@@ -246,7 +246,7 @@ export default function OwnerDashboard({ user }) {
 
   // Tiny arrow component for the active sort column header.
   const sortArrow = (col) => sortBy !== col ? null : (
-    <span style={{ marginLeft: 4, fontSize: 10, color: C.green }}>
+    <span style={{ marginLeft: 4, fontSize: 12, color: C.green }}>
       {sortDir === 'asc' ? '▲' : '▼'}
     </span>
   );
@@ -256,8 +256,8 @@ export default function OwnerDashboard({ user }) {
   if (data.unauthorized) {
     return (
       <div style={{ padding: 40, maxWidth: 600, margin: '0 auto', textAlign: 'center' }}>
-        <div style={{ fontSize: 20, fontWeight: 800, color: C.text, marginBottom: 8 }}>Access denied</div>
-        <div style={{ fontSize: 14, color: C.muted }}>
+        <div style={{ fontSize: 22, fontWeight: 800, color: C.text, marginBottom: 8 }}>Access denied</div>
+        <div style={{ fontSize: 16, color: C.muted }}>
           The founder dashboard is restricted to the super-owner account. If you believe you should have access, double-check that <code>is_super_owner</code> is set on your profile in Supabase.
         </div>
       </div>
@@ -269,13 +269,13 @@ export default function OwnerDashboard({ user }) {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', color: C.muted, marginBottom: 4 }}>
+          <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', color: C.muted, marginBottom: 4 }}>
             Founder
           </div>
-          <div style={{ fontSize: 28, fontWeight: 900, color: C.text, lineHeight: 1.1 }}>
+          <div style={{ fontSize: 30, fontWeight: 900, color: C.text, lineHeight: 1.1 }}>
             Tradevoice Control Room
           </div>
-          <div style={{ fontSize: 13, color: C.muted, marginTop: 6 }}>
+          <div style={{ fontSize: 15, color: C.muted, marginTop: 6 }}>
             Every account on Tradevoice, signed in as {user?.email || 'founder'}.
           </div>
         </div>
@@ -285,7 +285,7 @@ export default function OwnerDashboard({ user }) {
           style={{
             padding: '10px 18px', borderRadius: 8,
             background: C.green, color: '#fff', border: 'none',
-            fontSize: 13, fontWeight: 700, cursor: loading ? 'wait' : 'pointer',
+            fontSize: 15, fontWeight: 700, cursor: loading ? 'wait' : 'pointer',
             opacity: loading ? 0.7 : 1,
           }}
         >
@@ -294,7 +294,7 @@ export default function OwnerDashboard({ user }) {
       </div>
 
       {err && (
-        <div style={{ background: C.redLight, border: `1px solid #fecaca`, color: C.red, padding: 12, borderRadius: 8, marginBottom: 16, fontSize: 13 }}>
+        <div style={{ background: C.redLight, border: `1px solid #fecaca`, color: C.red, padding: 12, borderRadius: 8, marginBottom: 16, fontSize: 15 }}>
           {err}
         </div>
       )}
@@ -366,9 +366,9 @@ export default function OwnerDashboard({ user }) {
           <div style={{
             background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12,
             padding: '12px 18px', marginBottom: 20,
-            display: 'flex', alignItems: 'center', gap: 24, flexWrap: 'wrap', fontSize: 13,
+            display: 'flex', alignItems: 'center', gap: 24, flexWrap: 'wrap', fontSize: 15,
           }}>
-            <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: C.muted }}>
+            <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: C.muted }}>
               Last 24 hours
             </div>
             <div>
@@ -396,7 +396,7 @@ export default function OwnerDashboard({ user }) {
           onChange={e => setSearch(e.target.value)}
           style={{
             flex: '1 1 260px', minWidth: 200, padding: '10px 14px',
-            border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 14,
+            border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 16,
             outline: 'none', fontFamily: 'inherit',
           }}
         />
@@ -405,7 +405,7 @@ export default function OwnerDashboard({ user }) {
           onChange={e => setFilterStatus(e.target.value)}
           style={{
             padding: '10px 14px', border: `1px solid ${C.border}`, borderRadius: 8,
-            fontSize: 14, background: C.surface, cursor: 'pointer', fontFamily: 'inherit',
+            fontSize: 16, background: C.surface, cursor: 'pointer', fontFamily: 'inherit',
           }}
         >
           <option value="all">All statuses</option>
@@ -428,7 +428,7 @@ export default function OwnerDashboard({ user }) {
           }}
           style={{
             padding: '10px 14px', border: `1px solid ${C.border}`, borderRadius: 8,
-            fontSize: 14, background: C.surface, cursor: 'pointer', fontFamily: 'inherit',
+            fontSize: 16, background: C.surface, cursor: 'pointer', fontFamily: 'inherit',
           }}
           title="Sort accounts"
         >
@@ -452,14 +452,14 @@ export default function OwnerDashboard({ user }) {
         overflow: 'hidden',
       }}>
         {loading && data.accounts.length === 0 ? (
-          <div style={{ padding: 40, textAlign: 'center', color: C.muted, fontSize: 13 }}>Loading accounts…</div>
+          <div style={{ padding: 40, textAlign: 'center', color: C.muted, fontSize: 15 }}>Loading accounts…</div>
         ) : visibleAccounts.length === 0 ? (
-          <div style={{ padding: 40, textAlign: 'center', color: C.muted, fontSize: 13 }}>
+          <div style={{ padding: 40, textAlign: 'center', color: C.muted, fontSize: 15 }}>
             {search || filterStatus !== 'all' ? 'No accounts match this filter.' : 'No accounts yet — first real signup will land here.'}
           </div>
         ) : (
           <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 15 }}>
               <thead>
                 <tr style={{ background: '#fafaf7', borderBottom: `1px solid ${C.border}` }}>
                   <SortableTh col="email"      onSort={handleSort} arrow={sortArrow('email')}>Email</SortableTh>
@@ -490,7 +490,7 @@ export default function OwnerDashboard({ user }) {
                         </td>
                         <td style={td}>
                           <div style={{ color: C.text, fontWeight: 500 }}>{a.name || '—'}</div>
-                          {a.company && <div style={{ color: C.muted, fontSize: 12 }}>{a.company}</div>}
+                          {a.company && <div style={{ color: C.muted, fontSize: 14 }}>{a.company}</div>}
                         </td>
                         <td style={td}>
                           {a.plan ? <Pill bg="#eff6ff" fg="#1d4ed8">{a.plan}</Pill> : <span style={{ color: C.dim }}>—</span>}
@@ -512,7 +512,7 @@ export default function OwnerDashboard({ user }) {
                         <td style={{ ...td, textAlign: 'right', color: a.lifetimeRevenue > 0 ? C.greenDark : C.dim, fontWeight: 800 }}>
                           {a.lifetimeRevenue > 0 ? fmtMoney(a.lifetimeRevenue) : '—'}
                           {a.paymentCount > 0 && (
-                            <div style={{ fontSize: 11, fontWeight: 500, color: C.muted, marginTop: 2 }}>
+                            <div style={{ fontSize: 13, fontWeight: 500, color: C.muted, marginTop: 2 }}>
                               {a.paymentCount} payment{a.paymentCount === 1 ? '' : 's'}
                             </div>
                           )}
@@ -536,15 +536,15 @@ export default function OwnerDashboard({ user }) {
                                 display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
                               }}>
                                 <div>
-                                  <div style={{ fontSize: 12, fontWeight: 800, color: C.yellow, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                                  <div style={{ fontSize: 14, fontWeight: 800, color: C.yellow, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
                                     Cancellation Scheduled
                                   </div>
-                                  <div style={{ fontSize: 13, color: '#78350f', marginTop: 2 }}>
+                                  <div style={{ fontSize: 15, color: '#78350f', marginTop: 2 }}>
                                     Customer clicked Cancel. Access ends {a.currentPeriodEnd ? fmtDate(a.currentPeriodEnd) : 'at period end'}.
                                   </div>
                                 </div>
                                 {a.currentPeriodEnd && (
-                                  <div style={{ fontSize: 13, fontWeight: 800, color: '#78350f' }}>
+                                  <div style={{ fontSize: 15, fontWeight: 800, color: '#78350f' }}>
                                     {Math.max(0, Math.ceil((a.currentPeriodEnd.getTime() - Date.now()) / (24 * 60 * 60 * 1000)))}d left
                                   </div>
                                 )}
@@ -555,10 +555,10 @@ export default function OwnerDashboard({ user }) {
                                 background: C.redLight, border: '1px solid #fecaca',
                                 borderRadius: 8, padding: '10px 14px', marginBottom: 14,
                               }}>
-                                <div style={{ fontSize: 12, fontWeight: 800, color: C.red, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                                <div style={{ fontSize: 14, fontWeight: 800, color: C.red, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
                                   Subscription Canceled
                                 </div>
-                                <div style={{ fontSize: 13, color: '#7f1d1d', marginTop: 2 }}>
+                                <div style={{ fontSize: 15, color: '#7f1d1d', marginTop: 2 }}>
                                   Canceled {fmtDate(a.canceledAt)}. No longer paying.
                                 </div>
                               </div>
@@ -577,50 +577,50 @@ export default function OwnerDashboard({ user }) {
                                 display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 14,
                               }}>
                                 <div>
-                                  <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.success, marginBottom: 4 }}>
+                                  <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.success, marginBottom: 4 }}>
                                     Lifetime Revenue
                                   </div>
-                                  <div style={{ fontSize: 24, fontWeight: 900, color: C.success, lineHeight: 1 }}>
+                                  <div style={{ fontSize: 26, fontWeight: 900, color: C.success, lineHeight: 1 }}>
                                     {fmtMoney(a.lifetimeRevenue)}
                                   </div>
                                 </div>
                                 <div>
-                                  <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.muted, marginBottom: 4 }}>
+                                  <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.muted, marginBottom: 4 }}>
                                     Payments
                                   </div>
-                                  <div style={{ fontSize: 22, fontWeight: 800, color: C.text, lineHeight: 1 }}>
+                                  <div style={{ fontSize: 24, fontWeight: 800, color: C.text, lineHeight: 1 }}>
                                     {a.paymentCount}
                                   </div>
                                   {a.lastPaymentAt && (
-                                    <div style={{ fontSize: 11, color: C.muted, marginTop: 4 }}>
+                                    <div style={{ fontSize: 13, color: C.muted, marginTop: 4 }}>
                                       Last: {fmtDate(a.lastPaymentAt)}
                                     </div>
                                   )}
                                 </div>
                                 <div>
-                                  <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.muted, marginBottom: 4 }}>
+                                  <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.muted, marginBottom: 4 }}>
                                     Monthly
                                   </div>
-                                  <div style={{ fontSize: 22, fontWeight: 800, color: C.text, lineHeight: 1 }}>
+                                  <div style={{ fontSize: 24, fontWeight: 800, color: C.text, lineHeight: 1 }}>
                                     {a.monthlyRevenue > 0 ? fmtMoney(a.monthlyRevenue) : '—'}
                                   </div>
                                   {a.plan && (
-                                    <div style={{ fontSize: 11, color: C.muted, marginTop: 4 }}>
+                                    <div style={{ fontSize: 13, color: C.muted, marginTop: 4 }}>
                                       {a.plan.charAt(0).toUpperCase() + a.plan.slice(1)} plan
                                     </div>
                                   )}
                                 </div>
                                 <div>
-                                  <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.muted, marginBottom: 4 }}>
+                                  <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.muted, marginBottom: 4 }}>
                                     Next Payment
                                   </div>
-                                  <div style={{ fontSize: 14, fontWeight: 700, color: C.text, lineHeight: 1.3 }}>
+                                  <div style={{ fontSize: 16, fontWeight: 700, color: C.text, lineHeight: 1.3 }}>
                                     {a.cancelAtPeriodEnd
                                       ? <span style={{ color: C.yellow }}>None — canceling</span>
                                       : (a.currentPeriodEnd ? fmtDate(a.currentPeriodEnd) : 'TBD')}
                                   </div>
                                   {!a.cancelAtPeriodEnd && a.monthlyRevenue > 0 && (
-                                    <div style={{ fontSize: 11, color: C.muted, marginTop: 4 }}>
+                                    <div style={{ fontSize: 13, color: C.muted, marginTop: 4 }}>
                                       {fmtMoney(a.monthlyRevenue)}
                                     </div>
                                   )}
@@ -663,14 +663,14 @@ export default function OwnerDashboard({ user }) {
 function Timeline({ state, fallbackCreatedAt }) {
   if (!state || state.loading) {
     return (
-      <div style={{ marginTop: 14, fontSize: 12, color: C.dim, fontStyle: 'italic' }}>
+      <div style={{ marginTop: 14, fontSize: 14, color: C.dim, fontStyle: 'italic' }}>
         Loading timeline…
       </div>
     );
   }
   if (state.error) {
     return (
-      <div style={{ marginTop: 14, fontSize: 13, color: C.red, background: C.redLight, padding: 10, borderRadius: 6 }}>
+      <div style={{ marginTop: 14, fontSize: 15, color: C.red, background: C.redLight, padding: 10, borderRadius: 6 }}>
         {state.error}
       </div>
     );
@@ -679,10 +679,10 @@ function Timeline({ state, fallbackCreatedAt }) {
   if (events.length === 0) {
     return (
       <div style={{ marginTop: 14 }}>
-        <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.muted, marginBottom: 8 }}>
+        <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.muted, marginBottom: 8 }}>
           Subscription Timeline
         </div>
-        <div style={{ fontSize: 12, color: C.dim, fontStyle: 'italic' }}>
+        <div style={{ fontSize: 14, color: C.dim, fontStyle: 'italic' }}>
           No subscription events recorded yet{fallbackCreatedAt ? ` (account created ${fallbackCreatedAt.toLocaleDateString('en-US')})` : ''}. Future Stripe webhook events will land here automatically.
         </div>
       </div>
@@ -704,7 +704,7 @@ function Timeline({ state, fallbackCreatedAt }) {
 
   return (
     <div style={{ marginTop: 14 }}>
-      <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#6b6b6b', marginBottom: 10 }}>
+      <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#6b6b6b', marginBottom: 10 }}>
         Subscription Timeline · {events.length} event{events.length === 1 ? '' : 's'}
       </div>
       <div style={{ position: 'relative', paddingLeft: 18 }}>
@@ -713,7 +713,7 @@ function Timeline({ state, fallbackCreatedAt }) {
         {events.map(ev => {
           const m = meta[ev.eventType] || { dot: '#9ca3af', label: ev.eventType };
           return (
-            <div key={ev.id} style={{ position: 'relative', paddingBottom: 12, fontSize: 13 }}>
+            <div key={ev.id} style={{ position: 'relative', paddingBottom: 12, fontSize: 15 }}>
               <div style={{
                 position: 'absolute', left: -18, top: 4,
                 width: 12, height: 12, borderRadius: '50%',
@@ -723,21 +723,21 @@ function Timeline({ state, fallbackCreatedAt }) {
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
                 <span style={{ fontWeight: 700, color: '#1a1a1a' }}>{m.label}</span>
                 {ev.status && (
-                  <span style={{ fontSize: 11, color: '#6b6b6b', background: '#f1f5f9', padding: '1px 6px', borderRadius: 4 }}>
+                  <span style={{ fontSize: 13, color: '#6b6b6b', background: '#f1f5f9', padding: '1px 6px', borderRadius: 4 }}>
                     {ev.status}
                   </span>
                 )}
                 {ev.amount != null && ev.amount > 0 && (
-                  <span style={{ fontSize: 12, color: '#15803d', fontWeight: 700 }}>
+                  <span style={{ fontSize: 14, color: '#15803d', fontWeight: 700 }}>
                     ${ev.amount.toFixed(2)}
                   </span>
                 )}
-                <span style={{ marginLeft: 'auto', fontSize: 12, color: '#9a9a9a' }}>
+                <span style={{ marginLeft: 'auto', fontSize: 14, color: '#9a9a9a' }}>
                   {ev.occurredAt ? ev.occurredAt.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : '—'}
                 </span>
               </div>
               {ev.stripeSubscriptionId && (
-                <div style={{ fontSize: 11, color: '#9a9a9a', marginTop: 2, fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace" }}>
+                <div style={{ fontSize: 13, color: '#9a9a9a', marginTop: 2, fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace" }}>
                   {ev.stripeSubscriptionId}
                 </div>
               )}
@@ -751,7 +751,7 @@ function Timeline({ state, fallbackCreatedAt }) {
 
 const th = {
   textAlign: 'left', padding: '12px 14px',
-  fontSize: 11, fontWeight: 800, letterSpacing: '0.08em',
+  fontSize: 13, fontWeight: 800, letterSpacing: '0.08em',
   textTransform: 'uppercase', color: C.muted,
 };
 const td = { padding: '14px 14px', verticalAlign: 'top' };
@@ -779,8 +779,8 @@ function SortableTh({ col, onSort, arrow, align = 'left', children }) {
 function DetailField({ label, value, mono }) {
   return (
     <div>
-      <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: C.muted, marginBottom: 3 }}>{label}</div>
-      <div style={{ fontSize: 13, color: C.text, fontFamily: mono ? "ui-monospace, 'SF Mono', Menlo, monospace" : 'inherit', wordBreak: 'break-all' }}>
+      <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: C.muted, marginBottom: 3 }}>{label}</div>
+      <div style={{ fontSize: 15, color: C.text, fontFamily: mono ? "ui-monospace, 'SF Mono', Menlo, monospace" : 'inherit', wordBreak: 'break-all' }}>
         {value}
       </div>
     </div>

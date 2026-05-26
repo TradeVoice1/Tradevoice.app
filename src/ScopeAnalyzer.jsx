@@ -34,15 +34,15 @@ export default function ScopeAnalyzer({ user, setUser, onInsertScope }) {
         borderRadius: 10, padding: '14px 18px', marginBottom: 14,
         display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap',
       }}>
-        <div style={{ fontSize: 28 }}>🤖</div>
+        <div style={{ fontSize: 30 }}>🤖</div>
         <div style={{ flex: 1, minWidth: 200 }}>
-          <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#92400e', marginBottom: 4 }}>
+          <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#92400e', marginBottom: 4 }}>
             Elite feature
           </div>
-          <div style={{ fontSize: 15, fontWeight: 700, color: '#111' }}>
+          <div style={{ fontSize: 17, fontWeight: 700, color: '#111' }}>
             AI scope analysis — drop a PDF, get a precise scope of work
           </div>
-          <div style={{ fontSize: 13, color: '#92400e', marginTop: 4 }}>
+          <div style={{ fontSize: 15, color: '#92400e', marginTop: 4 }}>
             Claude reads the document, Perplexity researches current codes + standards, both AIs collaborate on a synthesized scope you can paste into the quote. Available on the Elite plan.
           </div>
         </div>
@@ -211,10 +211,10 @@ function ScopeAnalyzerActive({ user, setUser, onInsertScope }) {
       <div style={{ marginBottom: 18, border: '1.5px solid #bbf7d0', borderRadius: 12, background: '#f7fcf9', padding: 18 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14, gap: 10 }}>
           <div>
-            <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#15803d', marginBottom: 4 }}>
+            <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#15803d', marginBottom: 4 }}>
               AI Analysis Complete
             </div>
-            <div style={{ fontSize: 16, fontWeight: 700, color: '#111' }}>{fileName}</div>
+            <div style={{ fontSize: 18, fontWeight: 700, color: '#111' }}>{fileName}</div>
           </div>
           <button type="button" onClick={handleDiscard} style={ghostBtn}>Discard</button>
         </div>
@@ -236,7 +236,7 @@ function ScopeAnalyzerActive({ user, setUser, onInsertScope }) {
         </div>
 
         {/* Disclaimer — required for liability. AI hallucinations are real. */}
-        <div style={{ marginTop: 14, padding: '10px 14px', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 8, fontSize: 12, color: '#92400e', lineHeight: 1.55 }}>
+        <div style={{ marginTop: 14, padding: '10px 14px', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 8, fontSize: 14, color: '#92400e', lineHeight: 1.55 }}>
           ⚠ AI-generated. Review against your jurisdiction's requirements before sending to the customer. Citations link to common references but do not guarantee compliance.
         </div>
 
@@ -266,18 +266,18 @@ function ScopeAnalyzerActive({ user, setUser, onInsertScope }) {
             boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-              <div style={{ fontSize: 32 }}>🤖</div>
+              <div style={{ fontSize: 34 }}>🤖</div>
               <div>
-                <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#92400e' }}>
+                <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#92400e' }}>
                   Before you use AI scope analysis
                 </div>
-                <div style={{ fontSize: 22, fontWeight: 800, color: '#111', marginTop: 2 }}>
+                <div style={{ fontSize: 24, fontWeight: 800, color: '#111', marginTop: 2 }}>
                   Please review and agree
                 </div>
               </div>
             </div>
 
-            <p style={{ fontSize: 14, color: '#222', lineHeight: 1.7, marginBottom: 14 }}>
+            <p style={{ fontSize: 16, color: '#222', lineHeight: 1.7, marginBottom: 14 }}>
               The AI Scope Analyzer uses Anthropic Claude (PDF reading)
               and Perplexity AI (code research) to draft a scope of work
               for your review. <strong>It is not a substitute for your
@@ -285,7 +285,7 @@ function ScopeAnalyzerActive({ user, setUser, onInsertScope }) {
               acknowledge and agree that:
             </p>
 
-            <ul style={{ paddingLeft: 22, marginBottom: 14, color: '#222', fontSize: 14, lineHeight: 1.7 }}>
+            <ul style={{ paddingLeft: 22, marginBottom: 14, color: '#222', fontSize: 16, lineHeight: 1.7 }}>
               <li><strong>AI output is advisory only.</strong> It may contain errors, hallucinations, outdated code citations, wrong dimensions, or work items inappropriate for your jurisdiction or the actual job.</li>
               <li><strong>You will review every line</strong> before using it in a quote, invoice, customer communication, or work decision.</li>
               <li><strong>You will verify any code or standards reference</strong> against the cited source and your local jurisdiction before relying on it.</li>
@@ -294,7 +294,7 @@ function ScopeAnalyzerActive({ user, setUser, onInsertScope }) {
               <li><strong>The PDF you upload</strong> is sent to Anthropic for processing and its extracted text to Perplexity for research. We delete the uploaded PDF after analysis. Don't upload documents with third-party PII without consent.</li>
             </ul>
 
-            <p style={{ fontSize: 13, color: '#666', lineHeight: 1.6, marginBottom: 18 }}>
+            <p style={{ fontSize: 15, color: '#666', lineHeight: 1.6, marginBottom: 18 }}>
               Full terms in section 10 of our{' '}
               <a href="/terms" target="_blank" rel="noreferrer" style={{ color: '#2d6a4f', fontWeight: 700 }}>Terms of Service</a>.
               Data handling in section 5 of our{' '}
@@ -328,7 +328,7 @@ function ScopeAnalyzerActive({ user, setUser, onInsertScope }) {
         <div style={{
           background: '#fffbeb', border: '1px solid #fde68a',
           borderRadius: 8, padding: '10px 14px', marginBottom: 10,
-          fontSize: 12, color: '#92400e', lineHeight: 1.55,
+          fontSize: 14, color: '#92400e', lineHeight: 1.55,
         }}>
           ⚠ AI output is advisory only. You agreed on{' '}
           {new Date(user.aiScopeTermsAcceptedAt).toLocaleDateString()} to review
@@ -361,34 +361,34 @@ function ScopeAnalyzerActive({ user, setUser, onInsertScope }) {
           onChange={(e) => handleFile(e.target.files?.[0])}
           style={{ display: 'none' }}
         />
-        <div style={{ fontSize: 26, marginBottom: 6 }}>🤖</div>
+        <div style={{ fontSize: 28, marginBottom: 6 }}>🤖</div>
         {phase === 'idle' && (
           <>
-            <div style={{ fontSize: 15, fontWeight: 700, color: '#111', marginBottom: 4 }}>
+            <div style={{ fontSize: 17, fontWeight: 700, color: '#111', marginBottom: 4 }}>
               Drop a scope PDF or click to upload
             </div>
-            <div style={{ fontSize: 12, color: '#666', lineHeight: 1.55 }}>
+            <div style={{ fontSize: 14, color: '#666', lineHeight: 1.55 }}>
               Claude + Perplexity will read it, research current codes and standards, and write a precise scope-of-work for this quote. Max 25 MB. ~20-45 seconds.
             </div>
           </>
         )}
         {phase === 'uploading' && (
-          <div style={{ fontSize: 14, color: '#666', fontWeight: 600 }}>Uploading {fileName}…</div>
+          <div style={{ fontSize: 16, color: '#666', fontWeight: 600 }}>Uploading {fileName}…</div>
         )}
         {phase === 'analyzing' && (
           <>
-            <div style={{ fontSize: 14, color: '#15803d', fontWeight: 700, marginBottom: 4 }}>
+            <div style={{ fontSize: 16, color: '#15803d', fontWeight: 700, marginBottom: 4 }}>
               Analyzing {fileName}…
             </div>
-            <div style={{ fontSize: 12, color: '#666', lineHeight: 1.55 }}>
+            <div style={{ fontSize: 14, color: '#666', lineHeight: 1.55 }}>
               Claude is reading the PDF, then Perplexity researches current codes, then both AIs collaborate on the scope. This usually takes 20-45 seconds — don't close the tab.
             </div>
           </>
         )}
         {phase === 'error' && (
-          <div style={{ fontSize: 14, color: '#dc2626', fontWeight: 600 }}>
+          <div style={{ fontSize: 16, color: '#dc2626', fontWeight: 600 }}>
             {error || 'Something went wrong.'}
-            <div style={{ fontSize: 12, color: '#666', fontWeight: 400, marginTop: 4 }}>Click to try again.</div>
+            <div style={{ fontSize: 14, color: '#666', fontWeight: 400, marginTop: 4 }}>Click to try again.</div>
           </div>
         )}
       </label>
@@ -404,11 +404,11 @@ function Panel({ title, subtitle, body, citations, highlight }) {
       borderRadius: 10, padding: '12px 14px',
     }}>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 8 }}>
-        <div style={{ fontSize: 13, fontWeight: 800, color: '#111' }}>{title}</div>
-        <div style={{ fontSize: 11, color: '#888', fontStyle: 'italic' }}>{subtitle}</div>
+        <div style={{ fontSize: 15, fontWeight: 800, color: '#111' }}>{title}</div>
+        <div style={{ fontSize: 13, color: '#888', fontStyle: 'italic' }}>{subtitle}</div>
       </div>
       <div style={{
-        fontSize: 13, color: '#222', lineHeight: 1.6, whiteSpace: 'pre-wrap',
+        fontSize: 15, color: '#222', lineHeight: 1.6, whiteSpace: 'pre-wrap',
         maxHeight: highlight ? 'none' : 220,
         overflow: highlight ? 'visible' : 'auto',
       }}>
@@ -416,7 +416,7 @@ function Panel({ title, subtitle, body, citations, highlight }) {
       </div>
       {citations && citations.length > 0 && (
         <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px dashed #e5e5e0' }}>
-          <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#888', marginBottom: 6 }}>
+          <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#888', marginBottom: 6 }}>
             Citations
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -425,7 +425,7 @@ function Panel({ title, subtitle, body, citations, highlight }) {
                 key={i}
                 href={typeof c === 'string' ? c : c.url}
                 target="_blank" rel="noreferrer"
-                style={{ fontSize: 12, color: '#1d4ed8', wordBreak: 'break-all' }}
+                style={{ fontSize: 14, color: '#1d4ed8', wordBreak: 'break-all' }}
               >
                 [{i + 1}] {typeof c === 'string' ? c : (c.title || c.url)}
               </a>
@@ -439,11 +439,11 @@ function Panel({ title, subtitle, body, citations, highlight }) {
 
 const primaryBtn = {
   padding: '10px 18px', background: '#15803d', color: '#fff',
-  border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 700,
+  border: 'none', borderRadius: 8, fontSize: 16, fontWeight: 700,
   cursor: 'pointer', fontFamily: 'inherit',
 };
 const ghostBtn = {
   padding: '10px 16px', background: '#fff', color: '#666',
-  border: '1px solid #ddd', borderRadius: 8, fontSize: 14, fontWeight: 600,
+  border: '1px solid #ddd', borderRadius: 8, fontSize: 16, fontWeight: 600,
   cursor: 'pointer', fontFamily: 'inherit',
 };

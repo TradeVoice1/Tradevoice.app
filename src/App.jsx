@@ -115,12 +115,12 @@ const s = {
     background: C.surface,
     border: `1px solid ${C.border}`,
     color: C.text, borderRadius: 8, outline: 'none',
-    fontFamily: "'Inter', sans-serif", fontSize: 16,
+    fontFamily: "'Inter', sans-serif", fontSize: 18,
     transition: 'border-color 0.15s, box-shadow 0.15s',
     WebkitAppearance: 'none',
   },
   label: {
-    display: 'block', marginBottom: 6, fontSize: 11, fontWeight: 700,
+    display: 'block', marginBottom: 6, fontSize: 13, fontWeight: 700,
     letterSpacing: '0.08em', textTransform: 'uppercase',
     color: C.muted, fontFamily: "'Inter', sans-serif",
   },
@@ -240,7 +240,7 @@ function NumberInput({ value, onChange, width = 76, prefix = '', placeholder = '
 
   return (
     <div style={{ position: 'relative', width, display: 'inline-flex', alignItems: 'center' }}>
-      {prefix && <span style={{ position: 'absolute', left: 8, fontSize: 14, fontWeight: 700, color: C.muted, pointerEvents: 'none', zIndex: 1 }}>{prefix}</span>}
+      {prefix && <span style={{ position: 'absolute', left: 8, fontSize: 16, fontWeight: 700, color: C.muted, pointerEvents: 'none', zIndex: 1 }}>{prefix}</span>}
       <input
         ref={inputRef}
         type="text"
@@ -279,7 +279,7 @@ const Badge = ({ status }) => {
   const { label, bg, color, filled } = map[status] || map.draft;
   return (
     <span style={{
-      fontSize: 12, fontWeight: filled ? 800 : 700,
+      fontSize: 14, fontWeight: filled ? 800 : 700,
       letterSpacing: '0.08em', textTransform: 'uppercase',
       padding: '4px 11px', borderRadius: 5,
       background: bg, color,
@@ -396,10 +396,10 @@ const Logo = ({ size = 24 }) => (
 const SectionHead = ({ icon, title, sub }) => (
   <div style={{ marginBottom: 22, paddingBottom: 16, borderBottom: `1px solid ${C.border}` }}>
     <div style={{ display: 'flex', alignItems: 'center', gap: icon ? 10 : 0 }}>
-      {icon && <span style={{ fontSize: 22 }}>{icon}</span>}
-      <h1 style={{ margin: 0, fontFamily: "'Inter', sans-serif", fontSize: 28, fontWeight: 700, color: C.text, letterSpacing: '-0.025em' }}>{title}</h1>
+      {icon && <span style={{ fontSize: 24 }}>{icon}</span>}
+      <h1 style={{ margin: 0, fontFamily: "'Inter', sans-serif", fontSize: 30, fontWeight: 700, color: C.text, letterSpacing: '-0.025em' }}>{title}</h1>
     </div>
-    {sub && <p style={{ margin: '6px 0 0', fontSize: 15, color: C.muted, lineHeight: 1.5, fontVariantNumeric: 'tabular-nums', fontWeight: 500 }}>{sub}</p>}
+    {sub && <p style={{ margin: '6px 0 0', fontSize: 17, color: C.muted, lineHeight: 1.5, fontVariantNumeric: 'tabular-nums', fontWeight: 500 }}>{sub}</p>}
   </div>
 );
 
@@ -428,7 +428,7 @@ const StatCard = ({ icon, label, value, color = C.orange, delta, sub }) => (
     <div style={{ height: 4, background: `linear-gradient(90deg, ${color} 0%, ${color} 60%, ${color}88 100%)` }} />
     <div style={{ padding: '18px 16px 20px', textAlign: 'center', minWidth: 0 }}>
       {/* Larger label and bolder weight for sun-readable text outdoors on iPad. */}
-      <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.muted, marginBottom: 10, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{label}</div>
+      <div style={{ fontSize: 15, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.muted, marginBottom: 10, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{label}</div>
       {/* Value uses clamp() to scale 26–42px with viewport — fits "$12,345.00"
           on iPad portrait without truncating, still big on laptop. nowrap +
           ellipsis is the safety net for million-dollar invoices. */}
@@ -442,7 +442,7 @@ const StatCard = ({ icon, label, value, color = C.orange, delta, sub }) => (
       {/* Optional MoM delta chip. Green for positive, red for negative,
           neutral gray when there's no prior month to compare. */}
       {delta && (
-        <div style={{ marginTop: 8, fontSize: 12, fontWeight: 700, lineHeight: 1.3 }}>
+        <div style={{ marginTop: 8, fontSize: 14, fontWeight: 700, lineHeight: 1.3 }}>
           {delta.pct == null ? (
             <span style={{ color: C.dim }}>— {delta.label}</span>
           ) : (
@@ -453,7 +453,7 @@ const StatCard = ({ icon, label, value, color = C.orange, delta, sub }) => (
         </div>
       )}
       {sub && !delta && (
-        <div style={{ marginTop: 8, fontSize: 12, color: C.muted, fontWeight: 500 }}>{sub}</div>
+        <div style={{ marginTop: 8, fontSize: 14, color: C.muted, fontWeight: 500 }}>{sub}</div>
       )}
     </div>
   </div>
@@ -554,7 +554,7 @@ function LoginScreen({ onLogin, onSignup, onForgot }) {
         flex: 1, padding: '10px 14px', minHeight: 44, border: 'none', cursor: 'pointer',
         background: mode === value ? '#fff' : 'transparent',
         color: mode === value ? C.text : C.muted,
-        fontWeight: mode === value ? 700 : 600, fontSize: 14,
+        fontWeight: mode === value ? 700 : 600, fontSize: 16,
         borderRadius: 6, fontFamily: "'Inter', sans-serif",
         boxShadow: mode === value ? '0 1px 2px rgba(15, 23, 42, 0.1)' : 'none',
         transition: 'all 0.15s',
@@ -564,8 +564,8 @@ function LoginScreen({ onLogin, onSignup, onForgot }) {
 
   return (
     <AuthShell>
-      <div style={{ fontSize: 22, fontWeight: 700, color: C.text, marginBottom: 4, fontFamily: "'Inter', sans-serif", letterSpacing: '-0.02em' }}>Welcome back</div>
-      <div style={{ fontSize: 13, color: C.muted, marginBottom: 18 }}>
+      <div style={{ fontSize: 24, fontWeight: 700, color: C.text, marginBottom: 4, fontFamily: "'Inter', sans-serif", letterSpacing: '-0.02em' }}>Welcome back</div>
+      <div style={{ fontSize: 15, color: C.muted, marginBottom: 18 }}>
         {mode === 'owner' ? 'Sign in to your Tradevoice account' : 'Sign in with the Tech ID your employer gave you'}
       </div>
 
@@ -575,23 +575,23 @@ function LoginScreen({ onLogin, onSignup, onForgot }) {
         <ModePill value="tech"  label="Tech sign in" />
       </div>
 
-      {error && <div style={{ background: '#fef2f2', border: `1px solid ${C.error}33`, borderRadius: 6, padding: '9px 12px', fontSize: 13, color: C.error, marginBottom: 14 }}>{error}</div>}
+      {error && <div style={{ background: '#fef2f2', border: `1px solid ${C.error}33`, borderRadius: 6, padding: '9px 12px', fontSize: 15, color: C.error, marginBottom: 14 }}>{error}</div>}
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 18 }}>
         {mode === 'owner' ? (
           <div>
             <label style={s.label}>Email address</label>
             <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="matt@company.com"
-              style={{ ...s.input, width: '100%', padding: '12px 14px', minHeight: 48, fontSize: 16, boxSizing: 'border-box' }}
+              style={{ ...s.input, width: '100%', padding: '12px 14px', minHeight: 48, fontSize: 18, boxSizing: 'border-box' }}
               onKeyDown={e => e.key === 'Enter' && handleLogin()} />
           </div>
         ) : (
           <div>
             <label style={s.label}>Tech ID</label>
             <input type="text" value={techId} onChange={e => setTechId(e.target.value.toUpperCase())} placeholder="TV-T-XXXXXX"
-              style={{ ...s.input, width: '100%', padding: '14px', minHeight: 52, fontSize: 18, fontWeight: 700, letterSpacing: '0.08em', textAlign: 'center', fontFamily: 'ui-monospace, monospace', boxSizing: 'border-box' }}
+              style={{ ...s.input, width: '100%', padding: '14px', minHeight: 52, fontSize: 20, fontWeight: 700, letterSpacing: '0.08em', textAlign: 'center', fontFamily: 'ui-monospace, monospace', boxSizing: 'border-box' }}
               onKeyDown={e => e.key === 'Enter' && handleLogin()} />
-            <div style={{ fontSize: 12, color: C.dim, marginTop: 4 }}>
+            <div style={{ fontSize: 14, color: C.dim, marginTop: 4 }}>
               Don't have one? Ask your employer — they create Tech IDs from their Settings.
             </div>
           </div>
@@ -600,18 +600,18 @@ function LoginScreen({ onLogin, onSignup, onForgot }) {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
             <label style={{ ...s.label, margin: 0 }}>Password</label>
             {mode === 'owner' && (
-              <button type="button" onClick={onForgot} style={{ background: 'none', border: 'none', padding: 0, fontSize: 12, color: C.orange, textDecoration: 'none', fontWeight: 600, cursor: 'pointer', fontFamily: "'Inter', sans-serif" }}>Forgot password?</button>
+              <button type="button" onClick={onForgot} style={{ background: 'none', border: 'none', padding: 0, fontSize: 14, color: C.orange, textDecoration: 'none', fontWeight: 600, cursor: 'pointer', fontFamily: "'Inter', sans-serif" }}>Forgot password?</button>
             )}
           </div>
           <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••"
-            style={{ ...s.input, width: '100%', padding: '12px 14px', minHeight: 48, fontSize: 16, boxSizing: 'border-box' }}
+            style={{ ...s.input, width: '100%', padding: '12px 14px', minHeight: 48, fontSize: 18, boxSizing: 'border-box' }}
             onKeyDown={e => e.key === 'Enter' && handleLogin()} />
         </div>
       </div>
 
       <button onClick={handleLogin} disabled={loading} style={{
         ...s.btn, width: '100%', background: loading ? C.muted : C.orange, color: '#fff',
-        padding: '14px', minHeight: 50, fontSize: 15, letterSpacing: '0.06em', borderRadius: 50,
+        padding: '14px', minHeight: 50, fontSize: 17, letterSpacing: '0.06em', borderRadius: 50,
         border: 'none', marginBottom: 14, opacity: loading ? 0.7 : 1, fontWeight: 700,
       }}>{loading ? 'Signing in…' : (mode === 'owner' ? 'Sign In' : 'Sign In as Tech')}</button>
 
@@ -619,7 +619,7 @@ function LoginScreen({ onLogin, onSignup, onForgot }) {
         <>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
             <div style={{ flex: 1, height: 1, background: C.border }} />
-            <span style={{ fontSize: 11, color: C.dim }}>or</span>
+            <span style={{ fontSize: 13, color: C.dim }}>or</span>
             <div style={{ flex: 1, height: 1, background: C.border }} />
           </div>
 
@@ -633,7 +633,7 @@ function LoginScreen({ onLogin, onSignup, onForgot }) {
             style={{
               ...s.btn, width: '100%',
               background: C.surface, border: `1.5px solid ${C.border2}`, color: C.text,
-              padding: '11px', minHeight: 48, fontSize: 14, borderRadius: 50,
+              padding: '11px', minHeight: 48, fontSize: 16, borderRadius: 50,
               marginBottom: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
               cursor: googleBusy ? 'wait' : 'pointer',
               opacity: (googleBusy || loading) ? 0.6 : 1,
@@ -648,17 +648,17 @@ function LoginScreen({ onLogin, onSignup, onForgot }) {
               the early-access list. Surface that here so users aren't
               confused when their submission bounces. The "Create an
               account" link still works for allowlisted emails. */}
-          <div style={{ textAlign: 'center', fontSize: 12, color: C.muted, marginBottom: 8, lineHeight: 1.6 }}>
-            <div style={{ background: '#fef3c7', border: `1px solid ${C.warn}55`, borderRadius: 6, padding: '8px 12px', marginBottom: 8, color: C.warn, fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+          <div style={{ textAlign: 'center', fontSize: 14, color: C.muted, marginBottom: 8, lineHeight: 1.6 }}>
+            <div style={{ background: '#fef3c7', border: `1px solid ${C.warn}55`, borderRadius: 6, padding: '8px 12px', marginBottom: 8, color: C.warn, fontSize: 13, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
               Private Preview · Invite Only
             </div>
             Not invited yet?{' '}
             <a href="mailto:hello@thetradevoice.com?subject=Early%20Access%20Request%20—%20Tradevoice" style={{ color: C.orange, fontWeight: 700, textDecoration: 'none' }}>
               Request access →
             </a>
-            <div style={{ marginTop: 6, fontSize: 11, color: C.dim }}>
+            <div style={{ marginTop: 6, fontSize: 13, color: C.dim }}>
               Already invited?{' '}
-              <button onClick={onSignup} style={{ background: 'none', border: 'none', padding: 0, color: C.orange, fontWeight: 700, cursor: 'pointer', fontSize: 11, fontFamily: "'Inter', sans-serif", textDecoration: 'underline' }}>
+              <button onClick={onSignup} style={{ background: 'none', border: 'none', padding: 0, color: C.orange, fontWeight: 700, cursor: 'pointer', fontSize: 13, fontFamily: "'Inter', sans-serif", textDecoration: 'underline' }}>
                 Create your account
               </button>
             </div>
@@ -752,13 +752,13 @@ function SignupShell({ children, isTablet, step, steps }) {
             user advances through 0 → 3 so the left panel always speaks
             to what's in front of them. */}
         <div style={{ marginBottom: 36 }}>
-          <div style={{ display: 'inline-block', background: 'rgba(255,255,255,0.15)', padding: '4px 12px', borderRadius: 20, fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 18 }}>
+          <div style={{ display: 'inline-block', background: 'rgba(255,255,255,0.15)', padding: '4px 12px', borderRadius: 20, fontSize: 13, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 18 }}>
             {sc.eyebrow}
           </div>
-          <h1 style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: 36, fontWeight: 900, lineHeight: 1.1, marginBottom: 14, letterSpacing: '-0.02em', margin: 0 }}>
+          <h1 style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: 38, fontWeight: 900, lineHeight: 1.1, marginBottom: 14, letterSpacing: '-0.02em', margin: 0 }}>
             {sc.title}
           </h1>
-          <div style={{ fontSize: 15, color: 'rgba(255,255,255,0.85)', lineHeight: 1.6, fontWeight: 300, marginTop: 14 }}>
+          <div style={{ fontSize: 17, color: 'rgba(255,255,255,0.85)', lineHeight: 1.6, fontWeight: 300, marginTop: 14 }}>
             {sc.sub}
           </div>
         </div>
@@ -777,7 +777,7 @@ function SignupShell({ children, isTablet, step, steps }) {
                   background: done ? '#fff' : active ? '#fff' : 'rgba(255,255,255,0.12)',
                   border: `2px solid ${done || active ? '#fff' : 'rgba(255,255,255,0.3)'}`,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 13, fontWeight: 800,
+                  fontSize: 15, fontWeight: 800,
                   color: done || active ? '#1b4332' : '#fff',
                   flexShrink: 0,
                   transition: 'all 0.2s',
@@ -785,7 +785,7 @@ function SignupShell({ children, isTablet, step, steps }) {
                   {done ? '✓' : i + 1}
                 </div>
                 <div style={{
-                  fontSize: 14,
+                  fontSize: 16,
                   fontWeight: active ? 700 : 500,
                   color: '#fff',
                   letterSpacing: active ? '-0.01em' : 0,
@@ -800,15 +800,15 @@ function SignupShell({ children, isTablet, step, steps }) {
         <div style={{ paddingTop: 28, borderTop: '1px solid rgba(255,255,255,0.18)' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 16 }}>
             <div>
-              <div style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: 32, fontWeight: 700, lineHeight: 1 }}>28</div>
-              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 4 }}>Day free trial</div>
+              <div style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: 34, fontWeight: 700, lineHeight: 1 }}>28</div>
+              <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', marginTop: 4 }}>Day free trial</div>
             </div>
             <div>
-              <div style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: 32, fontWeight: 700, lineHeight: 1 }}>56</div>
-              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 4 }}>Trades supported</div>
+              <div style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: 34, fontWeight: 700, lineHeight: 1 }}>56</div>
+              <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', marginTop: 4 }}>Trades supported</div>
             </div>
           </div>
-          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)', lineHeight: 1.55 }}>
+          <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.65)', lineHeight: 1.55 }}>
             Built for contractors by a contractor. Cancel anytime — no card needed during trial.
           </div>
         </div>
@@ -1200,7 +1200,7 @@ function SignupScreen({ onComplete, onBack }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 24 }}>
           {steps.map((lbl, i) => (
             <div key={lbl} style={{ display: 'flex', alignItems: 'center', gap: 8, flex: i < steps.length - 1 ? 1 : 0 }}>
-              <div style={{ width: 28, height: 28, borderRadius: '50%', background: i <= step ? C.orange : C.raised, border: `2px solid ${i <= step ? C.orange : C.border2}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: i <= step ? '#fff' : C.dim, flexShrink: 0 }}>
+              <div style={{ width: 28, height: 28, borderRadius: '50%', background: i <= step ? C.orange : C.raised, border: `2px solid ${i <= step ? C.orange : C.border2}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, fontWeight: 700, color: i <= step ? '#fff' : C.dim, flexShrink: 0 }}>
                 {i < step ? '✓' : i + 1}
               </div>
               {i < steps.length - 1 && <div style={{ flex: 1, height: 2, background: i < step ? C.orange : C.border2 }} />}
@@ -1213,13 +1213,13 @@ function SignupScreen({ onComplete, onBack }) {
           already renders a serif headline tied to the current step. */}
       {isTablet && (
         <>
-          <div style={{ fontSize: 22, fontWeight: 700, color: C.text, marginBottom: 4, fontFamily: "'Inter', sans-serif", letterSpacing: '-0.02em' }}>
+          <div style={{ fontSize: 24, fontWeight: 700, color: C.text, marginBottom: 4, fontFamily: "'Inter', sans-serif", letterSpacing: '-0.02em' }}>
             {step === 0 ? 'Create your account' :
              step === 1 ? 'Your company' :
              step === 2 ? 'Choose your plan' :
                           'Add your card'}
           </div>
-          <div style={{ fontSize: 14, color: C.muted, marginBottom: 22 }}>
+          <div style={{ fontSize: 16, color: C.muted, marginBottom: 22 }}>
             {step === 0 ? '28-day free trial · cancel anytime' :
              step === 1 ? 'Tell us about your business' :
              step === 2 ? 'All plans include every feature' :
@@ -1230,9 +1230,9 @@ function SignupScreen({ onComplete, onBack }) {
 
       {step === 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
-          <div><label style={s.label}>Your name *</label><input value={name} onChange={e => setName(e.target.value)} placeholder="Alex Rivera" style={{ ...s.input, width: '100%', padding: '12px 14px', boxSizing: 'border-box', fontSize: 16 }}/></div>
-          <div><label style={s.label}>Email address *</label><input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="matt@company.com" style={{ ...s.input, width: '100%', padding: '12px 14px', boxSizing: 'border-box', fontSize: 16 }}/></div>
-          <div><label style={s.label}>Password * <span style={{ color: C.dim, fontWeight: 400 }}>(min 6 characters)</span></label><input type="password" value={password} onChange={e => setPass(e.target.value)} placeholder="••••••••" style={{ ...s.input, width: '100%', padding: '12px 14px', boxSizing: 'border-box', fontSize: 16 }}/></div>
+          <div><label style={s.label}>Your name *</label><input value={name} onChange={e => setName(e.target.value)} placeholder="Alex Rivera" style={{ ...s.input, width: '100%', padding: '12px 14px', boxSizing: 'border-box', fontSize: 18 }}/></div>
+          <div><label style={s.label}>Email address *</label><input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="matt@company.com" style={{ ...s.input, width: '100%', padding: '12px 14px', boxSizing: 'border-box', fontSize: 18 }}/></div>
+          <div><label style={s.label}>Password * <span style={{ color: C.dim, fontWeight: 400 }}>(min 6 characters)</span></label><input type="password" value={password} onChange={e => setPass(e.target.value)} placeholder="••••••••" style={{ ...s.input, width: '100%', padding: '12px 14px', boxSizing: 'border-box', fontSize: 18 }}/></div>
         </div>
       )}
 
@@ -1254,12 +1254,12 @@ function SignupScreen({ onComplete, onBack }) {
           {/* ── LEFT (or top on tablet): company basics ── */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
             {!isTablet && (
-              <div style={{ fontSize: 14, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: C.muted, marginBottom: 4 }}>
+              <div style={{ fontSize: 16, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: C.muted, marginBottom: 4 }}>
                 Your business
               </div>
             )}
-            <div><label style={s.label}>Company name *</label><input value={company} onChange={e => setCompany(e.target.value)} placeholder="Cornerstone Mechanical" style={{ ...s.input, width: '100%', padding: '12px 14px', boxSizing: 'border-box', fontSize: 16 }}/></div>
-            <div><label style={s.label}>Phone</label><input type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="(512) 555-0000" style={{ ...s.input, width: '100%', padding: '12px 14px', boxSizing: 'border-box', fontSize: 16 }}/></div>
+            <div><label style={s.label}>Company name *</label><input value={company} onChange={e => setCompany(e.target.value)} placeholder="Cornerstone Mechanical" style={{ ...s.input, width: '100%', padding: '12px 14px', boxSizing: 'border-box', fontSize: 18 }}/></div>
+            <div><label style={s.label}>Phone</label><input type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="(512) 555-0000" style={{ ...s.input, width: '100%', padding: '12px 14px', boxSizing: 'border-box', fontSize: 18 }}/></div>
             {/* State picker — primary state only at signup. Multi-state
                 contractors can add more states later in Settings →
                 Business Details. Drives the licensing + sales-tax
@@ -1270,12 +1270,12 @@ function SignupScreen({ onComplete, onBack }) {
               <select
                 value={states[0] || ''}
                 onChange={e => setStates(e.target.value ? [e.target.value] : [])}
-                style={{ ...s.input, width: '100%', padding: '12px 14px', boxSizing: 'border-box', fontSize: 16, cursor: 'pointer', background: C.surface, borderColor: states.length ? C.orange : C.border2 }}
+                style={{ ...s.input, width: '100%', padding: '12px 14px', boxSizing: 'border-box', fontSize: 18, cursor: 'pointer', background: C.surface, borderColor: states.length ? C.orange : C.border2 }}
               >
                 <option value="">— Select your state —</option>
                 {STATES.map(st => <option key={st} value={st}>{st}</option>)}
               </select>
-              <div style={{ fontSize: 12, color: C.dim, marginTop: 6 }}>
+              <div style={{ fontSize: 14, color: C.dim, marginTop: 6 }}>
                 Operate in multiple states? Pick the one you're licensed in primarily — you can add more in Settings after signup.
               </div>
             </div>
@@ -1286,10 +1286,10 @@ function SignupScreen({ onComplete, onBack }) {
                 as they jump categories. */}
             {!isTablet && trades.length > 0 && (
               <div style={{ marginTop: 10, padding: '14px 16px', background: '#effaf4', border: '1px solid #b7dfca', borderRadius: 10 }}>
-                <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#1b4332', marginBottom: 6 }}>
+                <div style={{ fontSize: 14, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#1b4332', marginBottom: 6 }}>
                   {trades.length} trade{trades.length === 1 ? '' : 's'} selected
                 </div>
-                <div style={{ fontSize: 13, color: '#1b4332', lineHeight: 1.5 }}>
+                <div style={{ fontSize: 15, color: '#1b4332', lineHeight: 1.5 }}>
                   {trades.slice(0, 6).map(t => TRADE_CONFIG[t]?.label || t).join(', ')}
                   {trades.length > 6 && <> + {trades.length - 6} more</>}
                 </div>
@@ -1300,20 +1300,20 @@ function SignupScreen({ onComplete, onBack }) {
           {/* ── RIGHT (or below on tablet): trade picker ── */}
           <div>
             {!isTablet && (
-              <div style={{ fontSize: 14, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: C.muted, marginBottom: 8 }}>
+              <div style={{ fontSize: 16, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: C.muted, marginBottom: 8 }}>
                 Your trade(s) *
               </div>
             )}
             {isTablet && (
               <>
                 <label style={s.label}>Your trade(s) <span style={{ color: C.errorBold }}>*</span></label>
-                <div style={{ fontSize: 12, color: C.dim, marginBottom: 8 }}>
+                <div style={{ fontSize: 14, color: C.dim, marginBottom: 8 }}>
                   Pick every trade you do. We'll preload quote sheets, materials, and labor rates for each.
                 </div>
               </>
             )}
             {!isTablet && (
-              <div style={{ fontSize: 13, color: C.muted, marginBottom: 14, lineHeight: 1.55 }}>
+              <div style={{ fontSize: 15, color: C.muted, marginBottom: 14, lineHeight: 1.55 }}>
                 Pick every trade you do. We'll preload quote sheets, materials, and labor rates for each one — bills of materials, default markups, payment terms, the works.
               </div>
             )}
@@ -1328,7 +1328,7 @@ function SignupScreen({ onComplete, onBack }) {
                     key={cat}
                     onClick={() => { setTradeCat(cat); setTradeSearch(''); }}
                     style={{
-                      ...s.btn, padding: '8px 16px', fontSize: 13, minHeight: 38, flexShrink: 0,
+                      ...s.btn, padding: '8px 16px', fontSize: 15, minHeight: 38, flexShrink: 0,
                       background: active ? C.orange : C.raised,
                       border: `1.5px solid ${active ? C.orange : C.border2}`,
                       color: active ? '#fff' : C.muted, borderRadius: 50, fontWeight: 700,
@@ -1346,13 +1346,13 @@ function SignupScreen({ onComplete, onBack }) {
               value={tradeSearch}
               onChange={e => setTradeSearch(e.target.value)}
               placeholder={`Search ${tradeCat.toLowerCase()} trades…`}
-              style={{ ...s.input, width: '100%', padding: '11px 14px', boxSizing: 'border-box', fontSize: 14, marginBottom: 12 }}
+              style={{ ...s.input, width: '100%', padding: '11px 14px', boxSizing: 'border-box', fontSize: 16, marginBottom: 12 }}
             />
 
             {/* Selected-count summary — tablet/mobile only; desktop has
                 its own callout on the left column. */}
             {isTablet && trades.length > 0 && (
-              <div style={{ fontSize: 12, color: C.muted, marginBottom: 8 }}>
+              <div style={{ fontSize: 14, color: C.muted, marginBottom: 8 }}>
                 <strong style={{ color: C.text }}>{trades.length}</strong> selected:
                 {' '}{trades.slice(0, 4).map(t => TRADE_CONFIG[t]?.label || t).join(', ')}
                 {trades.length > 4 && <> + {trades.length - 4} more</>}
@@ -1377,7 +1377,7 @@ function SignupScreen({ onComplete, onBack }) {
               background: C.surface,
             }}>
               {visibleTradesForCat.length === 0 && (
-                <div style={{ padding: 14, fontSize: 13, color: C.dim, gridColumn: '1 / -1', textAlign: 'center' }}>
+                <div style={{ padding: 14, fontSize: 15, color: C.dim, gridColumn: '1 / -1', textAlign: 'center' }}>
                   No trades match "{tradeSearch}". Try a different search.
                 </div>
               )}
@@ -1429,7 +1429,7 @@ function SignupScreen({ onComplete, onBack }) {
                     onClick={() => setBillingPeriod(opt.id)}
                     style={{
                       padding: '8px 16px', borderRadius: 999,
-                      border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700,
+                      border: 'none', cursor: 'pointer', fontSize: 15, fontWeight: 700,
                       background: active ? C.orange : 'transparent',
                       color:      active ? '#fff'    : C.muted,
                       fontFamily: 'inherit',
@@ -1485,7 +1485,7 @@ function SignupScreen({ onComplete, onBack }) {
                 >
                   {/* Popular badge — top-right corner on desktop card */}
                   {p.popular && !isTablet && (
-                    <span style={{ position: 'absolute', top: -10, right: 18, fontSize: 10, fontWeight: 900, letterSpacing: '0.08em', textTransform: 'uppercase', background: C.orange, color: '#fff', padding: '4px 10px', borderRadius: 12 }}>
+                    <span style={{ position: 'absolute', top: -10, right: 18, fontSize: 12, fontWeight: 900, letterSpacing: '0.08em', textTransform: 'uppercase', background: C.orange, color: '#fff', padding: '4px 10px', borderRadius: 12 }}>
                       Popular
                     </span>
                   )}
@@ -1494,7 +1494,7 @@ function SignupScreen({ onComplete, onBack }) {
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <span style={{ fontWeight: 800, fontSize: isTablet ? 15 : 22, color: selected ? C.orange : C.text }}>{p.name}</span>
                     {p.popular && isTablet && (
-                      <span style={{ fontSize: 11, background: C.orange, color: '#fff', padding: '2px 8px', borderRadius: 10 }}>Popular</span>
+                      <span style={{ fontSize: 13, background: C.orange, color: '#fff', padding: '2px 8px', borderRadius: 10 }}>Popular</span>
                     )}
                   </div>
 
@@ -1517,7 +1517,7 @@ function SignupScreen({ onComplete, onBack }) {
                   <div style={{ fontSize: isTablet ? 13 : 14, color: C.muted, lineHeight: 1.55, order: isTablet ? 1 : 0, flex: isTablet ? 1 : 'none' }}>
                     <div style={{ fontWeight: 700, color: C.text, marginBottom: isTablet ? 0 : 6, fontSize: isTablet ? 13 : 15 }}>{p.trades}</div>
                     {!isTablet && <div>{p.desc}</div>}
-                    {isTablet && <div style={{ fontSize: 13, color: C.muted, marginTop: 2 }}>{p.desc}</div>}
+                    {isTablet && <div style={{ fontSize: 15, color: C.muted, marginTop: 2 }}>{p.desc}</div>}
                   </div>
 
                   {/* Yearly savings callout */}
@@ -1538,8 +1538,8 @@ function SignupScreen({ onComplete, onBack }) {
               shell itself is 1280 — 480 felt cramped underneath the
               wide card row. */}
           <div style={{ width: '100%', maxWidth: isTablet ? 480 : 640, marginLeft: 'auto', marginRight: 'auto' }}>
-          <div style={{ fontSize: 13, color: C.dim, marginTop: 4, textAlign: 'center' }}>28-day free trial · No credit card needed · Cancel anytime</div>
-          <div style={{ fontSize: 13, color: C.muted, textAlign: 'center', marginTop: 8 }}>
+          <div style={{ fontSize: 15, color: C.dim, marginTop: 4, textAlign: 'center' }}>28-day free trial · No credit card needed · Cancel anytime</div>
+          <div style={{ fontSize: 15, color: C.muted, textAlign: 'center', marginTop: 8 }}>
             Need team members? Add techs for <strong style={{ color: C.orange }}>$19.99/mo each</strong> after sign-up in Settings → Team{plan === 'all' ? ' (first 2 free on Elite)' : plan === 'pro' ? ' (first 1 free on Pro)' : ''}. 28-day free trial on all plans.
           </div>
 
@@ -1549,7 +1549,7 @@ function SignupScreen({ onComplete, onBack }) {
               other six are tagged onto each invoice so the customer can pay
               however they want. */}
           <div style={{ marginTop: 16, padding: '14px 16px', background: C.raised, border: `1px solid ${C.border2}`, borderRadius: 10 }}>
-            <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.muted, marginBottom: 8, fontFamily: "'Inter', sans-serif", textAlign: 'center' }}>
+            <div style={{ fontSize: 14, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.muted, marginBottom: 8, fontFamily: "'Inter', sans-serif", textAlign: 'center' }}>
               How your customers can pay you
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, justifyContent: 'center', marginBottom: 8 }}>
@@ -1563,14 +1563,14 @@ function SignupScreen({ onComplete, onBack }) {
                 { label: 'Cash' },
               ].map(m => (
                 <span key={m.label} style={{
-                  fontSize: 12, fontWeight: 700, padding: '4px 10px', borderRadius: 12,
+                  fontSize: 14, fontWeight: 700, padding: '4px 10px', borderRadius: 12,
                   background: m.highlight ? C.orange : C.surface,
                   color:      m.highlight ? '#fff'   : C.text,
                   border: m.highlight ? 'none' : `1px solid ${C.border2}`,
                 }}>{m.label}</span>
               ))}
             </div>
-            <div style={{ fontSize: 12, color: C.muted, textAlign: 'center', lineHeight: 1.5 }}>
+            <div style={{ fontSize: 14, color: C.muted, textAlign: 'center', lineHeight: 1.5 }}>
               Connect Stripe in 2 minutes after sign-up to accept card &amp; ACH online — you keep 100% of the invoice (3.9% + $0.30 fee added to client&apos;s total). Tag the others as handles on every invoice.
             </div>
           </div>
@@ -1583,7 +1583,7 @@ function SignupScreen({ onComplete, onBack }) {
               onChange={e => setAcceptedTerms(e.target.checked)}
               style={{ marginTop: 2, width: 16, height: 16, accentColor: C.orange, cursor: 'pointer', flexShrink: 0 }}
             />
-            <span style={{ fontSize: 13, color: C.text, lineHeight: 1.5 }}>
+            <span style={{ fontSize: 15, color: C.text, lineHeight: 1.5 }}>
               I agree to the{' '}
               <a href="https://thetradevoice.com/terms" target="_blank" rel="noopener noreferrer" style={{ color: C.orange, fontWeight: 700, textDecoration: 'underline' }} onClick={e => e.stopPropagation()}>Terms of Service</a>
               {' '}and{' '}
@@ -1598,7 +1598,7 @@ function SignupScreen({ onComplete, onBack }) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           {/* Plan summary recap so the user remembers what they're starting */}
           <div style={{ padding: '14px 16px', background: C.orangeLo, border: `1px solid ${C.orange}33`, borderRadius: 10 }}>
-            <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: C.orange, marginBottom: 4 }}>
+            <div style={{ fontSize: 14, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: C.orange, marginBottom: 4 }}>
               Starting your 28-day trial
             </div>
             {(() => {
@@ -1607,12 +1607,12 @@ function SignupScreen({ onComplete, onBack }) {
               const price  = billingPeriod === 'yearly' ? p.yearlyPrice : p.monthlyPrice;
               const period = billingPeriod === 'yearly' ? '/yr' : '/mo';
               return (
-                <div style={{ fontSize: 14, color: C.text, lineHeight: 1.5 }}>
+                <div style={{ fontSize: 16, color: C.text, lineHeight: 1.5 }}>
                   <strong>{p.name}</strong> · {fmt(price)}{period} after trial · {p.trades}
                 </div>
               );
             })()}
-            <div style={{ fontSize: 12, color: C.muted, marginTop: 6, lineHeight: 1.5 }}>
+            <div style={{ fontSize: 14, color: C.muted, marginTop: 6, lineHeight: 1.5 }}>
               No charge today. We'll auto-charge the card you add below when the trial ends. Cancel anytime from Settings.
             </div>
           </div>
@@ -1620,7 +1620,7 @@ function SignupScreen({ onComplete, onBack }) {
           {/* Stripe Elements mount target. Loading state shows while the
               SetupIntent + Elements lazy-load complete. */}
           <div>
-            <div style={{ fontSize: 12, fontWeight: 800, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 8 }}>
+            <div style={{ fontSize: 14, fontWeight: 800, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 8 }}>
               Card on file
             </div>
             {/* CRITICAL: cardMountRef MUST be an empty React-owned div with no
@@ -1635,7 +1635,7 @@ function SignupScreen({ onComplete, onBack }) {
                 React's reconciliation never has to touch a node Stripe
                 has rewritten. */}
             {paymentPhase === 'loading' && (
-              <div style={{ textAlign: 'center', color: C.dim, fontSize: 13, padding: '36px 14px', minHeight: 180, boxSizing: 'border-box' }}>
+              <div style={{ textAlign: 'center', color: C.dim, fontSize: 15, padding: '36px 14px', minHeight: 180, boxSizing: 'border-box' }}>
                 Loading secure card form…
               </div>
             )}
@@ -1648,19 +1648,19 @@ function SignupScreen({ onComplete, onBack }) {
                 display: paymentPhase === 'loading' ? 'none' : 'block',
               }}
             />
-            <div style={{ fontSize: 11, color: C.dim, marginTop: 6, textAlign: 'center' }}>
+            <div style={{ fontSize: 13, color: C.dim, marginTop: 6, textAlign: 'center' }}>
               Card processed securely by Stripe. Your details never touch Tradevoice's servers.
             </div>
           </div>
 
           {paymentError && (
-            <div style={{ padding: '10px 14px', background: '#fef2f2', border: `1px solid ${C.error}55`, borderRadius: 8, fontSize: 13, color: C.errorBold, lineHeight: 1.5 }}>
+            <div style={{ padding: '10px 14px', background: '#fef2f2', border: `1px solid ${C.error}55`, borderRadius: 8, fontSize: 15, color: C.errorBold, lineHeight: 1.5 }}>
               {paymentError}
             </div>
           )}
 
           {paymentPhase === 'success' && (
-            <div style={{ padding: '12px 14px', background: C.orangeLo, border: `1px solid ${C.success}66`, borderRadius: 8, fontSize: 13, color: C.success, fontWeight: 700, textAlign: 'center' }}>
+            <div style={{ padding: '12px 14px', background: C.orangeLo, border: `1px solid ${C.success}66`, borderRadius: 8, fontSize: 15, color: C.success, fontWeight: 700, textAlign: 'center' }}>
               ✓ Trial started. Welcome to Tradevoice.
             </div>
           )}
@@ -1689,7 +1689,7 @@ function SignupScreen({ onComplete, onBack }) {
               setStep(s => s - 1);
             }}
             disabled={paymentPhase === 'submitting'}
-            style={{ ...s.btn, background: 'transparent', border: `1.5px solid ${C.border2}`, color: C.muted, padding: '13px 20px', fontSize: 15, borderRadius: 50, flex: '0 0 auto' }}
+            style={{ ...s.btn, background: 'transparent', border: `1.5px solid ${C.border2}`, color: C.muted, padding: '13px 20px', fontSize: 17, borderRadius: 50, flex: '0 0 auto' }}
           >
             {step === 0 ? 'Sign in' : '← Back'}
           </button>
@@ -1697,7 +1697,7 @@ function SignupScreen({ onComplete, onBack }) {
         <button
           onClick={step < 3 ? () => setStep(s => s + 1) : startTrial}
           disabled={!canNext[step]() || paymentPhase === 'submitting' || paymentPhase === 'success'}
-          style={{ ...s.btn, flex: 1, background: canNext[step]() ? C.orange : C.border2, color: '#fff', padding: '13px', fontSize: 15, borderRadius: 50, border: 'none', opacity: (canNext[step]() && paymentPhase !== 'submitting' && paymentPhase !== 'success') ? 1 : 0.5 }}
+          style={{ ...s.btn, flex: 1, background: canNext[step]() ? C.orange : C.border2, color: '#fff', padding: '13px', fontSize: 17, borderRadius: 50, border: 'none', opacity: (canNext[step]() && paymentPhase !== 'submitting' && paymentPhase !== 'success') ? 1 : 0.5 }}
         >
           {step < 3 ? 'Continue →' :
            paymentPhase === 'submitting' ? 'Starting trial…' :
@@ -1761,19 +1761,19 @@ function SubscriptionLockedScreen({ user, onSignOut }) {
     <div style={{ minHeight: '100dvh', background: C.bg, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px 16px', fontFamily: "'Inter', sans-serif" }}>
       <div style={{ marginBottom: 32 }}><Logo size={64} /></div>
       <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 16, padding: '40px 32px', width: '100%', maxWidth: 480, textAlign: 'center', boxShadow: C.shadow1 }}>
-        <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: isPaymentFailure ? C.errorBold : C.muted, marginBottom: 8 }}>{eyebrow}</div>
-        <h1 style={{ fontSize: 26, fontWeight: 800, color: C.text, marginBottom: 12, letterSpacing: '-0.02em' }}>{headline}</h1>
-        <p style={{ fontSize: 15, color: C.muted, lineHeight: 1.65, marginBottom: 24 }}>{body}</p>
+        <div style={{ fontSize: 14, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: isPaymentFailure ? C.errorBold : C.muted, marginBottom: 8 }}>{eyebrow}</div>
+        <h1 style={{ fontSize: 28, fontWeight: 800, color: C.text, marginBottom: 12, letterSpacing: '-0.02em' }}>{headline}</h1>
+        <p style={{ fontSize: 17, color: C.muted, lineHeight: 1.65, marginBottom: 24 }}>{body}</p>
         <div style={{ background: C.raised, border: `1px solid ${C.border2}`, borderRadius: 10, padding: '14px 16px', marginBottom: 22, textAlign: 'left' }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: C.muted, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6 }}>Account</div>
-          <div style={{ fontSize: 14, color: C.text, fontWeight: 600 }}>{user?.email}</div>
-          {user?.company && <div style={{ fontSize: 13, color: C.muted, marginTop: 2 }}>{user.company}</div>}
+          <div style={{ fontSize: 14, fontWeight: 700, color: C.muted, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6 }}>Account</div>
+          <div style={{ fontSize: 16, color: C.text, fontWeight: 600 }}>{user?.email}</div>
+          {user?.company && <div style={{ fontSize: 15, color: C.muted, marginTop: 2 }}>{user.company}</div>}
         </div>
-        <a href={ctaHref} style={{ ...s.btn, display: 'block', background: C.orange, color: '#fff', padding: '14px', fontSize: 15, fontWeight: 700, borderRadius: 50, border: 'none', textDecoration: 'none', marginBottom: 14 }}>
+        <a href={ctaHref} style={{ ...s.btn, display: 'block', background: C.orange, color: '#fff', padding: '14px', fontSize: 17, fontWeight: 700, borderRadius: 50, border: 'none', textDecoration: 'none', marginBottom: 14 }}>
           {ctaLabel}
         </a>
-        <div style={{ fontSize: 12, color: C.dim, lineHeight: 1.55, marginBottom: 24 }}>{footnote}</div>
-        <button onClick={onSignOut} style={{ ...s.btn, background: 'transparent', border: `1px solid ${C.border2}`, color: C.muted, padding: '10px 18px', fontSize: 13, borderRadius: 50, fontWeight: 600 }}>
+        <div style={{ fontSize: 14, color: C.dim, lineHeight: 1.55, marginBottom: 24 }}>{footnote}</div>
+        <button onClick={onSignOut} style={{ ...s.btn, background: 'transparent', border: `1px solid ${C.border2}`, color: C.muted, padding: '10px 18px', fontSize: 15, borderRadius: 50, fontWeight: 600 }}>
           Sign out
         </button>
       </div>
@@ -1809,24 +1809,24 @@ function JoinScreen({ onJoin, onBack }) {
 
   return (
     <AuthShell>
-      <div style={{ fontSize: 22, fontWeight: 700, color: C.text, marginBottom: 4, fontFamily: "'Inter', sans-serif", letterSpacing: '-0.02em' }}>
+      <div style={{ fontSize: 24, fontWeight: 700, color: C.text, marginBottom: 4, fontFamily: "'Inter', sans-serif", letterSpacing: '-0.02em' }}>
         {step === 0 ? 'Join your company' : 'Create your profile'}
       </div>
-      <div style={{ fontSize: 14, color: C.muted, marginBottom: 22 }}>
+      <div style={{ fontSize: 16, color: C.muted, marginBottom: 22 }}>
         {step === 0 ? 'Your employer will give you the company code' : `Joining ${found?.company}`}
       </div>
 
-      {error && <div style={{ background: '#fef2f2', border: `1px solid ${C.error}33`, borderRadius: 6, padding: '10px 14px', fontSize: 14, color: C.error, marginBottom: 16 }}>{error}</div>}
+      {error && <div style={{ background: '#fef2f2', border: `1px solid ${C.error}33`, borderRadius: 6, padding: '10px 14px', fontSize: 16, color: C.error, marginBottom: 16 }}>{error}</div>}
 
       {step === 0 && (
         <>
           <label style={s.label}>Company code</label>
           <input value={code} onChange={e => setCode(e.target.value.toUpperCase())} placeholder="TV-XXXXXX"
-            style={{ ...s.input, width: '100%', padding: '16px 14px', boxSizing: 'border-box', fontSize: 22, fontWeight: 700, letterSpacing: '0.12em', textAlign: 'center', marginBottom: 16 }}
+            style={{ ...s.input, width: '100%', padding: '16px 14px', boxSizing: 'border-box', fontSize: 24, fontWeight: 700, letterSpacing: '0.12em', textAlign: 'center', marginBottom: 16 }}
             onKeyDown={e => e.key === 'Enter' && lookupCode()} />
           <div style={{ display: 'flex', gap: 10 }}>
-            <button onClick={onBack} style={{ ...s.btn, background: 'transparent', border: `1.5px solid ${C.border2}`, color: C.muted, padding: '13px 20px', fontSize: 15, borderRadius: 50 }}>← Back</button>
-            <button onClick={lookupCode} disabled={code.length < 6} style={{ ...s.btn, flex: 1, background: C.orange, color: '#fff', padding: '13px', fontSize: 15, borderRadius: 50, border: 'none', opacity: code.length < 6 ? 0.5 : 1 }}>Find Company</button>
+            <button onClick={onBack} style={{ ...s.btn, background: 'transparent', border: `1.5px solid ${C.border2}`, color: C.muted, padding: '13px 20px', fontSize: 17, borderRadius: 50 }}>← Back</button>
+            <button onClick={lookupCode} disabled={code.length < 6} style={{ ...s.btn, flex: 1, background: C.orange, color: '#fff', padding: '13px', fontSize: 17, borderRadius: 50, border: 'none', opacity: code.length < 6 ? 0.5 : 1 }}>Find Company</button>
           </div>
         </>
       )}
@@ -1834,25 +1834,25 @@ function JoinScreen({ onJoin, onBack }) {
       {step === 1 && found && (
         <>
           <div style={{ background: C.orangeLo, border: `1px solid ${C.orange}44`, borderRadius: 8, padding: '12px 16px', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 36, height: 36, borderRadius: '50%', background: C.orange, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 14, fontWeight: 700 }}>
+            <div style={{ width: 36, height: 36, borderRadius: '50%', background: C.orange, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 16, fontWeight: 700 }}>
               {found.company.split(' ').map(w => w[0]).join('').slice(0,2)}
             </div>
             <div>
-              <div style={{ fontSize: 15, fontWeight: 700, color: C.text }}>{found.company}</div>
-              <div style={{ fontSize: 13, color: C.muted }}>Owner: {found.owner} · {found.trades.join(', ')}</div>
+              <div style={{ fontSize: 17, fontWeight: 700, color: C.text }}>{found.company}</div>
+              <div style={{ fontSize: 15, color: C.muted }}>Owner: {found.owner} · {found.trades.join(', ')}</div>
             </div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 13, marginBottom: 18 }}>
-            <div><label style={s.label}>Your name *</label><input value={name} onChange={e => setName(e.target.value)} placeholder="Carlos Reyes" style={{ ...s.input, width: '100%', padding: '12px 14px', boxSizing: 'border-box', fontSize: 16 }}/></div>
-            <div><label style={s.label}>Email *</label><input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="carlos@company.com" style={{ ...s.input, width: '100%', padding: '12px 14px', boxSizing: 'border-box', fontSize: 16 }}/></div>
-            <div><label style={s.label}>Password * <span style={{ color: C.dim, fontWeight: 400 }}>(min 6 characters)</span></label><input type="password" value={password} onChange={e => setPass(e.target.value)} placeholder="••••••••" style={{ ...s.input, width: '100%', padding: '12px 14px', boxSizing: 'border-box', fontSize: 16 }}/></div>
+            <div><label style={s.label}>Your name *</label><input value={name} onChange={e => setName(e.target.value)} placeholder="Carlos Reyes" style={{ ...s.input, width: '100%', padding: '12px 14px', boxSizing: 'border-box', fontSize: 18 }}/></div>
+            <div><label style={s.label}>Email *</label><input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="carlos@company.com" style={{ ...s.input, width: '100%', padding: '12px 14px', boxSizing: 'border-box', fontSize: 18 }}/></div>
+            <div><label style={s.label}>Password * <span style={{ color: C.dim, fontWeight: 400 }}>(min 6 characters)</span></label><input type="password" value={password} onChange={e => setPass(e.target.value)} placeholder="••••••••" style={{ ...s.input, width: '100%', padding: '12px 14px', boxSizing: 'border-box', fontSize: 18 }}/></div>
           </div>
-          <div style={{ fontSize: 13, color: C.muted, marginBottom: 16, background: C.raised, borderRadius: 8, padding: '10px 14px' }}>
+          <div style={{ fontSize: 15, color: C.muted, marginBottom: 16, background: C.raised, borderRadius: 8, padding: '10px 14px' }}>
             Your employer will set your permissions after you join. You'll have access to the features they enable for you.
           </div>
           <div style={{ display: 'flex', gap: 10 }}>
-            <button onClick={() => { setStep(0); setError(''); }} style={{ ...s.btn, background: 'transparent', border: `1.5px solid ${C.border2}`, color: C.muted, padding: '13px 20px', fontSize: 15, borderRadius: 50 }}>← Back</button>
-            <button onClick={finish} style={{ ...s.btn, flex: 1, background: C.orange, color: '#fff', padding: '13px', fontSize: 15, borderRadius: 50, border: 'none' }}>Join {found.company}</button>
+            <button onClick={() => { setStep(0); setError(''); }} style={{ ...s.btn, background: 'transparent', border: `1.5px solid ${C.border2}`, color: C.muted, padding: '13px 20px', fontSize: 17, borderRadius: 50 }}>← Back</button>
+            <button onClick={finish} style={{ ...s.btn, flex: 1, background: C.orange, color: '#fff', padding: '13px', fontSize: 17, borderRadius: 50, border: 'none' }}>Join {found.company}</button>
           </div>
         </>
       )}
@@ -1903,7 +1903,7 @@ function Onboarding({ onComplete }) {
       <label style={s.label}>{label}{req && <span style={{ color: C.orange }}> *</span>}</label>
       <input type={type} value={data[key]} placeholder={placeholder}
         onChange={e => setData(d => ({ ...d, [key]: e.target.value }))}
-        style={{ ...s.input, width: '100%', padding: '13px 14px', boxSizing: 'border-box', fontSize: 20, borderColor: data[key] ? C.orange : C.border2 }} />
+        style={{ ...s.input, width: '100%', padding: '13px 14px', boxSizing: 'border-box', fontSize: 22, borderColor: data[key] ? C.orange : C.border2 }} />
     </div>
   );
 
@@ -1914,7 +1914,7 @@ function Onboarding({ onComplete }) {
   return (
     <div style={{ minHeight: '100dvh', background: C.bg, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: "'Inter', sans-serif", padding: isTablet ? '24px 16px' : 24 }}>
       <div style={{ marginBottom: 12 }}><Logo size={52} /></div>
-      <div style={{ fontSize: 14, color: C.muted, marginBottom: 32, textAlign: 'center', lineHeight: 1.5, maxWidth: 340 }}>
+      <div style={{ fontSize: 16, color: C.muted, marginBottom: 32, textAlign: 'center', lineHeight: 1.5, maxWidth: 340 }}>
         From first estimate to final payment.
       </div>
 
@@ -1924,12 +1924,12 @@ function Onboarding({ onComplete }) {
           <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
             <div style={{
               width: 28, height: 28, borderRadius: 2, display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontFamily: "'Inter', sans-serif", fontSize: 17, fontWeight: 800,
+              fontFamily: "'Inter', sans-serif", fontSize: 19, fontWeight: 800,
               background: i < step ? C.orange : 'transparent',
               border: `2px solid ${i <= step ? C.orange : C.border2}`,
               color: i < step ? '#fff' : i === step ? C.orange : C.dim,
             }}>{i < step ? 'Done' : i + 1}</div>
-            {!isTablet && <span style={{ fontSize: 16, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: i === step ? C.text : C.dim }}>{label}</span>}
+            {!isTablet && <span style={{ fontSize: 18, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: i === step ? C.text : C.dim }}>{label}</span>}
             {i < STEPS.length - 1 && <div style={{ width: isTablet ? 12 : 20, height: 1, background: C.border2, margin: '0 2px' }} />}
           </div>
         ))}
@@ -1938,18 +1938,18 @@ function Onboarding({ onComplete }) {
       <div style={{ width: '100%', maxWidth: 480, background: C.surface, border: `1px solid ${C.border2}`, borderRadius: 4, padding: isTablet ? '28px 20px' : '36px 32px' }}>
 
         {step === 0 && <>
-          <h2 style={{ margin: '0 0 6px', fontFamily: "'Inter', sans-serif", fontSize: 24, fontWeight: 700, color: C.text, letterSpacing: '-0.02em' }}>Select Trade(s)</h2>
-          <p style={{ margin: '0 0 20px', fontSize: 18, color: C.muted }}>Select every trade your business offers. Pricing adjusts automatically.</p>
+          <h2 style={{ margin: '0 0 6px', fontFamily: "'Inter', sans-serif", fontSize: 26, fontWeight: 700, color: C.text, letterSpacing: '-0.02em' }}>Select Trade(s)</h2>
+          <p style={{ margin: '0 0 20px', fontSize: 20, color: C.muted }}>Select every trade your business offers. Pricing adjusts automatically.</p>
 
           {/* Licensed trades — top 4 */}
           <div style={{ marginBottom: 10 }}>
-            <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.muted, marginBottom: 8, fontFamily: "'Inter', sans-serif" }}>Licensed Trades</div>
+            <div style={{ fontSize: 15, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.muted, marginBottom: 8, fontFamily: "'Inter', sans-serif" }}>Licensed Trades</div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               {['Plumber','Electrician','HVAC','Roofing'].map(t => {
                 const on = data.trades.includes(t);
                 return (
                   <button key={t} onClick={() => toggle(t)} style={{
-                    ...s.btn, padding: '16px 12px', fontSize: 20, minHeight: 56,
+                    ...s.btn, padding: '16px 12px', fontSize: 22, minHeight: 56,
                     background: on ? C.orange : C.raised,
                     border: `2px solid ${on ? C.orange : C.border2}`,
                     color: on ? '#fff' : C.text,
@@ -1961,13 +1961,13 @@ function Onboarding({ onComplete }) {
 
           {/* Specialty Trades — gated with sub-selection */}
           <div style={{ marginBottom: 10 }}>
-            <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.muted, marginBottom: 8, fontFamily: "'Inter', sans-serif" }}>Specialty Trades</div>
-            <div style={{ fontSize: 15, color: C.muted, marginBottom: 10, lineHeight: 1.5 }}>
+            <div style={{ fontSize: 15, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.muted, marginBottom: 8, fontFamily: "'Inter', sans-serif" }}>Specialty Trades</div>
+            <div style={{ fontSize: 17, color: C.muted, marginBottom: 10, lineHeight: 1.5 }}>
               For non-licensed work: painting, flooring, drywall, tile, landscaping, and more.
               <strong style={{ color: C.error }}> Does not cover Plumbing, Electrical, HVAC, or Roofing.</strong>
             </div>
             <button onClick={() => toggle('Specialty')} style={{
-              ...s.btn, width: '100%', padding: '14px 16px', fontSize: 20, minHeight: 52, textAlign: 'left',
+              ...s.btn, width: '100%', padding: '14px 16px', fontSize: 22, minHeight: 52, textAlign: 'left',
               background: data.trades.includes('Specialty') ? C.orange : C.raised,
               border: `2px solid ${data.trades.includes('Specialty') ? C.orange : C.border2}`,
               color: data.trades.includes('Specialty') ? '#fff' : C.text,
@@ -1978,7 +1978,7 @@ function Onboarding({ onComplete }) {
             {/* Sub-selection — only visible when Specialty is toggled on */}
             {data.trades.includes('Specialty') && (
               <div style={{ marginTop: 10, padding: '14px', background: C.raised, border: `1.5px solid ${C.border2}`, borderRadius: 3 }}>
-                <div style={{ fontSize: 14, fontWeight: 700, color: C.text, marginBottom: 10 }}>
+                <div style={{ fontSize: 16, fontWeight: 700, color: C.text, marginBottom: 10 }}>
                   What type of specialty work do you perform? <span style={{ color: C.error }}>*</span>
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 7 }}>
@@ -1986,7 +1986,7 @@ function Onboarding({ onComplete }) {
                     const on = data.specialtyTypes.includes(type);
                     return (
                       <button key={type} onClick={() => toggleSpecialty(type)} style={{
-                        ...s.btn, padding: '10px 10px', fontSize: 16, minHeight: 44, textAlign: 'left',
+                        ...s.btn, padding: '10px 10px', fontSize: 18, minHeight: 44, textAlign: 'left',
                         background: on ? '#fff7ed' : C.surface,
                         border: `1.5px solid ${on ? C.orange : C.border2}`,
                         color: on ? C.orange : C.text,
@@ -1999,7 +1999,7 @@ function Onboarding({ onComplete }) {
                   })}
                 </div>
                 {data.specialtyTypes.length === 0 && (
-                  <div style={{ marginTop: 10, fontSize: 14, color: C.error }}>
+                  <div style={{ marginTop: 10, fontSize: 16, color: C.error }}>
                     Select at least one specialty type to continue.
                   </div>
                 )}
@@ -2007,17 +2007,17 @@ function Onboarding({ onComplete }) {
             )}
           </div>
 
-          {priceLabel && <div style={{ marginTop: 14, padding: '10px 14px', background: C.orangeLo, border: `1px solid ${C.orangeMd}`, borderRadius: 3, fontSize: 18, color: C.orange, fontWeight: 600 }}>{priceLabel}</div>}
+          {priceLabel && <div style={{ marginTop: 14, padding: '10px 14px', background: C.orangeLo, border: `1px solid ${C.orangeMd}`, borderRadius: 3, fontSize: 20, color: C.orange, fontWeight: 600 }}>{priceLabel}</div>}
         </>}
 
         {step === 1 && <>
-          <h2 style={{ margin: '0 0 6px', fontFamily: "'Inter', sans-serif", fontSize: 24, fontWeight: 700, color: C.text, letterSpacing: '-0.02em' }}>Type of Work</h2>
-          <p style={{ margin: '0 0 20px', fontSize: 18, color: C.muted }}>What kind of jobs do you run?</p>
+          <h2 style={{ margin: '0 0 6px', fontFamily: "'Inter', sans-serif", fontSize: 26, fontWeight: 700, color: C.text, letterSpacing: '-0.02em' }}>Type of Work</h2>
+          <p style={{ margin: '0 0 20px', fontSize: 20, color: C.muted }}>What kind of jobs do you run?</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {WORK_TYPES.map(w => {
               const on = data.workType === w;
               return (
-                <button key={w} onClick={() => setData(d => ({ ...d, workType: w }))} style={{ ...s.btn, padding: '15px 18px', fontSize: 21, textAlign: 'left', minHeight: 52, background: on ? C.orange : C.raised, border: `2px solid ${on ? C.orange : C.border2}`, color: on ? '#fff' : C.text }}>
+                <button key={w} onClick={() => setData(d => ({ ...d, workType: w }))} style={{ ...s.btn, padding: '15px 18px', fontSize: 23, textAlign: 'left', minHeight: 52, background: on ? C.orange : C.raised, border: `2px solid ${on ? C.orange : C.border2}`, color: on ? '#fff' : C.text }}>
                   {w}
                 </button>
               );
@@ -2026,23 +2026,23 @@ function Onboarding({ onComplete }) {
         </>}
 
         {step === 2 && <>
-          <h2 style={{ margin: '0 0 6px', fontFamily: "'Inter', sans-serif", fontSize: 24, fontWeight: 700, color: C.text, letterSpacing: '-0.02em' }}>
+          <h2 style={{ margin: '0 0 6px', fontFamily: "'Inter', sans-serif", fontSize: 26, fontWeight: 700, color: C.text, letterSpacing: '-0.02em' }}>
             {multiState ? 'Select Your States' : 'Your State'}
           </h2>
-          <p style={{ margin: '0 0 16px', fontSize: 18, color: C.muted }}>
+          <p style={{ margin: '0 0 16px', fontSize: 20, color: C.muted }}>
             {multiState ? 'Select every state you are licensed to operate in.' : 'Licensing requirements load automatically once selected.'}
           </p>
 
           {/* Single / Multi toggle */}
           <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
             <button onClick={() => { setMultiState(false); setData(d => ({ ...d, states: d.states.slice(0, 1) })); }} style={{
-              ...s.btn, flex: 1, padding: '10px 14px', fontSize: 16, minHeight: 44,
+              ...s.btn, flex: 1, padding: '10px 14px', fontSize: 18, minHeight: 44,
               background: !multiState ? C.orange : C.raised,
               border: `2px solid ${!multiState ? C.orange : C.border2}`,
               color: !multiState ? '#fff' : C.muted,
             }}>Single State</button>
             <button onClick={() => setMultiState(true)} style={{
-              ...s.btn, flex: 1, padding: '10px 14px', fontSize: 16, minHeight: 44,
+              ...s.btn, flex: 1, padding: '10px 14px', fontSize: 18, minHeight: 44,
               background: multiState ? C.orange : C.raised,
               border: `2px solid ${multiState ? C.orange : C.border2}`,
               color: multiState ? '#fff' : C.muted,
@@ -2054,7 +2054,7 @@ function Onboarding({ onComplete }) {
             <select
               value={data.states[0] || ''}
               onChange={e => setData(d => ({ ...d, states: e.target.value ? [e.target.value] : [] }))}
-              style={{ ...s.input, width: '100%', padding: '14px 14px', boxSizing: 'border-box', fontSize: 20, cursor: 'pointer', minHeight: 52, borderColor: data.states.length ? C.orange : C.border2 }}>
+              style={{ ...s.input, width: '100%', padding: '14px 14px', boxSizing: 'border-box', fontSize: 22, cursor: 'pointer', minHeight: 52, borderColor: data.states.length ? C.orange : C.border2 }}>
               <option value="">— Select state —</option>
               {STATES.map(st => <option key={st}>{st}</option>)}
             </select>
@@ -2068,7 +2068,7 @@ function Onboarding({ onComplete }) {
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 14 }}>
                   {data.states.map(st => (
                     <button key={st} onClick={() => toggleState(st)} style={{
-                      ...s.btn, padding: '6px 12px', fontSize: 14, minHeight: 34,
+                      ...s.btn, padding: '6px 12px', fontSize: 16, minHeight: 34,
                       background: C.orange, color: '#ffffff', border: 'none',
                     }}>
                       {st} &times;
@@ -2087,18 +2087,18 @@ function Onboarding({ onComplete }) {
                       padding: '12px 16px', background: selected ? C.orangeLo : 'transparent',
                       border: 'none', borderBottom: `1px solid ${C.border}`,
                       color: selected ? C.orange : C.text, cursor: 'pointer', textAlign: 'left',
-                      fontSize: 17, fontFamily: "'Inter', sans-serif",
+                      fontSize: 19, fontFamily: "'Inter', sans-serif",
                       WebkitTapHighlightColor: 'transparent',
                     }}>
                       <span>{st}</span>
-                      {selected && <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 14, fontWeight: 900, letterSpacing: '0.06em', color: C.orange }}>Selected</span>}
+                      {selected && <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 16, fontWeight: 900, letterSpacing: '0.06em', color: C.orange }}>Selected</span>}
                     </button>
                   );
                 })}
               </div>
 
               {data.states.length > 0 && (
-                <div style={{ marginTop: 10, fontSize: 16, color: C.orange, fontWeight: 600 }}>
+                <div style={{ marginTop: 10, fontSize: 18, color: C.orange, fontWeight: 600 }}>
                   {data.states.length} state{data.states.length > 1 ? 's' : ''} selected
                 </div>
               )}
@@ -2107,8 +2107,8 @@ function Onboarding({ onComplete }) {
         </>}
 
         {step === 3 && <>
-          <h2 style={{ margin: '0 0 6px', fontFamily: "'Inter', sans-serif", fontSize: 24, fontWeight: 700, color: C.text, letterSpacing: '-0.02em' }}>Your Profile</h2>
-          <p style={{ margin: '0 0 20px', fontSize: 18, color: C.muted }}>This appears on your invoices and proposals.</p>
+          <h2 style={{ margin: '0 0 6px', fontFamily: "'Inter', sans-serif", fontSize: 26, fontWeight: 700, color: C.text, letterSpacing: '-0.02em' }}>Your Profile</h2>
+          <p style={{ margin: '0 0 20px', fontSize: 20, color: C.muted }}>This appears on your invoices and proposals.</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             {inputField('name',    'Your Name',    'Alex Rivera',               'text',  true)}
             {inputField('company', 'Company Name', "Cornerstone Mechanical",    'text',  false)}
@@ -2236,7 +2236,7 @@ function TechPerformanceWidget({ user, invoices, teamMembers, nav }) {
   return (
     <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: '18px 20px', marginBottom: 22, boxShadow: C.shadow1 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14, gap: 10, flexWrap: 'wrap' }}>
-        <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, fontWeight: 800, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+        <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, fontWeight: 800, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
           Tech Performance
         </div>
         <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
@@ -2250,7 +2250,7 @@ function TechPerformanceWidget({ user, invoices, teamMembers, nav }) {
                 border:    `1px solid ${period === p.id ? C.orange : C.border2}`,
                 padding: '5px 12px', borderRadius: 50,
                 fontFamily: "'Inter', sans-serif",
-                fontSize: 12, fontWeight: 700, letterSpacing: '0.04em',
+                fontSize: 14, fontWeight: 700, letterSpacing: '0.04em',
                 cursor: 'pointer', WebkitTapHighlightColor: 'transparent',
                 whiteSpace: 'nowrap',
               }}
@@ -2265,7 +2265,7 @@ function TechPerformanceWidget({ user, invoices, teamMembers, nav }) {
           nobody invoiced this period. We still show the roster so they
           remember who their crew is. */}
       {!hasAnyData && (
-        <div style={{ padding: '14px 0', fontSize: 14, color: C.dim, fontStyle: 'italic', textAlign: 'center' }}>
+        <div style={{ padding: '14px 0', fontSize: 16, color: C.dim, fontStyle: 'italic', textAlign: 'center' }}>
           No invoices in {periodBounds.label.toLowerCase()} yet.
         </div>
       )}
@@ -2294,16 +2294,16 @@ function TechPerformanceWidget({ user, invoices, teamMembers, nav }) {
                   width: 38, height: 38, borderRadius: '50%',
                   background: m.isOwner ? C.orange : C.success,
                   color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontFamily: "'Inter', sans-serif", fontWeight: 800, fontSize: 14, letterSpacing: '0.04em',
+                  fontFamily: "'Inter', sans-serif", fontWeight: 800, fontSize: 16, letterSpacing: '0.04em',
                   flexShrink: 0,
                 }}>
                   {m.initials}
                 </div>
                 <div style={{ minWidth: 0 }}>
-                  <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, fontWeight: 700, color: C.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 17, fontWeight: 700, color: C.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {m.name}
                   </div>
-                  <div style={{ fontSize: 11, color: C.muted, marginTop: 1, fontWeight: 600, letterSpacing: '0.04em' }}>
+                  <div style={{ fontSize: 13, color: C.muted, marginTop: 1, fontWeight: 600, letterSpacing: '0.04em' }}>
                     {m.isOwner ? 'OWNER' : 'TECH'}
                     {isTopEarner && <span style={{ color: C.orange, marginLeft: 8 }}>★ Top earner</span>}
                   </div>
@@ -2326,10 +2326,10 @@ function TechPerformanceWidget({ user, invoices, teamMembers, nav }) {
               {/* Share-of-team-revenue bar — only meaningful with 2+ techs */}
               {!isTablet && metrics.length > 1 && (
                 <div style={{ width: 110, textAlign: 'right' }}>
-                  <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 14, fontWeight: 800, color: C.orange, fontVariantNumeric: 'tabular-nums' }}>
+                  <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 16, fontWeight: 800, color: C.orange, fontVariantNumeric: 'tabular-nums' }}>
                     {pctOfTeam.toFixed(0)}%
                   </div>
-                  <div style={{ fontSize: 10, color: C.muted, fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: 5 }}>of team</div>
+                  <div style={{ fontSize: 12, color: C.muted, fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: 5 }}>of team</div>
                   <div style={{ height: 4, background: C.border, borderRadius: 2, overflow: 'hidden' }}>
                     <div style={{ width: `${pctOfTeam}%`, height: '100%', background: C.orange, transition: 'width 0.3s' }} />
                   </div>
@@ -2343,8 +2343,8 @@ function TechPerformanceWidget({ user, invoices, teamMembers, nav }) {
       {/* Hint to add more techs if it's just the owner. Surfaces the path
           to Settings → Team since the seat-buying flow lives there. */}
       {roster.length === 1 && (
-        <div style={{ marginTop: 12, padding: '10px 14px', background: C.orangeLo, border: `1px solid ${C.orangeMd}`, borderRadius: 8, fontSize: 13, color: C.muted, lineHeight: 1.5 }}>
-          You're the only tech right now. <button onClick={() => nav && nav('settings')} style={{ background: 'none', border: 'none', color: C.orange, fontWeight: 700, cursor: 'pointer', padding: 0, fontSize: 13 }}>Add a tech ($19.99/mo)</button> to see side-by-side performance.
+        <div style={{ marginTop: 12, padding: '10px 14px', background: C.orangeLo, border: `1px solid ${C.orangeMd}`, borderRadius: 8, fontSize: 15, color: C.muted, lineHeight: 1.5 }}>
+          You're the only tech right now. <button onClick={() => nav && nav('settings')} style={{ background: 'none', border: 'none', color: C.orange, fontWeight: 700, cursor: 'pointer', padding: 0, fontSize: 15 }}>Add a tech ($19.99/mo)</button> to see side-by-side performance.
         </div>
       )}
     </div>
@@ -2355,8 +2355,8 @@ function TechPerformanceWidget({ user, invoices, teamMembers, nav }) {
 function Stat({ label, value, color }) {
   return (
     <div style={{ minWidth: 0 }}>
-      <div style={{ fontSize: 10, fontWeight: 700, color: '#9ca3af', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 2 }}>{label}</div>
-      <div style={{ fontSize: 15, fontWeight: 800, color, fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{value}</div>
+      <div style={{ fontSize: 12, fontWeight: 700, color: '#9ca3af', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 2 }}>{label}</div>
+      <div style={{ fontSize: 17, fontWeight: 800, color, fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{value}</div>
     </div>
   );
 }
@@ -2476,10 +2476,10 @@ function Dashboard({ user, nav, invoices = [], plans = [], onScheduleFromPlan, t
           from passive read-only into a real navigation surface. */}
       <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: '18px 20px', marginBottom: 22, boxShadow: C.shadow1 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14, gap: 10, flexWrap: 'wrap' }}>
-          <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, fontWeight: 800, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+          <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, fontWeight: 800, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
             12-Month Invoice Trend
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14, fontSize: 12, color: C.muted, fontWeight: 600 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14, fontSize: 14, color: C.muted, fontWeight: 600 }}>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
               <span style={{ width: 10, height: 10, background: C.orange, borderRadius: 2, display: 'inline-block' }} />
               Invoiced
@@ -2532,10 +2532,10 @@ function Dashboard({ user, nav, invoices = [], plans = [], onScheduleFromPlan, t
                     )}
                   </div>
                 </div>
-                <div style={{ fontSize: 11, fontWeight: isCurrent ? 800 : 600, color: isCurrent ? C.text : C.muted, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                <div style={{ fontSize: 13, fontWeight: isCurrent ? 800 : 600, color: isCurrent ? C.text : C.muted, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
                   {b.label}
                 </div>
-                <div style={{ fontSize: 10, fontWeight: 700, color: isCurrent ? C.orange : C.dim, fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: isCurrent ? C.orange : C.dim, fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>
                   {b.invoiced >= 1000 ? `$${(b.invoiced / 1000).toFixed(b.invoiced >= 10000 ? 0 : 1)}k` : (b.invoiced > 0 ? `$${Math.round(b.invoiced)}` : '—')}
                 </div>
               </button>
@@ -2561,11 +2561,11 @@ function Dashboard({ user, nav, invoices = [], plans = [], onScheduleFromPlan, t
       <div style={{ display: 'grid', gridTemplateColumns: isTablet ? '1fr' : '1fr 290px', gap: 14 }}>
 
         <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 4, padding: '16px 18px' }}>
-          <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, fontWeight: 800, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 14 }}>Recent Invoices</div>
+          <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, fontWeight: 800, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 14 }}>Recent Invoices</div>
           {recent.length === 0 ? (
-            <div style={{ padding: '20px 0', textAlign: 'center', color: C.dim, fontSize: 13, lineHeight: 1.6 }}>
+            <div style={{ padding: '20px 0', textAlign: 'center', color: C.dim, fontSize: 15, lineHeight: 1.6 }}>
               No invoices yet.{' '}
-              <button onClick={() => nav('invoice')} style={{ background: 'none', border: 'none', color: C.orange, cursor: 'pointer', fontSize: 13, fontWeight: 700, padding: 0 }}>
+              <button onClick={() => nav('invoice')} style={{ background: 'none', border: 'none', color: C.orange, cursor: 'pointer', fontSize: 15, fontWeight: 700, padding: 0 }}>
                 Create your first invoice →
               </button>
             </div>
@@ -2586,11 +2586,11 @@ function Dashboard({ user, nav, invoices = [], plans = [], onScheduleFromPlan, t
               onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
               >
                 <div style={{ minWidth: 0 }}>
-                  <div style={{ fontSize: 16, fontWeight: 700, color: C.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', letterSpacing: '-0.01em' }}>{inv.clientName || '—'}</div>
-                  <div style={{ fontSize: 14, color: C.muted, marginTop: 3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: 500 }}>{inv.title} — {inv.createdAt}</div>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: C.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', letterSpacing: '-0.01em' }}>{inv.clientName || '—'}</div>
+                  <div style={{ fontSize: 16, color: C.muted, marginTop: 3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: 500 }}>{inv.title} — {inv.createdAt}</div>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6, flexShrink: 0 }}>
-                  <div style={{ fontSize: 19, fontWeight: 800, fontFamily: "'Inter', sans-serif", color: C.text, fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.02em' }}>{fmtMoney(calc.total)}</div>
+                  <div style={{ fontSize: 21, fontWeight: 800, fontFamily: "'Inter', sans-serif", color: C.text, fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.02em' }}>{fmtMoney(calc.total)}</div>
                   <InvBadge status={inv.status} />
                 </div>
               </div>
@@ -2599,7 +2599,7 @@ function Dashboard({ user, nav, invoices = [], plans = [], onScheduleFromPlan, t
         </div>
 
         <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 4, padding: '16px 18px' }}>
-          <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, fontWeight: 800, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 14 }}>Quick Actions</div>
+          <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, fontWeight: 800, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 14 }}>Quick Actions</div>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             {[
               { label: 'New Invoice', sec: 'invoice' },
@@ -2617,7 +2617,7 @@ function Dashboard({ user, nav, invoices = [], plans = [], onScheduleFromPlan, t
                 color: '#fff',
                 cursor: 'pointer',
                 fontFamily: "'Inter', sans-serif",
-                fontSize: 14,
+                fontSize: 16,
                 fontWeight: 700,
                 letterSpacing: '-0.005em',
                 whiteSpace: 'nowrap',
@@ -2641,11 +2641,11 @@ function Dashboard({ user, nav, invoices = [], plans = [], onScheduleFromPlan, t
           </div>
           {!isTablet && (
             <div style={{ marginTop: 16, padding: '12px', background: C.orangeLo, border: `1px solid ${C.orangeMd}`, borderRadius: 3 }}>
-              <div style={{ fontSize: 11, color: C.orange, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 3 }}>Your Plan</div>
-              <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 22, fontWeight: 900, color: C.orange }}>
-                ${getPrice(user.trades?.length || 1)}<span style={{ fontSize: 13, fontWeight: 400, color: C.muted }}>/mo</span>
+              <div style={{ fontSize: 13, color: C.orange, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 3 }}>Your Plan</div>
+              <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 24, fontWeight: 900, color: C.orange }}>
+                ${getPrice(user.trades?.length || 1)}<span style={{ fontSize: 15, fontWeight: 400, color: C.muted }}>/mo</span>
               </div>
-              <div style={{ fontSize: 12, color: C.muted, marginTop: 3 }}>{user.trades?.join(', ')}</div>
+              <div style={{ fontSize: 14, color: C.muted, marginTop: 3 }}>{user.trades?.join(', ')}</div>
             </div>
           )}
         </div>
@@ -2656,16 +2656,16 @@ function Dashboard({ user, nav, invoices = [], plans = [], onScheduleFromPlan, t
       {plans.length > 0 && (
         <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 4, padding: '16px 18px', marginTop: 14 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14, gap: 10 }}>
-            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, fontWeight: 800, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, fontWeight: 800, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
               Maintenance Plans — Due Soon
             </div>
             <button onClick={() => nav('plans')} style={{
               background: 'none', border: 'none', color: C.orange,
-              fontSize: 13, fontWeight: 700, cursor: 'pointer', padding: 0,
+              fontSize: 15, fontWeight: 700, cursor: 'pointer', padding: 0,
             }}>View all →</button>
           </div>
           {plansDueSoon.length === 0 ? (
-            <div style={{ padding: '14px 0', color: C.dim, fontSize: 14, textAlign: 'center' }}>
+            <div style={{ padding: '14px 0', color: C.dim, fontSize: 16, textAlign: 'center' }}>
               All plans on track — nothing due in the next two weeks.
             </div>
           ) : plansDueSoon.map((p, i) => {
@@ -2689,20 +2689,20 @@ function Dashboard({ user, nav, invoices = [], plans = [], onScheduleFromPlan, t
                 gap: 12, borderRadius: 8,
               }}>
                 <div style={{ minWidth: 0 }}>
-                  <div style={{ fontSize: 16, fontWeight: 700, color: C.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', letterSpacing: '-0.01em' }}>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: C.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', letterSpacing: '-0.01em' }}>
                     {p.title}
                   </div>
-                  <div style={{ fontSize: 13, color: C.muted, marginTop: 3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: 500 }}>
+                  <div style={{ fontSize: 15, color: C.muted, marginTop: 3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: 500 }}>
                     {p.clientName || 'Unknown client'} · {p.trade}
                   </div>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6, flexShrink: 0 }}>
                   <span style={{
-                    fontSize: 11, fontWeight: 800, letterSpacing: '0.06em', textTransform: 'uppercase',
+                    fontSize: 13, fontWeight: 800, letterSpacing: '0.06em', textTransform: 'uppercase',
                     padding: '3px 9px', borderRadius: 4, background: pillBg, color: pillFg,
                   }}>{pillTxt}</span>
                   <button onClick={() => onScheduleFromPlan?.(p)} style={{
-                    padding: '6px 12px', fontSize: 12, fontWeight: 700,
+                    padding: '6px 12px', fontSize: 14, fontWeight: 700,
                     background: C.orange, color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer',
                   }}>Schedule</button>
                 </div>
@@ -2916,7 +2916,7 @@ function InvBadge({ status }) {
   const meta = INV_STATUS[status] || INV_STATUS.draft;
   const { label, bg, color, filled } = meta;
   return <span style={{
-    fontSize: 12, fontWeight: filled ? 800 : 700,
+    fontSize: 14, fontWeight: filled ? 800 : 700,
     letterSpacing: '0.08em', textTransform: 'uppercase',
     padding: '4px 11px', borderRadius: 5,
     background: bg, color,
@@ -2945,7 +2945,7 @@ function AgingGrid({ buckets, totals, labels, colors, onFilter }) {
             {fmtMoney(totals[b].amount)}
           </div>
           <div style={{ fontSize: isTablet ? 12 : 13, fontWeight:700, color:C.muted, textTransform:'uppercase', letterSpacing:'0.05em' }}>{labels[b]}</div>
-          {totals[b].count > 0 && <div style={{ fontSize:12, color:C.dim, marginTop:3 }}>{totals[b].count} inv.</div>}
+          {totals[b].count > 0 && <div style={{ fontSize: 14, color:C.dim, marginTop:3 }}>{totals[b].count} inv.</div>}
         </button>
       ))}
     </div>
@@ -2973,9 +2973,9 @@ function AgingReport({ invoices, onFilter }) {
   return (
     <div style={{ background:C.surface, border:`1px solid ${C.border}`, borderRadius:4, overflow:'hidden', marginBottom:20 }}>
       <div style={{ padding:'14px 18px', borderBottom:`1px solid ${C.border}`, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-        <div style={{ fontFamily:"'Inter', sans-serif", fontSize:17, fontWeight:900, letterSpacing:'0.08em', textTransform:'uppercase', color:C.muted }}>A/R Aging Summary</div>
-        <div style={{ fontFamily:"'Inter', sans-serif", fontSize:19, fontWeight:900, color:C.text }}>
-          {fmtMoney(grandTotal)} <span style={{ fontSize:14, fontWeight:400, color:C.muted }}>total outstanding</span>
+        <div style={{ fontFamily:"'Inter', sans-serif", fontSize: 19, fontWeight:900, letterSpacing:'0.08em', textTransform:'uppercase', color:C.muted }}>A/R Aging Summary</div>
+        <div style={{ fontFamily:"'Inter', sans-serif", fontSize: 21, fontWeight:900, color:C.text }}>
+          {fmtMoney(grandTotal)} <span style={{ fontSize: 16, fontWeight:400, color:C.muted }}>total outstanding</span>
         </div>
       </div>
       <AgingGrid buckets={buckets} totals={totals} labels={labels} colors={colors} onFilter={onFilter} />
@@ -3011,14 +3011,14 @@ function RecordPaymentModal({ invoice, onSave, onClose }) {
   return (
     <div style={{ position:'fixed', inset:0, background:'#00000066', display:'flex', alignItems:'center', justifyContent:'center', zIndex:999, padding:20 }}>
       <div style={{ background:C.surface, border:`1px solid ${C.border2}`, borderRadius:4, padding:'28px 26px', width:'100%', maxWidth:440 }}>
-        <div style={{ fontFamily:"'Inter', sans-serif", fontSize:24, fontWeight:900, color:C.text, marginBottom:4, textTransform:'uppercase' }}>Record Payment</div>
-        <div style={{ fontSize:16, color:C.muted, marginBottom:22 }}>{invoice.number} — {invoice.clientName}</div>
+        <div style={{ fontFamily:"'Inter', sans-serif", fontSize: 26, fontWeight:900, color:C.text, marginBottom:4, textTransform:'uppercase' }}>Record Payment</div>
+        <div style={{ fontSize: 18, color:C.muted, marginBottom:22 }}>{invoice.number} — {invoice.clientName}</div>
 
         <div style={{ background:C.raised, border:`1px solid ${C.border}`, borderRadius:3, padding:'12px 16px', marginBottom:20, display:'flex', gap:8, flexWrap:'wrap', justifyContent:'space-between' }}>
           {[['Invoice Total', fmtMoney(calc.total), C.text], ['Paid to Date', fmtMoney(calc.paid), C.success], ['Balance Due', fmtMoney(calc.balance), calc.balance>0 ? C.error : C.success]].map(([l,v,c])=>(
             <div key={l} style={{ flex:'1 1 80px', textAlign:'center' }}>
-              <div style={{ fontFamily:"'Inter', sans-serif", fontSize:20, fontWeight:900, color:c }}>{v}</div>
-              <div style={{ fontSize:13, color:C.muted, marginTop:3, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.06em' }}>{l}</div>
+              <div style={{ fontFamily:"'Inter', sans-serif", fontSize: 22, fontWeight:900, color:c }}>{v}</div>
+              <div style={{ fontSize: 15, color:C.muted, marginTop:3, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.06em' }}>{l}</div>
             </div>
           ))}
         </div>
@@ -3045,7 +3045,7 @@ function RecordPaymentModal({ invoice, onSave, onClose }) {
           <div>
             <label style={s.label}>Reference / Check # <span style={{ color:C.dim, fontWeight:400, textTransform:'none', letterSpacing:0 }}>(optional)</span></label>
             <input value={ref} onChange={e=>setRef(e.target.value)} placeholder="e.g. CHK-1042 or transaction ID"
-              style={{ ...s.input, width:'100%', padding:'11px 14px', boxSizing:'border-box', fontSize:17, minHeight:48 }} />
+              style={{ ...s.input, width:'100%', padding:'11px 14px', boxSizing:'border-box', fontSize: 19, minHeight:48 }} />
           </div>
         </div>
 
@@ -3141,7 +3141,7 @@ function InvoiceHub({ invoices, onSelect, onNew, pendingMonthFilter, clearPendin
   const paidMo  = invoices.filter(i=>i.status==='paid').reduce((s,i)=>s+calcInvoice(i).paid,0);
 
   const TH = ({ label, col, right }) => (
-    <th onClick={()=>col&&handleSort(col)} style={{ padding:'11px 14px', textAlign:right?'right':'left', fontSize:14, fontWeight:900, color:C.muted, textTransform:'uppercase', letterSpacing:'0.08em', fontFamily:"'Inter', sans-serif", whiteSpace:'nowrap', cursor:col?'pointer':'default', borderBottom:`1.5px solid ${C.border2}`, background:C.raised, userSelect:'none' }}>
+    <th onClick={()=>col&&handleSort(col)} style={{ padding:'11px 14px', textAlign:right?'right':'left', fontSize: 16, fontWeight:900, color:C.muted, textTransform:'uppercase', letterSpacing:'0.08em', fontFamily:"'Inter', sans-serif", whiteSpace:'nowrap', cursor:col?'pointer':'default', borderBottom:`1.5px solid ${C.border2}`, background:C.raised, userSelect:'none' }}>
       {label}{col && <SortArrow col={col} />}
     </th>
   );
@@ -3151,8 +3151,8 @@ function InvoiceHub({ invoices, onSelect, onNew, pendingMonthFilter, clearPendin
       {/* Header */}
       <div style={{ marginBottom:20, paddingBottom:18, borderBottom:`1px solid ${C.border}`, display:'flex', alignItems:'center', justifyContent:'space-between', flexWrap:'wrap', gap:12 }}>
         <div>
-          <h1 style={{ margin:0, fontFamily:"'Inter', sans-serif", fontSize:28, fontWeight:700, color:C.text, letterSpacing:'-0.025em' }}>Invoices</h1>
-          <p style={{ margin:'6px 0 0', fontSize:15, color:C.muted, fontWeight:500 }}>{invoices.length} total</p>
+          <h1 style={{ margin:0, fontFamily:"'Inter', sans-serif", fontSize: 30, fontWeight:700, color:C.text, letterSpacing:'-0.025em' }}>Invoices</h1>
+          <p style={{ margin:'6px 0 0', fontSize: 17, color:C.muted, fontWeight:500 }}>{invoices.length} total</p>
         </div>
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
           <Btn
@@ -3171,11 +3171,11 @@ function InvoiceHub({ invoices, onSelect, onNew, pendingMonthFilter, clearPendin
             }}
             disabled={visible.filter(i => i.status !== 'draft').length === 0}
             title="Download a QuickBooks-compatible CSV of the currently visible invoices (drafts excluded). Import in QB Online via Settings → Import Data → Invoices."
-            style={{ fontSize:18, padding:'12px 20px', minHeight:52 }}
+            style={{ fontSize: 20, padding:'12px 20px', minHeight:52 }}
           >
             Export to QuickBooks
           </Btn>
-          <Btn variant="primary" onClick={onNew} style={{ fontSize:21, padding:'12px 22px', minHeight:52 }}>New Invoice</Btn>
+          <Btn variant="primary" onClick={onNew} style={{ fontSize: 23, padding:'12px 22px', minHeight:52 }}>New Invoice</Btn>
         </div>
       </div>
 
@@ -3187,13 +3187,13 @@ function InvoiceHub({ invoices, onSelect, onNew, pendingMonthFilter, clearPendin
       {(yearTree.sortedYears.length > 0 || monthFilter) && (
         <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: '14px 16px', marginBottom: 16, boxShadow: C.shadow1 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, gap: 10, flexWrap: 'wrap' }}>
-            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, fontWeight: 800, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, fontWeight: 800, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
               Browse by Month
             </div>
             {monthFilter && (
               <button
                 onClick={() => setMonthFilter(null)}
-                style={{ ...s.btn, background: 'transparent', border: `1px solid ${C.border2}`, color: C.muted, padding: '6px 12px', fontSize: 13, minHeight: 32 }}
+                style={{ ...s.btn, background: 'transparent', border: `1px solid ${C.border2}`, color: C.muted, padding: '6px 12px', fontSize: 15, minHeight: 32 }}
               >
                 Clear ×
               </button>
@@ -3216,7 +3216,7 @@ function InvoiceHub({ invoices, onSelect, onNew, pendingMonthFilter, clearPendin
                     onClick={() => { setSelectedYear(yr); setMonthFilter(null); }}
                     style={{
                       ...s.btn,
-                      padding: '8px 18px', fontSize: 15, minHeight: 40, flexShrink: 0,
+                      padding: '8px 18px', fontSize: 17, minHeight: 40, flexShrink: 0,
                       background: active ? C.orange : C.raised,
                       border: `1.5px solid ${active ? C.orange : C.border2}`,
                       color: active ? '#fff' : C.muted,
@@ -3273,8 +3273,8 @@ function InvoiceHub({ invoices, onSelect, onNew, pendingMonthFilter, clearPendin
                     fontWeight: 700,
                   }}
                 >
-                  <span style={{ fontSize: 14, letterSpacing: '0.04em', textTransform: 'uppercase' }}>{mLabel}</span>
-                  <span style={{ fontSize: 12, fontWeight: 600, marginTop: 4, opacity: 0.85 }}>
+                  <span style={{ fontSize: 16, letterSpacing: '0.04em', textTransform: 'uppercase' }}>{mLabel}</span>
+                  <span style={{ fontSize: 14, fontWeight: 600, marginTop: 4, opacity: 0.85 }}>
                     {count > 0 ? `${count} invoice${count === 1 ? '' : 's'}` : '—'}
                   </span>
                 </button>
@@ -3283,14 +3283,14 @@ function InvoiceHub({ invoices, onSelect, onNew, pendingMonthFilter, clearPendin
           </div>
 
           {monthFilter && (
-            <div style={{ marginTop: 12, paddingTop: 12, borderTop: `1px solid ${C.border}`, fontSize: 14, color: C.muted }}>
+            <div style={{ marginTop: 12, paddingTop: 12, borderTop: `1px solid ${C.border}`, fontSize: 16, color: C.muted }}>
               Showing <strong style={{ color: C.text }}>{(() => {
                 const [yr, mo] = monthFilter.split('-');
                 const moName = ['January','February','March','April','May','June','July','August','September','October','November','December'][parseInt(mo, 10) - 1];
                 return `${moName} ${yr}`;
               })()}</strong>
               {' '}only —{' '}
-              <button onClick={() => setMonthFilter(null)} style={{ background: 'none', border: 'none', color: C.orange, cursor: 'pointer', fontWeight: 700, padding: 0, fontSize: 14 }}>
+              <button onClick={() => setMonthFilter(null)} style={{ background: 'none', border: 'none', color: C.orange, cursor: 'pointer', fontWeight: 700, padding: 0, fontSize: 16 }}>
                 show all months
               </button>
             </div>
@@ -3320,8 +3320,8 @@ function InvoiceHub({ invoices, onSelect, onNew, pendingMonthFilter, clearPendin
           >
             <div style={{ height: 4, background: `linear-gradient(90deg, ${c.color} 0%, ${c.color} 60%, ${c.color}88 100%)` }} />
             <div style={{ padding: '16px 18px 18px', textAlign: 'center' }}>
-              <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.muted, marginBottom: 4 }}>{c.label}</div>
-              <div style={{ fontSize: 13, color: C.dim, marginBottom: 10, fontWeight: 500 }}>{c.sub}</div>
+              <div style={{ fontSize: 15, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.muted, marginBottom: 4 }}>{c.label}</div>
+              <div style={{ fontSize: 15, color: C.dim, marginBottom: 10, fontWeight: 500 }}>{c.sub}</div>
               <div style={{ fontFamily:"'Inter', sans-serif", fontSize: 'clamp(24px, 4.4vw, 36px)', fontWeight: 800, color: c.color, lineHeight: 1, fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.03em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.val}</div>
             </div>
           </div>
@@ -3332,21 +3332,21 @@ function InvoiceHub({ invoices, onSelect, onNew, pendingMonthFilter, clearPendin
       <AgingReport invoices={invoices} onFilter={b => { setAgingFilter(agingFilter===b?null:b); setFilter('all'); }} />
       {agingFilter && (
         <div style={{ marginBottom:12, display:'flex', alignItems:'center', gap:10 }}>
-          <span style={{ fontSize:16, color:C.muted }}>Filtering by aging: <strong style={{ color:C.orange }}>{agingFilter==='current'?'Current':agingFilter+' days past due'}</strong></span>
-          <button onClick={()=>setAgingFilter(null)} style={{ ...s.btn, background:'transparent', border:`1px solid ${C.border2}`, color:C.muted, padding:'4px 10px', fontSize:14, minHeight:32 }}>Clear</button>
+          <span style={{ fontSize: 18, color:C.muted }}>Filtering by aging: <strong style={{ color:C.orange }}>{agingFilter==='current'?'Current':agingFilter+' days past due'}</strong></span>
+          <button onClick={()=>setAgingFilter(null)} style={{ ...s.btn, background:'transparent', border:`1px solid ${C.border2}`, color:C.muted, padding:'4px 10px', fontSize: 16, minHeight:32 }}>Clear</button>
         </div>
       )}
 
       {/* Search + Status filter */}
       <div style={{ display:'flex', gap:10, marginBottom:12, flexWrap:'wrap' }}>
         <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search by client, title, or invoice #..."
-          style={{ ...s.input, flex:1, minWidth:180, padding:'10px 14px', fontSize:17 }} />
+          style={{ ...s.input, flex:1, minWidth:180, padding:'10px 14px', fontSize: 19 }} />
       </div>
       <div style={{ display:'flex', gap:6, marginBottom:16, overflowX:'auto', flexWrap:'nowrap', paddingBottom:4, WebkitOverflowScrolling:'touch' }}>
         {FILTERS.map(f => {
           const count = f==='all' ? invoices.length : invoices.filter(i=>i.status===f).length;
           return (
-            <button key={f} onClick={()=>{setFilter(f);setAgingFilter(null);}} style={{ ...s.btn, padding:'7px 14px', fontSize:14, minHeight:40, background:filter===f?C.orange:C.raised, border:`1.5px solid ${filter===f?C.orange:C.border2}`, color:filter===f?'#fff':C.muted }}>
+            <button key={f} onClick={()=>{setFilter(f);setAgingFilter(null);}} style={{ ...s.btn, padding:'7px 14px', fontSize: 16, minHeight:40, background:filter===f?C.orange:C.raised, border:`1.5px solid ${filter===f?C.orange:C.border2}`, color:filter===f?'#fff':C.muted }}>
               {f.charAt(0).toUpperCase()+f.slice(1)} {count>0 && <span style={{ opacity:0.7 }}>({count})</span>}
             </button>
           );
@@ -3372,7 +3372,7 @@ function InvoiceHub({ invoices, onSelect, onNew, pendingMonthFilter, clearPendin
           </thead>
           <tbody>
             {visible.length === 0 && (
-              <tr><td colSpan={10} style={{ padding:'32px 20px', textAlign:'center', fontSize:18, color:C.dim }}>No invoices match this filter.</td></tr>
+              <tr><td colSpan={10} style={{ padding:'32px 20px', textAlign:'center', fontSize: 20, color:C.dim }}>No invoices match this filter.</td></tr>
             )}
             {visible.map((inv, i) => {
               const calc = calcInvoice(inv);
@@ -3383,15 +3383,15 @@ function InvoiceHub({ invoices, onSelect, onNew, pendingMonthFilter, clearPendin
                   onPointerLeave={e=>e.currentTarget.style.background=i%2===0?'#fff':'#fafafa'}
                 >
                   <td style={{ padding:'12px 14px', whiteSpace:'nowrap' }}><InvBadge status={inv.status} /></td>
-                  <td style={{ padding:'12px 14px', fontFamily:"'Inter', sans-serif", fontSize:16, fontWeight:800, color:C.orange, letterSpacing:'0.06em', whiteSpace:'nowrap' }}>{inv.number}</td>
-                  <td style={{ padding:'12px 14px', fontSize:16, color:C.text, whiteSpace:'nowrap' }}>{inv.clientName}</td>
-                  <td style={{ padding:'12px 14px', fontSize:15, color:inv.techName?C.text:C.dim, fontStyle:inv.techName?'normal':'italic', whiteSpace:'nowrap' }}>{inv.techName || '—'}</td>
-                  <td style={{ padding:'12px 14px', fontSize:16, color:C.muted, maxWidth:220, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{inv.title}</td>
-                  <td style={{ padding:'12px 14px', fontSize:15, color:C.muted, whiteSpace:'nowrap' }}>{inv.createdAt}</td>
-                  <td style={{ padding:'12px 14px', textAlign:'right', fontSize:15, color:isOverdue?C.error:C.muted, fontWeight:isOverdue?700:400, whiteSpace:'nowrap' }}>{inv.dueAt}</td>
-                  <td style={{ padding:'12px 14px', fontSize:15, color:C.muted, whiteSpace:'nowrap' }}>{inv.terms||'Net 30'}</td>
-                  <td style={{ padding:'12px 14px', textAlign:'right', fontFamily:"'Inter', sans-serif", fontSize:17, fontWeight:700, color:C.text, whiteSpace:'nowrap' }}>{fmtMoney(calc.total)}</td>
-                  <td style={{ padding:'12px 14px', textAlign:'right', fontFamily:"'Inter', sans-serif", fontSize:17, fontWeight:900, color:calc.balance>0?(isOverdue?C.error:C.text):C.success, whiteSpace:'nowrap' }}>
+                  <td style={{ padding:'12px 14px', fontFamily:"'Inter', sans-serif", fontSize: 18, fontWeight:800, color:C.orange, letterSpacing:'0.06em', whiteSpace:'nowrap' }}>{inv.number}</td>
+                  <td style={{ padding:'12px 14px', fontSize: 18, color:C.text, whiteSpace:'nowrap' }}>{inv.clientName}</td>
+                  <td style={{ padding:'12px 14px', fontSize: 17, color:inv.techName?C.text:C.dim, fontStyle:inv.techName?'normal':'italic', whiteSpace:'nowrap' }}>{inv.techName || '—'}</td>
+                  <td style={{ padding:'12px 14px', fontSize: 18, color:C.muted, maxWidth:220, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{inv.title}</td>
+                  <td style={{ padding:'12px 14px', fontSize: 17, color:C.muted, whiteSpace:'nowrap' }}>{inv.createdAt}</td>
+                  <td style={{ padding:'12px 14px', textAlign:'right', fontSize: 17, color:isOverdue?C.error:C.muted, fontWeight:isOverdue?700:400, whiteSpace:'nowrap' }}>{inv.dueAt}</td>
+                  <td style={{ padding:'12px 14px', fontSize: 17, color:C.muted, whiteSpace:'nowrap' }}>{inv.terms||'Net 30'}</td>
+                  <td style={{ padding:'12px 14px', textAlign:'right', fontFamily:"'Inter', sans-serif", fontSize: 19, fontWeight:700, color:C.text, whiteSpace:'nowrap' }}>{fmtMoney(calc.total)}</td>
+                  <td style={{ padding:'12px 14px', textAlign:'right', fontFamily:"'Inter', sans-serif", fontSize: 19, fontWeight:900, color:calc.balance>0?(isOverdue?C.error:C.text):C.success, whiteSpace:'nowrap' }}>
                     {calc.balance>0 ? fmtMoney(calc.balance) : 'PAID'}
                   </td>
                 </tr>
@@ -3401,7 +3401,7 @@ function InvoiceHub({ invoices, onSelect, onNew, pendingMonthFilter, clearPendin
         </table>
       </div>
       {visible.length > 0 && (
-        <div style={{ marginTop:10, padding:'10px 14px', background:C.raised, border:`1px solid ${C.border}`, borderRadius:3, display:'flex', justifyContent:'space-between', fontSize:15, color:C.muted }}>
+        <div style={{ marginTop:10, padding:'10px 14px', background:C.raised, border:`1px solid ${C.border}`, borderRadius:3, display:'flex', justifyContent:'space-between', fontSize: 17, color:C.muted }}>
           <span>{visible.length} invoice{visible.length!==1?'s':''}</span>
           <span>Balance Due Total: <strong style={{ color:C.text }}>{fmtMoney(visible.reduce((s,i)=>s+calcInvoice(i).balance,0))}</strong></span>
         </div>
@@ -3624,13 +3624,13 @@ function InvoiceEditor({ initial, user, teamMembers = [], existingInvoices = [],
       style={{ ...s.input, width:'100%', padding:'9px 10px', boxSizing:'border-box', minHeight:44 }} />
   );
   const TH = ({ children, right }) => (
-    <th style={{ padding:'10px 8px', textAlign:right?'right':'left', fontSize:16, fontWeight:900, color:C.muted, textTransform:'uppercase', letterSpacing:'0.1em', fontFamily:"'Inter', sans-serif", borderBottom:`1.5px solid ${C.border2}`, background:C.raised, whiteSpace:'nowrap' }}>{children}</th>
+    <th style={{ padding:'10px 8px', textAlign:right?'right':'left', fontSize: 18, fontWeight:900, color:C.muted, textTransform:'uppercase', letterSpacing:'0.1em', fontFamily:"'Inter', sans-serif", borderBottom:`1.5px solid ${C.border2}`, background:C.raised, whiteSpace:'nowrap' }}>{children}</th>
   );
   const TC = ({ val }) => (
-    <td style={{ padding:'8px', textAlign:'right', fontSize:18, fontWeight:700, color:val>0?C.text:C.dim, fontFamily:"'Inter', sans-serif" }}>{fmtMoney(val)}</td>
+    <td style={{ padding:'8px', textAlign:'right', fontSize: 20, fontWeight:700, color:val>0?C.text:C.dim, fontFamily:"'Inter', sans-serif" }}>{fmtMoney(val)}</td>
   );
   const DelX = ({ onClick }) => (
-    <button onClick={onClick} style={{ ...s.btn, background:'transparent', border:`1px solid ${C.border2}`, color:C.error, padding:'6px 10px', fontSize:15, minHeight:44, minWidth:44 }}>Remove</button>
+    <button onClick={onClick} style={{ ...s.btn, background:'transparent', border:`1px solid ${C.border2}`, color:C.error, padding:'6px 10px', fontSize: 17, minHeight:44, minWidth:44 }}>Remove</button>
   );
 
   const tradeColor = getTradeConfig(trade, user?.trades)?.color || C.orange;
@@ -3640,31 +3640,31 @@ function InvoiceEditor({ initial, user, teamMembers = [], existingInvoices = [],
       {/* Top bar */}
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20, flexWrap:'wrap', gap:12 }}>
         <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-          <Btn variant="ghost" size="sm" onClick={onCancel} style={{ fontSize:21, padding:'12px 24px', minHeight:52 }}>Cancel</Btn>
-          <span style={{ fontFamily:"'Inter', sans-serif", fontSize:18, fontWeight:700, color:C.text, letterSpacing:'-0.02em' }}>
+          <Btn variant="ghost" size="sm" onClick={onCancel} style={{ fontSize: 23, padding:'12px 24px', minHeight:52 }}>Cancel</Btn>
+          <span style={{ fontFamily:"'Inter', sans-serif", fontSize: 20, fontWeight:700, color:C.text, letterSpacing:'-0.02em' }}>
             {initial ? `Edit ${initial.number}` : 'New Invoice'}
           </span>
         </div>
         <div style={{ display:'flex', gap:8 }}>
-          <Btn variant="ghost"   size="sm" onClick={()=>handleSave(true)}  disabled={saving} style={{ fontSize:21, padding:'12px 24px', minHeight:52, opacity: saving ? 0.6 : 1 }}>{saving ? 'Saving…' : 'Save Draft'}</Btn>
-          <Btn variant="primary" size="sm" onClick={()=>handleSave(false)} disabled={saving} style={{ fontSize:21, padding:'12px 24px', minHeight:52, opacity: saving ? 0.6 : 1 }}>{saving ? 'Saving…' : 'Save + Preview'}</Btn>
+          <Btn variant="ghost"   size="sm" onClick={()=>handleSave(true)}  disabled={saving} style={{ fontSize: 23, padding:'12px 24px', minHeight:52, opacity: saving ? 0.6 : 1 }}>{saving ? 'Saving…' : 'Save Draft'}</Btn>
+          <Btn variant="primary" size="sm" onClick={()=>handleSave(false)} disabled={saving} style={{ fontSize: 23, padding:'12px 24px', minHeight:52, opacity: saving ? 0.6 : 1 }}>{saving ? 'Saving…' : 'Save + Preview'}</Btn>
         </div>
       </div>
 
       {/* Client + job info */}
       <div style={{ background:C.surface, border:`1px solid ${C.border}`, borderRadius:4, padding:'20px 22px', marginBottom:16 }}>
-        <div style={{ fontSize:15, fontWeight:800, color:C.muted, letterSpacing:'0.1em', textTransform:'uppercase', marginBottom:14, fontFamily:"'Inter', sans-serif" }}>Invoice Details</div>
+        <div style={{ fontSize: 17, fontWeight:800, color:C.muted, letterSpacing:'0.1em', textTransform:'uppercase', marginBottom:14, fontFamily:"'Inter', sans-serif" }}>Invoice Details</div>
         <div style={{ display:'grid', gridTemplateColumns:isTablet?'1fr':'1fr 1fr', gap:14 }}>
           <div>
             <label style={s.label}>Job Title <span style={{ color:C.orange }}>*</span></label>
             <input value={title} onChange={e=>setTitle(e.target.value)} placeholder="e.g. Kitchen Shut-Off Valve Replacement"
-              style={{ ...s.input, width:'100%', padding:'12px 14px', boxSizing:'border-box', fontSize:18, minHeight:48 }} />
+              style={{ ...s.input, width:'100%', padding:'12px 14px', boxSizing:'border-box', fontSize: 20, minHeight:48 }} />
           </div>
           <div style={{ display:'grid', gridTemplateColumns:isTablet?'1fr':'1fr 1fr 1fr', gap:12 }}>
             <div>
               <label style={s.label}>Payment Terms</label>
               <select value={terms} onChange={e=>handleTermsChange(e.target.value)}
-                style={{ ...s.input, width:'100%', padding:'12px 14px', boxSizing:'border-box', fontSize:17, minHeight:48, cursor:'pointer', borderColor:C.orange+'66' }}>
+                style={{ ...s.input, width:'100%', padding:'12px 14px', boxSizing:'border-box', fontSize: 19, minHeight:48, cursor:'pointer', borderColor:C.orange+'66' }}>
                 {PAYMENT_TERMS.map(t=><option key={t.label}>{t.label}</option>)}
               </select>
             </div>
@@ -3680,22 +3680,22 @@ function InvoiceEditor({ initial, user, teamMembers = [], existingInvoices = [],
           <div>
             <label style={s.label}>Client Name</label>
             <input value={clientName} onChange={e=>setClientName(e.target.value)} placeholder="Sandra Johnson"
-              style={{ ...s.input, width:'100%', padding:'11px 12px', boxSizing:'border-box', fontSize:18, minHeight:48 }} />
+              style={{ ...s.input, width:'100%', padding:'11px 12px', boxSizing:'border-box', fontSize: 20, minHeight:48 }} />
           </div>
           <div>
             <label style={s.label}>Email</label>
             <input type="email" value={clientEmail} onChange={e=>setClientEmail(e.target.value)} placeholder="client@email.com"
-              style={{ ...s.input, width:'100%', padding:'11px 12px', boxSizing:'border-box', fontSize:18, minHeight:48 }} />
+              style={{ ...s.input, width:'100%', padding:'11px 12px', boxSizing:'border-box', fontSize: 20, minHeight:48 }} />
           </div>
           <div>
             <label style={s.label}>Phone</label>
             <input type="tel" value={clientPhone} onChange={e=>setClientPhone(e.target.value)} placeholder="(512) 555-0000"
-              style={{ ...s.input, width:'100%', padding:'11px 12px', boxSizing:'border-box', fontSize:18, minHeight:48 }} />
+              style={{ ...s.input, width:'100%', padding:'11px 12px', boxSizing:'border-box', fontSize: 20, minHeight:48 }} />
           </div>
           <div>
             <label style={s.label}>Address</label>
             <input value={clientAddr} onChange={e=>setClientAddr(e.target.value)} placeholder="123 Main St, Austin TX"
-              style={{ ...s.input, width:'100%', padding:'11px 12px', boxSizing:'border-box', fontSize:18, minHeight:48 }} />
+              style={{ ...s.input, width:'100%', padding:'11px 12px', boxSizing:'border-box', fontSize: 20, minHeight:48 }} />
           </div>
         </div>
         {/* Tech attribution + Trade selector row.
@@ -3707,7 +3707,7 @@ function InvoiceEditor({ initial, user, teamMembers = [], existingInvoices = [],
           <div>
             <label style={s.label}>Service Performed By</label>
             <select value={techUserId || ''} onChange={e => setTechUserId(e.target.value || null)}
-              style={{ ...s.input, width: '100%', padding: '11px 12px', minHeight: 48, cursor: 'pointer', boxSizing: 'border-box', fontSize: 16, fontWeight: 600 }}>
+              style={{ ...s.input, width: '100%', padding: '11px 12px', minHeight: 48, cursor: 'pointer', boxSizing: 'border-box', fontSize: 18, fontWeight: 600 }}>
               <option value="">— Unassigned —</option>
               <option value={user?.id}>{user?.name || 'You (owner)'}{!teamMembers.length ? '' : ' (owner)'}</option>
               {teamMembers.map(t => (
@@ -3719,7 +3719,7 @@ function InvoiceEditor({ initial, user, teamMembers = [], existingInvoices = [],
           <div>
             <label style={s.label}>Invoice Type</label>
             <select value={trade} onChange={e=>setTrade(e.target.value)}
-              style={{ ...s.input, width:'100%', padding:'11px 12px', minHeight:48, cursor:'pointer', boxSizing: 'border-box', borderColor:tradeColor+'88', fontSize: 16, fontWeight: 600 }}>
+              style={{ ...s.input, width:'100%', padding:'11px 12px', minHeight:48, cursor:'pointer', boxSizing: 'border-box', borderColor:tradeColor+'88', fontSize: 18, fontWeight: 600 }}>
               {user.trades.map(t => <option key={t} value={t}>{t==='Specialty'?'Specialty Trades':`${t} Only`}</option>)}
               <option value="bundle">Multi-Trade Job ({user.trades.length} trades)</option>
             </select>
@@ -3734,34 +3734,34 @@ function InvoiceEditor({ initial, user, teamMembers = [], existingInvoices = [],
           critical for commercial / property-management invoicing where AP
           won't pay without these fields. */}
       <div style={{ background:C.surface, border:`1px solid ${C.border}`, borderRadius:4, padding:'20px 22px', marginBottom:16 }}>
-        <div style={{ fontSize:15, fontWeight:800, color:C.muted, letterSpacing:'0.1em', textTransform:'uppercase', marginBottom:14, fontFamily:"'Inter', sans-serif" }}>Job Details</div>
+        <div style={{ fontSize: 17, fontWeight:800, color:C.muted, letterSpacing:'0.1em', textTransform:'uppercase', marginBottom:14, fontFamily:"'Inter', sans-serif" }}>Job Details</div>
 
         {/* Job # + PO + Work Order + Service Period */}
         <div style={{ display:'grid', gridTemplateColumns:isTablet?'1fr':'1fr 1fr 1fr 1fr', gap:12 }}>
           <div>
             <label style={s.label}>Job #</label>
             <input value={jobNumber} onChange={e=>setJobNumber(e.target.value)} placeholder="e.g. JOB-2026-0042"
-              style={{ ...s.input, width:'100%', padding:'11px 12px', boxSizing:'border-box', fontSize:17, minHeight:48 }} />
+              style={{ ...s.input, width:'100%', padding:'11px 12px', boxSizing:'border-box', fontSize: 19, minHeight:48 }} />
           </div>
           <div>
             <label style={s.label}>PO Number</label>
             <input value={poNumber} onChange={e=>setPoNumber(e.target.value)} placeholder="e.g. PO-29481"
-              style={{ ...s.input, width:'100%', padding:'11px 12px', boxSizing:'border-box', fontSize:17, minHeight:48 }} />
+              style={{ ...s.input, width:'100%', padding:'11px 12px', boxSizing:'border-box', fontSize: 19, minHeight:48 }} />
           </div>
           <div>
             <label style={s.label}>Work Order #</label>
             <input value={workOrderNumber} onChange={e=>setWorkOrderNumber(e.target.value)} placeholder="e.g. WO-1042"
-              style={{ ...s.input, width:'100%', padding:'11px 12px', boxSizing:'border-box', fontSize:17, minHeight:48 }} />
+              style={{ ...s.input, width:'100%', padding:'11px 12px', boxSizing:'border-box', fontSize: 19, minHeight:48 }} />
           </div>
           <div>
             <label style={s.label}>Service Period Start</label>
             <input type="date" value={servicePeriodStart} onChange={e=>setServicePeriodStart(e.target.value)}
-              style={{ ...s.input, width:'100%', padding:'11px 12px', boxSizing:'border-box', fontSize:17, minHeight:48 }} />
+              style={{ ...s.input, width:'100%', padding:'11px 12px', boxSizing:'border-box', fontSize: 19, minHeight:48 }} />
           </div>
           <div>
             <label style={s.label}>Service Period End</label>
             <input type="date" value={servicePeriodEnd} onChange={e=>setServicePeriodEnd(e.target.value)}
-              style={{ ...s.input, width:'100%', padding:'11px 12px', boxSizing:'border-box', fontSize:17, minHeight:48 }} />
+              style={{ ...s.input, width:'100%', padding:'11px 12px', boxSizing:'border-box', fontSize: 19, minHeight:48 }} />
           </div>
         </div>
 
@@ -3774,7 +3774,7 @@ function InvoiceEditor({ initial, user, teamMembers = [], existingInvoices = [],
           </label>
           {!jobAddressSame && (
             <input value={jobAddress} onChange={e=>setJobAddress(e.target.value)} placeholder="2847 Magnolia Dr, Suite B, Houston TX"
-              style={{ ...s.input, width:'100%', padding:'11px 12px', boxSizing:'border-box', fontSize:17, minHeight:48, marginTop:8 }} />
+              style={{ ...s.input, width:'100%', padding:'11px 12px', boxSizing:'border-box', fontSize: 19, minHeight:48, marginTop:8 }} />
           )}
         </div>
 
@@ -3792,14 +3792,14 @@ function InvoiceEditor({ initial, user, teamMembers = [], existingInvoices = [],
             <select
               value={invoiceState}
               onChange={e => handleInvoiceStateChange(e.target.value)}
-              style={{ ...s.input, width:'100%', padding:'11px 12px', boxSizing:'border-box', fontSize:17, minHeight:48, cursor:'pointer', background:'#fff', marginTop:6 }}
+              style={{ ...s.input, width:'100%', padding:'11px 12px', boxSizing:'border-box', fontSize: 19, minHeight:48, cursor:'pointer', background:'#fff', marginTop:6 }}
             >
               <option value="">— Select the state where the job happened —</option>
               {userStates.map(st => (
                 <option key={st} value={st}>{st}</option>
               ))}
             </select>
-            <div style={{ fontSize:12, color:C.muted, marginTop:8, lineHeight:1.5 }}>
+            <div style={{ fontSize: 14, color:C.muted, marginTop:8, lineHeight:1.5 }}>
               You operate in {userStates.length} states. Pick the one where THIS job
               was performed — that's the state whose tax rate AND license number gets applied.
               {invoiceState && invoiceState !== userPrimaryState && (
@@ -3822,9 +3822,9 @@ function InvoiceEditor({ initial, user, teamMembers = [], existingInvoices = [],
             value={invoiceLicense}
             onChange={e => setInvoiceLicense(e.target.value)}
             placeholder={invoiceState ? `${invoiceState} license #` : 'License # (optional)'}
-            style={{ ...s.input, width:'100%', padding:'11px 12px', boxSizing:'border-box', fontSize:17, minHeight:48 }}
+            style={{ ...s.input, width:'100%', padding:'11px 12px', boxSizing:'border-box', fontSize: 19, minHeight:48 }}
           />
-          <div style={{ fontSize:12, color:C.muted, marginTop:6 }}>
+          <div style={{ fontSize: 14, color:C.muted, marginTop:6 }}>
             {invoiceState && (user?.stateLicenses?.[invoiceState])
               ? `Auto-filled from your ${invoiceState} license. Editable for one-off jobs.`
               : 'Optional. Leave blank for jobs that don\'t require a license number.'}
@@ -3836,17 +3836,17 @@ function InvoiceEditor({ initial, user, teamMembers = [], existingInvoices = [],
           <div>
             <label style={s.label}>Service Requested By</label>
             <input value={requestedBy} onChange={e=>setRequestedBy(e.target.value)} placeholder="Property manager, foreman, owner"
-              style={{ ...s.input, width:'100%', padding:'11px 12px', boxSizing:'border-box', fontSize:17, minHeight:48 }} />
+              style={{ ...s.input, width:'100%', padding:'11px 12px', boxSizing:'border-box', fontSize: 19, minHeight:48 }} />
           </div>
           <div>
             <label style={s.label}>Approved By</label>
             <input value={approvedBy} onChange={e=>setApprovedBy(e.target.value)} placeholder="Signatory who authorized the work"
-              style={{ ...s.input, width:'100%', padding:'11px 12px', boxSizing:'border-box', fontSize:17, minHeight:48 }} />
+              style={{ ...s.input, width:'100%', padding:'11px 12px', boxSizing:'border-box', fontSize: 19, minHeight:48 }} />
           </div>
           <div>
             <label style={s.label}>Salesperson</label>
             <select value={salespersonId || ''} onChange={e=>setSalespersonId(e.target.value || null)}
-              style={{ ...s.input, width:'100%', padding:'11px 12px', boxSizing:'border-box', fontSize:16, minHeight:48, cursor:'pointer', fontWeight:600 }}>
+              style={{ ...s.input, width:'100%', padding:'11px 12px', boxSizing:'border-box', fontSize: 18, minHeight:48, cursor:'pointer', fontWeight:600 }}>
               <option value="">— None —</option>
               <option value={user?.id}>{user?.name || 'You (owner)'}</option>
               {teamMembers.map(t => (
@@ -3861,17 +3861,17 @@ function InvoiceEditor({ initial, user, teamMembers = [], existingInvoices = [],
           <div>
             <label style={s.label}>Permit Number</label>
             <input value={permitNumber} onChange={e=>setPermitNumber(e.target.value)} placeholder="e.g. BP-2026-08471"
-              style={{ ...s.input, width:'100%', padding:'11px 12px', boxSizing:'border-box', fontSize:17, minHeight:48 }} />
+              style={{ ...s.input, width:'100%', padding:'11px 12px', boxSizing:'border-box', fontSize: 19, minHeight:48 }} />
           </div>
           <div>
             <label style={s.label}>Discount Amount ($)</label>
             <input type="number" min="0" step="0.01" value={discountAmount} onChange={e=>setDiscountAmount(e.target.value)} placeholder="0.00"
-              style={{ ...s.input, width:'100%', padding:'11px 12px', boxSizing:'border-box', fontSize:17, minHeight:48 }} />
+              style={{ ...s.input, width:'100%', padding:'11px 12px', boxSizing:'border-box', fontSize: 19, minHeight:48 }} />
           </div>
           <div>
             <label style={s.label}>Discount Label</label>
             <input value={discountLabel} onChange={e=>setDiscountLabel(e.target.value)} placeholder="Repeat-customer 10%"
-              style={{ ...s.input, width:'100%', padding:'11px 12px', boxSizing:'border-box', fontSize:17, minHeight:48 }} />
+              style={{ ...s.input, width:'100%', padding:'11px 12px', boxSizing:'border-box', fontSize: 19, minHeight:48 }} />
           </div>
         </div>
 
@@ -3879,8 +3879,8 @@ function InvoiceEditor({ initial, user, teamMembers = [], existingInvoices = [],
         <div style={{ marginTop:14 }}>
           <label style={s.label}>Late Fee Terms (printed on invoice)</label>
           <input value={lateFeeTerms} onChange={e=>setLateFeeTerms(e.target.value)} placeholder="1.5% per month after Net 30"
-            style={{ ...s.input, width:'100%', padding:'11px 12px', boxSizing:'border-box', fontSize:16, minHeight:48 }} />
-          <div style={{ fontSize:13, color:C.dim, marginTop:4 }}>
+            style={{ ...s.input, width:'100%', padding:'11px 12px', boxSizing:'border-box', fontSize: 18, minHeight:48 }} />
+          <div style={{ fontSize: 15, color:C.dim, marginTop:4 }}>
             Default comes from Settings → Profile. Edit here to override on this invoice only.
           </div>
         </div>
@@ -3904,15 +3904,15 @@ function InvoiceEditor({ initial, user, teamMembers = [], existingInvoices = [],
               }}
               style={{ width:18, height:18, cursor:'pointer' }}
             />
-            <span style={{ fontSize:15, fontWeight:600, color:C.text }}>
+            <span style={{ fontSize: 17, fontWeight:600, color:C.text }}>
               I performed this work and these line items are accurate
             </span>
           </label>
           {techSignedAt && (
             <div style={{ marginTop:10, display:'grid', gridTemplateColumns:isTablet?'1fr':'1fr 1fr', gap:10, alignItems:'center' }}>
               <input value={techSignedName} onChange={e=>setTechSignedName(e.target.value)} placeholder="Type your full name"
-                style={{ ...s.input, width:'100%', padding:'10px 12px', boxSizing:'border-box', fontSize:16, minHeight:44 }} />
-              <div style={{ fontSize:13, color:C.muted, fontWeight:600 }}>
+                style={{ ...s.input, width:'100%', padding:'10px 12px', boxSizing:'border-box', fontSize: 18, minHeight:44 }} />
+              <div style={{ fontSize: 15, color:C.muted, fontWeight:600 }}>
                 Signed {new Date(techSignedAt).toLocaleString()}
               </div>
             </div>
@@ -4033,7 +4033,7 @@ function InvoiceEditor({ initial, user, teamMembers = [], existingInvoices = [],
                     <div style={{ display:'flex', alignItems:'center', gap:8 }}>
                       <NumberInput value={markup} onChange={setMarkup} width={120} fontSize={22}
                         style={{ minHeight: 52, fontWeight: 700, padding: '12px 14px' }} />
-                      <span style={{ fontFamily:"'Inter', sans-serif", fontSize:20, fontWeight:800, color:C.muted }}>%</span>
+                      <span style={{ fontFamily:"'Inter', sans-serif", fontSize: 22, fontWeight:800, color:C.muted }}>%</span>
                     </div>
                   </div>
                   <div>
@@ -4041,7 +4041,7 @@ function InvoiceEditor({ initial, user, teamMembers = [], existingInvoices = [],
                     <div style={{ display:'flex', alignItems:'center', gap:8 }}>
                       <NumberInput value={taxRate} onChange={setTaxRate} width={120} fontSize={22}
                         style={{ minHeight: 52, fontWeight: 700, padding: '12px 14px' }} />
-                      <span style={{ fontFamily:"'Inter', sans-serif", fontSize:20, fontWeight:800, color:C.muted }}>%</span>
+                      <span style={{ fontFamily:"'Inter', sans-serif", fontSize: 22, fontWeight:800, color:C.muted }}>%</span>
                     </div>
                   </div>
                 </div>
@@ -4049,7 +4049,7 @@ function InvoiceEditor({ initial, user, teamMembers = [], existingInvoices = [],
                   <label style={s.label}>Notes to Client</label>
                   <textarea value={notes} onChange={e=>setNotes(e.target.value)} rows={5}
                     placeholder="Payment terms, warranty info, next steps..."
-                    style={{ ...s.input, width:'100%', padding:'12px 14px', boxSizing:'border-box', resize:'vertical', lineHeight:1.65, fontSize:18 }} />
+                    style={{ ...s.input, width:'100%', padding:'12px 14px', boxSizing:'border-box', resize:'vertical', lineHeight:1.65, fontSize: 20 }} />
                 </div>
               </div>
             )}
@@ -4059,36 +4059,36 @@ function InvoiceEditor({ initial, user, teamMembers = [], existingInvoices = [],
         {/* Summary panel */}
         <div style={{ background:C.surface, border:`1px solid ${C.border}`, borderRadius:4, overflow:'hidden', position:isTablet?'static':'sticky', top:24 }}>
           <div style={{ padding:'18px 18px 0' }}>
-            <div style={{ fontSize:15, fontWeight:900, letterSpacing:'0.1em', textTransform:'uppercase', color:C.muted, marginBottom:12, fontFamily:"'Inter', sans-serif" }}>Summary</div>
+            <div style={{ fontSize: 17, fontWeight:900, letterSpacing:'0.1em', textTransform:'uppercase', color:C.muted, marginBottom:12, fontFamily:"'Inter', sans-serif" }}>Summary</div>
             {[['Labor',calc.laborT],['Materials',calc.matsT],['Equipment',calc.equipT]].map(([lbl,val])=>(
               <div key={lbl} style={{ display:'flex', justifyContent:'space-between', padding:'8px 0', borderBottom:`1px solid ${C.border}` }}>
-                <span style={{ fontSize:18, color:C.muted }}>{lbl}</span>
-                <span style={{ fontSize:19, fontWeight:700, fontFamily:"'Inter', sans-serif", color:val>0?C.text:C.dim }}>{fmtMoney(val)}</span>
+                <span style={{ fontSize: 20, color:C.muted }}>{lbl}</span>
+                <span style={{ fontSize: 21, fontWeight:700, fontFamily:"'Inter', sans-serif", color:val>0?C.text:C.dim }}>{fmtMoney(val)}</span>
               </div>
             ))}
             <div style={{ display:'flex', justifyContent:'space-between', padding:'9px 0', borderBottom:`1px solid ${C.border}` }}>
-              <span style={{ fontSize:17, color:C.muted }}>Markup ({markup}%) <span style={{ fontSize:13, color:C.dim }}>mat+equip</span></span>
-              <span style={{ fontSize:18, color:C.muted }}>{fmtMoney(calc.mkAmt)}</span>
+              <span style={{ fontSize: 19, color:C.muted }}>Markup ({markup}%) <span style={{ fontSize: 15, color:C.dim }}>mat+equip</span></span>
+              <span style={{ fontSize: 20, color:C.muted }}>{fmtMoney(calc.mkAmt)}</span>
             </div>
             {calc.discount > 0 && (
               <div style={{ display:'flex', justifyContent:'space-between', padding:'9px 0', borderBottom:`1px solid ${C.border}` }}>
-                <span style={{ fontSize:17, color:C.green, fontWeight:600 }}>
-                  Discount{discountLabel ? <span style={{ fontSize:13, color:C.dim, marginLeft:6 }}>{discountLabel}</span> : null}
+                <span style={{ fontSize: 19, color:C.green, fontWeight:600 }}>
+                  Discount{discountLabel ? <span style={{ fontSize: 15, color:C.dim, marginLeft:6 }}>{discountLabel}</span> : null}
                 </span>
-                <span style={{ fontSize:18, color:C.green, fontWeight:700 }}>−{fmtMoney(calc.discount)}</span>
+                <span style={{ fontSize: 20, color:C.green, fontWeight:700 }}>−{fmtMoney(calc.discount)}</span>
               </div>
             )}
             <div style={{ display:'flex', justifyContent:'space-between', padding:'9px 0', borderBottom:`1px solid ${C.border}` }}>
-              <span style={{ fontSize:17, color:C.muted }}>
+              <span style={{ fontSize: 19, color:C.muted }}>
                 Tax ({taxRate}%)
-                {laborTaxable(user?.state) && <span style={{ fontSize:12, color:C.warn, marginLeft:6, fontWeight:700 }}>incl. labor ({user?.state?.split(',')[0]})</span>}
+                {laborTaxable(user?.state) && <span style={{ fontSize: 14, color:C.warn, marginLeft:6, fontWeight:700 }}>incl. labor ({user?.state?.split(',')[0]})</span>}
               </span>
-              <span style={{ fontSize:18, color:C.muted }}>{fmtMoney(calc.txAmt)}</span>
+              <span style={{ fontSize: 20, color:C.muted }}>{fmtMoney(calc.txAmt)}</span>
             </div>
           </div>
           <div style={{ margin:'0 18px 18px', marginTop:0, background:C.orange, borderRadius:'0 0 3px 3px', padding:'14px 18px', display:'flex', justifyContent:'space-between', alignItems:'center', marginTop:12 }}>
-            <span style={{ fontFamily:"'Inter', sans-serif", fontSize:17, fontWeight:900, letterSpacing:'0.1em', textTransform:'uppercase', color:'#fff' }}>Total Due</span>
-            <span style={{ fontFamily:"'Inter', sans-serif", fontSize:28, fontWeight:900, color:'#fff', lineHeight:1 }}>{fmtMoney(calc.total)}</span>
+            <span style={{ fontFamily:"'Inter', sans-serif", fontSize: 19, fontWeight:900, letterSpacing:'0.1em', textTransform:'uppercase', color:'#fff' }}>Total Due</span>
+            <span style={{ fontFamily:"'Inter', sans-serif", fontSize: 30, fontWeight:900, color:'#fff', lineHeight:1 }}>{fmtMoney(calc.total)}</span>
           </div>
         </div>
       </div>
@@ -4143,41 +4143,41 @@ function InvoiceDocument({ invoice, user, logo, payments, onEdit, onBack, onReco
     <div>
       {/* Action bar */}
       <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:20, flexWrap:'wrap' }}>
-        <Btn variant="ghost" size="sm" onClick={onBack} style={{ fontSize:18, padding:'10px 18px', minHeight:48 }}>Back</Btn>
-        <span style={{ fontFamily:"'Inter', sans-serif", fontSize:26, fontWeight:800, color:C.orange, letterSpacing:'0.08em' }}>{invoice.number}</span>
+        <Btn variant="ghost" size="sm" onClick={onBack} style={{ fontSize: 20, padding:'10px 18px', minHeight:48 }}>Back</Btn>
+        <span style={{ fontFamily:"'Inter', sans-serif", fontSize: 28, fontWeight:800, color:C.orange, letterSpacing:'0.08em' }}>{invoice.number}</span>
         <InvBadge status={invoice.status} />
         {calc.balance > 0.01 && !isVoid && (
-          <span style={{ fontFamily:"'Inter', sans-serif", fontSize:18, fontWeight:900, color:isOverdue?C.error:C.text }}>Balance: {fmtMoney(calc.balance)}</span>
+          <span style={{ fontFamily:"'Inter', sans-serif", fontSize: 20, fontWeight:900, color:isOverdue?C.error:C.text }}>Balance: {fmtMoney(calc.balance)}</span>
         )}
         <div style={{ marginLeft:'auto', display:'flex', gap:8, flexWrap:'wrap' }}>
-          {!isVoid && !isPaid && <Btn variant="ghost" size="sm" onClick={onEdit} style={{ fontSize:18, padding:'10px 18px', minHeight:48 }}>Edit</Btn>}
+          {!isVoid && !isPaid && <Btn variant="ghost" size="sm" onClick={onEdit} style={{ fontSize: 20, padding:'10px 18px', minHeight:48 }}>Edit</Btn>}
           {/* Download PDF — uses the browser's print dialog to "save as PDF".
               Crude but works on every browser; a real PDF generator can come later. */}
-          <Btn variant="ghost" size="sm" onClick={() => window.print()} style={{ fontSize:18, padding:'10px 18px', minHeight:48 }}>Download PDF</Btn>
+          <Btn variant="ghost" size="sm" onClick={() => window.print()} style={{ fontSize: 20, padding:'10px 18px', minHeight:48 }}>Download PDF</Btn>
           {/* Send — opens the share modal with a copyable link to the public invoice page. */}
           {!isVoid && !isPaid && (
-            <Btn variant="primary" size="sm" onClick={() => setShowShare(true)} style={{ fontSize:18, padding:'10px 18px', minHeight:48 }}>Send</Btn>
+            <Btn variant="primary" size="sm" onClick={() => setShowShare(true)} style={{ fontSize: 20, padding:'10px 18px', minHeight:48 }}>Send</Btn>
           )}
           {/* Re-send link for invoices that have already been sent */}
           {(invoice.status === 'sent' || invoice.status === 'viewed' || invoice.status === 'partial') && (
-            <Btn variant="ghost" size="sm" onClick={() => setShowShare(true)} style={{ fontSize:18, padding:'10px 18px', minHeight:48 }}>Share Link</Btn>
+            <Btn variant="ghost" size="sm" onClick={() => setShowShare(true)} style={{ fontSize: 20, padding:'10px 18px', minHeight:48 }}>Share Link</Btn>
           )}
-          {isOverdue && <Btn variant="ghost" size="sm" onClick={onSendReminder} style={{ fontSize:18, padding:'10px 18px', minHeight:48, color:C.warn, borderColor:C.warn+'66' }}>Send Reminder</Btn>}
+          {isOverdue && <Btn variant="ghost" size="sm" onClick={onSendReminder} style={{ fontSize: 20, padding:'10px 18px', minHeight:48, color:C.warn, borderColor:C.warn+'66' }}>Send Reminder</Btn>}
           {!isVoid && !isPaid && calc.balance > 0 && (
-            <Btn variant="primary" size="sm" onClick={onRecordPayment} style={{ fontSize:18, padding:'10px 18px', minHeight:48 }}>Record Payment</Btn>
+            <Btn variant="primary" size="sm" onClick={onRecordPayment} style={{ fontSize: 20, padding:'10px 18px', minHeight:48 }}>Record Payment</Btn>
           )}
           {!isVoid && !isPaid && (
-            <Btn variant="ghost" size="sm" onClick={onVoid} style={{ fontSize:18, padding:'10px 18px', minHeight:48, color:C.error, borderColor:C.error+'44' }}>Void</Btn>
+            <Btn variant="ghost" size="sm" onClick={onVoid} style={{ fontSize: 20, padding:'10px 18px', minHeight:48, color:C.error, borderColor:C.error+'44' }}>Void</Btn>
           )}
           {/* Un-invoice: only for invoices created from a quote (notes contain "Converted from"). */}
           {!isPaid && onUnInvoice && /Converted from/.test(invoice.notes || '') && (
-            <Btn variant="ghost" size="sm" onClick={onUnInvoice} style={{ fontSize:18, padding:'10px 18px', minHeight:48, color:C.warn, borderColor:C.warn+'44' }} title="Delete this invoice and restore the source quote">
+            <Btn variant="ghost" size="sm" onClick={onUnInvoice} style={{ fontSize: 20, padding:'10px 18px', minHeight:48, color:C.warn, borderColor:C.warn+'44' }} title="Delete this invoice and restore the source quote">
               Un-invoice
             </Btn>
           )}
           {/* Hard delete — destructive, separate from Void. Hidden once paid (don't lose payment history). */}
           {!isPaid && onDelete && (
-            <Btn variant="ghost" size="sm" onClick={onDelete} style={{ fontSize:18, padding:'10px 18px', minHeight:48, color:C.errorBold, borderColor:C.errorBold+'66', fontWeight: 800 }}>
+            <Btn variant="ghost" size="sm" onClick={onDelete} style={{ fontSize: 20, padding:'10px 18px', minHeight:48, color:C.errorBold, borderColor:C.errorBold+'66', fontWeight: 800 }}>
               Delete
             </Btn>
           )}
@@ -4200,13 +4200,13 @@ function InvoiceDocument({ invoice, user, logo, payments, onEdit, onBack, onReco
             </div>
             {/* Trade badge */}
             <div style={{ marginBottom:8 }}>
-              <span style={{ display:'inline-block', fontSize:15, fontWeight:900, letterSpacing:'0.1em', textTransform:'uppercase', padding:'3px 10px', borderRadius:2, background:accentColor, color:'#fff', fontFamily:"'Inter', sans-serif" }}>
+              <span style={{ display:'inline-block', fontSize: 17, fontWeight:900, letterSpacing:'0.1em', textTransform:'uppercase', padding:'3px 10px', borderRadius:2, background:accentColor, color:'#fff', fontFamily:"'Inter', sans-serif" }}>
                 {tradeConf.docLabel}
               </span>
             </div>
-            <div style={{ fontSize:19, fontWeight:700, color:'#222', marginBottom:2 }}>{user?.company || user?.name}</div>
-            {user?.tagline && <div style={{ fontSize:14, color:accentColor, fontWeight:600, marginBottom:4 }}>{user.tagline}</div>}
-            <div style={{ fontSize:17, color:'#777', lineHeight:1.9 }}>
+            <div style={{ fontSize: 21, fontWeight:700, color:'#222', marginBottom:2 }}>{user?.company || user?.name}</div>
+            {user?.tagline && <div style={{ fontSize: 16, color:accentColor, fontWeight:600, marginBottom:4 }}>{user.tagline}</div>}
+            <div style={{ fontSize: 19, color:'#777', lineHeight:1.9 }}>
               {user?.email && <div>{user.email}</div>}
               {user?.phone && <div>{user.phone}</div>}
               {(user?.states?.length>1 ? user.states.join(', ') : user?.state) && <div>{user?.states?.length>1 ? user.states.join(', ') : user?.state}</div>}
@@ -4222,14 +4222,14 @@ function InvoiceDocument({ invoice, user, logo, payments, onEdit, onBack, onReco
               const perState  = invoice.state && user?.stateLicenses?.[invoice.state];
               const lic = stamped || perState || user?.license || tradeConf.licenseNote;
               if (!lic) return null;
-              return <div style={{ marginTop:6, fontSize:15, color:'#888', fontStyle:'italic' }}>{lic}</div>;
+              return <div style={{ marginTop:6, fontSize: 17, color:'#888', fontStyle:'italic' }}>{lic}</div>;
             })()}
           </div>
 
           <div style={{ textAlign:isTablet?'left':'right', marginTop:isTablet?16:0, display:'flex', flexDirection:'column', alignItems:isTablet?'flex-start':'flex-end' }}>
             <div style={{ marginBottom:20 }}>
               <div style={{ fontFamily:"'Inter', sans-serif", fontSize:isTablet?34:46, fontWeight:900, color:'#111', letterSpacing:'0.04em', lineHeight:1 }}>INVOICE</div>
-              <div style={{ fontFamily:"'Inter', sans-serif", fontSize:30, fontWeight:900, color:accentColor, letterSpacing:'0.1em', marginTop:4 }}>{invoice.number}</div>
+              <div style={{ fontFamily:"'Inter', sans-serif", fontSize: 32, fontWeight:900, color:accentColor, letterSpacing:'0.1em', marginTop:4 }}>{invoice.number}</div>
             </div>
             <div style={{ display:'grid', gridTemplateColumns:'auto 1fr', gap:'6px 18px' }}>
               {[
@@ -4247,8 +4247,8 @@ function InvoiceDocument({ invoice, user, logo, payments, onEdit, onBack, onReco
                     ? [['Service Period', `${invoice.servicePeriodStart || '?'} → ${invoice.servicePeriodEnd || '?'}`]] : []),
               ].map(([label, val]) => (
                 <Fragment key={label}>
-                  <span style={{ fontSize:16, fontWeight:800, textTransform:'uppercase', letterSpacing:'0.09em', color:'#bbb', paddingTop:2, whiteSpace:'nowrap' }}>{label}</span>
-                  <span style={{ fontSize:17, fontWeight:600, color: invoice.status==='paid' ? C.success : invoice.status==='overdue' ? C.error : '#222' }}>{val}</span>
+                  <span style={{ fontSize: 18, fontWeight:800, textTransform:'uppercase', letterSpacing:'0.09em', color:'#bbb', paddingTop:2, whiteSpace:'nowrap' }}>{label}</span>
+                  <span style={{ fontSize: 19, fontWeight:600, color: invoice.status==='paid' ? C.success : invoice.status==='overdue' ? C.error : '#222' }}>{val}</span>
                 </Fragment>
               ))}
             </div>
@@ -4258,23 +4258,23 @@ function InvoiceDocument({ invoice, user, logo, payments, onEdit, onBack, onReco
         {/* Bill To + Job */}
         <div style={{ padding:isTablet?'16px 18px':'20px 44px', display:'grid', gridTemplateColumns:isTablet?'1fr':'1fr 1fr', gap:20, background:'#f9f9f9', borderBottom:'1.5px solid #ebebeb' }}>
           <div>
-            <div style={{ fontSize:16, fontWeight:900, textTransform:'uppercase', letterSpacing:'0.12em', color:'#bbb', marginBottom:6, fontFamily:"'Inter', sans-serif" }}>Bill To</div>
-            <div style={{ fontSize:20, fontWeight:700, color:'#111' }}>{invoice.clientName || '—'}</div>
-            {invoice.clientAddress && <div style={{ fontSize:17, color:'#777', marginTop:2, lineHeight:1.8 }}>{invoice.clientAddress}</div>}
-            {invoice.clientEmail && <div style={{ fontSize:17, color:'#777' }}>{invoice.clientEmail}</div>}
-            {invoice.clientPhone && <div style={{ fontSize:17, color:'#777' }}>{invoice.clientPhone}</div>}
+            <div style={{ fontSize: 18, fontWeight:900, textTransform:'uppercase', letterSpacing:'0.12em', color:'#bbb', marginBottom:6, fontFamily:"'Inter', sans-serif" }}>Bill To</div>
+            <div style={{ fontSize: 22, fontWeight:700, color:'#111' }}>{invoice.clientName || '—'}</div>
+            {invoice.clientAddress && <div style={{ fontSize: 19, color:'#777', marginTop:2, lineHeight:1.8 }}>{invoice.clientAddress}</div>}
+            {invoice.clientEmail && <div style={{ fontSize: 19, color:'#777' }}>{invoice.clientEmail}</div>}
+            {invoice.clientPhone && <div style={{ fontSize: 19, color:'#777' }}>{invoice.clientPhone}</div>}
             {/* Job site block — only when the work was at an address that
                 differs from billing (typical for commercial property mgmt). */}
             {invoice.jobAddress && (
               <div style={{ marginTop: 14, paddingTop: 12, borderTop: '1px dashed #ddd' }}>
-                <div style={{ fontSize:14, fontWeight:900, textTransform:'uppercase', letterSpacing:'0.12em', color:'#bbb', marginBottom:4, fontFamily:"'Inter', sans-serif" }}>Job Site</div>
-                <div style={{ fontSize:16, color:'#444', lineHeight:1.6 }}>{invoice.jobAddress}</div>
+                <div style={{ fontSize: 16, fontWeight:900, textTransform:'uppercase', letterSpacing:'0.12em', color:'#bbb', marginBottom:4, fontFamily:"'Inter', sans-serif" }}>Job Site</div>
+                <div style={{ fontSize: 18, color:'#444', lineHeight:1.6 }}>{invoice.jobAddress}</div>
               </div>
             )}
           </div>
           <div>
-            <div style={{ fontSize:16, fontWeight:900, textTransform:'uppercase', letterSpacing:'0.12em', color:'#bbb', marginBottom:6, fontFamily:"'Inter', sans-serif" }}>Job</div>
-            <div style={{ fontSize:20, fontWeight:700, color:'#111', lineHeight:1.4 }}>{invoice.title}</div>
+            <div style={{ fontSize: 18, fontWeight:900, textTransform:'uppercase', letterSpacing:'0.12em', color:'#bbb', marginBottom:6, fontFamily:"'Inter', sans-serif" }}>Job</div>
+            <div style={{ fontSize: 22, fontWeight:700, color:'#111', lineHeight:1.4 }}>{invoice.title}</div>
             {/* People rows — each only renders when set, so old invoices
                 created before these columns existed stay clean. */}
             {[
@@ -4283,8 +4283,8 @@ function InvoiceDocument({ invoice, user, logo, payments, onEdit, onBack, onReco
               ['Requested by',   invoice.requestedBy],
               ['Approved by',    invoice.approvedBy],
             ].filter(([_, v]) => v && String(v).trim()).map(([label, val]) => (
-              <div key={label} style={{ marginTop: 8, fontSize: 15, color: '#666', display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                <span style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#bbb' }}>{label}</span>
+              <div key={label} style={{ marginTop: 8, fontSize: 17, color: '#666', display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                <span style={{ fontSize: 14, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#bbb' }}>{label}</span>
                 <span style={{ fontWeight: 700, color: '#222' }}>{val}</span>
               </div>
             ))}
@@ -4300,43 +4300,43 @@ function InvoiceDocument({ invoice, user, logo, payments, onEdit, onBack, onReco
               { label: 'Equipment & Rental',               rows: invoice.equipment, type:'equipment' },
             ].filter(s=>s.rows?.length>0).map(({ label, rows, type }) => (
               <div key={label}>
-                <div style={{ padding:'12px 0 6px', fontSize:16, fontWeight:900, color:tradeConf.color, textTransform:'uppercase', letterSpacing:'0.1em', fontFamily:"'Inter', sans-serif", borderTop:'1px solid #eee' }}>{label}</div>
+                <div style={{ padding:'12px 0 6px', fontSize: 18, fontWeight:900, color:tradeConf.color, textTransform:'uppercase', letterSpacing:'0.1em', fontFamily:"'Inter', sans-serif", borderTop:'1px solid #eee' }}>{label}</div>
                 <table style={{ width:'100%', borderCollapse:'collapse', minWidth:380 }}>
                   <thead>
                     <tr style={{ borderBottom:'1.5px solid #222' }}>
                       {type==='labor'
-                        ? ['Description','Hrs','$/Hr','Amount'].map((h,i)=><th key={h} style={{ padding:'9px 8px', textAlign:i===0?'left':'right', fontSize:15, fontWeight:900, color:'#999', textTransform:'uppercase', letterSpacing:'0.08em', fontFamily:"'Inter', sans-serif", whiteSpace:'nowrap' }}>{h}</th>)
+                        ? ['Description','Hrs','$/Hr','Amount'].map((h,i)=><th key={h} style={{ padding:'9px 8px', textAlign:i===0?'left':'right', fontSize: 17, fontWeight:900, color:'#999', textTransform:'uppercase', letterSpacing:'0.08em', fontFamily:"'Inter', sans-serif", whiteSpace:'nowrap' }}>{h}</th>)
                         : type==='materials'
-                        ? ['Description','Qty','Unit','Unit Cost','Amount'].map((h,i)=><th key={h} style={{ padding:'9px 8px', textAlign:i===0?'left':'right', fontSize:15, fontWeight:900, color:'#999', textTransform:'uppercase', letterSpacing:'0.08em', fontFamily:"'Inter', sans-serif", whiteSpace:'nowrap' }}>{h}</th>)
-                        : ['Description','Qty','Unit','Rate','Amount'].map((h,i)=><th key={h} style={{ padding:'9px 8px', textAlign:i===0?'left':'right', fontSize:15, fontWeight:900, color:'#999', textTransform:'uppercase', letterSpacing:'0.08em', fontFamily:"'Inter', sans-serif", whiteSpace:'nowrap' }}>{h}</th>)
+                        ? ['Description','Qty','Unit','Unit Cost','Amount'].map((h,i)=><th key={h} style={{ padding:'9px 8px', textAlign:i===0?'left':'right', fontSize: 17, fontWeight:900, color:'#999', textTransform:'uppercase', letterSpacing:'0.08em', fontFamily:"'Inter', sans-serif", whiteSpace:'nowrap' }}>{h}</th>)
+                        : ['Description','Qty','Unit','Rate','Amount'].map((h,i)=><th key={h} style={{ padding:'9px 8px', textAlign:i===0?'left':'right', fontSize: 17, fontWeight:900, color:'#999', textTransform:'uppercase', letterSpacing:'0.08em', fontFamily:"'Inter', sans-serif", whiteSpace:'nowrap' }}>{h}</th>)
                       }
                     </tr>
                   </thead>
                   <tbody>
                     {type==='labor' && rows.map((r,i)=>(
                       <tr key={r.id||i} style={{ background:i%2===0?'#fff':'#fafafa', borderBottom:'1px solid #f0f0f0' }}>
-                        <td style={{ padding:'11px 8px', fontSize:17, color:'#222' }}>{r.desc}</td>
-                        <td style={{ padding:'11px 8px', textAlign:'right', fontSize:17, color:'#555' }}>{r.hrs}</td>
-                        <td style={{ padding:'11px 8px', textAlign:'right', fontSize:17, color:'#555' }}>{fmtMoney(r.rate)}</td>
-                        <td style={{ padding:'11px 8px', textAlign:'right', fontSize:17, fontWeight:700, color:'#111' }}>{fmtMoney(r.hrs*r.rate)}</td>
+                        <td style={{ padding:'11px 8px', fontSize: 19, color:'#222' }}>{r.desc}</td>
+                        <td style={{ padding:'11px 8px', textAlign:'right', fontSize: 19, color:'#555' }}>{r.hrs}</td>
+                        <td style={{ padding:'11px 8px', textAlign:'right', fontSize: 19, color:'#555' }}>{fmtMoney(r.rate)}</td>
+                        <td style={{ padding:'11px 8px', textAlign:'right', fontSize: 19, fontWeight:700, color:'#111' }}>{fmtMoney(r.hrs*r.rate)}</td>
                       </tr>
                     ))}
                     {type==='materials' && rows.map((r,i)=>(
                       <tr key={r.id||i} style={{ background:i%2===0?'#fff':'#fafafa', borderBottom:'1px solid #f0f0f0' }}>
-                        <td style={{ padding:'11px 8px', fontSize:17, color:'#222' }}>{r.desc}</td>
-                        <td style={{ padding:'11px 8px', textAlign:'right', fontSize:17, color:'#555' }}>{r.qty}</td>
-                        <td style={{ padding:'11px 8px', textAlign:'right', fontSize:15, color:'#aaa', fontStyle:'italic' }}>{r.unit}</td>
-                        <td style={{ padding:'11px 8px', textAlign:'right', fontSize:17, color:'#555' }}>{fmtMoney(r.cost)}</td>
-                        <td style={{ padding:'11px 8px', textAlign:'right', fontSize:17, fontWeight:700, color:'#111' }}>{fmtMoney(r.qty*r.cost)}</td>
+                        <td style={{ padding:'11px 8px', fontSize: 19, color:'#222' }}>{r.desc}</td>
+                        <td style={{ padding:'11px 8px', textAlign:'right', fontSize: 19, color:'#555' }}>{r.qty}</td>
+                        <td style={{ padding:'11px 8px', textAlign:'right', fontSize: 17, color:'#aaa', fontStyle:'italic' }}>{r.unit}</td>
+                        <td style={{ padding:'11px 8px', textAlign:'right', fontSize: 19, color:'#555' }}>{fmtMoney(r.cost)}</td>
+                        <td style={{ padding:'11px 8px', textAlign:'right', fontSize: 19, fontWeight:700, color:'#111' }}>{fmtMoney(r.qty*r.cost)}</td>
                       </tr>
                     ))}
                     {type==='equipment' && rows.map((r,i)=>(
                       <tr key={r.id||i} style={{ background:i%2===0?'#fff':'#fafafa', borderBottom:'1px solid #f0f0f0' }}>
-                        <td style={{ padding:'11px 8px', fontSize:17, color:'#222' }}>{r.desc}</td>
-                        <td style={{ padding:'11px 8px', textAlign:'right', fontSize:17, color:'#555' }}>{r.qty}</td>
-                        <td style={{ padding:'11px 8px', textAlign:'right', fontSize:15, color:'#aaa', fontStyle:'italic' }}>{r.unit}</td>
-                        <td style={{ padding:'11px 8px', textAlign:'right', fontSize:17, color:'#555' }}>{fmtMoney(r.rate)}</td>
-                        <td style={{ padding:'11px 8px', textAlign:'right', fontSize:17, fontWeight:700, color:'#111' }}>{fmtMoney(r.qty*r.rate)}</td>
+                        <td style={{ padding:'11px 8px', fontSize: 19, color:'#222' }}>{r.desc}</td>
+                        <td style={{ padding:'11px 8px', textAlign:'right', fontSize: 19, color:'#555' }}>{r.qty}</td>
+                        <td style={{ padding:'11px 8px', textAlign:'right', fontSize: 17, color:'#aaa', fontStyle:'italic' }}>{r.unit}</td>
+                        <td style={{ padding:'11px 8px', textAlign:'right', fontSize: 19, color:'#555' }}>{fmtMoney(r.rate)}</td>
+                        <td style={{ padding:'11px 8px', textAlign:'right', fontSize: 19, fontWeight:700, color:'#111' }}>{fmtMoney(r.qty*r.rate)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -4352,7 +4352,7 @@ function InvoiceDocument({ invoice, user, logo, payments, onEdit, onBack, onReco
             {invBundleGroups.map(group => (
               <div key={group.trade}>
                 <div style={{ display:'flex', alignItems:'center', gap:10, padding:'14px 0 6px', borderTop:'1.5px solid #eee', marginTop:4 }}>
-                  <span style={{ display:'inline-block', fontSize:14, fontWeight:900, letterSpacing:'0.1em', textTransform:'uppercase', padding:'2px 8px', borderRadius:2, background:group.color, color:'#fff', fontFamily:"'Inter', sans-serif" }}>{group.label}</span>
+                  <span style={{ display:'inline-block', fontSize: 16, fontWeight:900, letterSpacing:'0.1em', textTransform:'uppercase', padding:'2px 8px', borderRadius:2, background:group.color, color:'#fff', fontFamily:"'Inter', sans-serif" }}>{group.label}</span>
                 </div>
                 {[
                   { label: TRADE_CONFIG[group.trade].laborTitle, rows: group.labor,     type:'labor'     },
@@ -4360,7 +4360,7 @@ function InvoiceDocument({ invoice, user, logo, payments, onEdit, onBack, onReco
                   { label: 'Equipment & Rental',                 rows: group.equipment, type:'equipment' },
                 ].filter(s=>s.rows?.length>0).map(({ label, rows, type }) => (
                   <div key={label} style={{ marginBottom:8 }}>
-                    <div style={{ fontSize:15, fontWeight:800, color:'#aaa', textTransform:'uppercase', letterSpacing:'0.08em', padding:'6px 0 4px', fontFamily:"'Inter', sans-serif" }}>{label}</div>
+                    <div style={{ fontSize: 17, fontWeight:800, color:'#aaa', textTransform:'uppercase', letterSpacing:'0.08em', padding:'6px 0 4px', fontFamily:"'Inter', sans-serif" }}>{label}</div>
                     <table style={{ width:'100%', borderCollapse:'collapse', minWidth:380 }}>
                       <thead>
                         <tr style={{ borderBottom:'1px solid #ddd' }}>
@@ -4369,34 +4369,34 @@ function InvoiceDocument({ invoice, user, logo, payments, onEdit, onBack, onReco
                             : type==='materials'
                             ? ['Description','Qty','Unit','Unit Cost','Amount']
                             : ['Description','Qty','Unit','Rate','Amount']
-                          ).map((h,i) => <th key={h} style={{ padding:'7px 8px', textAlign:i===0?'left':'right', fontSize:14, fontWeight:900, color:'#bbb', textTransform:'uppercase', letterSpacing:'0.08em', fontFamily:"'Inter', sans-serif", whiteSpace:'nowrap' }}>{h}</th>)}
+                          ).map((h,i) => <th key={h} style={{ padding:'7px 8px', textAlign:i===0?'left':'right', fontSize: 16, fontWeight:900, color:'#bbb', textTransform:'uppercase', letterSpacing:'0.08em', fontFamily:"'Inter', sans-serif", whiteSpace:'nowrap' }}>{h}</th>)}
                         </tr>
                       </thead>
                       <tbody>
                         {type==='labor' && rows.map((r,i)=>(
                           <tr key={r.id||i} style={{ background:i%2===0?'#fff':'#fafafa', borderBottom:'1px solid #f5f5f5' }}>
-                            <td style={{ padding:'10px 8px', fontSize:17, color:'#222' }}>{r.desc}</td>
-                            <td style={{ padding:'10px 8px', textAlign:'right', fontSize:17, color:'#555' }}>{r.hrs}</td>
-                            <td style={{ padding:'10px 8px', textAlign:'right', fontSize:17, color:'#555' }}>{fmtMoney(r.rate)}</td>
-                            <td style={{ padding:'10px 8px', textAlign:'right', fontSize:17, fontWeight:700, color:'#111' }}>{fmtMoney(r.hrs*r.rate)}</td>
+                            <td style={{ padding:'10px 8px', fontSize: 19, color:'#222' }}>{r.desc}</td>
+                            <td style={{ padding:'10px 8px', textAlign:'right', fontSize: 19, color:'#555' }}>{r.hrs}</td>
+                            <td style={{ padding:'10px 8px', textAlign:'right', fontSize: 19, color:'#555' }}>{fmtMoney(r.rate)}</td>
+                            <td style={{ padding:'10px 8px', textAlign:'right', fontSize: 19, fontWeight:700, color:'#111' }}>{fmtMoney(r.hrs*r.rate)}</td>
                           </tr>
                         ))}
                         {type==='materials' && rows.map((r,i)=>(
                           <tr key={r.id||i} style={{ background:i%2===0?'#fff':'#fafafa', borderBottom:'1px solid #f5f5f5' }}>
-                            <td style={{ padding:'10px 8px', fontSize:17, color:'#222' }}>{r.desc}</td>
-                            <td style={{ padding:'10px 8px', textAlign:'right', fontSize:17, color:'#555' }}>{r.qty}</td>
-                            <td style={{ padding:'10px 8px', textAlign:'right', fontSize:15, color:'#aaa', fontStyle:'italic' }}>{r.unit}</td>
-                            <td style={{ padding:'10px 8px', textAlign:'right', fontSize:17, color:'#555' }}>{fmtMoney(r.cost)}</td>
-                            <td style={{ padding:'10px 8px', textAlign:'right', fontSize:17, fontWeight:700, color:'#111' }}>{fmtMoney(r.qty*r.cost)}</td>
+                            <td style={{ padding:'10px 8px', fontSize: 19, color:'#222' }}>{r.desc}</td>
+                            <td style={{ padding:'10px 8px', textAlign:'right', fontSize: 19, color:'#555' }}>{r.qty}</td>
+                            <td style={{ padding:'10px 8px', textAlign:'right', fontSize: 17, color:'#aaa', fontStyle:'italic' }}>{r.unit}</td>
+                            <td style={{ padding:'10px 8px', textAlign:'right', fontSize: 19, color:'#555' }}>{fmtMoney(r.cost)}</td>
+                            <td style={{ padding:'10px 8px', textAlign:'right', fontSize: 19, fontWeight:700, color:'#111' }}>{fmtMoney(r.qty*r.cost)}</td>
                           </tr>
                         ))}
                         {type==='equipment' && rows.map((r,i)=>(
                           <tr key={r.id||i} style={{ background:i%2===0?'#fff':'#fafafa', borderBottom:'1px solid #f5f5f5' }}>
-                            <td style={{ padding:'10px 8px', fontSize:17, color:'#222' }}>{r.desc}</td>
-                            <td style={{ padding:'10px 8px', textAlign:'right', fontSize:17, color:'#555' }}>{r.qty}</td>
-                            <td style={{ padding:'10px 8px', textAlign:'right', fontSize:15, color:'#aaa', fontStyle:'italic' }}>{r.unit}</td>
-                            <td style={{ padding:'10px 8px', textAlign:'right', fontSize:17, color:'#555' }}>{fmtMoney(r.rate)}</td>
-                            <td style={{ padding:'10px 8px', textAlign:'right', fontSize:17, fontWeight:700, color:'#111' }}>{fmtMoney(r.qty*r.rate)}</td>
+                            <td style={{ padding:'10px 8px', fontSize: 19, color:'#222' }}>{r.desc}</td>
+                            <td style={{ padding:'10px 8px', textAlign:'right', fontSize: 19, color:'#555' }}>{r.qty}</td>
+                            <td style={{ padding:'10px 8px', textAlign:'right', fontSize: 17, color:'#aaa', fontStyle:'italic' }}>{r.unit}</td>
+                            <td style={{ padding:'10px 8px', textAlign:'right', fontSize: 19, color:'#555' }}>{fmtMoney(r.rate)}</td>
+                            <td style={{ padding:'10px 8px', textAlign:'right', fontSize: 19, fontWeight:700, color:'#111' }}>{fmtMoney(r.qty*r.rate)}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -4408,8 +4408,8 @@ function InvoiceDocument({ invoice, user, logo, payments, onEdit, onBack, onReco
                   const sub = invGroupSubs?.find(x => x.trade === group.trade)?.sub ?? 0;
                   return (
                     <div style={{ display:'flex', justifyContent:'flex-end', alignItems:'center', padding:'8px 0 14px', gap:14, borderBottom:'1px solid #eee', marginBottom:4 }}>
-                      <span style={{ fontSize:14, fontWeight:800, letterSpacing:'0.08em', textTransform:'uppercase', color: group.color }}>{group.label} Subtotal</span>
-                      <span style={{ fontFamily:"'Inter', sans-serif", fontSize:22, fontWeight:900, color:'#111', minWidth:110, textAlign:'right' }}>{fmtMoney(sub)}</span>
+                      <span style={{ fontSize: 16, fontWeight:800, letterSpacing:'0.08em', textTransform:'uppercase', color: group.color }}>{group.label} Subtotal</span>
+                      <span style={{ fontFamily:"'Inter', sans-serif", fontSize: 24, fontWeight:900, color:'#111', minWidth:110, textAlign:'right' }}>{fmtMoney(sub)}</span>
                     </div>
                   );
                 })()}
@@ -4425,11 +4425,11 @@ function InvoiceDocument({ invoice, user, logo, payments, onEdit, onBack, onReco
               {/* Per-trade breakdown for multi-trade invoices */}
               {isBundleInv && invGroupSubs && invGroupSubs.length > 0 && (
                 <div style={{ background:'#fff', borderBottom:'1px solid #eee' }}>
-                  <div style={{ fontSize:13, fontWeight:900, letterSpacing:'0.08em', textTransform:'uppercase', color:'#999', padding:'10px 16px 4px' }}>By Trade</div>
+                  <div style={{ fontSize: 15, fontWeight:900, letterSpacing:'0.08em', textTransform:'uppercase', color:'#999', padding:'10px 16px 4px' }}>By Trade</div>
                   {invGroupSubs.map(g => (
                     <div key={g.trade} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'6px 16px 6px 14px', borderLeft:`4px solid ${g.color}` }}>
-                      <span style={{ fontSize:15, fontWeight:700, color:'#444' }}>{g.label}</span>
-                      <span style={{ fontFamily:"'Inter', sans-serif", fontSize:17, fontWeight:700, color:'#111' }}>{fmtMoney(g.sub)}</span>
+                      <span style={{ fontSize: 17, fontWeight:700, color:'#444' }}>{g.label}</span>
+                      <span style={{ fontFamily:"'Inter', sans-serif", fontSize: 19, fontWeight:700, color:'#111' }}>{fmtMoney(g.sub)}</span>
                     </div>
                   ))}
                   <div style={{ height:8 }} />
@@ -4444,13 +4444,13 @@ function InvoiceDocument({ invoice, user, logo, payments, onEdit, onBack, onReco
                   : []),
                 [`Tax (${invoice.tax}%)`,              fmtMoney(calc.txAmt), '#777', '#444'],
               ].map(([label, val, labelColor, valColor]) => (
-                <div key={label} style={{ display:'flex', justifyContent:'space-between', padding:'10px 16px', fontSize:17, color:labelColor, borderBottom:'1px solid #e8e8e8' }}>
+                <div key={label} style={{ display:'flex', justifyContent:'space-between', padding:'10px 16px', fontSize: 19, color:labelColor, borderBottom:'1px solid #e8e8e8' }}>
                   <span>{label}</span><span style={{ fontWeight:600, color:valColor }}>{val}</span>
                 </div>
               ))}
               <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'14px 16px', background:C.orange }}>
-                <span style={{ fontFamily:"'Inter', sans-serif", fontSize:17, fontWeight:900, letterSpacing:'0.1em', textTransform:'uppercase', color:'#fff' }}>Total Due</span>
-                <span style={{ fontFamily:"'Inter', sans-serif", fontSize:30, fontWeight:900, color:'#fff', lineHeight:1 }}>{fmtMoney(calc.total)}</span>
+                <span style={{ fontFamily:"'Inter', sans-serif", fontSize: 19, fontWeight:900, letterSpacing:'0.1em', textTransform:'uppercase', color:'#fff' }}>Total Due</span>
+                <span style={{ fontFamily:"'Inter', sans-serif", fontSize: 32, fontWeight:900, color:'#fff', lineHeight:1 }}>{fmtMoney(calc.total)}</span>
               </div>
             </div>
           </div>
@@ -4459,8 +4459,8 @@ function InvoiceDocument({ invoice, user, logo, payments, onEdit, onBack, onReco
         {/* Notes + footer */}
         {invoice.notes && (
           <div style={{ padding:isTablet?'14px 18px 20px':'18px 44px 28px', background:'#f9f9f9', borderTop:'1.5px solid #eee' }}>
-            <div style={{ fontSize:14, fontWeight:900, textTransform:'uppercase', letterSpacing:'0.1em', color:'#aaa', marginBottom:5, fontFamily:"'Inter', sans-serif" }}>Notes</div>
-            <div style={{ fontSize:17, color:'#666', lineHeight:1.75 }}>{invoice.notes}</div>
+            <div style={{ fontSize: 16, fontWeight:900, textTransform:'uppercase', letterSpacing:'0.1em', color:'#aaa', marginBottom:5, fontFamily:"'Inter', sans-serif" }}>Notes</div>
+            <div style={{ fontSize: 19, color:'#666', lineHeight:1.75 }}>{invoice.notes}</div>
           </div>
         )}
 
@@ -4473,20 +4473,20 @@ function InvoiceDocument({ invoice, user, logo, payments, onEdit, onBack, onReco
           <div style={{ padding: isTablet ? '16px 18px' : '20px 44px', borderTop: '1.5px solid #eee', background: '#fff', display: 'grid', gridTemplateColumns: isTablet ? '1fr' : '1fr 1fr', gap: 24 }}>
             {invoice.techSignedAt && (
               <div>
-                <div style={{ fontSize:13, fontWeight:900, textTransform:'uppercase', letterSpacing:'0.12em', color:'#aaa', marginBottom:8, fontFamily:"'Inter', sans-serif" }}>Performed By — Sign-off</div>
-                <div style={{ fontFamily:"'Caveat', 'Inter', cursive", fontSize:24, color:'#222', lineHeight:1, marginBottom:6, borderBottom:'1px solid #ccc', paddingBottom:4 }}>
+                <div style={{ fontSize: 15, fontWeight:900, textTransform:'uppercase', letterSpacing:'0.12em', color:'#aaa', marginBottom:8, fontFamily:"'Inter', sans-serif" }}>Performed By — Sign-off</div>
+                <div style={{ fontFamily:"'Caveat', 'Inter', cursive", fontSize: 26, color:'#222', lineHeight:1, marginBottom:6, borderBottom:'1px solid #ccc', paddingBottom:4 }}>
                   {invoice.techSignedName || invoice.techName || '—'}
                 </div>
-                <div style={{ fontSize:13, color:'#777' }}>{new Date(invoice.techSignedAt).toLocaleString()}</div>
+                <div style={{ fontSize: 15, color:'#777' }}>{new Date(invoice.techSignedAt).toLocaleString()}</div>
               </div>
             )}
             {invoice.customerSignedAt && (
               <div>
-                <div style={{ fontSize:13, fontWeight:900, textTransform:'uppercase', letterSpacing:'0.12em', color:'#aaa', marginBottom:8, fontFamily:"'Inter', sans-serif" }}>Customer Acknowledgement</div>
-                <div style={{ fontFamily:"'Caveat', 'Inter', cursive", fontSize:24, color:'#222', lineHeight:1, marginBottom:6, borderBottom:'1px solid #ccc', paddingBottom:4 }}>
+                <div style={{ fontSize: 15, fontWeight:900, textTransform:'uppercase', letterSpacing:'0.12em', color:'#aaa', marginBottom:8, fontFamily:"'Inter', sans-serif" }}>Customer Acknowledgement</div>
+                <div style={{ fontFamily:"'Caveat', 'Inter', cursive", fontSize: 26, color:'#222', lineHeight:1, marginBottom:6, borderBottom:'1px solid #ccc', paddingBottom:4 }}>
                   {invoice.customerSignedName || '—'}
                 </div>
-                <div style={{ fontSize:13, color:'#777' }}>Signed {new Date(invoice.customerSignedAt).toLocaleString()}</div>
+                <div style={{ fontSize: 15, color:'#777' }}>Signed {new Date(invoice.customerSignedAt).toLocaleString()}</div>
               </div>
             )}
           </div>
@@ -4500,16 +4500,16 @@ function InvoiceDocument({ invoice, user, logo, payments, onEdit, onBack, onReco
           <div style={{ padding: isTablet ? '14px 18px' : '16px 44px', background: '#fafafa', borderTop: '1px solid #eee', display: 'grid', gridTemplateColumns: isTablet ? '1fr' : '1fr 1fr', gap: 18 }}>
             {(invoice.lateFeeTerms || user?.defaultLateFeePolicy) && (
               <div>
-                <div style={{ fontSize:12, fontWeight:900, textTransform:'uppercase', letterSpacing:'0.12em', color:'#aaa', marginBottom:4, fontFamily:"'Inter', sans-serif" }}>Payment Terms</div>
-                <div style={{ fontSize:14, color:'#666', lineHeight:1.6 }}>
+                <div style={{ fontSize: 14, fontWeight:900, textTransform:'uppercase', letterSpacing:'0.12em', color:'#aaa', marginBottom:4, fontFamily:"'Inter', sans-serif" }}>Payment Terms</div>
+                <div style={{ fontSize: 16, color:'#666', lineHeight:1.6 }}>
                   {invoice.lateFeeTerms || user.defaultLateFeePolicy}
                 </div>
               </div>
             )}
             {user?.coiCarrier && (
               <div>
-                <div style={{ fontSize:12, fontWeight:900, textTransform:'uppercase', letterSpacing:'0.12em', color:'#aaa', marginBottom:4, fontFamily:"'Inter', sans-serif" }}>Insurance</div>
-                <div style={{ fontSize:14, color:'#666', lineHeight:1.6 }}>
+                <div style={{ fontSize: 14, fontWeight:900, textTransform:'uppercase', letterSpacing:'0.12em', color:'#aaa', marginBottom:4, fontFamily:"'Inter', sans-serif" }}>Insurance</div>
+                <div style={{ fontSize: 16, color:'#666', lineHeight:1.6 }}>
                   {user.coiCarrier}
                   {user.coiPolicyNumber && <> · Policy {user.coiPolicyNumber}</>}
                   {user.coiExpiresAt && <> · Exp {user.coiExpiresAt}</>}
@@ -4538,16 +4538,16 @@ function InvoiceDocument({ invoice, user, logo, payments, onEdit, onBack, onReco
           if (methods.length === 0) return null;
           return (
             <div style={{ padding: '18px 44px', borderTop: '1.5px solid #ebebeb', background: '#fafafa' }}>
-              <div style={{ fontSize: 13, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#aaa', marginBottom: 12, fontFamily: "'Inter', sans-serif" }}>How to Pay</div>
+              <div style={{ fontSize: 15, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#aaa', marginBottom: 12, fontFamily: "'Inter', sans-serif" }}>How to Pay</div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '10px 24px' }}>
                 {methods.map(m => (
                   <div key={m.label} style={{ padding: m.highlight ? '10px 12px' : '0', background: m.highlight ? '#fff7ed' : 'transparent', border: m.highlight ? `1px solid ${C.orange}44` : 'none', borderRadius: m.highlight ? 3 : 0 }}>
-                    <div style={{ fontSize: 14, fontWeight: 800, color: m.highlight ? C.orange : '#333', fontFamily: "'Inter', sans-serif" }}>{m.label}</div>
-                    <div style={{ fontSize: 13, color: '#777', marginTop: 2, lineHeight: 1.5 }}>{m.detail}</div>
+                    <div style={{ fontSize: 16, fontWeight: 800, color: m.highlight ? C.orange : '#333', fontFamily: "'Inter', sans-serif" }}>{m.label}</div>
+                    <div style={{ fontSize: 15, color: '#777', marginTop: 2, lineHeight: 1.5 }}>{m.detail}</div>
                   </div>
                 ))}
               </div>
-              <div style={{ marginTop: 10, fontSize: 12, color: '#bbb', fontStyle: 'italic' }}>
+              <div style={{ marginTop: 10, fontSize: 14, color: '#bbb', fontStyle: 'italic' }}>
                 Online card payments include a 3.9% + $0.30 processing fee paid by client. Zelle, Venmo, Cash App, check, and cash have no fee.
               </div>
             </div>
@@ -4560,9 +4560,9 @@ function InvoiceDocument({ invoice, user, logo, payments, onEdit, onBack, onReco
           if (!links.length) return null;
           return (
             <div style={{ padding: '14px 44px', borderTop: '1.5px solid #ebebeb', background: '#fff', display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
-              <div style={{ fontSize: 12, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#aaa', fontFamily: "'Inter', sans-serif" }}>Follow us</div>
+              <div style={{ fontSize: 14, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#aaa', fontFamily: "'Inter', sans-serif" }}>Follow us</div>
               {links.map(l => (
-                <a key={l.platform} href={l.url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, fontWeight: 700, color: C.orange, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                <a key={l.platform} href={l.url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 15, fontWeight: 700, color: C.orange, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                   <span>{l.icon}</span>
                   <span>{l.display}</span>
                 </a>
@@ -4573,10 +4573,10 @@ function InvoiceDocument({ invoice, user, logo, payments, onEdit, onBack, onReco
 
         {/* Footer */}
         <div style={{ padding:'10px 44px', background:'#f4f4f4', borderTop:'1px solid #e8e8e8', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-          <div style={{ fontSize:14, color:'#bbb', fontStyle:'italic' }}>{invoice.number} — {invoice.createdAt}</div>
+          <div style={{ fontSize: 16, color:'#bbb', fontStyle:'italic' }}>{invoice.number} — {invoice.createdAt}</div>
           <div style={{ display:'flex', alignItems:'center', gap:5 }}>
-            <span style={{ fontSize:12, color:'#ccc', textTransform:'uppercase', letterSpacing:'0.07em', fontFamily:"'Inter', sans-serif", fontWeight:600 }}>Powered by</span>
-            <span style={{ fontFamily:"'Inter', sans-serif", fontSize:13, fontWeight:900, letterSpacing:'0.04em', lineHeight:1 }}>
+            <span style={{ fontSize: 14, color:'#ccc', textTransform:'uppercase', letterSpacing:'0.07em', fontFamily:"'Inter', sans-serif", fontWeight:600 }}>Powered by</span>
+            <span style={{ fontFamily:"'Inter', sans-serif", fontSize: 15, fontWeight:900, letterSpacing:'0.04em', lineHeight:1 }}>
               <span style={{ color:C.orange }}>TRADE</span><span style={{ color:'#bbb' }}>VOICE</span>
             </span>
           </div>
@@ -4587,20 +4587,20 @@ function InvoiceDocument({ invoice, user, logo, payments, onEdit, onBack, onReco
       {/* Payment History — below the document */}
       {calc.paid > 0 && (
         <div style={{ marginTop:20, background:C.surface, border:`1px solid ${C.border}`, borderRadius:4, overflow:'hidden' }}>
-          <div style={{ padding:'14px 18px', borderBottom:`1px solid ${C.border}`, fontFamily:"'Inter', sans-serif", fontSize:17, fontWeight:900, color:C.muted, letterSpacing:'0.08em', textTransform:'uppercase' }}>Payments Received</div>
+          <div style={{ padding:'14px 18px', borderBottom:`1px solid ${C.border}`, fontFamily:"'Inter', sans-serif", fontSize: 19, fontWeight:900, color:C.muted, letterSpacing:'0.08em', textTransform:'uppercase' }}>Payments Received</div>
           {(invoice.payments||[]).map((p,i,arr) => (
             <div key={p.id} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'13px 18px', borderBottom:i<arr.length-1?`1px solid ${C.border}`:'none', gap:12, flexWrap:'wrap' }}>
               <div>
-                <div style={{ fontSize:17, fontWeight:600, color:C.text }}>{p.method} {p.ref ? `— #${p.ref}` : ''}</div>
-                <div style={{ fontSize:15, color:C.muted, marginTop:2 }}>{p.date}</div>
+                <div style={{ fontSize: 19, fontWeight:600, color:C.text }}>{p.method} {p.ref ? `— #${p.ref}` : ''}</div>
+                <div style={{ fontSize: 17, color:C.muted, marginTop:2 }}>{p.date}</div>
               </div>
-              <div style={{ fontFamily:"'Inter', sans-serif", fontSize:20, fontWeight:900, color:C.success }}>{fmtMoney(p.amount)}</div>
+              <div style={{ fontFamily:"'Inter', sans-serif", fontSize: 22, fontWeight:900, color:C.success }}>{fmtMoney(p.amount)}</div>
             </div>
           ))}
           {calc.balance > 0.01 && (
             <div style={{ display:'flex', justifyContent:'space-between', padding:'12px 18px', background:C.raised, borderTop:`1px solid ${C.border}` }}>
-              <span style={{ fontSize:16, fontWeight:700, color:C.muted }}>Balance Remaining</span>
-              <span style={{ fontFamily:"'Inter', sans-serif", fontSize:19, fontWeight:900, color:C.error }}>{fmtMoney(calc.balance)}</span>
+              <span style={{ fontSize: 18, fontWeight:700, color:C.muted }}>Balance Remaining</span>
+              <span style={{ fontFamily:"'Inter', sans-serif", fontSize: 21, fontWeight:900, color:C.error }}>{fmtMoney(calc.balance)}</span>
             </div>
           )}
         </div>
@@ -4609,16 +4609,16 @@ function InvoiceDocument({ invoice, user, logo, payments, onEdit, onBack, onReco
       {/* Activity Log — mirrors QB audit trail */}
       {(invoice.activity||[]).length > 0 && (
         <div style={{ marginTop:16, background:C.surface, border:`1px solid ${C.border}`, borderRadius:4, overflow:'hidden' }}>
-          <div style={{ padding:'14px 18px', borderBottom:`1px solid ${C.border}`, fontFamily:"'Inter', sans-serif", fontSize:17, fontWeight:900, color:C.muted, letterSpacing:'0.08em', textTransform:'uppercase' }}>Activity Log</div>
+          <div style={{ padding:'14px 18px', borderBottom:`1px solid ${C.border}`, fontFamily:"'Inter', sans-serif", fontSize: 19, fontWeight:900, color:C.muted, letterSpacing:'0.08em', textTransform:'uppercase' }}>Activity Log</div>
           {[...(invoice.activity||[])].reverse().map((a,i,arr) => {
             const icons = { created:'Created', sent:'Sent', viewed:'Viewed', payment:'Payment', reminder:'Reminder', voided:'Voided', edited:'Edited' };
             const colors = { created:C.muted, sent:'#1d4ed8', viewed:'#0284c7', payment:C.success, reminder:C.warn, voided:C.error, edited:C.muted };
             return (
               <div key={i} style={{ display:'flex', gap:14, padding:'12px 18px', borderBottom:i<arr.length-1?`1px solid ${C.border}`:'none', alignItems:'flex-start' }}>
-                <span style={{ fontFamily:"'Inter', sans-serif", fontSize:13, fontWeight:900, letterSpacing:'0.08em', textTransform:'uppercase', color: colors[a.type]||C.muted, marginTop:2, minWidth:70 }}>{icons[a.type]||a.type}</span>
+                <span style={{ fontFamily:"'Inter', sans-serif", fontSize: 15, fontWeight:900, letterSpacing:'0.08em', textTransform:'uppercase', color: colors[a.type]||C.muted, marginTop:2, minWidth:70 }}>{icons[a.type]||a.type}</span>
                 <div style={{ flex:1 }}>
-                  <div style={{ fontSize:16, color:C.text }}>{a.note}</div>
-                  <div style={{ fontSize:14, color:C.dim, marginTop:2 }}>{a.date}</div>
+                  <div style={{ fontSize: 18, color:C.text }}>{a.note}</div>
+                  <div style={{ fontSize: 16, color:C.dim, marginTop:2 }}>{a.date}</div>
                 </div>
               </div>
             );
@@ -4690,15 +4690,15 @@ function ShareInvoiceModal({ invoice, onClose, onSend }) {
         {/* Header */}
         <div style={{ padding: '20px 24px', background: C.success, color: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', opacity: 0.85 }}>{invoice.status === 'draft' ? 'Sending Invoice' : 'Invoice Link'}</div>
-            <div style={{ fontSize: 19, fontWeight: 700, marginTop: 2 }}>{invoice.number}</div>
+            <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', opacity: 0.85 }}>{invoice.status === 'draft' ? 'Sending Invoice' : 'Invoice Link'}</div>
+            <div style={{ fontSize: 21, fontWeight: 700, marginTop: 2 }}>{invoice.number}</div>
           </div>
-          <button onClick={onClose} style={{ width: 44, height: 44, borderRadius: '50%', background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', fontSize: 22, cursor: 'pointer' }}>×</button>
+          <button onClick={onClose} style={{ width: 44, height: 44, borderRadius: '50%', background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', fontSize: 24, cursor: 'pointer' }}>×</button>
         </div>
 
         {/* Body */}
         <div style={{ padding: '20px 24px' }}>
-          <div style={{ fontSize: 13, color: C.muted, lineHeight: 1.55, marginBottom: 14 }}>
+          <div style={{ fontSize: 15, color: C.muted, lineHeight: 1.55, marginBottom: 14 }}>
             Send this link to <strong style={{ color: C.text }}>{invoice.clientName || 'your customer'}</strong>. They'll see a clean read-only invoice and your payment options. Mobile? Tap "Text" to open your messaging app with the link pre-filled.
           </div>
 
@@ -4706,11 +4706,11 @@ function ShareInvoiceModal({ invoice, onClose, onSend }) {
           <div style={{ ...s.label, marginBottom: 6 }}>Public Link</div>
           <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
             <input readOnly value={url} onFocus={e => e.target.select()}
-              style={{ flex: 1, padding: '12px 14px', minHeight: 48, fontSize: 14, border: `1px solid ${C.border}`, borderRadius: 8, background: C.raised, color: C.text, fontFamily: 'ui-monospace, monospace', boxSizing: 'border-box' }} />
+              style={{ flex: 1, padding: '12px 14px', minHeight: 48, fontSize: 16, border: `1px solid ${C.border}`, borderRadius: 8, background: C.raised, color: C.text, fontFamily: 'ui-monospace, monospace', boxSizing: 'border-box' }} />
             <button onClick={() => copy(url, 'url')} style={{
               padding: '0 18px', minHeight: 48, border: `1.5px solid ${copied === 'url' ? C.success : C.border2}`,
               borderRadius: 8, background: copied === 'url' ? '#f0fdf4' : '#fff',
-              color: copied === 'url' ? C.success : C.muted, fontSize: 14, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap',
+              color: copied === 'url' ? C.success : C.muted, fontSize: 16, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap',
             }}>{copied === 'url' ? '✓ Copied' : 'Copy'}</button>
           </div>
 
@@ -4720,18 +4720,18 @@ function ShareInvoiceModal({ invoice, onClose, onSend }) {
             <a href={smsHref} style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
               padding: '14px', minHeight: 50, borderRadius: 8, textDecoration: 'none',
-              background: C.orange, color: '#fff', fontSize: 14, fontWeight: 700,
+              background: C.orange, color: '#fff', fontSize: 16, fontWeight: 700,
               boxShadow: '0 1px 2px rgba(45,106,79,0.25)',
             }}>📱 Text {invoice.clientName ? `${invoice.clientName.split(' ')[0]}` : 'Customer'}</a>
             <a href={mailHref} style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
               padding: '14px', minHeight: 50, borderRadius: 8, textDecoration: 'none',
-              background: '#fff', color: C.orange, fontSize: 14, fontWeight: 700,
+              background: '#fff', color: C.orange, fontSize: 16, fontWeight: 700,
               border: `1.5px solid ${C.orange}88`,
             }}>✉️ Email Customer</a>
           </div>
 
-          <div style={{ fontSize: 12, color: C.dim, lineHeight: 1.5, marginBottom: 4 }}>
+          <div style={{ fontSize: 14, color: C.dim, lineHeight: 1.5, marginBottom: 4 }}>
             <strong style={{ color: C.muted }}>Tip:</strong> the customer doesn't need an account. They open the link, see the invoice, and pay using whatever method you have set in Settings → Payments (Venmo, Zelle, check, cash, etc.).
           </div>
         </div>
@@ -4740,7 +4740,7 @@ function ShareInvoiceModal({ invoice, onClose, onSend }) {
         <div style={{ padding: '14px 24px', borderTop: `1px solid ${C.border}`, display: 'flex', gap: 10 }}>
           <button onClick={onClose} style={{
             flex: 1, padding: '14px', minHeight: 50, border: 'none', borderRadius: 8,
-            background: C.success, color: '#fff', fontSize: 15, fontWeight: 700, cursor: 'pointer',
+            background: C.success, color: '#fff', fontSize: 17, fontWeight: 700, cursor: 'pointer',
           }}>Done</button>
         </div>
       </div>
@@ -4813,25 +4813,25 @@ function ShareQuoteModal({ quote, onClose, onSend }) {
       }}>
         <div style={{ padding: '20px 24px', background: C.orange, color: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', opacity: 0.85 }}>{quote.status === 'draft' ? 'Sending Quote' : 'Quote Link'}</div>
-            <div style={{ fontSize: 19, fontWeight: 700, marginTop: 2 }}>{quote.number}</div>
+            <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', opacity: 0.85 }}>{quote.status === 'draft' ? 'Sending Quote' : 'Quote Link'}</div>
+            <div style={{ fontSize: 21, fontWeight: 700, marginTop: 2 }}>{quote.number}</div>
           </div>
-          <button onClick={onClose} style={{ width: 44, height: 44, borderRadius: '50%', background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', fontSize: 22, cursor: 'pointer' }}>×</button>
+          <button onClick={onClose} style={{ width: 44, height: 44, borderRadius: '50%', background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', fontSize: 24, cursor: 'pointer' }}>×</button>
         </div>
 
         <div style={{ padding: '20px 24px' }}>
-          <div style={{ fontSize: 13, color: C.muted, lineHeight: 1.55, marginBottom: 14 }}>
+          <div style={{ fontSize: 15, color: C.muted, lineHeight: 1.55, marginBottom: 14 }}>
             Send this link to <strong style={{ color: C.text }}>{customerName || 'your customer'}</strong>. They'll see a clean read-only quote and an "Accept Quote" button. The status flips to <em>Accepted</em> here the moment they tap it.
           </div>
 
           <div style={{ ...s.label, marginBottom: 6 }}>Public Link</div>
           <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
             <input readOnly value={url} onFocus={e => e.target.select()}
-              style={{ flex: 1, padding: '12px 14px', minHeight: 48, fontSize: 14, border: `1px solid ${C.border}`, borderRadius: 8, background: C.raised, color: C.text, fontFamily: 'ui-monospace, monospace', boxSizing: 'border-box' }} />
+              style={{ flex: 1, padding: '12px 14px', minHeight: 48, fontSize: 16, border: `1px solid ${C.border}`, borderRadius: 8, background: C.raised, color: C.text, fontFamily: 'ui-monospace, monospace', boxSizing: 'border-box' }} />
             <button onClick={() => copy(url, 'url')} style={{
               padding: '0 18px', minHeight: 48, border: `1.5px solid ${copied === 'url' ? C.success : C.border2}`,
               borderRadius: 8, background: copied === 'url' ? '#f0fdf4' : '#fff',
-              color: copied === 'url' ? C.success : C.muted, fontSize: 14, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap',
+              color: copied === 'url' ? C.success : C.muted, fontSize: 16, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap',
             }}>{copied === 'url' ? '✓ Copied' : 'Copy'}</button>
           </div>
 
@@ -4840,18 +4840,18 @@ function ShareQuoteModal({ quote, onClose, onSend }) {
             <a href={smsHref} style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
               padding: '14px', minHeight: 50, borderRadius: 8, textDecoration: 'none',
-              background: C.orange, color: '#fff', fontSize: 14, fontWeight: 700,
+              background: C.orange, color: '#fff', fontSize: 16, fontWeight: 700,
               boxShadow: '0 1px 2px rgba(234, 88, 12, 0.25)',
             }}>📱 Text {customerName ? customerName.split(' ')[0] : 'Customer'}</a>
             <a href={mailHref} style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
               padding: '14px', minHeight: 50, borderRadius: 8, textDecoration: 'none',
-              background: '#fff', color: C.orange, fontSize: 14, fontWeight: 700,
+              background: '#fff', color: C.orange, fontSize: 16, fontWeight: 700,
               border: `1.5px solid ${C.orange}88`,
             }}>✉️ Email Customer</a>
           </div>
 
-          <div style={{ fontSize: 12, color: C.dim, lineHeight: 1.5, marginBottom: 4 }}>
+          <div style={{ fontSize: 14, color: C.dim, lineHeight: 1.5, marginBottom: 4 }}>
             <strong style={{ color: C.muted }}>Tip:</strong> the customer doesn't need an account. They open the link, review the quote, and tap Accept — you'll see the status update here in real time.
           </div>
         </div>
@@ -4859,7 +4859,7 @@ function ShareQuoteModal({ quote, onClose, onSend }) {
         <div style={{ padding: '14px 24px', borderTop: `1px solid ${C.border}`, display: 'flex', gap: 10 }}>
           <button onClick={onClose} style={{
             flex: 1, padding: '14px', minHeight: 50, border: 'none', borderRadius: 8,
-            background: C.orange, color: '#fff', fontSize: 15, fontWeight: 700, cursor: 'pointer',
+            background: C.orange, color: '#fff', fontSize: 17, fontWeight: 700, cursor: 'pointer',
           }}>Done</button>
         </div>
       </div>
@@ -5132,9 +5132,9 @@ function QuoteDocument({ quote, client, user, logo, onRevise, onBack, onConvertT
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, flexWrap: 'wrap' }}>
           <Btn variant="ghost" size="sm" onClick={onBack}>Back to Quotes</Btn>
           <Badge status={quote.status} />
-          <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 26, fontWeight: 800, color: C.orange, letterSpacing: '0.08em' }}>{quote.number}</span>
+          <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 28, fontWeight: 800, color: C.orange, letterSpacing: '0.08em' }}>{quote.number}</span>
           {/* Trade label */}
-          <span style={{ fontSize: 15, fontWeight: 900, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '3px 9px', borderRadius: 2, background: tradeConf.color + '22', color: tradeConf.color, fontFamily: "'Inter', sans-serif" }}>
+          <span style={{ fontSize: 17, fontWeight: 900, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '3px 9px', borderRadius: 2, background: tradeConf.color + '22', color: tradeConf.color, fontFamily: "'Inter', sans-serif" }}>
             {tradeConf.label}
           </span>
         </div>
@@ -5188,7 +5188,7 @@ function QuoteDocument({ quote, client, user, logo, onRevise, onBack, onConvertT
       )}
 
       {quote.revisionNumber > 1 && (
-        <div style={{ marginBottom: 14, padding: '10px 16px', background: '#fffbeb', border: `1px solid ${C.warn}33`, borderRadius: 3, fontSize: 17, color: C.warn }}>
+        <div style={{ marginBottom: 14, padding: '10px 16px', background: '#fffbeb', border: `1px solid ${C.warn}33`, borderRadius: 3, fontSize: 19, color: C.warn }}>
           Revision {quote.revisionNumber} — {quote.revisionOf ? `supersedes ${quote.revisionOf}` : ''}
         </div>
       )}
@@ -5213,7 +5213,7 @@ function QuoteDocument({ quote, client, user, logo, onRevise, onBack, onConvertT
 
             {/* Trade label */}
             <div style={{ marginBottom: 8 }}>
-              <span style={{ display: 'inline-block', fontSize: 15, fontWeight: 900, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '3px 10px', borderRadius: 2, background: accentColor, color: '#fff', fontFamily: "'Inter', sans-serif" }}>
+              <span style={{ display: 'inline-block', fontSize: 17, fontWeight: 900, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '3px 10px', borderRadius: 2, background: accentColor, color: '#fff', fontFamily: "'Inter', sans-serif" }}>
                 {quote.trade === 'Specialty' && user?.specialtyTypes?.length > 0
                   ? user.specialtyTypes.slice(0, 2).join(' / ') + (user.specialtyTypes.length > 2 ? ` + ${user.specialtyTypes.length - 2} more` : '')
                   : tradeConf.docLabel}
@@ -5221,9 +5221,9 @@ function QuoteDocument({ quote, client, user, logo, onRevise, onBack, onConvertT
             </div>
 
             {/* Company info */}
-            <div style={{ fontSize: 19, fontWeight: 700, color: '#222', marginBottom: 2 }}>{user?.company || user?.name || 'Your Company'}</div>
-            {user?.tagline && <div style={{ fontSize: 14, color: accentColor, fontWeight: 600, marginBottom: 4 }}>{user.tagline}</div>}
-            <div style={{ fontSize: 17, color: '#777', lineHeight: 1.9 }}>
+            <div style={{ fontSize: 21, fontWeight: 700, color: '#222', marginBottom: 2 }}>{user?.company || user?.name || 'Your Company'}</div>
+            {user?.tagline && <div style={{ fontSize: 16, color: accentColor, fontWeight: 600, marginBottom: 4 }}>{user.tagline}</div>}
+            <div style={{ fontSize: 19, color: '#777', lineHeight: 1.9 }}>
               {user?.email && <div>{user.email}</div>}
               {user?.phone && <div>{user.phone}</div>}
               {user?.state && <div>{user.state}</div>}
@@ -5237,13 +5237,13 @@ function QuoteDocument({ quote, client, user, logo, onRevise, onBack, onConvertT
               const perState = quote.state && user?.stateLicenses?.[quote.state];
               const lic = stamped || perState || user?.license || tradeConf.licenseNote;
               if (!lic) return null;
-              return <div style={{ marginTop: 6, fontSize: 15, color: '#888', fontStyle: 'italic' }}>{lic}</div>;
+              return <div style={{ marginTop: 6, fontSize: 17, color: '#888', fontStyle: 'italic' }}>{lic}</div>;
             })()}
           </div>
           <div style={{ textAlign: isTablet ? 'left' : 'right', marginTop: isTablet ? 16 : 0, display: 'flex', flexDirection: 'column', alignItems: isTablet ? 'flex-start' : 'flex-end' }}>
             <div style={{ marginBottom: 20 }}>
               <div style={{ fontFamily: "'Inter', sans-serif", fontSize: isTablet ? 34 : 46, fontWeight: 900, color: '#111', letterSpacing: '0.04em', lineHeight: 1 }}>QUOTE</div>
-              <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 34, fontWeight: 900, color: accentColor, letterSpacing: '0.1em', marginTop: 4 }}>{quote.number}</div>
+              <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 36, fontWeight: 900, color: accentColor, letterSpacing: '0.1em', marginTop: 4 }}>{quote.number}</div>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '6px 18px' }}>
               {[
@@ -5252,8 +5252,8 @@ function QuoteDocument({ quote, client, user, logo, onRevise, onBack, onConvertT
                 ['Status',  quote.status.toUpperCase()],
               ].map(([label, val]) => (
                 <>
-                  <span key={label+'-l'} style={{ fontSize: 16, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.09em', color: '#bbb', paddingTop: 2, whiteSpace: 'nowrap' }}>{label}</span>
-                  <span key={label+'-v'} style={{ fontSize: 17, fontWeight: 600, color: val === 'ACCEPTED' ? '#22c55e' : val === 'DECLINED' ? '#ef4444' : '#222' }}>{val}</span>
+                  <span key={label+'-l'} style={{ fontSize: 18, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.09em', color: '#bbb', paddingTop: 2, whiteSpace: 'nowrap' }}>{label}</span>
+                  <span key={label+'-v'} style={{ fontSize: 19, fontWeight: 600, color: val === 'ACCEPTED' ? '#22c55e' : val === 'DECLINED' ? '#ef4444' : '#222' }}>{val}</span>
                 </>
               ))}
             </div>
@@ -5263,25 +5263,25 @@ function QuoteDocument({ quote, client, user, logo, onRevise, onBack, onConvertT
         {/* Prepared For + Project */}
         <div style={{ padding: isTablet ? '16px 18px' : '20px 44px', display: 'grid', gridTemplateColumns: isTablet ? '1fr' : '1fr 1fr', gap: 20, background: '#f9f9f9', borderBottom: '1.5px solid #ebebeb' }}>
           <div>
-            <div style={{ fontSize: 16, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#bbb', marginBottom: 6, fontFamily: "'Inter', sans-serif" }}>Prepared For</div>
-            <div style={{ fontSize: 20, fontWeight: 700, color: '#111' }}>{client?.name || '—'}</div>
-            {client?.company && <div style={{ fontSize: 17, color: '#555', marginTop: 1 }}>{client.company}</div>}
-            <div style={{ fontSize: 17, color: '#777', lineHeight: 1.8, marginTop: 2 }}>
+            <div style={{ fontSize: 18, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#bbb', marginBottom: 6, fontFamily: "'Inter', sans-serif" }}>Prepared For</div>
+            <div style={{ fontSize: 22, fontWeight: 700, color: '#111' }}>{client?.name || '—'}</div>
+            {client?.company && <div style={{ fontSize: 19, color: '#555', marginTop: 1 }}>{client.company}</div>}
+            <div style={{ fontSize: 19, color: '#777', lineHeight: 1.8, marginTop: 2 }}>
               {client?.email && <div>{client.email}</div>}
               {client?.phone && <div>{client.phone}</div>}
             </div>
           </div>
           <div>
-            <div style={{ fontSize: 16, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#bbb', marginBottom: 6, fontFamily: "'Inter', sans-serif" }}>Project</div>
-            <div style={{ fontSize: 20, fontWeight: 700, color: '#111', lineHeight: 1.4 }}>{quote.title}</div>
+            <div style={{ fontSize: 18, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#bbb', marginBottom: 6, fontFamily: "'Inter', sans-serif" }}>Project</div>
+            <div style={{ fontSize: 22, fontWeight: 700, color: '#111', lineHeight: 1.4 }}>{quote.title}</div>
           </div>
         </div>
 
         {/* Scope of Work */}
         {quote.scope && (
           <div style={{ padding: isTablet ? '16px 18px' : '22px 44px', borderBottom: '1.5px solid #ebebeb' }}>
-            <div style={{ fontSize: 16, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#bbb', marginBottom: 8, fontFamily: "'Inter', sans-serif" }}>Scope of Work</div>
-            <div style={{ fontSize: 18, color: '#333', lineHeight: 1.85, maxWidth: 680 }}>{quote.scope}</div>
+            <div style={{ fontSize: 18, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#bbb', marginBottom: 8, fontFamily: "'Inter', sans-serif" }}>Scope of Work</div>
+            <div style={{ fontSize: 20, color: '#333', lineHeight: 1.85, maxWidth: 680 }}>{quote.scope}</div>
           </div>
         )}
 
@@ -5294,38 +5294,38 @@ function QuoteDocument({ quote, client, user, logo, onRevise, onBack, onConvertT
               { label: 'Equipment & Rental', rows: quote.equipment, cols: ['Description','Qty','Unit','Rate','Amount'],            type: 'equipment' },
             ].filter(s => s.rows?.length > 0).map(({ label, rows, cols, type }) => (
               <div key={label}>
-                <div style={{ padding: '12px 0 6px', fontSize: 16, fontWeight: 900, color: tradeConf.color, textTransform: 'uppercase', letterSpacing: '0.1em', fontFamily: "'Inter', sans-serif", borderTop: '1px solid #eee' }}>{label}</div>
+                <div style={{ padding: '12px 0 6px', fontSize: 18, fontWeight: 900, color: tradeConf.color, textTransform: 'uppercase', letterSpacing: '0.1em', fontFamily: "'Inter', sans-serif", borderTop: '1px solid #eee' }}>{label}</div>
                 <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 420 }}>
                   <thead>
                     <tr style={{ borderBottom: '1.5px solid #222' }}>
-                      {cols.map((h, i) => <th key={h} style={{ padding: '9px 8px', textAlign: i === 0 ? 'left' : 'right', fontSize: 16, fontWeight: 900, color: '#999', textTransform: 'uppercase', letterSpacing: '0.1em', fontFamily: "'Inter', sans-serif", whiteSpace: 'nowrap' }}>{h}</th>)}
+                      {cols.map((h, i) => <th key={h} style={{ padding: '9px 8px', textAlign: i === 0 ? 'left' : 'right', fontSize: 18, fontWeight: 900, color: '#999', textTransform: 'uppercase', letterSpacing: '0.1em', fontFamily: "'Inter', sans-serif", whiteSpace: 'nowrap' }}>{h}</th>)}
                     </tr>
                   </thead>
                   <tbody>
                     {type === 'labor' && rows.map((r, i) => (
                       <tr key={r.id} style={{ background: i % 2 === 0 ? '#fff' : '#fafafa', borderBottom: '1px solid #f0f0f0' }}>
-                        <td style={{ padding: '11px 8px', fontSize: 18, color: '#222' }}>{r.desc}</td>
-                        <td style={{ padding: '11px 8px', textAlign: 'right', fontSize: 18, color: '#555' }}>{r.hrs}</td>
-                        <td style={{ padding: '11px 8px', textAlign: 'right', fontSize: 18, color: '#555' }}>{fmt(r.rate)}</td>
-                        <td style={{ padding: '11px 8px', textAlign: 'right', fontSize: 18, fontWeight: 700, color: '#111' }}>{fmt(r.hrs * r.rate)}</td>
+                        <td style={{ padding: '11px 8px', fontSize: 20, color: '#222' }}>{r.desc}</td>
+                        <td style={{ padding: '11px 8px', textAlign: 'right', fontSize: 20, color: '#555' }}>{r.hrs}</td>
+                        <td style={{ padding: '11px 8px', textAlign: 'right', fontSize: 20, color: '#555' }}>{fmt(r.rate)}</td>
+                        <td style={{ padding: '11px 8px', textAlign: 'right', fontSize: 20, fontWeight: 700, color: '#111' }}>{fmt(r.hrs * r.rate)}</td>
                       </tr>
                     ))}
                     {type === 'materials' && rows.map((r, i) => (
                       <tr key={r.id} style={{ background: i % 2 === 0 ? '#fff' : '#fafafa', borderBottom: '1px solid #f0f0f0' }}>
-                        <td style={{ padding: '11px 8px', fontSize: 18, color: '#222' }}>{r.desc}</td>
-                        <td style={{ padding: '11px 8px', textAlign: 'right', fontSize: 18, color: '#555' }}>{r.qty}</td>
-                        <td style={{ padding: '11px 8px', textAlign: 'right', fontSize: 16, color: '#aaa', fontStyle: 'italic' }}>{r.unit}</td>
-                        <td style={{ padding: '11px 8px', textAlign: 'right', fontSize: 18, color: '#555' }}>{fmt(r.cost)}</td>
-                        <td style={{ padding: '11px 8px', textAlign: 'right', fontSize: 18, fontWeight: 700, color: '#111' }}>{fmt(r.qty * r.cost)}</td>
+                        <td style={{ padding: '11px 8px', fontSize: 20, color: '#222' }}>{r.desc}</td>
+                        <td style={{ padding: '11px 8px', textAlign: 'right', fontSize: 20, color: '#555' }}>{r.qty}</td>
+                        <td style={{ padding: '11px 8px', textAlign: 'right', fontSize: 18, color: '#aaa', fontStyle: 'italic' }}>{r.unit}</td>
+                        <td style={{ padding: '11px 8px', textAlign: 'right', fontSize: 20, color: '#555' }}>{fmt(r.cost)}</td>
+                        <td style={{ padding: '11px 8px', textAlign: 'right', fontSize: 20, fontWeight: 700, color: '#111' }}>{fmt(r.qty * r.cost)}</td>
                       </tr>
                     ))}
                     {type === 'equipment' && rows.map((r, i) => (
                       <tr key={r.id} style={{ background: i % 2 === 0 ? '#fff' : '#fafafa', borderBottom: '1px solid #f0f0f0' }}>
-                        <td style={{ padding: '11px 8px', fontSize: 18, color: '#222' }}>{r.desc}</td>
-                        <td style={{ padding: '11px 8px', textAlign: 'right', fontSize: 18, color: '#555' }}>{r.qty}</td>
-                        <td style={{ padding: '11px 8px', textAlign: 'right', fontSize: 16, color: '#aaa', fontStyle: 'italic' }}>{r.unit}</td>
-                        <td style={{ padding: '11px 8px', textAlign: 'right', fontSize: 18, color: '#555' }}>{fmt(r.rate)}</td>
-                        <td style={{ padding: '11px 8px', textAlign: 'right', fontSize: 18, fontWeight: 700, color: '#111' }}>{fmt(r.qty * r.rate)}</td>
+                        <td style={{ padding: '11px 8px', fontSize: 20, color: '#222' }}>{r.desc}</td>
+                        <td style={{ padding: '11px 8px', textAlign: 'right', fontSize: 20, color: '#555' }}>{r.qty}</td>
+                        <td style={{ padding: '11px 8px', textAlign: 'right', fontSize: 18, color: '#aaa', fontStyle: 'italic' }}>{r.unit}</td>
+                        <td style={{ padding: '11px 8px', textAlign: 'right', fontSize: 20, color: '#555' }}>{fmt(r.rate)}</td>
+                        <td style={{ padding: '11px 8px', textAlign: 'right', fontSize: 20, fontWeight: 700, color: '#111' }}>{fmt(r.qty * r.rate)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -5342,7 +5342,7 @@ function QuoteDocument({ quote, client, user, logo, onRevise, onBack, onConvertT
               <div key={group.trade}>
                 {/* Trade section header */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 0 6px', borderTop: '1.5px solid #eee', marginTop: 4 }}>
-                  <span style={{ display: 'inline-block', fontSize: 14, fontWeight: 900, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '2px 8px', borderRadius: 2, background: group.color, color: '#fff', fontFamily: "'Inter', sans-serif" }}>{group.label}</span>
+                  <span style={{ display: 'inline-block', fontSize: 16, fontWeight: 900, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '2px 8px', borderRadius: 2, background: group.color, color: '#fff', fontFamily: "'Inter', sans-serif" }}>{group.label}</span>
                 </div>
 
                 {[
@@ -5351,7 +5351,7 @@ function QuoteDocument({ quote, client, user, logo, onRevise, onBack, onConvertT
                   { label: 'Equipment & Rental',                  rows: group.equipment, type: 'equipment' },
                 ].filter(s => s.rows?.length > 0).map(({ label, rows, type }) => (
                   <div key={label} style={{ marginBottom: 8 }}>
-                    <div style={{ fontSize: 15, fontWeight: 800, color: '#aaa', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '6px 0 4px', fontFamily: "'Inter', sans-serif" }}>{label}</div>
+                    <div style={{ fontSize: 17, fontWeight: 800, color: '#aaa', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '6px 0 4px', fontFamily: "'Inter', sans-serif" }}>{label}</div>
                     <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 420 }}>
                       <thead>
                         <tr style={{ borderBottom: '1px solid #ddd' }}>
@@ -5361,35 +5361,35 @@ function QuoteDocument({ quote, client, user, logo, onRevise, onBack, onConvertT
                             ? ['Description','Qty','Unit','Unit Cost','Amount']
                             : ['Description','Qty','Unit','Rate','Amount']
                           ).map((h, i) => (
-                            <th key={h} style={{ padding: '7px 8px', textAlign: i === 0 ? 'left' : 'right', fontSize: 15, fontWeight: 900, color: '#bbb', textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: "'Inter', sans-serif", whiteSpace: 'nowrap' }}>{h}</th>
+                            <th key={h} style={{ padding: '7px 8px', textAlign: i === 0 ? 'left' : 'right', fontSize: 17, fontWeight: 900, color: '#bbb', textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: "'Inter', sans-serif", whiteSpace: 'nowrap' }}>{h}</th>
                           ))}
                         </tr>
                       </thead>
                       <tbody>
                         {type === 'labor' && rows.map((r, i) => (
                           <tr key={r.id} style={{ background: i % 2 === 0 ? '#fff' : '#fafafa', borderBottom: '1px solid #f5f5f5' }}>
-                            <td style={{ padding: '10px 8px', fontSize: 18, color: '#222' }}>{r.desc}</td>
-                            <td style={{ padding: '10px 8px', textAlign: 'right', fontSize: 18, color: '#555' }}>{r.hrs}</td>
-                            <td style={{ padding: '10px 8px', textAlign: 'right', fontSize: 18, color: '#555' }}>{fmt(r.rate)}</td>
-                            <td style={{ padding: '10px 8px', textAlign: 'right', fontSize: 18, fontWeight: 700, color: '#111' }}>{fmt(r.hrs * r.rate)}</td>
+                            <td style={{ padding: '10px 8px', fontSize: 20, color: '#222' }}>{r.desc}</td>
+                            <td style={{ padding: '10px 8px', textAlign: 'right', fontSize: 20, color: '#555' }}>{r.hrs}</td>
+                            <td style={{ padding: '10px 8px', textAlign: 'right', fontSize: 20, color: '#555' }}>{fmt(r.rate)}</td>
+                            <td style={{ padding: '10px 8px', textAlign: 'right', fontSize: 20, fontWeight: 700, color: '#111' }}>{fmt(r.hrs * r.rate)}</td>
                           </tr>
                         ))}
                         {type === 'materials' && rows.map((r, i) => (
                           <tr key={r.id} style={{ background: i % 2 === 0 ? '#fff' : '#fafafa', borderBottom: '1px solid #f5f5f5' }}>
-                            <td style={{ padding: '10px 8px', fontSize: 18, color: '#222' }}>{r.desc}</td>
-                            <td style={{ padding: '10px 8px', textAlign: 'right', fontSize: 18, color: '#555' }}>{r.qty}</td>
-                            <td style={{ padding: '10px 8px', textAlign: 'right', fontSize: 16, color: '#aaa', fontStyle: 'italic' }}>{r.unit}</td>
-                            <td style={{ padding: '10px 8px', textAlign: 'right', fontSize: 18, color: '#555' }}>{fmt(r.cost)}</td>
-                            <td style={{ padding: '10px 8px', textAlign: 'right', fontSize: 18, fontWeight: 700, color: '#111' }}>{fmt(r.qty * r.cost)}</td>
+                            <td style={{ padding: '10px 8px', fontSize: 20, color: '#222' }}>{r.desc}</td>
+                            <td style={{ padding: '10px 8px', textAlign: 'right', fontSize: 20, color: '#555' }}>{r.qty}</td>
+                            <td style={{ padding: '10px 8px', textAlign: 'right', fontSize: 18, color: '#aaa', fontStyle: 'italic' }}>{r.unit}</td>
+                            <td style={{ padding: '10px 8px', textAlign: 'right', fontSize: 20, color: '#555' }}>{fmt(r.cost)}</td>
+                            <td style={{ padding: '10px 8px', textAlign: 'right', fontSize: 20, fontWeight: 700, color: '#111' }}>{fmt(r.qty * r.cost)}</td>
                           </tr>
                         ))}
                         {type === 'equipment' && rows.map((r, i) => (
                           <tr key={r.id} style={{ background: i % 2 === 0 ? '#fff' : '#fafafa', borderBottom: '1px solid #f5f5f5' }}>
-                            <td style={{ padding: '10px 8px', fontSize: 18, color: '#222' }}>{r.desc}</td>
-                            <td style={{ padding: '10px 8px', textAlign: 'right', fontSize: 18, color: '#555' }}>{r.qty}</td>
-                            <td style={{ padding: '10px 8px', textAlign: 'right', fontSize: 16, color: '#aaa', fontStyle: 'italic' }}>{r.unit}</td>
-                            <td style={{ padding: '10px 8px', textAlign: 'right', fontSize: 18, color: '#555' }}>{fmt(r.rate)}</td>
-                            <td style={{ padding: '10px 8px', textAlign: 'right', fontSize: 18, fontWeight: 700, color: '#111' }}>{fmt(r.qty * r.rate)}</td>
+                            <td style={{ padding: '10px 8px', fontSize: 20, color: '#222' }}>{r.desc}</td>
+                            <td style={{ padding: '10px 8px', textAlign: 'right', fontSize: 20, color: '#555' }}>{r.qty}</td>
+                            <td style={{ padding: '10px 8px', textAlign: 'right', fontSize: 18, color: '#aaa', fontStyle: 'italic' }}>{r.unit}</td>
+                            <td style={{ padding: '10px 8px', textAlign: 'right', fontSize: 20, color: '#555' }}>{fmt(r.rate)}</td>
+                            <td style={{ padding: '10px 8px', textAlign: 'right', fontSize: 20, fontWeight: 700, color: '#111' }}>{fmt(r.qty * r.rate)}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -5407,10 +5407,10 @@ function QuoteDocument({ quote, client, user, logo, onRevise, onBack, onConvertT
                       padding: '8px 0 14px', gap: 14,
                       borderBottom: '1px solid #eee', marginBottom: 4,
                     }}>
-                      <span style={{ fontSize: 14, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: group.color }}>
+                      <span style={{ fontSize: 16, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: group.color }}>
                         {group.label} Subtotal
                       </span>
-                      <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 22, fontWeight: 900, color: '#111', minWidth: 110, textAlign: 'right' }}>
+                      <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 24, fontWeight: 900, color: '#111', minWidth: 110, textAlign: 'right' }}>
                         {fmt(sub)}
                       </span>
                     </div>
@@ -5429,13 +5429,13 @@ function QuoteDocument({ quote, client, user, logo, onRevise, onBack, onConvertT
                   immediately sees how the project cost splits by discipline. */}
               {isBundle && groupSubtotals && groupSubtotals.length > 0 && (
                 <div style={{ background: '#fff', borderBottom: '1px solid #eee' }}>
-                  <div style={{ fontSize: 13, fontWeight: 900, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#999', padding: '10px 16px 4px' }}>
+                  <div style={{ fontSize: 15, fontWeight: 900, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#999', padding: '10px 16px 4px' }}>
                     By Trade
                   </div>
                   {groupSubtotals.map(g => (
                     <div key={g.trade} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 16px 6px 14px', borderLeft: `4px solid ${g.color}` }}>
-                      <span style={{ fontSize: 15, fontWeight: 700, color: '#444' }}>{g.label}</span>
-                      <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 17, fontWeight: 700, color: '#111' }}>{fmt(g.sub)}</span>
+                      <span style={{ fontSize: 17, fontWeight: 700, color: '#444' }}>{g.label}</span>
+                      <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 19, fontWeight: 700, color: '#111' }}>{fmt(g.sub)}</span>
                     </div>
                   ))}
                   <div style={{ height: 8 }} />
@@ -5448,13 +5448,13 @@ function QuoteDocument({ quote, client, user, logo, onRevise, onBack, onConvertT
                 ['Equipment & Rental', fmt(calc.equipT)],
                 [`Tax (${quote.tax}%)`, fmt(calc.txAmt)],
               ].filter(([, val]) => val !== '$0.00').map(([label, val]) => (
-                <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 16px', fontSize: 17, color: '#777', borderBottom: '1px solid #eee' }}>
+                <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 16px', fontSize: 19, color: '#777', borderBottom: '1px solid #eee' }}>
                   <span>{label}</span><span style={{ fontWeight: 600, color: '#444' }}>{val}</span>
                 </div>
               ))}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '13px 16px', background: tradeConf.color }}>
-                <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 18, fontWeight: 900, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#fff' }}>Quote Total</span>
-                <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 35, fontWeight: 900, color: '#fff', lineHeight: 1 }}>{fmt(calc.total)}</span>
+                <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 20, fontWeight: 900, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#fff' }}>Quote Total</span>
+                <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 37, fontWeight: 900, color: '#fff', lineHeight: 1 }}>{fmt(calc.total)}</span>
               </div>
             </div>
           </div>
@@ -5463,25 +5463,25 @@ function QuoteDocument({ quote, client, user, logo, onRevise, onBack, onConvertT
         {/* Terms */}
         <div style={{ padding: isTablet ? '14px 18px 22px' : '18px 44px 28px', background: '#f9f9f9', borderTop: '1.5px solid #eee', display: 'grid', gridTemplateColumns: isTablet ? '1fr' : '1fr auto', gap: 24, alignItems: 'end' }}>
           <div>
-            <div style={{ fontSize: 16, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#bbb', marginBottom: 6, fontFamily: "'Inter', sans-serif" }}>Terms & Conditions</div>
-            <div style={{ fontSize: 17, color: '#666', lineHeight: 1.75 }}>{quote.terms || 'Quote valid for 30 days from date of issue.'}</div>
+            <div style={{ fontSize: 18, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#bbb', marginBottom: 6, fontFamily: "'Inter', sans-serif" }}>Terms & Conditions</div>
+            <div style={{ fontSize: 19, color: '#666', lineHeight: 1.75 }}>{quote.terms || 'Quote valid for 30 days from date of issue.'}</div>
           </div>
           {quote.status === 'sent' && (
             <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-              <button style={{ ...s.btn, padding: '11px 20px', fontSize: 17, background: C.success, color: '#fff', minHeight: 44, border: 'none' }}>Accept Quote</button>
-              <button style={{ ...s.btn, padding: '11px 16px', fontSize: 17, background: 'transparent', color: C.error, minHeight: 44, border: `1.5px solid ${C.error}40` }}>Decline</button>
+              <button style={{ ...s.btn, padding: '11px 20px', fontSize: 19, background: C.success, color: '#fff', minHeight: 44, border: 'none' }}>Accept Quote</button>
+              <button style={{ ...s.btn, padding: '11px 16px', fontSize: 19, background: 'transparent', color: C.error, minHeight: 44, border: `1.5px solid ${C.error}40` }}>Decline</button>
             </div>
           )}
         </div>
 
         {/* Footer — small Tradevoice branding */}
         <div style={{ padding: '10px 44px', background: '#f4f4f4', borderTop: '1px solid #e8e8e8', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ fontSize: 11, color: '#bbb', fontStyle: 'italic' }}>
+          <div style={{ fontSize: 13, color: '#bbb', fontStyle: 'italic' }}>
             {quote.number} — {quote.createdAt}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-            <span style={{ fontSize: 10, color: '#ccc', textTransform: 'uppercase', letterSpacing: '0.07em', fontFamily: "'Inter', sans-serif", fontWeight: 600 }}>Powered by</span>
-            <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, fontWeight: 900, letterSpacing: '0.04em', lineHeight: 1 }}>
+            <span style={{ fontSize: 12, color: '#ccc', textTransform: 'uppercase', letterSpacing: '0.07em', fontFamily: "'Inter', sans-serif", fontWeight: 600 }}>Powered by</span>
+            <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, fontWeight: 900, letterSpacing: '0.04em', lineHeight: 1 }}>
               <span style={{ color: C.orange }}>TRADE</span><span style={{ color: '#bbb' }}>VOICE</span>
             </span>
           </div>
@@ -5553,14 +5553,14 @@ function CalendarPicker({ value, onChange, label }) {
           ...s.input,
           width: '100%', padding: '11px 14px', boxSizing: 'border-box',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          cursor: 'pointer', minHeight: 44, fontSize: 18,
+          cursor: 'pointer', minHeight: 44, fontSize: 20,
           borderColor: open ? C.orange : C.border2,
           color: selected ? C.text : C.muted,
           background: C.raised,
         }}
       >
         <span>{displayValue}</span>
-        <span style={{ fontSize: 16, color: C.muted, marginLeft: 8 }}>&#9660;</span>
+        <span style={{ fontSize: 18, color: C.muted, marginLeft: 8 }}>&#9660;</span>
       </button>
 
       {/* Calendar dropdown */}
@@ -5574,17 +5574,17 @@ function CalendarPicker({ value, onChange, label }) {
 
           {/* Month / Year header */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-            <button onClick={prevMonth} style={{ ...s.btn, background: C.raised, border: `1px solid ${C.border2}`, color: C.text, padding: '6px 12px', fontSize: 16, minHeight: 32, borderRadius: 4 }}>&#8249;</button>
-            <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 14, fontWeight: 800, color: C.text, letterSpacing: '0.04em' }}>
+            <button onClick={prevMonth} style={{ ...s.btn, background: C.raised, border: `1px solid ${C.border2}`, color: C.text, padding: '6px 12px', fontSize: 18, minHeight: 32, borderRadius: 4 }}>&#8249;</button>
+            <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 16, fontWeight: 800, color: C.text, letterSpacing: '0.04em' }}>
               {MONTHS[viewMonth]} {viewYear}
             </span>
-            <button onClick={nextMonth} style={{ ...s.btn, background: C.raised, border: `1px solid ${C.border2}`, color: C.text, padding: '6px 12px', fontSize: 16, minHeight: 32, borderRadius: 4 }}>&#8250;</button>
+            <button onClick={nextMonth} style={{ ...s.btn, background: C.raised, border: `1px solid ${C.border2}`, color: C.text, padding: '6px 12px', fontSize: 18, minHeight: 32, borderRadius: 4 }}>&#8250;</button>
           </div>
 
           {/* Day-of-week headers */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2, marginBottom: 2 }}>
             {DAYS.map(d => (
-              <div key={d} style={{ textAlign: 'center', fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 800, color: C.muted, padding: '4px 0', letterSpacing: '0.05em' }}>{d}</div>
+              <div key={d} style={{ textAlign: 'center', fontFamily: "'Inter', sans-serif", fontSize: 13, fontWeight: 800, color: C.muted, padding: '4px 0', letterSpacing: '0.05em' }}>{d}</div>
             ))}
           </div>
 
@@ -5602,7 +5602,7 @@ function CalendarPicker({ value, onChange, label }) {
                   onClick={() => !isPast && selectDay(d)}
                   style={{
                     ...s.btn,
-                    padding: '6px 0', fontSize: 13, textAlign: 'center',
+                    padding: '6px 0', fontSize: 15, textAlign: 'center',
                     borderRadius: 4, minHeight: 32,
                     background: isSel ? C.orange : isToday ? C.orangeLo : 'transparent',
                     color: isSel ? '#fff' : isPast ? C.dim : isToday ? C.orange : C.text,
@@ -5621,12 +5621,12 @@ function CalendarPicker({ value, onChange, label }) {
           {/* Today shortcut */}
           <div style={{ marginTop: 8, paddingTop: 8, borderTop: `1px solid ${C.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <button onClick={() => { onChange(toStr(today)); setOpen(false); }}
-              style={{ ...s.btn, background: 'transparent', border: `1px solid ${C.border2}`, color: C.muted, padding: '6px 14px', fontSize: 12, minHeight: 32, borderRadius: 4 }}>
+              style={{ ...s.btn, background: 'transparent', border: `1px solid ${C.border2}`, color: C.muted, padding: '6px 14px', fontSize: 14, minHeight: 32, borderRadius: 4 }}>
               Today
             </button>
             {value && (
               <button onClick={() => { onChange(''); setOpen(false); }}
-                style={{ ...s.btn, background: 'transparent', border: 'none', color: C.error, padding: '6px 12px', fontSize: 12, minHeight: 32 }}>
+                style={{ ...s.btn, background: 'transparent', border: 'none', color: C.error, padding: '6px 12px', fontSize: 14, minHeight: 32 }}>
                 Clear
               </button>
             )}
@@ -5696,7 +5696,7 @@ function QuickAddPanel({ library, onInsert, onSaveNew, onDelete, type }) {
 
       {/* Panel header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderBottom: `1px solid ${C.border}` }}>
-        <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 16, fontWeight: 900, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.orange }}>
+        <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 18, fontWeight: 900, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.orange }}>
           Quick Add — Saved Items
         </span>
         <div style={{ display: 'flex', gap: 8 }}>
@@ -5704,7 +5704,7 @@ function QuickAddPanel({ library, onInsert, onSaveNew, onDelete, type }) {
             ...s.btn, background: adding ? C.orangeLo : 'transparent',
             border: `1.5px solid ${adding ? C.orange : C.border2}`,
             color: adding ? C.orange : C.muted,
-            padding: '5px 12px', fontSize: 16, minHeight: 32,
+            padding: '5px 12px', fontSize: 18, minHeight: 32,
           }}>
             {adding ? 'Cancel' : 'Save New Item'}
           </button>
@@ -5712,7 +5712,7 @@ function QuickAddPanel({ library, onInsert, onSaveNew, onDelete, type }) {
             ...s.btn, background: managing ? '#fef2f2' : 'transparent',
             border: `1.5px solid ${managing ? C.error : C.border2}`,
             color: managing ? C.error : C.muted,
-            padding: '5px 12px', fontSize: 16, minHeight: 32,
+            padding: '5px 12px', fontSize: 18, minHeight: 32,
           }}>
             {managing ? 'Done' : 'Manage'}
           </button>
@@ -5770,10 +5770,10 @@ function QuickAddPanel({ library, onInsert, onSaveNew, onDelete, type }) {
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
             <button onClick={saveNew} disabled={!newDesc.trim()} style={{
-              ...s.btn, background: C.orange, color: '#ffffff', padding: '10px 20px', fontSize: 17,
+              ...s.btn, background: C.orange, color: '#ffffff', padding: '10px 20px', fontSize: 19,
               minHeight: 44, opacity: !newDesc.trim() ? 0.4 : 1,
             }}>Save to Library</button>
-            <button onClick={resetForm} style={{ ...s.btn, background: 'transparent', border: `1.5px solid ${C.border2}`, color: C.muted, padding: '10px 16px', fontSize: 17, minHeight: 44 }}>Cancel</button>
+            <button onClick={resetForm} style={{ ...s.btn, background: 'transparent', border: `1.5px solid ${C.border2}`, color: C.muted, padding: '10px 16px', fontSize: 19, minHeight: 44 }}>Cancel</button>
           </div>
         </div>
       )}
@@ -5781,7 +5781,7 @@ function QuickAddPanel({ library, onInsert, onSaveNew, onDelete, type }) {
       {/* Quick-add grid */}
       <div style={{ padding: '12px 14px', display: 'grid', gridTemplateColumns: isTablet ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)', gap: 8 }}>
         {library.length === 0 && (
-          <div style={{ gridColumn: '1 / -1', padding: '16px 0', textAlign: 'center', fontSize: 18, color: C.dim }}>
+          <div style={{ gridColumn: '1 / -1', padding: '16px 0', textAlign: 'center', fontSize: 20, color: C.dim }}>
             No saved items yet. Use "Save New Item" to build your library.
           </div>
         )}
@@ -5801,10 +5801,10 @@ function QuickAddPanel({ library, onInsert, onSaveNew, onDelete, type }) {
                 onPointerEnter={e => { if (!managing && !isSel) e.currentTarget.style.borderColor = C.orange; }}
                 onPointerLeave={e => { if (!managing && !isSel) e.currentTarget.style.borderColor = C.border2; }}
               >
-                <div style={{ fontSize: 17, fontWeight: isSel ? 700 : 600, color: isSel ? C.text : managing ? C.muted : C.text, lineHeight: 1.4, marginBottom: 3 }}>
+                <div style={{ fontSize: 19, fontWeight: isSel ? 700 : 600, color: isSel ? C.text : managing ? C.muted : C.text, lineHeight: 1.4, marginBottom: 3 }}>
                   {item.desc}
                 </div>
-                <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 16, color: C.orange, fontWeight: 700 }}>
+                <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 18, color: C.orange, fontWeight: 700 }}>
                   {isMat
                     ? `${item.qty} ${item.unit} — ${Number(item.cost).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})} ea.`
                     : `${item.qty} ${item.unit} — ${Number(item.rate).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}/${item.unit}`}
@@ -5816,16 +5816,16 @@ function QuickAddPanel({ library, onInsert, onSaveNew, onDelete, type }) {
                 <div style={{ marginTop: 6, display: 'flex', alignItems: 'center', gap: 6, padding: '0 2px' }}>
                   {/* − qty + */}
                   <button onClick={e => { e.stopPropagation(); setSelQty(q => Math.max(1, q - 1)); }}
-                    style={{ ...s.btn, width: 36, height: 36, minHeight: 36, padding: 0, background: C.raised, border: `1.5px solid ${C.border2}`, color: C.text, fontSize: 20, lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>−</button>
-                  <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 20, fontWeight: 900, color: C.orange, minWidth: 24, textAlign: 'center' }}>{selQty}</span>
+                    style={{ ...s.btn, width: 36, height: 36, minHeight: 36, padding: 0, background: C.raised, border: `1.5px solid ${C.border2}`, color: C.text, fontSize: 22, lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>−</button>
+                  <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 22, fontWeight: 900, color: C.orange, minWidth: 24, textAlign: 'center' }}>{selQty}</span>
                   <button onClick={e => { e.stopPropagation(); setSelQty(q => q + 1); }}
-                    style={{ ...s.btn, width: 36, height: 36, minHeight: 36, padding: 0, background: C.raised, border: `1.5px solid ${C.border2}`, color: C.text, fontSize: 20, lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>+</button>
+                    style={{ ...s.btn, width: 36, height: 36, minHeight: 36, padding: 0, background: C.raised, border: `1.5px solid ${C.border2}`, color: C.text, fontSize: 22, lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>+</button>
                   {/* Add to quote/invoice */}
                   <button onClick={e => { e.stopPropagation(); handleInsert(item, selQty); }}
-                    style={{ ...s.btn, flex: 1, height: 36, minHeight: 36, padding: '0 10px', background: C.orange, border: 'none', color: '#fff', fontSize: 15, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Add</button>
+                    style={{ ...s.btn, flex: 1, height: 36, minHeight: 36, padding: '0 10px', background: C.orange, border: 'none', color: '#fff', fontSize: 17, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Add</button>
                   {/* Remove from library */}
                   <button onClick={e => { e.stopPropagation(); onDelete(item.id); setSelItem(null); }}
-                    style={{ ...s.btn, width: 36, height: 36, minHeight: 36, padding: 0, background: '#fef2f2', border: `1.5px solid ${C.error}44`, color: C.error, fontSize: 18, lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>✕</button>
+                    style={{ ...s.btn, width: 36, height: 36, minHeight: 36, padding: 0, background: '#fef2f2', border: `1.5px solid ${C.error}44`, color: C.error, fontSize: 20, lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>✕</button>
                 </div>
               )}
 
@@ -5836,7 +5836,7 @@ function QuickAddPanel({ library, onInsert, onSaveNew, onDelete, type }) {
                   style={{
                     position: 'absolute', top: 6, right: 6,
                     background: C.error, border: 'none', borderRadius: 2,
-                    color: '#fff', fontSize: 16, fontWeight: 800, fontFamily: "'Inter', sans-serif",
+                    color: '#fff', fontSize: 18, fontWeight: 800, fontFamily: "'Inter', sans-serif",
                     padding: '2px 7px', cursor: 'pointer', minHeight: 24,
                     letterSpacing: '0.05em', textTransform: 'uppercase',
                   }}>
@@ -6081,10 +6081,10 @@ function QuoteEditor({ initial, clients, existingQuotes = [], user, setUser, onS
 
   // ── Shared table helpers ──
   const TH = ({ children, right }) => (
-    <th style={{ padding: '9px 7px', textAlign: right ? 'right' : 'left', fontSize: 16, fontWeight: 900, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.1em', fontFamily: "'Inter', sans-serif", borderBottom: `1.5px solid ${C.border2}`, background: C.raised, whiteSpace: 'nowrap' }}>{children}</th>
+    <th style={{ padding: '9px 7px', textAlign: right ? 'right' : 'left', fontSize: 18, fontWeight: 900, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.1em', fontFamily: "'Inter', sans-serif", borderBottom: `1.5px solid ${C.border2}`, background: C.raised, whiteSpace: 'nowrap' }}>{children}</th>
   );
   const TC = ({ val }) => (
-    <td style={{ padding: '6px 7px', textAlign: 'right', fontSize: 18, fontWeight: 700, color: val > 0 ? C.text : C.dim, fontFamily: "'Inter', sans-serif" }}>{fmt(val)}</td>
+    <td style={{ padding: '6px 7px', textAlign: 'right', fontSize: 20, fontWeight: 700, color: val > 0 ? C.text : C.dim, fontFamily: "'Inter', sans-serif" }}>{fmt(val)}</td>
   );
   // Accounting-style number cell — formats as $1,234.00 at rest, plain number on focus
   // Delegate to the shared NumberInput so editor inputs get the same iPad-friendly,
@@ -6099,7 +6099,7 @@ function QuoteEditor({ initial, clients, existingQuotes = [], user, setUser, onS
   const DelX = ({ onClick }) => (
     <button onClick={onClick}
       style={{ background: 'none', border: 'none', color: C.muted, cursor: 'pointer',
-        fontSize: 23, padding: '0', minHeight: 44, minWidth: 44,
+        fontSize: 25, padding: '0', minHeight: 44, minWidth: 44,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         borderRadius: 3, WebkitTapHighlightColor: 'transparent' }}
       onPointerDown={e => e.currentTarget.style.color = C.error}
@@ -6122,14 +6122,14 @@ function QuoteEditor({ initial, clients, existingQuotes = [], user, setUser, onS
       {/* Top bar */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <Btn variant="ghost" size="sm" onClick={onCancel} style={{ fontSize: 21, padding: '12px 24px', minHeight: 52 }}>Cancel</Btn>
-          <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 18, fontWeight: 700, color: C.text, letterSpacing: '-0.02em' }}>
+          <Btn variant="ghost" size="sm" onClick={onCancel} style={{ fontSize: 23, padding: '12px 24px', minHeight: 52 }}>Cancel</Btn>
+          <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 20, fontWeight: 700, color: C.text, letterSpacing: '-0.02em' }}>
             {isRevision ? `Revising ${initial.number}` : 'New Quote'}
           </span>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
-          <Btn variant="ghost"   size="sm" onClick={() => handleSave(true)}  disabled={saving} style={{ fontSize: 21, padding: '12px 24px', minHeight: 52, opacity: saving ? 0.6 : 1 }}>{saving ? 'Saving…' : 'Save Draft'}</Btn>
-          <Btn variant="primary" size="sm" onClick={() => handleSave(false)} disabled={saving} style={{ fontSize: 21, padding: '12px 24px', minHeight: 52, opacity: saving ? 0.6 : 1 }}>{saving ? 'Saving…' : 'Save + Preview'}</Btn>
+          <Btn variant="ghost"   size="sm" onClick={() => handleSave(true)}  disabled={saving} style={{ fontSize: 23, padding: '12px 24px', minHeight: 52, opacity: saving ? 0.6 : 1 }}>{saving ? 'Saving…' : 'Save Draft'}</Btn>
+          <Btn variant="primary" size="sm" onClick={() => handleSave(false)} disabled={saving} style={{ fontSize: 23, padding: '12px 24px', minHeight: 52, opacity: saving ? 0.6 : 1 }}>{saving ? 'Saving…' : 'Save + Preview'}</Btn>
         </div>
       </div>
 
@@ -6159,7 +6159,7 @@ function QuoteEditor({ initial, clients, existingQuotes = [], user, setUser, onS
               <div style={{ width: 4, height: 22, background: tradeConf.color, borderRadius: 2 }} />
               <span style={{
                 fontFamily: "'Inter', sans-serif",
-                fontSize: 14, fontWeight: 900, letterSpacing: '0.12em',
+                fontSize: 16, fontWeight: 900, letterSpacing: '0.12em',
                 textTransform: 'uppercase', color: C.muted,
               }}>Job Details</span>
             </div>
@@ -6167,7 +6167,7 @@ function QuoteEditor({ initial, clients, existingQuotes = [], user, setUser, onS
                 sees the doc type without hunting the dropdown. */}
             <span style={{
               display: 'inline-flex', alignItems: 'center', gap: 6,
-              fontSize: 13, fontWeight: 800, letterSpacing: '0.06em', textTransform: 'uppercase',
+              fontSize: 15, fontWeight: 800, letterSpacing: '0.06em', textTransform: 'uppercase',
               padding: '5px 11px', borderRadius: 20,
               background: tradeConf.color + '15', color: tradeConf.color,
               border: `1.5px solid ${tradeConf.color}55`,
@@ -6183,7 +6183,7 @@ function QuoteEditor({ initial, clients, existingQuotes = [], user, setUser, onS
             <div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
                 <label style={{
-                  fontSize: 12, fontWeight: 800, letterSpacing: '0.1em',
+                  fontSize: 14, fontWeight: 800, letterSpacing: '0.1em',
                   textTransform: 'uppercase', color: C.muted,
                   fontFamily: "'Inter', sans-serif",
                 }}>Client</label>
@@ -6197,7 +6197,7 @@ function QuoteEditor({ initial, clients, existingQuotes = [], user, setUser, onS
                       background: 'transparent', border: 'none',
                       color: C.orange, cursor: 'pointer',
                       fontFamily: "'Inter', sans-serif",
-                      fontSize: 12, fontWeight: 800, letterSpacing: '0.08em',
+                      fontSize: 14, fontWeight: 800, letterSpacing: '0.08em',
                       textTransform: 'uppercase', padding: '2px 4px',
                       WebkitTapHighlightColor: 'transparent',
                     }}
@@ -6207,7 +6207,7 @@ function QuoteEditor({ initial, clients, existingQuotes = [], user, setUser, onS
                 )}
               </div>
               <select value={clientId} onChange={e => setClientId(e.target.value)}
-                style={{ ...s.input, width: '100%', padding: '12px 14px', minHeight: 48, cursor: 'pointer', boxSizing: 'border-box', fontSize: 16, fontWeight: 600 }}>
+                style={{ ...s.input, width: '100%', padding: '12px 14px', minHeight: 48, cursor: 'pointer', boxSizing: 'border-box', fontSize: 18, fontWeight: 600 }}>
                 {clients.length === 0 && <option value="">— Add a client first —</option>}
                 {clients.map(c => <option key={c.id} value={c.id}>{c.name}{c.company ? ` — ${c.company}` : ''}</option>)}
               </select>
@@ -6215,7 +6215,7 @@ function QuoteEditor({ initial, clients, existingQuotes = [], user, setUser, onS
             <div>
               <label style={{
                 display: 'block', marginBottom: 6,
-                fontSize: 12, fontWeight: 800, letterSpacing: '0.1em',
+                fontSize: 14, fontWeight: 800, letterSpacing: '0.1em',
                 textTransform: 'uppercase', color: C.muted,
                 fontFamily: "'Inter', sans-serif",
               }}>
@@ -6229,7 +6229,7 @@ function QuoteEditor({ initial, clients, existingQuotes = [], user, setUser, onS
                 style={{
                   ...s.input,
                   width: '100%', padding: '12px 14px', minHeight: 48,
-                  fontSize: 16, fontWeight: 600, boxSizing: 'border-box',
+                  fontSize: 18, fontWeight: 600, boxSizing: 'border-box',
                 }}
               />
             </div>
@@ -6241,7 +6241,7 @@ function QuoteEditor({ initial, clients, existingQuotes = [], user, setUser, onS
               <div>
                 <label style={{
                   display: 'block', marginBottom: 6,
-                  fontSize: 12, fontWeight: 800, letterSpacing: '0.1em',
+                  fontSize: 14, fontWeight: 800, letterSpacing: '0.1em',
                   textTransform: 'uppercase', color: C.muted,
                   fontFamily: "'Inter', sans-serif",
                 }}>Quote Sheet Type</label>
@@ -6249,7 +6249,7 @@ function QuoteEditor({ initial, clients, existingQuotes = [], user, setUser, onS
                   style={{
                     ...s.input, width: '100%', padding: '12px 14px', minHeight: 48,
                     cursor: 'pointer', boxSizing: 'border-box',
-                    fontSize: 16, fontWeight: 600,
+                    fontSize: 18, fontWeight: 600,
                     borderColor: tradeConf.color + '88',
                     borderWidth: 1.5,
                   }}>
@@ -6287,21 +6287,21 @@ function QuoteEditor({ initial, clients, existingQuotes = [], user, setUser, onS
             <div style={{ marginTop:14, padding:'14px 16px', background:'#fffaf3', border:'1px solid #fbeacf', borderRadius:10 }}>
               <label style={{
                 display: 'block', marginBottom: 6,
-                fontSize: 12, fontWeight: 800, letterSpacing: '0.1em',
+                fontSize: 14, fontWeight: 800, letterSpacing: '0.1em',
                 textTransform: 'uppercase', color: C.muted,
                 fontFamily: "'Inter', sans-serif",
               }}>Job State (drives tax rate + license)</label>
               <select
                 value={quoteState}
                 onChange={e => handleQuoteStateChange(e.target.value)}
-                style={{ ...s.input, width:'100%', padding:'12px 14px', minHeight:48, cursor:'pointer', boxSizing:'border-box', fontSize:16, fontWeight:600, background:'#fff' }}
+                style={{ ...s.input, width:'100%', padding:'12px 14px', minHeight:48, cursor:'pointer', boxSizing:'border-box', fontSize: 18, fontWeight:600, background:'#fff' }}
               >
                 <option value="">— Select the state where the job is —</option>
                 {userStates.map(st => (
                   <option key={st} value={st}>{st}</option>
                 ))}
               </select>
-              <div style={{ fontSize:12, color:C.muted, marginTop:8, lineHeight:1.5 }}>
+              <div style={{ fontSize: 14, color:C.muted, marginTop:8, lineHeight:1.5 }}>
                 You operate in {userStates.length} states. Pick the one where THIS job will be performed — that's the state whose tax rate AND license number gets applied. Carries over to the invoice on conversion.
                 {quoteState && quoteState !== userPrimaryState && (
                   <span style={{ display:'block', marginTop:6, color:'#9a3412', fontWeight:600 }}>
@@ -6317,7 +6317,7 @@ function QuoteEditor({ initial, clients, existingQuotes = [], user, setUser, onS
           <div style={{ marginTop:14 }}>
             <label style={{
               display: 'block', marginBottom: 6,
-              fontSize: 12, fontWeight: 800, letterSpacing: '0.1em',
+              fontSize: 14, fontWeight: 800, letterSpacing: '0.1em',
               textTransform: 'uppercase', color: C.muted,
               fontFamily: "'Inter', sans-serif",
             }}>License Number on This Quote</label>
@@ -6326,9 +6326,9 @@ function QuoteEditor({ initial, clients, existingQuotes = [], user, setUser, onS
               value={quoteLicense}
               onChange={e => setQuoteLicense(e.target.value)}
               placeholder={quoteState ? `${quoteState} license #` : 'License # (optional)'}
-              style={{ ...s.input, width:'100%', padding:'12px 14px', minHeight:48, boxSizing:'border-box', fontSize:16, fontWeight:600 }}
+              style={{ ...s.input, width:'100%', padding:'12px 14px', minHeight:48, boxSizing:'border-box', fontSize: 18, fontWeight:600 }}
             />
-            <div style={{ fontSize:12, color:C.muted, marginTop:6 }}>
+            <div style={{ fontSize: 14, color:C.muted, marginTop:6 }}>
               {quoteState && (user?.stateLicenses?.[quoteState])
                 ? `Auto-filled from your ${quoteState} license. Editable for one-off jobs.`
                 : 'Optional. Leave blank for jobs that don\'t require a license number.'}
@@ -6397,7 +6397,7 @@ function QuoteEditor({ initial, clients, existingQuotes = [], user, setUser, onS
             {tab === 'labor' && (
               <div style={{ overflowX: 'auto' }}>
                 <div style={{ marginBottom: 10, padding: '8px 12px', background: tradeConf.color + '18', border: `1px solid ${tradeConf.color}33`, borderRadius: 3, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
-                  <span style={{ fontSize: 16, fontWeight: 800, color: tradeConf.color, fontFamily: "'Inter', sans-serif", letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                  <span style={{ fontSize: 18, fontWeight: 800, color: tradeConf.color, fontFamily: "'Inter', sans-serif", letterSpacing: '0.06em', textTransform: 'uppercase' }}>
                     {tradeConf.laborTitle}
                     {!isBundle && ` — Default rate: $${tradeConf.defaultLaborRate}/hr`}
                     {isBundle && ` — Tag each row with its trade for the per-trade subtotals`}
@@ -6409,7 +6409,7 @@ function QuoteEditor({ initial, clients, existingQuotes = [], user, setUser, onS
                     const baseRate = t ? TRADE_CONFIG[t]?.defaultLaborRate : tradeConf.defaultLaborRate;
                     addRow(setLabor, { desc: '', hrs: 1, rate: baseRate, ...(isBundle ? { _trade: t } : {}) });
                   }}
-                    style={{ ...s.btn, background: tradeConf.color, color: '#fff', padding: '6px 14px', fontSize: 16, minHeight: 34 }}>
+                    style={{ ...s.btn, background: tradeConf.color, color: '#fff', padding: '6px 14px', fontSize: 18, minHeight: 34 }}>
                     Add Labor Row
                   </button>
                 </div>
@@ -6433,7 +6433,7 @@ function QuoteEditor({ initial, clients, existingQuotes = [], user, setUser, onS
                                 const newRate = (!r.rate || r.rate === TRADE_CONFIG[r._trade]?.defaultLaborRate) ? TRADE_CONFIG[t]?.defaultLaborRate : r.rate;
                                 setLabor(a => a.map(x => x.id === r.id ? { ...x, _trade: t, rate: newRate } : x));
                               }}
-                              style={{ ...s.input, width: '100%', padding: '8px 5px', minHeight: 44, cursor: 'pointer', fontSize: 14, borderColor: (TRADE_CONFIG[r._trade]?.color || C.border2) + '88' }}>
+                              style={{ ...s.input, width: '100%', padding: '8px 5px', minHeight: 44, cursor: 'pointer', fontSize: 16, borderColor: (TRADE_CONFIG[r._trade]?.color || C.border2) + '88' }}>
                               {(user?.trades || ALL_TRADES).map(t => (
                                 <option key={t} value={t}>{t}</option>
                               ))}
@@ -6448,7 +6448,7 @@ function QuoteEditor({ initial, clients, existingQuotes = [], user, setUser, onS
                     ))}
                   </tbody>
                 </table>
-                {labor.length === 0 && <div style={{ padding: '12px 0', fontSize: 18, color: C.dim }}>No labor rows yet. Use the button above to add a row with the default rate pre-filled.</div>}
+                {labor.length === 0 && <div style={{ padding: '12px 0', fontSize: 20, color: C.dim }}>No labor rows yet. Use the button above to add a row with the default rate pre-filled.</div>}
               </div>
             )}
 
@@ -6477,7 +6477,7 @@ function QuoteEditor({ initial, clients, existingQuotes = [], user, setUser, onS
                             <td style={{ padding: '5px 5px', width: 130 }}>
                               <select value={r._trade || user?.trades?.[0] || 'Plumber'}
                                 onChange={e => updRow(setMats, r.id, '_trade', e.target.value)}
-                                style={{ ...s.input, width: '100%', padding: '8px 5px', minHeight: 44, cursor: 'pointer', fontSize: 14, borderColor: (TRADE_CONFIG[r._trade]?.color || C.border2) + '88' }}>
+                                style={{ ...s.input, width: '100%', padding: '8px 5px', minHeight: 44, cursor: 'pointer', fontSize: 16, borderColor: (TRADE_CONFIG[r._trade]?.color || C.border2) + '88' }}>
                                 {(user?.trades || ALL_TRADES).map(t => <option key={t} value={t}>{t}</option>)}
                               </select>
                             </td>
@@ -6504,7 +6504,7 @@ function QuoteEditor({ initial, clients, existingQuotes = [], user, setUser, onS
                                 if (exists) return;
                                 setMatLibrary(prev => [...prev, { id: uid(), desc: r.desc, qty: r.qty, unit: r.unit, cost: r.cost, ...(r._trade ? { _trade: r._trade } : {}) }]);
                               }}
-                              style={{ ...s.btn, background: 'transparent', border: `1.5px solid ${C.border2}`, color: C.muted, padding: '5px 8px', fontSize: 15, minHeight: 44, minWidth: 44, WebkitTapHighlightColor: 'transparent' }}
+                              style={{ ...s.btn, background: 'transparent', border: `1.5px solid ${C.border2}`, color: C.muted, padding: '5px 8px', fontSize: 17, minHeight: 44, minWidth: 44, WebkitTapHighlightColor: 'transparent' }}
                               onPointerEnter={e => { e.currentTarget.style.borderColor = C.orange; e.currentTarget.style.color = C.orange; }}
                               onPointerLeave={e => { e.currentTarget.style.borderColor = C.border2; e.currentTarget.style.color = C.muted; }}
                             >Save</button>
@@ -6544,7 +6544,7 @@ function QuoteEditor({ initial, clients, existingQuotes = [], user, setUser, onS
                             <td style={{ padding: '5px 5px', width: 130 }}>
                               <select value={r._trade || user?.trades?.[0] || 'Plumber'}
                                 onChange={e => updRow(setEquip, r.id, '_trade', e.target.value)}
-                                style={{ ...s.input, width: '100%', padding: '8px 5px', minHeight: 44, cursor: 'pointer', fontSize: 14, borderColor: (TRADE_CONFIG[r._trade]?.color || C.border2) + '88' }}>
+                                style={{ ...s.input, width: '100%', padding: '8px 5px', minHeight: 44, cursor: 'pointer', fontSize: 16, borderColor: (TRADE_CONFIG[r._trade]?.color || C.border2) + '88' }}>
                                 {(user?.trades || ALL_TRADES).map(t => <option key={t} value={t}>{t}</option>)}
                               </select>
                             </td>
@@ -6567,7 +6567,7 @@ function QuoteEditor({ initial, clients, existingQuotes = [], user, setUser, onS
                                 if (exists) return;
                                 setEquipLibrary(prev => [...prev, { id: uid(), desc: r.desc, qty: r.qty, unit: r.unit, rate: r.rate, ...(r._trade ? { _trade: r._trade } : {}) }]);
                               }}
-                              style={{ ...s.btn, background: 'transparent', border: `1.5px solid ${C.border2}`, color: C.muted, padding: '5px 8px', fontSize: 15, minHeight: 44, minWidth: 44, WebkitTapHighlightColor: 'transparent' }}
+                              style={{ ...s.btn, background: 'transparent', border: `1.5px solid ${C.border2}`, color: C.muted, padding: '5px 8px', fontSize: 17, minHeight: 44, minWidth: 44, WebkitTapHighlightColor: 'transparent' }}
                               onPointerEnter={e => { e.currentTarget.style.borderColor = C.orange; e.currentTarget.style.color = C.orange; }}
                               onPointerLeave={e => { e.currentTarget.style.borderColor = C.border2; e.currentTarget.style.color = C.muted; }}
                             >Save</button>
@@ -6578,7 +6578,7 @@ function QuoteEditor({ initial, clients, existingQuotes = [], user, setUser, onS
                     </tbody>
                   </table>
                   <Btn variant="ghost" size="sm" style={{ marginTop: 10 }} onClick={() => addRow(setEquip, { desc: '', qty: 1, unit: 'day', rate: 0, ...(isBundle ? { _trade: user?.trades?.[0] || 'Plumber' } : {}) })}>Add Equipment Row</Btn>
-                  {equip.length === 0 && <div style={{ padding: '12px 0 4px', fontSize: 18, color: C.dim }}>No equipment added. Tap a saved item above or add a row manually.</div>}
+                  {equip.length === 0 && <div style={{ padding: '12px 0 4px', fontSize: 20, color: C.dim }}>No equipment added. Tap a saved item above or add a row manually.</div>}
                 </div>
               </div>
             )}
@@ -6597,53 +6597,53 @@ function QuoteEditor({ initial, clients, existingQuotes = [], user, setUser, onS
         <div style={{ position: isTablet ? 'static' : 'sticky', top: 24 }}>
           <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 4, overflow: 'hidden' }}>
             <div style={{ padding: '16px 16px 0' }}>
-              <div style={{ fontSize: 15, fontWeight: 900, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.muted, marginBottom: 12, fontFamily: "'Inter', sans-serif" }}>Live Total</div>
+              <div style={{ fontSize: 17, fontWeight: 900, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.muted, marginBottom: 12, fontFamily: "'Inter', sans-serif" }}>Live Total</div>
               {[['Labor', calc.laborT], ['Materials', calc.matsT], ['Equipment', calc.equipT]].map(([lbl, val]) => (
                 <div key={lbl} style={{ display: 'flex', justifyContent: 'space-between', padding: '7px 0', borderBottom: `1px solid ${C.border}` }}>
-                  <span style={{ fontSize: 18, color: C.muted }}>{lbl}</span>
-                  <span style={{ fontSize: 18, fontWeight: 700, color: val > 0 ? C.text : C.dim, fontFamily: "'Inter', sans-serif" }}>{fmt(val)}</span>
+                  <span style={{ fontSize: 20, color: C.muted }}>{lbl}</span>
+                  <span style={{ fontSize: 20, fontWeight: 700, color: val > 0 ? C.text : C.dim, fontFamily: "'Inter', sans-serif" }}>{fmt(val)}</span>
                 </div>
               ))}
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: `1px solid ${C.border}` }}>
-                <span style={{ fontSize: 18, color: C.muted }}>Subtotal</span>
-                <span style={{ fontSize: 19, fontWeight: 700, color: C.text, fontFamily: "'Inter', sans-serif" }}>{fmt(calc.sub)}</span>
+                <span style={{ fontSize: 20, color: C.muted }}>Subtotal</span>
+                <span style={{ fontSize: 21, fontWeight: 700, color: C.text, fontFamily: "'Inter', sans-serif" }}>{fmt(calc.sub)}</span>
               </div>
             </div>
             <div style={{ padding: '12px 16px', borderBottom: `1px solid ${C.border}` }}>
               {/* Markup — materials + equipment only */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
                 <div>
-                  <span style={{ fontSize: 18, color: C.muted }}>Markup</span>
-                  <span style={{ fontSize: 12, color: C.dim, marginLeft: 5 }}>mat + equip only</span>
+                  <span style={{ fontSize: 20, color: C.muted }}>Markup</span>
+                  <span style={{ fontSize: 14, color: C.dim, marginLeft: 5 }}>mat + equip only</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   <NumberInput value={markup} onChange={setMarkup} width={64} fontSize={18}
                     style={{ minHeight: 38, fontWeight: 700 }} />
-                  <span style={{ fontSize: 16, color: C.dim }}>%</span>
-                  <span style={{ fontSize: 16, color: C.dim, width: 52, textAlign: 'right', fontFamily: "'Inter', sans-serif" }}>{fmt(calc.mkAmt)}</span>
+                  <span style={{ fontSize: 18, color: C.dim }}>%</span>
+                  <span style={{ fontSize: 18, color: C.dim, width: 52, textAlign: 'right', fontFamily: "'Inter', sans-serif" }}>{fmt(calc.mkAmt)}</span>
                 </div>
               </div>
               {/* Tax — with labor tax indicator */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
                 <div>
-                  <span style={{ fontSize: 18, color: C.muted }}>Tax</span>
+                  <span style={{ fontSize: 20, color: C.muted }}>Tax</span>
                   {laborTaxable(user?.state)
-                    ? <span style={{ fontSize: 12, color: C.warn, marginLeft: 5, fontWeight: 700 }}>labor taxable in {user?.state?.split(',')[0]}</span>
-                    : <span style={{ fontSize: 12, color: C.dim, marginLeft: 5 }}>mat + equip only</span>
+                    ? <span style={{ fontSize: 14, color: C.warn, marginLeft: 5, fontWeight: 700 }}>labor taxable in {user?.state?.split(',')[0]}</span>
+                    : <span style={{ fontSize: 14, color: C.dim, marginLeft: 5 }}>mat + equip only</span>
                   }
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   <NumberInput value={tax} onChange={setTax} width={64} fontSize={18}
                     style={{ minHeight: 38, fontWeight: 700 }} />
-                  <span style={{ fontSize: 16, color: C.dim }}>%</span>
-                  <span style={{ fontSize: 16, color: C.dim, width: 52, textAlign: 'right', fontFamily: "'Inter', sans-serif" }}>{fmt(calc.txAmt)}</span>
+                  <span style={{ fontSize: 18, color: C.dim }}>%</span>
+                  <span style={{ fontSize: 18, color: C.dim, width: 52, textAlign: 'right', fontFamily: "'Inter', sans-serif" }}>{fmt(calc.txAmt)}</span>
                 </div>
               </div>
             </div>
             <div style={{ padding: '14px 16px', background: C.orangeLo }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, fontWeight: 900, color: C.orange, letterSpacing: '0.1em', textTransform: 'uppercase' }}>Quote Total</span>
-                <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 33, fontWeight: 900, color: C.orange, lineHeight: 1 }}>{fmt(calc.total)}</span>
+                <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 17, fontWeight: 900, color: C.orange, letterSpacing: '0.1em', textTransform: 'uppercase' }}>Quote Total</span>
+                <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 35, fontWeight: 900, color: C.orange, lineHeight: 1 }}>{fmt(calc.total)}</span>
               </div>
             </div>
           </div>
@@ -6699,10 +6699,10 @@ function QuotesHub({ quotes, clients, onSelect, onNew, onNewClient }) {
         fontFamily: "'Inter', sans-serif",
       }}>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: active ? C.orange : C.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{name}</div>
-          {company && <div style={{ fontSize: 11, color: C.muted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginTop: 1 }}>{company}</div>}
+          <div style={{ fontSize: 15, fontWeight: 600, color: active ? C.orange : C.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{name}</div>
+          {company && <div style={{ fontSize: 13, color: C.muted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginTop: 1 }}>{company}</div>}
         </div>
-        <span style={{ fontSize: 11, fontWeight: 700, color: active ? C.orange : C.dim, flexShrink: 0 }}>{count}</span>
+        <span style={{ fontSize: 13, fontWeight: 700, color: active ? C.orange : C.dim, flexShrink: 0 }}>{count}</span>
       </button>
     );
   };
@@ -6712,12 +6712,12 @@ function QuotesHub({ quotes, clients, onSelect, onNew, onNewClient }) {
       {/* Page header */}
       <div style={{ marginBottom: 20, paddingBottom: 18, borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <h1 style={{ margin: 0, fontFamily: "'Inter', sans-serif", fontSize: 28, fontWeight: 700, color: C.text, letterSpacing: '-0.025em' }}>Quotes</h1>
-          <p style={{ margin: '6px 0 0', fontSize: 15, color: C.muted, fontWeight: 500 }}>{quotes.length} total — {quotes.filter(q => q.status === 'sent').length} awaiting response</p>
+          <h1 style={{ margin: 0, fontFamily: "'Inter', sans-serif", fontSize: 30, fontWeight: 700, color: C.text, letterSpacing: '-0.025em' }}>Quotes</h1>
+          <p style={{ margin: '6px 0 0', fontSize: 17, color: C.muted, fontWeight: 500 }}>{quotes.length} total — {quotes.filter(q => q.status === 'sent').length} awaiting response</p>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
-          {isTablet && <Btn variant="flat" size="sm" onClick={() => setShowFolders(!showFolders)} style={{ fontSize: 21, padding: '12px 22px', minHeight: 52 }}>Clients</Btn>}
-          <Btn variant="primary" size="sm" onClick={onNew} style={{ fontSize: 21, padding: '12px 22px', minHeight: 52 }}>New Quote</Btn>
+          {isTablet && <Btn variant="flat" size="sm" onClick={() => setShowFolders(!showFolders)} style={{ fontSize: 23, padding: '12px 22px', minHeight: 52 }}>Clients</Btn>}
+          <Btn variant="primary" size="sm" onClick={onNew} style={{ fontSize: 23, padding: '12px 22px', minHeight: 52 }}>New Quote</Btn>
         </div>
       </div>
 
@@ -6727,8 +6727,8 @@ function QuotesHub({ quotes, clients, onSelect, onNew, onNewClient }) {
         {(!isTablet || showFolders) && (
           <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 4, overflow: 'hidden', paddingBottom: 6 }}>
             <div style={{ padding: '10px 12px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-              <span style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', color: C.muted, fontFamily: "'Inter', sans-serif" }}>Client Folders</span>
-              <button onClick={onNewClient} style={{ background: 'transparent', border: 'none', color: C.orange, fontSize: 20, lineHeight: 1, padding: '0 4px', cursor: 'pointer', fontFamily: "'Inter', sans-serif", fontWeight: 400 }} title="New client" aria-label="New client">+</button>
+              <span style={{ fontSize: 13, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', color: C.muted, fontFamily: "'Inter', sans-serif" }}>Client Folders</span>
+              <button onClick={onNewClient} style={{ background: 'transparent', border: 'none', color: C.orange, fontSize: 22, lineHeight: 1, padding: '0 4px', cursor: 'pointer', fontFamily: "'Inter', sans-serif", fontWeight: 400 }} title="New client" aria-label="New client">+</button>
             </div>
             <Folder id="all" name="All Quotes" count={quotes.length} />
             {clients.map(c => <Folder key={c.id} id={c.id} name={c.name} company={c.company} count={clientQuoteCounts[c.id] || 0} />)}
@@ -6742,15 +6742,15 @@ function QuotesHub({ quotes, clients, onSelect, onNew, onNewClient }) {
             <div style={{ marginBottom: 14 }}>
               <input value={search} onChange={e => setSearch(e.target.value)}
                 placeholder="Search by title or quote number…"
-                style={{ ...s.input, width: '100%', padding: '11px 14px', boxSizing: 'border-box', fontSize: 18 }} />
+                style={{ ...s.input, width: '100%', padding: '11px 14px', boxSizing: 'border-box', fontSize: 20 }} />
             </div>
 
             {/* Quotes */}
             <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 4, overflow: 'hidden' }}>
               {filtered.length === 0 ? (
-                <div style={{ padding: '40px 20px', textAlign: 'center', color: C.muted, fontSize: 19 }}>
+                <div style={{ padding: '40px 20px', textAlign: 'center', color: C.muted, fontSize: 21 }}>
                   No quotes yet.{' '}
-                  <button onClick={onNew} style={{ background: 'none', border: 'none', color: C.orange, cursor: 'pointer', fontSize: 19, fontWeight: 600, padding: 0 }}>
+                  <button onClick={onNew} style={{ background: 'none', border: 'none', color: C.orange, cursor: 'pointer', fontSize: 21, fontWeight: 600, padding: 0 }}>
                     Create your first quote
                   </button>
                 </div>
@@ -6769,14 +6769,14 @@ function QuotesHub({ quotes, clients, onSelect, onNew, onNewClient }) {
                   onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                     {/* Number + status */}
                     <div style={{ flexShrink: 0 }}>
-                      <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 17, fontWeight: 800, color: C.orange, letterSpacing: '0.07em', marginBottom: 3 }}>{q.number}</div>
+                      <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 19, fontWeight: 800, color: C.orange, letterSpacing: '0.07em', marginBottom: 3 }}>{q.number}</div>
                       <Badge status={q.status} />
                     </div>
 
                     {/* Details */}
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 19, fontWeight: 600, color: C.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{q.title}</div>
-                      <div style={{ fontSize: 17, color: C.muted, marginTop: 2, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                      <div style={{ fontSize: 21, fontWeight: 600, color: C.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{q.title}</div>
+                      <div style={{ fontSize: 19, color: C.muted, marginTop: 2, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
                         <span>{client?.name || '—'}</span>
                         <span style={{ color: C.dim }}>-</span>
                         <span>{q.createdAt}</span>
@@ -6786,8 +6786,8 @@ function QuotesHub({ quotes, clients, onSelect, onNew, onNewClient }) {
 
                     {/* Total */}
                     <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                      <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 21, fontWeight: 900, color: C.text }}>{fmt(calc.total)}</div>
-                      <div style={{ fontSize: 15, color: C.dim, marginTop: 2 }}>Exp: {q.expiresAt}</div>
+                      <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 23, fontWeight: 900, color: C.text }}>{fmt(calc.total)}</div>
+                      <div style={{ fontSize: 17, color: C.dim, marginTop: 2 }}>Exp: {q.expiresAt}</div>
                     </div>
                   </button>
                 );
@@ -6812,7 +6812,7 @@ function NewClientModal({ onSave, onClose }) {
   return (
     <div style={{ position: 'fixed', inset: 0, background: '#000000aa', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 999, padding: 20 }}>
       <div style={{ background: C.surface, border: `1px solid ${C.border2}`, borderRadius: 4, padding: 32, width: '100%', maxWidth: 560 }}>
-        <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 25, fontWeight: 900, color: C.text, marginBottom: 20, textTransform: 'uppercase' }}>New Client</div>
+        <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 27, fontWeight: 900, color: C.text, marginBottom: 20, textTransform: 'uppercase' }}>New Client</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div><Label>Name *</Label><Input value={name}    onChange={setName}    placeholder="Sandra Johnson" /></div>
           <div><Label>Company</Label><Input value={company} onChange={setCompany} placeholder="ABC Rentals LLC" /></div>
@@ -6850,7 +6850,7 @@ function F({ label, children, hint }) {
   return (
     <div>
       <label style={s.label}>{label}</label>
-      {hint && <div style={{ fontSize: 13, color: C.dim, marginBottom: 6, marginTop: -4 }}>{hint}</div>}
+      {hint && <div style={{ fontSize: 15, color: C.dim, marginBottom: 6, marginTop: -4 }}>{hint}</div>}
       {children}
     </div>
   );
@@ -6996,7 +6996,7 @@ function ProfileModal({ profile, onSave, onClose }) {
   // an inline definition: it causes focus loss on every keystroke.
   const I = (val, onChange, ph, type='text') => (
     <input type={type} value={val} onChange={e => onChange(e.target.value)} placeholder={ph}
-      style={{ ...s.input, width: '100%', padding: '12px 14px', boxSizing: 'border-box', fontSize: 17, minHeight: 48 }} />
+      style={{ ...s.input, width: '100%', padding: '12px 14px', boxSizing: 'border-box', fontSize: 19, minHeight: 48 }} />
   );
 
   // Layout: on tablet/phone, classic centered modal (the original
@@ -7051,14 +7051,14 @@ function ProfileModal({ profile, onSave, onClose }) {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: isTablet ? 22 : 28 }}>
           <div>
             <div style={{ fontFamily: "'Inter', sans-serif", fontSize: isTablet ? 24 : 32, fontWeight: 900, color: C.text, marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Company Profile</div>
-            <p style={{ fontSize: 15, color: C.muted, marginBottom: 0, marginTop: 0 }}>Everything here appears on all quotes and invoices.</p>
+            <p style={{ fontSize: 17, color: C.muted, marginBottom: 0, marginTop: 0 }}>Everything here appears on all quotes and invoices.</p>
           </div>
           {!isTablet && (
             <button
               onClick={onClose}
               style={{
                 background: 'transparent', border: 'none', color: C.muted,
-                fontSize: 28, fontWeight: 300, cursor: 'pointer', lineHeight: 1,
+                fontSize: 30, fontWeight: 300, cursor: 'pointer', lineHeight: 1,
                 padding: '4px 12px', borderRadius: 8, fontFamily: 'inherit',
               }}
               title="Close"
@@ -7073,20 +7073,20 @@ function ProfileModal({ profile, onSave, onClose }) {
             {logo ? (
               <div style={{ position: 'relative', display: 'inline-block' }}>
                 <img src={logo} alt="Logo" style={{ maxHeight: 72, maxWidth: 180, objectFit: 'contain', display: 'block', background: '#f8f8f8', padding: 8, borderRadius: 3, border: '1px solid #ddd' }} />
-                <button onClick={handleRemoveLogo} style={{ position: 'absolute', top: -8, right: -8, background: C.error, border: 'none', borderRadius: '50%', width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#fff', fontSize: 15, fontWeight: 700 }}>×</button>
+                <button onClick={handleRemoveLogo} style={{ position: 'absolute', top: -8, right: -8, background: C.error, border: 'none', borderRadius: '50%', width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#fff', fontSize: 17, fontWeight: 700 }}>×</button>
               </div>
             ) : (
               <div style={{ width: 110, height: 68, border: `2px dashed ${C.border2}`, borderRadius: 4, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, background: C.raised }}>
-                <span style={{ fontSize: 20, color: C.dim }}>+</span>
-                <span style={{ fontSize: 11, color: C.dim, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' }}>No Logo</span>
+                <span style={{ fontSize: 22, color: C.dim }}>+</span>
+                <span style={{ fontSize: 13, color: C.dim, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' }}>No Logo</span>
               </div>
             )}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <button onClick={() => fileRef.current?.click()} disabled={uploading} style={{ ...s.btn, background: C.raised, border: `1.5px solid ${C.border2}`, color: C.text, padding: '10px 18px', fontSize: 15, minHeight: 44, opacity: uploading ? 0.5 : 1, cursor: uploading ? 'wait' : 'pointer' }}>
+              <button onClick={() => fileRef.current?.click()} disabled={uploading} style={{ ...s.btn, background: C.raised, border: `1.5px solid ${C.border2}`, color: C.text, padding: '10px 18px', fontSize: 17, minHeight: 44, opacity: uploading ? 0.5 : 1, cursor: uploading ? 'wait' : 'pointer' }}>
                 {uploading ? 'Uploading…' : (logo ? 'Change Logo' : 'Upload Logo')}
               </button>
-              <span style={{ fontSize: 13, color: C.dim }}>PNG, JPG, SVG — max 2 MB</span>
-              {uploadError && <span style={{ fontSize: 13, color: C.error, fontWeight: 600 }}>{uploadError}</span>}
+              <span style={{ fontSize: 15, color: C.dim }}>PNG, JPG, SVG — max 2 MB</span>
+              {uploadError && <span style={{ fontSize: 15, color: C.error, fontWeight: 600 }}>{uploadError}</span>}
             </div>
           </div>
           <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFile} />
@@ -7117,7 +7117,7 @@ function ProfileModal({ profile, onSave, onClose }) {
           {!can(profile, 'hasMultiStateLicenses') && (
             <div>
               <label style={s.label}>State You Operate In</label>
-              <div style={{ fontSize: 13, color: C.dim, marginBottom: 8, marginTop: -4 }}>
+              <div style={{ fontSize: 15, color: C.dim, marginBottom: 8, marginTop: -4 }}>
                 Drives the tax rate + license number on your invoices. Need to work in multiple states with different licenses?{' '}
                 <strong style={{ color: '#92400e' }}>Upgrade to Elite</strong> for multi-state support.
               </div>
@@ -7134,7 +7134,7 @@ function ProfileModal({ profile, onSave, onClose }) {
                     return {};
                   });
                 }}
-                style={{ ...s.input, width: '100%', padding: '12px 14px', boxSizing: 'border-box', fontSize: 16, cursor: 'pointer', background: C.surface }}
+                style={{ ...s.input, width: '100%', padding: '12px 14px', boxSizing: 'border-box', fontSize: 18, cursor: 'pointer', background: C.surface }}
               >
                 <option value="">— Select your state —</option>
                 {STATES.map(st => <option key={st} value={st}>{st}</option>)}
@@ -7144,19 +7144,19 @@ function ProfileModal({ profile, onSave, onClose }) {
           {can(profile, 'hasMultiStateLicenses') && (
           <div>
             <label style={s.label}>States You Operate In</label>
-            <div style={{ fontSize: 13, color: C.dim, marginBottom: 8, marginTop: -4 }}>
+            <div style={{ fontSize: 15, color: C.dim, marginBottom: 8, marginTop: -4 }}>
               Add every state you do work in. Each state can have its own license number below — the right one auto-applies to every invoice based on where the job is.
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
               {statesList.length === 0 && (
-                <div style={{ fontSize: 13, color: C.dim, padding: '4px 0' }}>No states added yet.</div>
+                <div style={{ fontSize: 15, color: C.dim, padding: '4px 0' }}>No states added yet.</div>
               )}
               {statesList.map(st => (
                 <div key={st} style={{
                   display: 'inline-flex', alignItems: 'center', gap: 6,
                   background: C.orangeLo, color: C.orange,
                   border: `1px solid ${C.orange}`, borderRadius: 18,
-                  padding: '6px 6px 6px 14px', fontSize: 14, fontWeight: 700,
+                  padding: '6px 6px 6px 14px', fontSize: 16, fontWeight: 700,
                 }}>
                   <span>{st}</span>
                   <button
@@ -7165,7 +7165,7 @@ function ProfileModal({ profile, onSave, onClose }) {
                     title={`Remove ${st}`}
                     style={{
                       background: 'transparent', border: 'none',
-                      color: C.orange, cursor: 'pointer', fontSize: 18, fontWeight: 700,
+                      color: C.orange, cursor: 'pointer', fontSize: 20, fontWeight: 700,
                       lineHeight: 1, padding: '0 4px',
                     }}
                   >×</button>
@@ -7179,7 +7179,7 @@ function ProfileModal({ profile, onSave, onClose }) {
                     display: 'inline-flex', alignItems: 'center', gap: 6,
                     background: C.raised, color: C.muted,
                     border: `1.5px dashed ${C.border2}`, borderRadius: 18,
-                    padding: '6px 14px', fontSize: 14, fontWeight: 600,
+                    padding: '6px 14px', fontSize: 16, fontWeight: 600,
                     cursor: 'pointer', fontFamily: 'inherit',
                   }}
                 >+ Add State</button>
@@ -7190,7 +7190,7 @@ function ProfileModal({ profile, onSave, onClose }) {
                   defaultValue=""
                   onChange={e => handleAddState(e.target.value)}
                   onBlur={() => setShowAddState(false)}
-                  style={{ ...s.input, padding: '8px 14px', fontSize: 14, minHeight: 38, cursor: 'pointer', background: C.surface }}
+                  style={{ ...s.input, padding: '8px 14px', fontSize: 16, minHeight: 38, cursor: 'pointer', background: C.surface }}
                 >
                   <option value="">— Select state —</option>
                   {STATES.filter(st => !statesList.includes(st)).map(st => (
@@ -7205,7 +7205,7 @@ function ProfileModal({ profile, onSave, onClose }) {
           {/* Tagline */}
           <F label="Tagline" hint="Shows under your company name on documents — optional">
             <input value={tagline} onChange={e => setTagline(e.target.value)} placeholder="Austin's Most Trusted Plumber Since 2008"
-              style={{ ...s.input, width: '100%', padding: '12px 14px', boxSizing: 'border-box', fontSize: 17, minHeight: 48 }} />
+              style={{ ...s.input, width: '100%', padding: '12px 14px', boxSizing: 'border-box', fontSize: 19, minHeight: 48 }} />
           </F>
 
           {/* Per-state license numbers (migration 0037). One row per
@@ -7220,19 +7220,19 @@ function ProfileModal({ profile, onSave, onClose }) {
           {can(profile, 'hasMultiStateLicenses') && statesList.length > 0 && (
             <div>
               <label style={s.label}>Licenses By State</label>
-              <div style={{ fontSize: 13, color: C.dim, marginBottom: 10, marginTop: -4 }}>
+              <div style={{ fontSize: 15, color: C.dim, marginBottom: 10, marginTop: -4 }}>
                 Each state's license number auto-fills on invoices and quotes for jobs in that state. Leave blank if a state doesn't require one.
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {statesList.map(st => (
                   <div key={st} style={{ display: 'grid', gridTemplateColumns: isTablet ? '1fr' : '140px 1fr', gap: 10, alignItems: 'center' }}>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: C.text, fontFamily: "'Inter', sans-serif" }}>{st}</div>
+                    <div style={{ fontSize: 16, fontWeight: 700, color: C.text, fontFamily: "'Inter', sans-serif" }}>{st}</div>
                     <input
                       type="text"
                       value={stateLicenses[st] || ''}
                       onChange={e => handleStateLicenseChange(st, e.target.value)}
                       placeholder={`${st} license #`}
-                      style={{ ...s.input, width: '100%', padding: '11px 14px', boxSizing: 'border-box', fontSize: 16, minHeight: 44 }}
+                      style={{ ...s.input, width: '100%', padding: '11px 14px', boxSizing: 'border-box', fontSize: 18, minHeight: 44 }}
                     />
                   </div>
                 ))}
@@ -7247,17 +7247,17 @@ function ProfileModal({ profile, onSave, onClose }) {
               this one field. */}
           <F label={statesList.length > 1 ? 'Default License Number (fallback)' : 'License Number'} hint="Shown under company info on quotes and invoices. Used when no state-specific license matches.">
             <input value={license} onChange={e => setLicense(e.target.value)} placeholder="TX Lic. #M-12345 or Master Plumber #54321"
-              style={{ ...s.input, width: '100%', padding: '12px 14px', boxSizing: 'border-box', fontSize: 17, minHeight: 48 }} />
+              style={{ ...s.input, width: '100%', padding: '12px 14px', boxSizing: 'border-box', fontSize: 19, minHeight: 48 }} />
           </F>
 
           {/* Accent color */}
           <div>
             <label style={s.label}>Document Accent Color</label>
-            <div style={{ fontSize: 13, color: C.dim, marginBottom: 8, marginTop: -4 }}>The color stripe and headers on your quotes and invoices. Leave on "Trade Color" to auto-match by trade.</div>
+            <div style={{ fontSize: 15, color: C.dim, marginBottom: 8, marginTop: -4 }}>The color stripe and headers on your quotes and invoices. Leave on "Trade Color" to auto-match by trade.</div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: colorMode === 'custom' ? 10 : 0 }}>
               {/* Trade color option */}
               <button onClick={() => setColorMode('trade')} style={{
-                ...s.btn, padding: '10px 8px', fontSize: 13, minHeight: 48, textAlign: 'center',
+                ...s.btn, padding: '10px 8px', fontSize: 15, minHeight: 48, textAlign: 'center',
                 background: colorMode === 'trade' ? C.orangeLo : C.raised,
                 border: `2px solid ${colorMode === 'trade' ? C.orange : C.border2}`,
                 color: colorMode === 'trade' ? C.orange : C.muted,
@@ -7271,7 +7271,7 @@ function ProfileModal({ profile, onSave, onClose }) {
                   background: colorMode === p.val ? p.val + '22' : C.raised,
                 }}>
                   <div style={{ width: 22, height: 22, borderRadius: 4, background: p.val, border: '1px solid rgba(0,0,0,0.15)' }} />
-                  <span style={{ fontSize: 10, color: C.muted, lineHeight: 1.2, textAlign: 'center' }}>{p.label}</span>
+                  <span style={{ fontSize: 12, color: C.muted, lineHeight: 1.2, textAlign: 'center' }}>{p.label}</span>
                 </button>
               ))}
 
@@ -7281,7 +7281,7 @@ function ProfileModal({ profile, onSave, onClose }) {
                 background: colorMode === 'custom' ? C.orangeLo : C.raised,
               }}>
                 <div style={{ width: 22, height: 22, borderRadius: 4, background: accentColor || '#cccccc', border: '1px solid rgba(0,0,0,0.15)' }} />
-                <span style={{ fontSize: 10, color: C.muted }}>Custom</span>
+                <span style={{ fontSize: 12, color: C.muted }}>Custom</span>
               </button>
             </div>
             {colorMode === 'custom' && (
@@ -7289,8 +7289,8 @@ function ProfileModal({ profile, onSave, onClose }) {
                 <input type="color" value={accentColor || '#2d6a4f'} onChange={e => setAccentColor(e.target.value)}
                   style={{ width: 48, height: 44, border: `1px solid ${C.border2}`, borderRadius: 4, cursor: 'pointer', padding: 2 }} />
                 <input value={accentColor} onChange={e => setAccentColor(e.target.value)} placeholder="#2d6a4f"
-                  style={{ ...s.input, width: 110, padding: '11px 12px', fontSize: 16, minHeight: 44 }} />
-                <span style={{ fontSize: 14, color: C.muted }}>Any hex color</span>
+                  style={{ ...s.input, width: 110, padding: '11px 12px', fontSize: 18, minHeight: 44 }} />
+                <span style={{ fontSize: 16, color: C.muted }}>Any hex color</span>
               </div>
             )}
           </div>
@@ -7298,7 +7298,7 @@ function ProfileModal({ profile, onSave, onClose }) {
           {/* Default terms */}
           <F label="Default Quote Terms" hint="Pre-fills on every new quote — edit per quote as needed">
             <textarea value={defaultTerms} onChange={e => setDefaultTerms(e.target.value)} rows={4}
-              style={{ ...s.input, width: '100%', padding: '12px 14px', boxSizing: 'border-box', resize: 'vertical', lineHeight: 1.65, fontSize: 15 }} />
+              style={{ ...s.input, width: '100%', padding: '12px 14px', boxSizing: 'border-box', resize: 'vertical', lineHeight: 1.65, fontSize: 17 }} />
           </F>
 
           {/* Google review link — appended to Marketing → Review Request emails.
@@ -7316,13 +7316,13 @@ function ProfileModal({ profile, onSave, onClose }) {
               placeholder="https://g.page/r/..."
               style={{
                 ...s.input, width: '100%', padding: '12px 14px',
-                boxSizing: 'border-box', fontSize: 17, minHeight: 48,
+                boxSizing: 'border-box', fontSize: 19, minHeight: 48,
                 borderColor: reviewLink && !/^https?:\/\//i.test(reviewLink.trim())
                   ? '#dc2626' : C.border,
               }}
             />
             {reviewLink && !/^https?:\/\//i.test(reviewLink.trim()) && (
-              <div style={{ fontSize: 13, color: '#dc2626', marginTop: 6, fontWeight: 600 }}>
+              <div style={{ fontSize: 15, color: '#dc2626', marginTop: 6, fontWeight: 600 }}>
                 Must start with http:// or https://. Paste the full URL from your Google Business Profile.
               </div>
             )}
@@ -7567,13 +7567,13 @@ function Billing({ user, setUser, payments }) {
           border: '1px solid #bbf7d0',
           borderRadius: 12, padding: '24px 28px', marginBottom: 24,
         }}>
-          <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', color: C.success, marginBottom: 6 }}>
+          <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', color: C.success, marginBottom: 6 }}>
             Founder Account
           </div>
-          <div style={{ fontSize: 22, fontWeight: 900, color: C.text, marginBottom: 8 }}>
+          <div style={{ fontSize: 24, fontWeight: 900, color: C.text, marginBottom: 8 }}>
             No plan · No subscription · No charges
           </div>
-          <div style={{ fontSize: 14, color: C.muted, lineHeight: 1.6, maxWidth: 540 }}>
+          <div style={{ fontSize: 16, color: C.muted, lineHeight: 1.6, maxWidth: 540 }}>
             This account is exempt from Tradevoice billing. There's no Stripe customer,
             no subscription, and no card on file — so nothing can ever charge you.
             All features are unlocked. To use the app as a paying customer for testing,
@@ -7623,23 +7623,23 @@ function Billing({ user, setUser, payments }) {
           the trial countdown turns urgent and whether the past-due banner
           shows in the rest of the app. */}
       <div style={{ marginBottom: 24 }}>
-        <div style={{ fontSize: 15, fontWeight: 800, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12, fontFamily: "'Inter', sans-serif" }}>Tradevoice Subscription</div>
+        <div style={{ fontSize: 17, fontWeight: 800, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12, fontFamily: "'Inter', sans-serif" }}>Tradevoice Subscription</div>
 
         <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, padding: '18px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 14, flexWrap: 'wrap' }}>
           <div style={{ flex: 1, minWidth: 220 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6, flexWrap: 'wrap' }}>
-              <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 22, fontWeight: 900, color: C.text }}>
-                {planName} — ${currentPrice}<span style={{ fontSize: 15, fontWeight: 500, color: C.muted }}>/mo</span>
+              <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 24, fontWeight: 900, color: C.text }}>
+                {planName} — ${currentPrice}<span style={{ fontSize: 17, fontWeight: 500, color: C.muted }}>/mo</span>
               </div>
               {/* Status pill */}
-              {subStatus === 'active' && <span style={{ fontSize: 12, fontWeight: 700, background: '#f0fdf4', color: C.success, padding: '3px 10px', borderRadius: 12 }}>Active</span>}
-              {subStatus === 'trialing' && hasCard && <span style={{ fontSize: 12, fontWeight: 700, background: '#eff6ff', color: '#1d4ed8', padding: '3px 10px', borderRadius: 12 }}>Trialing</span>}
-              {subStatus === 'trialing' && !hasCard && <span style={{ fontSize: 12, fontWeight: 700, background: '#fef9c3', color: C.warn, padding: '3px 10px', borderRadius: 12 }}>Trial — No card</span>}
-              {subStatus === 'past_due' && <span style={{ fontSize: 12, fontWeight: 700, background: '#fef2f2', color: C.errorBold, padding: '3px 10px', borderRadius: 12 }}>Past due</span>}
-              {subStatus === 'canceled' && <span style={{ fontSize: 12, fontWeight: 700, background: '#f3f4f6', color: C.muted, padding: '3px 10px', borderRadius: 12 }}>Canceled</span>}
+              {subStatus === 'active' && <span style={{ fontSize: 14, fontWeight: 700, background: '#f0fdf4', color: C.success, padding: '3px 10px', borderRadius: 12 }}>Active</span>}
+              {subStatus === 'trialing' && hasCard && <span style={{ fontSize: 14, fontWeight: 700, background: '#eff6ff', color: '#1d4ed8', padding: '3px 10px', borderRadius: 12 }}>Trialing</span>}
+              {subStatus === 'trialing' && !hasCard && <span style={{ fontSize: 14, fontWeight: 700, background: '#fef9c3', color: C.warn, padding: '3px 10px', borderRadius: 12 }}>Trial — No card</span>}
+              {subStatus === 'past_due' && <span style={{ fontSize: 14, fontWeight: 700, background: '#fef2f2', color: C.errorBold, padding: '3px 10px', borderRadius: 12 }}>Past due</span>}
+              {subStatus === 'canceled' && <span style={{ fontSize: 14, fontWeight: 700, background: '#f3f4f6', color: C.muted, padding: '3px 10px', borderRadius: 12 }}>Canceled</span>}
             </div>
             {/* Status sub-line */}
-            <div style={{ fontSize: 14, color: C.muted, lineHeight: 1.55 }}>
+            <div style={{ fontSize: 16, color: C.muted, lineHeight: 1.55 }}>
               {!hasCard && subStatus === 'trialing' && (
                 <>
                   {daysLeft !== null
@@ -7664,7 +7664,7 @@ function Billing({ user, setUser, payments }) {
                 ...s.btn,
                 background: subStatus === 'past_due' ? C.errorBold : C.orange,
                 color: '#fff', border: 'none',
-                padding: '12px 22px', fontSize: 15, fontWeight: 800, minHeight: 46,
+                padding: '12px 22px', fontSize: 17, fontWeight: 800, minHeight: 46,
                 boxShadow: '0 1px 2px rgba(45, 106, 79, 0.25)',
                 flexShrink: 0,
               }}
@@ -7678,7 +7678,7 @@ function Billing({ user, setUser, payments }) {
                 ...s.btn,
                 background: C.raised, color: C.muted,
                 border: `1.5px solid ${C.border2}`,
-                padding: '10px 18px', fontSize: 14, fontWeight: 700, minHeight: 42,
+                padding: '10px 18px', fontSize: 16, fontWeight: 700, minHeight: 42,
                 flexShrink: 0,
               }}
             >
@@ -7700,9 +7700,9 @@ function Billing({ user, setUser, payments }) {
 
       {/* Payment methods */}
       <div style={{ marginBottom: 24 }}>
-        <div style={{ fontSize: 15, fontWeight: 800, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12, fontFamily: "'Inter', sans-serif" }}>Accepted Payments</div>
+        <div style={{ fontSize: 17, fontWeight: 800, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12, fontFamily: "'Inter', sans-serif" }}>Accepted Payments</div>
         {connected.length === 0 ? (
-          <div style={{ background: C.raised, border: `1px dashed ${C.border2}`, borderRadius: 4, padding: '20px', textAlign: 'center', fontSize: 16, color: C.muted }}>
+          <div style={{ background: C.raised, border: `1px dashed ${C.border2}`, borderRadius: 4, padding: '20px', textAlign: 'center', fontSize: 18, color: C.muted }}>
             No payment methods set up yet. Go to Settings to connect your accounts.
           </div>
         ) : (
@@ -7712,10 +7712,10 @@ function Billing({ user, setUser, payments }) {
               const sub = cfg.type === 'connect' ? 'Connected' : cfg.type === 'toggle' ? 'Accepted in person' : p.handle;
               return (
                 <div key={key} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 3, padding: '13px 14px', display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{ flexShrink: 0, width: 36, height: 36, background: C.raised, border: `1px solid ${C.border2}`, borderRadius: 3, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Inter', sans-serif", fontSize: 14, fontWeight: 900, color: C.orange, letterSpacing: '0.04em' }}>{cfg.abbr}</div>
+                  <div style={{ flexShrink: 0, width: 36, height: 36, background: C.raised, border: `1px solid ${C.border2}`, borderRadius: 3, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Inter', sans-serif", fontSize: 16, fontWeight: 900, color: C.orange, letterSpacing: '0.04em' }}>{cfg.abbr}</div>
                   <div style={{ minWidth: 0 }}>
-                    <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 17, fontWeight: 800, color: C.text }}>{cfg.name}</div>
-                    <div style={{ fontSize: 15, color: cfg.type === 'connect' ? C.success : C.muted, marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{sub}</div>
+                    <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 19, fontWeight: 800, color: C.text }}>{cfg.name}</div>
+                    <div style={{ fontSize: 17, color: cfg.type === 'connect' ? C.success : C.muted, marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{sub}</div>
                   </div>
                 </div>
               );
@@ -7726,20 +7726,20 @@ function Billing({ user, setUser, payments }) {
 
       {/* Billing history */}
       <div>
-        <div style={{ fontSize: 15, fontWeight: 800, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12, fontFamily: "'Inter', sans-serif" }}>Billing History</div>
+        <div style={{ fontSize: 17, fontWeight: 800, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12, fontFamily: "'Inter', sans-serif" }}>Billing History</div>
         <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 4, overflow: 'hidden' }}>
           {['Mar 20, 2026','Feb 20, 2026','Jan 20, 2026'].map((date, i, arr) => (
             <div key={date} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 18px', borderBottom: i < arr.length - 1 ? `1px solid ${C.border}` : 'none', gap: 12, flexWrap: 'wrap' }}>
               <div>
-                <div style={{ fontSize: 19, color: C.text, fontWeight: 500 }}>
+                <div style={{ fontSize: 21, color: C.text, fontWeight: 500 }}>
                   {planName} — {user?.plan?.endsWith('_yearly') ? 'Annual' : 'Monthly'}
                 </div>
-                <div style={{ fontSize: 17, color: C.muted, marginTop: 2 }}>{date}</div>
+                <div style={{ fontSize: 19, color: C.muted, marginTop: 2 }}>{date}</div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
-                <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 20, fontWeight: 800, color: C.text }}>${currentPrice}</span>
-                <span style={{ fontSize: 15, fontWeight: 800, color: C.success, textTransform: 'uppercase', letterSpacing: '0.07em' }}>Paid</span>
-                <GhostBtn size="sm" style={{ padding: '6px 12px', fontSize: 16 }}>Receipt</GhostBtn>
+                <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 22, fontWeight: 800, color: C.text }}>${currentPrice}</span>
+                <span style={{ fontSize: 17, fontWeight: 800, color: C.success, textTransform: 'uppercase', letterSpacing: '0.07em' }}>Paid</span>
+                <GhostBtn size="sm" style={{ padding: '6px 12px', fontSize: 18 }}>Receipt</GhostBtn>
               </div>
             </div>
           ))}
@@ -7823,9 +7823,9 @@ function Clients({ user, nav, invoices = [] }) {
     return (
       <div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
-          <button onClick={() => setSelected(null)} style={{ ...s.btn, background: 'transparent', border: `1px solid ${C.border2}`, color: C.muted, padding: '8px 16px', fontSize: 14 }}>← Back</button>
-          <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 22, fontWeight: 900, color: C.text }}>{c.name}</div>
-          {c.company && <span style={{ fontSize: 15, color: C.muted }}>{c.company}</span>}
+          <button onClick={() => setSelected(null)} style={{ ...s.btn, background: 'transparent', border: `1px solid ${C.border2}`, color: C.muted, padding: '8px 16px', fontSize: 16 }}>← Back</button>
+          <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 24, fontWeight: 900, color: C.text }}>{c.name}</div>
+          {c.company && <span style={{ fontSize: 17, color: C.muted }}>{c.company}</span>}
         </div>
 
         {/* Client info card */}
@@ -7836,8 +7836,8 @@ function Clients({ user, nav, invoices = [] }) {
             { label: 'Balance Due', val: owed > 0 ? '$' + owed.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}) : 'All paid', color: owed > 0 ? C.error : C.success },
           ].map(f => (
             <div key={f.label}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>{f.label}</div>
-              <div style={{ fontSize: 16, fontWeight: 600, color: f.color || C.text }}>{f.val}</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>{f.label}</div>
+              <div style={{ fontSize: 18, fontWeight: 600, color: f.color || C.text }}>{f.val}</div>
             </div>
           ))}
         </div>
@@ -7848,33 +7848,33 @@ function Clients({ user, nav, invoices = [] }) {
             <button onClick={() => nav('quotes')} style={{
               flex: 1, minWidth: 140,
               ...s.btn, background: C.orangeLo, border: `2px solid ${C.orange}`, color: C.orange,
-              padding: '11px 18px', fontSize: 13, borderRadius: 50, minHeight: 44,
+              padding: '11px 18px', fontSize: 15, borderRadius: 50, minHeight: 44,
             }}>+ New Quote</button>
             <button onClick={() => nav('invoice')} style={{
               flex: 1, minWidth: 140,
               ...s.btn, background: C.orange, border: `2px solid ${C.orange}`, color: '#fff',
-              padding: '11px 18px', fontSize: 13, borderRadius: 50, minHeight: 44,
+              padding: '11px 18px', fontSize: 15, borderRadius: 50, minHeight: 44,
             }}>+ New Invoice</button>
           </div>
         )}
 
         {/* Invoices */}
         <div style={{ marginBottom: 20 }}>
-          <div style={{ fontSize: 14, fontWeight: 800, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 10 }}>Invoices ({inv.length})</div>
+          <div style={{ fontSize: 16, fontWeight: 800, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 10 }}>Invoices ({inv.length})</div>
           {inv.length === 0
-            ? <div style={{ color: C.dim, fontSize: 15, padding: '14px 0' }}>No invoices yet</div>
+            ? <div style={{ color: C.dim, fontSize: 17, padding: '14px 0' }}>No invoices yet</div>
             : inv.map(i => {
                 const calc = calcInvoice(i, user?.state);
                 return (
                   <div key={i.id} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 6, padding: '14px 16px', marginBottom: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
                     <div>
-                      <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, fontWeight: 700, color: C.orange }}>{i.number}</div>
-                      <div style={{ fontSize: 14, color: C.text }}>{i.title}</div>
-                      <div style={{ fontSize: 13, color: C.muted }}>{i.createdAt}</div>
+                      <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 17, fontWeight: 700, color: C.orange }}>{i.number}</div>
+                      <div style={{ fontSize: 16, color: C.text }}>{i.title}</div>
+                      <div style={{ fontSize: 15, color: C.muted }}>{i.createdAt}</div>
                     </div>
                     <div style={{ textAlign: 'right' }}>
-                      <div style={{ fontSize: 18, fontWeight: 900, color: C.text }}>{'$' + calc.total.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
-                      <span style={{ fontSize: 12, fontWeight: 700, padding: '2px 8px', borderRadius: 10, background: INV_STATUS[i.status]?.bg || '#f3f4f6', color: INV_STATUS[i.status]?.color || C.muted, textTransform: 'uppercase' }}>{INV_STATUS[i.status]?.label || i.status}</span>
+                      <div style={{ fontSize: 20, fontWeight: 900, color: C.text }}>{'$' + calc.total.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
+                      <span style={{ fontSize: 14, fontWeight: 700, padding: '2px 8px', borderRadius: 10, background: INV_STATUS[i.status]?.bg || '#f3f4f6', color: INV_STATUS[i.status]?.color || C.muted, textTransform: 'uppercase' }}>{INV_STATUS[i.status]?.label || i.status}</span>
                     </div>
                   </div>
                 );
@@ -7884,17 +7884,17 @@ function Clients({ user, nav, invoices = [] }) {
 
         {/* Quotes */}
         <div>
-          <div style={{ fontSize: 14, fontWeight: 800, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 10 }}>Quotes ({quo.length})</div>
+          <div style={{ fontSize: 16, fontWeight: 800, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 10 }}>Quotes ({quo.length})</div>
           {quo.length === 0
-            ? <div style={{ color: C.dim, fontSize: 15, padding: '14px 0' }}>No quotes yet</div>
+            ? <div style={{ color: C.dim, fontSize: 17, padding: '14px 0' }}>No quotes yet</div>
             : quo.map(q => (
                 <div key={q.id} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 6, padding: '14px 16px', marginBottom: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
                   <div>
-                    <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, fontWeight: 700, color: C.orange }}>{q.number}</div>
-                    <div style={{ fontSize: 14, color: C.text }}>{q.title}</div>
-                    <div style={{ fontSize: 13, color: C.muted }}>{q.createdAt}</div>
+                    <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 17, fontWeight: 700, color: C.orange }}>{q.number}</div>
+                    <div style={{ fontSize: 16, color: C.text }}>{q.title}</div>
+                    <div style={{ fontSize: 15, color: C.muted }}>{q.createdAt}</div>
                   </div>
-                  <span style={{ fontSize: 12, fontWeight: 700, padding: '2px 10px', borderRadius: 10, background: '#f3f4f6', color: C.muted, textTransform: 'uppercase' }}>{q.status}</span>
+                  <span style={{ fontSize: 14, fontWeight: 700, padding: '2px 10px', borderRadius: 10, background: '#f3f4f6', color: C.muted, textTransform: 'uppercase' }}>{q.status}</span>
                 </div>
               ))
           }
@@ -7913,11 +7913,11 @@ function Clients({ user, nav, invoices = [] }) {
         <input
           value={search} onChange={e => setSearch(e.target.value)}
           placeholder="Search clients…"
-          style={{ ...s.input, flex: 1, padding: '12px 14px', fontSize: 16 }}
+          style={{ ...s.input, flex: 1, padding: '12px 14px', fontSize: 18 }}
         />
         <button onClick={() => setShowAdd(true)} style={{
           ...s.btn, background: C.orange, color: '#fff',
-          padding: '12px 20px', fontSize: 14, borderRadius: 50,
+          padding: '12px 20px', fontSize: 16, borderRadius: 50,
           border: 'none', whiteSpace: 'nowrap',
         }}>+ Add Client</button>
       </div>
@@ -7925,7 +7925,7 @@ function Clients({ user, nav, invoices = [] }) {
       {/* Add client form */}
       {showAdd && (
         <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: '18px 20px', marginBottom: 18 }}>
-          <div style={{ fontSize: 16, fontWeight: 800, color: C.text, marginBottom: 14 }}>New Client</div>
+          <div style={{ fontSize: 18, fontWeight: 800, color: C.text, marginBottom: 14 }}>New Client</div>
           <div style={{ display: 'grid', gridTemplateColumns: isTablet ? '1fr' : '1fr 1fr', gap: 12, marginBottom: 14 }}>
             {[
               { key: 'name',    label: 'Full Name *',    ph: 'Sandra Johnson'        },
@@ -7937,24 +7937,24 @@ function Clients({ user, nav, invoices = [] }) {
                 <label style={s.label}>{f.label}</label>
                 <input value={newClient[f.key]} onChange={e => setNewClient(p => ({ ...p, [f.key]: e.target.value }))}
                   placeholder={f.ph}
-                  style={{ ...s.input, width: '100%', padding: '11px 13px', boxSizing: 'border-box', fontSize: 16 }} />
+                  style={{ ...s.input, width: '100%', padding: '11px 13px', boxSizing: 'border-box', fontSize: 18 }} />
               </div>
             ))}
           </div>
           <div style={{ display: 'flex', gap: 10 }}>
-            <button onClick={addClient} disabled={!newClient.name.trim() || saving} style={{ ...s.btn, background: C.orange, color: '#fff', padding: '11px 24px', fontSize: 14, borderRadius: 50, border: 'none', opacity: (newClient.name.trim() && !saving) ? 1 : 0.4 }}>{saving ? 'Saving…' : 'Save Client'}</button>
-            <button onClick={() => setShowAdd(false)} style={{ ...s.btn, background: 'transparent', border: `1px solid ${C.border2}`, color: C.muted, padding: '11px 20px', fontSize: 14, borderRadius: 50 }}>Cancel</button>
+            <button onClick={addClient} disabled={!newClient.name.trim() || saving} style={{ ...s.btn, background: C.orange, color: '#fff', padding: '11px 24px', fontSize: 16, borderRadius: 50, border: 'none', opacity: (newClient.name.trim() && !saving) ? 1 : 0.4 }}>{saving ? 'Saving…' : 'Save Client'}</button>
+            <button onClick={() => setShowAdd(false)} style={{ ...s.btn, background: 'transparent', border: `1px solid ${C.border2}`, color: C.muted, padding: '11px 20px', fontSize: 16, borderRadius: 50 }}>Cancel</button>
           </div>
         </div>
       )}
 
       {/* Loading / error / empty / list */}
       {loading
-        ? <div style={{ color: C.dim, fontSize: 16, padding: '30px 0', textAlign: 'center' }}>Loading clients…</div>
+        ? <div style={{ color: C.dim, fontSize: 18, padding: '30px 0', textAlign: 'center' }}>Loading clients…</div>
         : loadError
-        ? <div style={{ color: C.error, fontSize: 14, padding: '20px', background: '#fef2f2', border: `1px solid ${C.error}33`, borderRadius: 6, textAlign: 'center' }}>{loadError}</div>
+        ? <div style={{ color: C.error, fontSize: 16, padding: '20px', background: '#fef2f2', border: `1px solid ${C.error}33`, borderRadius: 6, textAlign: 'center' }}>{loadError}</div>
         : filtered.length === 0
-        ? <div style={{ color: C.dim, fontSize: 16, padding: '30px 0', textAlign: 'center' }}>{clients.length === 0 ? 'No clients yet — tap "+ Add Client" to create one.' : 'No clients match your search.'}</div>
+        ? <div style={{ color: C.dim, fontSize: 18, padding: '30px 0', textAlign: 'center' }}>{clients.length === 0 ? 'No clients yet — tap "+ Add Client" to create one.' : 'No clients match your search.'}</div>
         : filtered.map(c => {
             const inv = clientInvoices(c);
             const quo = clientQuotes(c);
@@ -7969,34 +7969,34 @@ function Clients({ user, nav, invoices = [] }) {
                 {/* Avatar + info */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
                   <div style={{ width: 44, height: 44, borderRadius: '50%', background: C.orange, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <span style={{ fontSize: 16, fontWeight: 900, color: '#fff', fontFamily: "'Inter', sans-serif" }}>
+                    <span style={{ fontSize: 18, fontWeight: 900, color: '#fff', fontFamily: "'Inter', sans-serif" }}>
                       {c.name.split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase()}
                     </span>
                   </div>
                   <div>
-                    <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 17, fontWeight: 700, color: C.text }}>{c.name}</div>
-                    {c.company && <div style={{ fontSize: 14, color: C.muted }}>{c.company}</div>}
-                    <div style={{ fontSize: 13, color: C.dim }}>{c.email}{c.phone ? `  ·  ${c.phone}` : ''}</div>
+                    <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 19, fontWeight: 700, color: C.text }}>{c.name}</div>
+                    {c.company && <div style={{ fontSize: 16, color: C.muted }}>{c.company}</div>}
+                    <div style={{ fontSize: 15, color: C.dim }}>{c.email}{c.phone ? `  ·  ${c.phone}` : ''}</div>
                   </div>
                 </div>
 
                 {/* Stats */}
                 <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexShrink: 0 }}>
                   <div style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: 18, fontWeight: 900, color: C.text, fontFamily: "'Inter', sans-serif" }}>{inv.length}</div>
-                    <div style={{ fontSize: 11, color: C.dim, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Invoices</div>
+                    <div style={{ fontSize: 20, fontWeight: 900, color: C.text, fontFamily: "'Inter', sans-serif" }}>{inv.length}</div>
+                    <div style={{ fontSize: 13, color: C.dim, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Invoices</div>
                   </div>
                   <div style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: 18, fontWeight: 900, color: C.text, fontFamily: "'Inter', sans-serif" }}>{quo.length}</div>
-                    <div style={{ fontSize: 11, color: C.dim, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Quotes</div>
+                    <div style={{ fontSize: 20, fontWeight: 900, color: C.text, fontFamily: "'Inter', sans-serif" }}>{quo.length}</div>
+                    <div style={{ fontSize: 13, color: C.dim, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Quotes</div>
                   </div>
                   {owed > 0 && (
                     <div style={{ textAlign: 'center' }}>
-                      <div style={{ fontSize: 16, fontWeight: 900, color: C.error, fontFamily: "'Inter', sans-serif" }}>{'$' + owed.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
-                      <div style={{ fontSize: 11, color: C.error, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Owed</div>
+                      <div style={{ fontSize: 18, fontWeight: 900, color: C.error, fontFamily: "'Inter', sans-serif" }}>{'$' + owed.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
+                      <div style={{ fontSize: 13, color: C.error, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Owed</div>
                     </div>
                   )}
-                  <span style={{ color: C.muted, fontSize: 18 }}>›</span>
+                  <span style={{ color: C.muted, fontSize: 20 }}>›</span>
                 </div>
               </button>
             );
@@ -8026,37 +8026,37 @@ function TeamMemberRow({ member, onUpdate, onRemove }) {
     <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, marginBottom: 8, overflow: 'hidden' }}>
       {/* Row header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', cursor: 'pointer' }} onClick={() => setExpanded(e => !e)}>
-        <div style={{ width: 38, height: 38, borderRadius: '50%', background: member.status === 'pending' ? C.warn : C.orange, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, color: '#fff', flexShrink: 0 }}>
+        <div style={{ width: 38, height: 38, borderRadius: '50%', background: member.status === 'pending' ? C.warn : C.orange, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 700, color: '#fff', flexShrink: 0 }}>
           {member.name.split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase()}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 15, fontWeight: 700, color: C.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{member.name}</div>
-          <div style={{ fontSize: 13, color: C.muted }}>{member.email || 'Pending invite'} · {member.trades?.join(', ') || 'No trade set'}</div>
+          <div style={{ fontSize: 17, fontWeight: 700, color: C.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{member.name}</div>
+          <div style={{ fontSize: 15, color: C.muted }}>{member.email || 'Pending invite'} · {member.trades?.join(', ') || 'No trade set'}</div>
         </div>
-        <span style={{ fontSize: 12, fontWeight: 700, padding: '3px 10px', borderRadius: 10, background: member.status === 'active' ? '#f0fdf4' : '#fffbeb', color: member.status === 'active' ? C.success : C.warn, flexShrink: 0 }}>
+        <span style={{ fontSize: 14, fontWeight: 700, padding: '3px 10px', borderRadius: 10, background: member.status === 'active' ? '#f0fdf4' : '#fffbeb', color: member.status === 'active' ? C.success : C.warn, flexShrink: 0 }}>
           {member.status === 'active' ? 'Active' : 'Pending'}
         </span>
-        <span style={{ color: C.dim, fontSize: 16, flexShrink: 0 }}>{expanded ? '▲' : '▼'}</span>
+        <span style={{ color: C.dim, fontSize: 18, flexShrink: 0 }}>{expanded ? '▲' : '▼'}</span>
       </div>
 
       {/* Expanded permissions */}
       {expanded && (
         <div style={{ borderTop: `1px solid ${C.border}`, padding: '14px 16px', background: C.raised }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>Permissions</div>
+          <div style={{ fontSize: 15, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>Permissions</div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 14 }}>
             {PERMS.map(({ key, label }) => (
               <button key={key} onClick={() => togglePerm(key)} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'transparent', border: 'none', cursor: 'pointer', padding: '6px 0', textAlign: 'left' }}>
                 <div style={{ width: 20, height: 20, borderRadius: 4, background: member.perms[key] ? C.orange : C.raised, border: `2px solid ${member.perms[key] ? C.orange : C.border2}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  {member.perms[key] && <span style={{ color: '#fff', fontSize: 12, fontWeight: 700 }}>✓</span>}
+                  {member.perms[key] && <span style={{ color: '#fff', fontSize: 14, fontWeight: 700 }}>✓</span>}
                 </div>
-                <span style={{ fontSize: 13, color: member.perms[key] ? C.text : C.dim, fontWeight: member.perms[key] ? 600 : 400 }}>{label}</span>
+                <span style={{ fontSize: 15, color: member.perms[key] ? C.text : C.dim, fontWeight: member.perms[key] ? 600 : 400 }}>{label}</span>
               </button>
             ))}
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
-            <button onClick={() => onUpdate({ ...member, perms: Object.fromEntries(PERMS.map(p => [p.key, true])) })} style={{ ...s.btn, background: C.raised, border: `1px solid ${C.border2}`, color: C.muted, padding: '7px 14px', fontSize: 13, borderRadius: 50 }}>All on</button>
-            <button onClick={() => onUpdate({ ...member, perms: Object.fromEntries(PERMS.map(p => [p.key, false])) })} style={{ ...s.btn, background: C.raised, border: `1px solid ${C.border2}`, color: C.muted, padding: '7px 14px', fontSize: 13, borderRadius: 50 }}>All off</button>
-            <button onClick={() => onRemove(member.id)} style={{ ...s.btn, background: 'transparent', border: `1px solid ${C.error}44`, color: C.error, padding: '7px 14px', fontSize: 13, borderRadius: 50, marginLeft: 'auto' }}>Remove</button>
+            <button onClick={() => onUpdate({ ...member, perms: Object.fromEntries(PERMS.map(p => [p.key, true])) })} style={{ ...s.btn, background: C.raised, border: `1px solid ${C.border2}`, color: C.muted, padding: '7px 14px', fontSize: 15, borderRadius: 50 }}>All on</button>
+            <button onClick={() => onUpdate({ ...member, perms: Object.fromEntries(PERMS.map(p => [p.key, false])) })} style={{ ...s.btn, background: C.raised, border: `1px solid ${C.border2}`, color: C.muted, padding: '7px 14px', fontSize: 15, borderRadius: 50 }}>All off</button>
+            <button onClick={() => onRemove(member.id)} style={{ ...s.btn, background: 'transparent', border: `1px solid ${C.error}44`, color: C.error, padding: '7px 14px', fontSize: 15, borderRadius: 50, marginLeft: 'auto' }}>Remove</button>
           </div>
         </div>
       )}
@@ -8118,19 +8118,19 @@ function BuyTechSeatModal({ user, onClose, onCreate }) {
         {/* Header */}
         <div style={{ padding: '20px 24px', borderBottom: `1px solid ${C.border}`, background: C.orange, color: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', opacity: 0.85 }}>New Tech Seat — $19.99/mo</div>
-            <div style={{ fontSize: 19, fontWeight: 700, marginTop: 2 }}>Add a Technician</div>
+            <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', opacity: 0.85 }}>New Tech Seat — $19.99/mo</div>
+            <div style={{ fontSize: 21, fontWeight: 700, marginTop: 2 }}>Add a Technician</div>
           </div>
-          <button onClick={onClose} style={{ width: 44, height: 44, borderRadius: '50%', background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', fontSize: 22, cursor: 'pointer' }}>×</button>
+          <button onClick={onClose} style={{ width: 44, height: 44, borderRadius: '50%', background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', fontSize: 24, cursor: 'pointer' }}>×</button>
         </div>
 
         {/* Body */}
         <div style={{ padding: '20px 24px' }}>
-          {err && <div style={{ background: C.errorLo, border: `1px solid ${C.error}33`, color: C.errorBold, padding: '10px 14px', borderRadius: 8, fontSize: 14, marginBottom: 16 }}>{err}</div>}
+          {err && <div style={{ background: C.errorLo, border: `1px solid ${C.error}33`, color: C.errorBold, padding: '10px 14px', borderRadius: 8, fontSize: 16, marginBottom: 16 }}>{err}</div>}
 
           <label style={{ ...s.label, marginTop: 0 }}>Tech Name <span style={{ color: C.errorBold }}>*</span></label>
           <input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Carlos Reyes"
-            style={{ ...s.input, width: '100%', padding: '12px 14px', minHeight: 48, fontSize: 16, fontWeight: 600, marginBottom: 14, boxSizing: 'border-box' }} />
+            style={{ ...s.input, width: '100%', padding: '12px 14px', minHeight: 48, fontSize: 18, fontWeight: 600, marginBottom: 14, boxSizing: 'border-box' }} />
 
           <label style={s.label}>Trade(s) — what this tech can do <span style={{ color: C.errorBold }}>*</span></label>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 14 }}>
@@ -8139,7 +8139,7 @@ function BuyTechSeatModal({ user, onClose, onCreate }) {
                 padding: '10px 14px', minHeight: 44, borderRadius: 50, border: `1.5px solid ${trades.includes(t) ? C.orange : C.border2}`,
                 background: trades.includes(t) ? C.orange : '#fff',
                 color: trades.includes(t) ? '#fff' : C.muted,
-                fontSize: 14, fontWeight: 600, cursor: 'pointer',
+                fontSize: 16, fontWeight: 600, cursor: 'pointer',
               }}>{t}</button>
             ))}
           </div>
@@ -8148,12 +8148,12 @@ function BuyTechSeatModal({ user, onClose, onCreate }) {
             <div>
               <label style={s.label}>Branch / Location</label>
               <input value={branch} onChange={e => setBranch(e.target.value)} placeholder="Houston North"
-                style={{ ...s.input, width: '100%', padding: '12px 14px', minHeight: 48, fontSize: 16, boxSizing: 'border-box' }} />
+                style={{ ...s.input, width: '100%', padding: '12px 14px', minHeight: 48, fontSize: 18, boxSizing: 'border-box' }} />
             </div>
             <div>
               <label style={s.label}>Phone</label>
               <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="(713) 555-0100" type="tel"
-                style={{ ...s.input, width: '100%', padding: '12px 14px', minHeight: 48, fontSize: 16, boxSizing: 'border-box' }} />
+                style={{ ...s.input, width: '100%', padding: '12px 14px', minHeight: 48, fontSize: 18, boxSizing: 'border-box' }} />
             </div>
           </div>
 
@@ -8167,14 +8167,14 @@ function BuyTechSeatModal({ user, onClose, onCreate }) {
               { key: 'viewAllJobs',     label: 'View ALL company jobs (vs only theirs)' },
               { key: 'viewDashboard',   label: 'View dashboard / financials' },
             ].map(({ key, label }) => (
-              <label key={key} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', cursor: 'pointer', fontSize: 14, color: C.text, fontWeight: 500 }}>
+              <label key={key} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', cursor: 'pointer', fontSize: 16, color: C.text, fontWeight: 500 }}>
                 <input type="checkbox" checked={!!perms[key]} onChange={() => togglePerm(key)} style={{ width: 20, height: 20, accentColor: C.orange, cursor: 'pointer' }} />
                 <span>{label}</span>
               </label>
             ))}
           </div>
 
-          <div style={{ background: C.orangeLo, border: `1px solid ${C.orange}33`, borderRadius: 8, padding: '12px 14px', fontSize: 13, color: C.muted, lineHeight: 1.5 }}>
+          <div style={{ background: C.orangeLo, border: `1px solid ${C.orange}33`, borderRadius: 8, padding: '12px 14px', fontSize: 15, color: C.muted, lineHeight: 1.5 }}>
             <strong style={{ color: C.orange }}>How this works:</strong> we'll generate a unique Tech ID
             and password for them. Share those credentials with the tech — they sign in with the ID
             (no email needed). They'll be prompted to set their own password on first login.
@@ -8185,12 +8185,12 @@ function BuyTechSeatModal({ user, onClose, onCreate }) {
         <div style={{ padding: '14px 24px', borderTop: `1px solid ${C.border}`, display: 'flex', gap: 10, position: 'sticky', bottom: 0, background: '#fff' }}>
           <button onClick={onClose} disabled={saving} style={{
             flex: 1, padding: '14px', minHeight: 50, border: `1.5px solid ${C.border2}`, borderRadius: 8,
-            background: '#fff', color: C.muted, fontSize: 15, fontWeight: 600, cursor: 'pointer',
+            background: '#fff', color: C.muted, fontSize: 17, fontWeight: 600, cursor: 'pointer',
           }}>Cancel</button>
           <button onClick={submit} disabled={saving || !name.trim() || trades.length === 0} style={{
             flex: 2, padding: '14px', minHeight: 50, border: 'none', borderRadius: 8,
             background: saving || !name.trim() || trades.length === 0 ? C.dim : C.orange,
-            color: '#fff', fontSize: 15, fontWeight: 700, cursor: saving ? 'wait' : 'pointer',
+            color: '#fff', fontSize: 17, fontWeight: 700, cursor: saving ? 'wait' : 'pointer',
             opacity: saving || !name.trim() || trades.length === 0 ? 0.55 : 1,
           }}>{saving ? 'Creating account…' : 'Create Tech Account ($19.99/mo)'}</button>
         </div>
@@ -8223,11 +8223,11 @@ function TechCredentialsDisplay({ creds, onClose }) {
     }}>
       <div style={{ background: '#fff', borderRadius: 14, width: '100%', maxWidth: 520, maxHeight: '92vh', overflow: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}>
         <div style={{ padding: '24px', borderBottom: `1px solid ${C.border}`, background: C.success, color: '#fff' }}>
-          <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', opacity: 0.85 }}>Account Created</div>
-          <div style={{ fontSize: 20, fontWeight: 700, marginTop: 4 }}>{creds.member?.name || 'Tech'} is ready to sign in</div>
+          <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', opacity: 0.85 }}>Account Created</div>
+          <div style={{ fontSize: 22, fontWeight: 700, marginTop: 4 }}>{creds.member?.name || 'Tech'} is ready to sign in</div>
         </div>
         <div style={{ padding: '24px' }}>
-          <div style={{ background: '#fef9c3', border: `1px solid ${C.warn}55`, borderRadius: 8, padding: '12px 16px', marginBottom: 20, fontSize: 13, color: C.muted, lineHeight: 1.55 }}>
+          <div style={{ background: '#fef9c3', border: `1px solid ${C.warn}55`, borderRadius: 8, padding: '12px 16px', marginBottom: 20, fontSize: 15, color: C.muted, lineHeight: 1.55 }}>
             <strong style={{ color: C.warn }}>Save these now.</strong> The password won't be shown again. Copy them, write them down, or text them to the tech.
           </div>
 
@@ -8235,12 +8235,12 @@ function TechCredentialsDisplay({ creds, onClose }) {
           <div style={{ marginBottom: 16 }}>
             <div style={{ ...s.label, marginBottom: 8 }}>Tech ID</div>
             <div style={{ display: 'flex', alignItems: 'stretch', gap: 8 }}>
-              <div style={{ flex: 1, background: C.raised, border: `1px solid ${C.border}`, borderRadius: 8, padding: '14px 18px', fontFamily: 'ui-monospace, monospace', fontSize: 22, fontWeight: 800, color: C.text, letterSpacing: '0.06em', textAlign: 'center' }}>
+              <div style={{ flex: 1, background: C.raised, border: `1px solid ${C.border}`, borderRadius: 8, padding: '14px 18px', fontFamily: 'ui-monospace, monospace', fontSize: 24, fontWeight: 800, color: C.text, letterSpacing: '0.06em', textAlign: 'center' }}>
                 {creds.techId}
               </div>
               <button onClick={() => copy(creds.techId, 'id')} style={{
                 padding: '0 18px', minHeight: 50, border: `1.5px solid ${C.border2}`, borderRadius: 8,
-                background: '#fff', color: copied === 'id' ? C.success : C.muted, fontSize: 14, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap',
+                background: '#fff', color: copied === 'id' ? C.success : C.muted, fontSize: 16, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap',
               }}>{copied === 'id' ? '✓ Copied' : 'Copy'}</button>
             </div>
           </div>
@@ -8249,25 +8249,25 @@ function TechCredentialsDisplay({ creds, onClose }) {
           <div style={{ marginBottom: 16 }}>
             <div style={{ ...s.label, marginBottom: 8 }}>Initial Password</div>
             <div style={{ display: 'flex', alignItems: 'stretch', gap: 8 }}>
-              <div style={{ flex: 1, background: C.raised, border: `1px solid ${C.border}`, borderRadius: 8, padding: '14px 18px', fontFamily: 'ui-monospace, monospace', fontSize: 22, fontWeight: 800, color: C.text, letterSpacing: '0.06em', textAlign: 'center' }}>
+              <div style={{ flex: 1, background: C.raised, border: `1px solid ${C.border}`, borderRadius: 8, padding: '14px 18px', fontFamily: 'ui-monospace, monospace', fontSize: 24, fontWeight: 800, color: C.text, letterSpacing: '0.06em', textAlign: 'center' }}>
                 {creds.password}
               </div>
               <button onClick={() => copy(creds.password, 'pw')} style={{
                 padding: '0 18px', minHeight: 50, border: `1.5px solid ${C.border2}`, borderRadius: 8,
-                background: '#fff', color: copied === 'pw' ? C.success : C.muted, fontSize: 14, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap',
+                background: '#fff', color: copied === 'pw' ? C.success : C.muted, fontSize: 16, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap',
               }}>{copied === 'pw' ? '✓ Copied' : 'Copy'}</button>
             </div>
-            <div style={{ fontSize: 12, color: C.dim, marginTop: 6 }}>The tech will be asked to change this on first sign-in.</div>
+            <div style={{ fontSize: 14, color: C.dim, marginTop: 6 }}>The tech will be asked to change this on first sign-in.</div>
           </div>
 
           <button onClick={() => copy(both, 'all')} style={{
             width: '100%', padding: '14px', minHeight: 50, border: `1.5px solid ${C.orange}88`, borderRadius: 8,
-            background: copied === 'all' ? C.orangeLo : '#fff', color: C.orange, fontSize: 14, fontWeight: 700, cursor: 'pointer', marginBottom: 14,
+            background: copied === 'all' ? C.orangeLo : '#fff', color: C.orange, fontSize: 16, fontWeight: 700, cursor: 'pointer', marginBottom: 14,
           }}>{copied === 'all' ? '✓ Copied — paste into a text or email to the tech' : 'Copy both + sign-in instructions'}</button>
 
           <button onClick={onClose} style={{
             width: '100%', padding: '14px', minHeight: 50, border: 'none', borderRadius: 8,
-            background: C.success, color: '#fff', fontSize: 15, fontWeight: 700, cursor: 'pointer',
+            background: C.success, color: '#fff', fontSize: 17, fontWeight: 700, cursor: 'pointer',
           }}>Done</button>
         </div>
       </div>
@@ -8326,20 +8326,20 @@ function TimeOffPanel({ team = [], timeOff = [], onAdd, onRemove }) {
 
   return (
     <div style={{ marginBottom: 28 }}>
-      <div style={{ fontSize: 15, fontWeight: 800, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12, fontFamily: "'Inter', sans-serif" }}>
+      <div style={{ fontSize: 17, fontWeight: 800, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12, fontFamily: "'Inter', sans-serif" }}>
         Time Off
       </div>
 
       {/* Add-form card */}
       <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: '16px 20px', marginBottom: 14 }}>
-        <div style={{ fontSize: 13, color: C.muted, marginBottom: 12, lineHeight: 1.5 }}>
+        <div style={{ fontSize: 15, color: C.muted, marginBottom: 12, lineHeight: 1.5 }}>
           Block out vacation, sick days, or training. Off techs won't show in the Add Job dropdown for those dates and you'll get a warning if you try to drag a job onto their off-days.
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 10, marginBottom: 10 }}>
           <div>
             <label style={s.label}>Tech</label>
             <select value={techId} onChange={e => setTechId(e.target.value)}
-              style={{ ...s.input, padding: '10px 12px', fontSize: 15, width: '100%' }}>
+              style={{ ...s.input, padding: '10px 12px', fontSize: 17, width: '100%' }}>
               <option value="">— Select tech —</option>
               {team.map(t => (
                 <option key={t.id} value={t.userId || t.id}>{t.name || 'Unnamed'}</option>
@@ -8349,21 +8349,21 @@ function TimeOffPanel({ team = [], timeOff = [], onAdd, onRemove }) {
           <div>
             <label style={s.label}>Start Date</label>
             <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)}
-              style={{ ...s.input, padding: '10px 12px', fontSize: 15, width: '100%' }} />
+              style={{ ...s.input, padding: '10px 12px', fontSize: 17, width: '100%' }} />
           </div>
           <div>
             <label style={s.label}>End Date</label>
             <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)}
-              style={{ ...s.input, padding: '10px 12px', fontSize: 15, width: '100%' }} />
+              style={{ ...s.input, padding: '10px 12px', fontSize: 17, width: '100%' }} />
           </div>
         </div>
         <label style={s.label}>Reason (optional)</label>
         <input type="text" placeholder="Vacation, sick day, training…" value={reason} onChange={e => setReason(e.target.value)}
-          style={{ ...s.input, padding: '10px 12px', fontSize: 15, width: '100%', marginBottom: 12 }} />
+          style={{ ...s.input, padding: '10px 12px', fontSize: 17, width: '100%', marginBottom: 12 }} />
         <button onClick={submit} disabled={!canAdd || saving} style={{
           ...s.btn,
           background: canAdd ? C.orange : C.border, color: '#fff',
-          padding: '10px 20px', fontSize: 14, borderRadius: 8,
+          padding: '10px 20px', fontSize: 16, borderRadius: 8,
           opacity: !canAdd || saving ? 0.55 : 1,
           cursor: !canAdd || saving ? 'not-allowed' : 'pointer',
         }}>
@@ -8373,7 +8373,7 @@ function TimeOffPanel({ team = [], timeOff = [], onAdd, onRemove }) {
 
       {/* List of existing entries */}
       {sorted.length === 0 ? (
-        <div style={{ padding: '14px 18px', background: C.surface, border: `1px dashed ${C.border}`, borderRadius: 8, fontSize: 13, color: C.muted, textAlign: 'center' }}>
+        <div style={{ padding: '14px 18px', background: C.surface, border: `1px dashed ${C.border}`, borderRadius: 8, fontSize: 15, color: C.muted, textAlign: 'center' }}>
           No time-off entries yet.
         </div>
       ) : (
@@ -8390,17 +8390,17 @@ function TimeOffPanel({ team = [], timeOff = [], onAdd, onRemove }) {
               }}>
                 <div style={{ minWidth: 0, flex: 1 }}>
                   <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 3, flexWrap: 'wrap' }}>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: C.text }}>{t.techName || 'Unknown tech'}</div>
+                    <div style={{ fontSize: 17, fontWeight: 700, color: C.text }}>{t.techName || 'Unknown tech'}</div>
                     {isLive && (
-                      <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase',
+                      <span style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase',
                         padding: '2px 7px', borderRadius: 4, background: C.errorBold, color: '#fff' }}>Off now</span>
                     )}
                     {isPast && (
-                      <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase',
+                      <span style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase',
                         padding: '2px 7px', borderRadius: 4, background: C.border, color: C.muted }}>Past</span>
                     )}
                   </div>
-                  <div style={{ fontSize: 13, color: C.muted }}>
+                  <div style={{ fontSize: 15, color: C.muted }}>
                     {fmt(t.startDate)} → {fmt(t.endDate)}
                     {t.reason ? ` · ${t.reason}` : ''}
                   </div>
@@ -8412,7 +8412,7 @@ function TimeOffPanel({ team = [], timeOff = [], onAdd, onRemove }) {
                 }} style={{
                   ...s.btn,
                   background: 'transparent', border: `1px solid ${C.border2}`, color: C.error,
-                  padding: '6px 12px', fontSize: 13, borderRadius: 6, flexShrink: 0,
+                  padding: '6px 12px', fontSize: 15, borderRadius: 6, flexShrink: 0,
                 }}>Remove</button>
               </div>
             );
@@ -8583,7 +8583,7 @@ function Settings({ user, setUser, logo, onLogoChange, showProfileModal, setShow
   };
 
   const SectionLabel = ({ children }) => (
-    <div style={{ fontSize: 15, fontWeight: 800, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12, fontFamily: "'Inter', sans-serif" }}>{children}</div>
+    <div style={{ fontSize: 17, fontWeight: 800, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12, fontFamily: "'Inter', sans-serif" }}>{children}</div>
   );
 
   return (
@@ -8592,12 +8592,12 @@ function Settings({ user, setUser, logo, onLogoChange, showProfileModal, setShow
 
       {/* Profile summary */}
       <div style={{ marginBottom: 28 }}>
-        <div style={{ fontSize: 15, fontWeight: 800, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12, fontFamily: "'Inter', sans-serif" }}>Profile</div>
+        <div style={{ fontSize: 17, fontWeight: 800, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12, fontFamily: "'Inter', sans-serif" }}>Profile</div>
         <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 4, padding: '20px 22px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
           <div>
-            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 23, fontWeight: 900, color: C.text }}>{user.name}</div>
-            <div style={{ fontSize: 18, color: C.muted, marginTop: 2 }}>{user.company}</div>
-            <div style={{ fontSize: 16, color: C.dim, marginTop: 6, lineHeight: 1.8 }}>
+            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 25, fontWeight: 900, color: C.text }}>{user.name}</div>
+            <div style={{ fontSize: 20, color: C.muted, marginTop: 2 }}>{user.company}</div>
+            <div style={{ fontSize: 18, color: C.dim, marginTop: 6, lineHeight: 1.8 }}>
               <div>{user.email}</div>
               <div>{user.phone}</div>
               <div>{user.states?.join(', ') || user.state}</div>
@@ -8609,15 +8609,15 @@ function Settings({ user, setUser, logo, onLogoChange, showProfileModal, setShow
 
       {/* Logo preview in settings */}
       <div style={{ marginBottom: 28 }}>
-        <div style={{ fontSize: 15, fontWeight: 800, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12, fontFamily: "'Inter', sans-serif" }}>Company Logo</div>
+        <div style={{ fontSize: 17, fontWeight: 800, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12, fontFamily: "'Inter', sans-serif" }}>Company Logo</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           {logo
             ? <div style={{ position: 'relative', display: 'inline-block' }}>
                 <img src={logo} alt="Company logo" style={{ maxHeight: 72, maxWidth: 200, objectFit: 'contain', display: 'block', background: C.raised, padding: 8, borderRadius: 3, border: `1px solid ${C.border}` }} />
-                <button onClick={() => onLogoChange(null)} style={{ position: 'absolute', top: -8, right: -8, background: C.error, border: 'none', borderRadius: '50%', width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#fff', fontSize: 14, fontWeight: 700 }}>x</button>
+                <button onClick={() => onLogoChange(null)} style={{ position: 'absolute', top: -8, right: -8, background: C.error, border: 'none', borderRadius: '50%', width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#fff', fontSize: 16, fontWeight: 700 }}>x</button>
               </div>
             : <div style={{ width: 140, height: 72, border: `2px dashed ${C.border2}`, borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', background: C.raised }}>
-                <span style={{ fontSize: 14, color: C.dim, fontFamily: "'Inter', sans-serif", fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>No Logo</span>
+                <span style={{ fontSize: 16, color: C.dim, fontFamily: "'Inter', sans-serif", fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>No Logo</span>
               </div>
           }
           <GhostBtn size="sm" onClick={() => setShowProfileModal(true)}>{logo ? 'Change Logo' : 'Upload Logo'}</GhostBtn>
@@ -8662,7 +8662,7 @@ function Settings({ user, setUser, logo, onLogoChange, showProfileModal, setShow
       {/* ── Payment Setup ─────────────────────────────────────────────────── */}
       <div style={{ marginBottom: 28 }}>
         <SectionLabel>Payment Setup</SectionLabel>
-        <div style={{ fontSize: 15, color: C.muted, marginBottom: 16, lineHeight: 1.6 }}>
+        <div style={{ fontSize: 17, color: C.muted, marginBottom: 16, lineHeight: 1.6 }}>
           Connect your accounts so clients can pay you directly. These appear on every invoice and quote you send.
         </div>
 
@@ -8673,11 +8673,11 @@ function Settings({ user, setUser, logo, onLogoChange, showProfileModal, setShow
             background: stripeBanner.kind === 'success' ? '#f0fdf4' : '#fef2f2',
             border: `1px solid ${stripeBanner.kind === 'success' ? C.success + '44' : C.error + '44'}`,
             color: stripeBanner.kind === 'success' ? C.success : C.error,
-            fontSize: 14, fontWeight: 600,
+            fontSize: 16, fontWeight: 600,
             display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12,
           }}>
             <span>{stripeBanner.text}</span>
-            <button onClick={() => setStripeBanner(null)} style={{ background: 'transparent', border: 'none', color: 'inherit', cursor: 'pointer', fontSize: 18, fontWeight: 700 }}>×</button>
+            <button onClick={() => setStripeBanner(null)} style={{ background: 'transparent', border: 'none', color: 'inherit', cursor: 'pointer', fontSize: 20, fontWeight: 700 }}>×</button>
           </div>
         )}
 
@@ -8686,15 +8686,15 @@ function Settings({ user, setUser, logo, onLogoChange, showProfileModal, setShow
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
             <div style={{ flex: 1 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6, flexWrap: 'wrap' }}>
-                <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 18, fontWeight: 800, color: C.text }}>Card &amp; ACH — Stripe</div>
+                <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 20, fontWeight: 800, color: C.text }}>Card &amp; ACH — Stripe</div>
                 {stripeConnected && stripeChargesEnabled && (
-                  <span style={{ fontSize: 13, fontWeight: 700, background: '#f0fdf4', color: C.success, padding: '2px 8px', borderRadius: 3 }}>Connected</span>
+                  <span style={{ fontSize: 15, fontWeight: 700, background: '#f0fdf4', color: C.success, padding: '2px 8px', borderRadius: 3 }}>Connected</span>
                 )}
                 {stripeConnected && !stripeChargesEnabled && (
-                  <span style={{ fontSize: 13, fontWeight: 700, background: '#fef9c3', color: C.warn, padding: '2px 8px', borderRadius: 3 }}>Verifying with Stripe…</span>
+                  <span style={{ fontSize: 15, fontWeight: 700, background: '#fef9c3', color: C.warn, padding: '2px 8px', borderRadius: 3 }}>Verifying with Stripe…</span>
                 )}
               </div>
-              <div style={{ fontSize: 15, color: C.muted, lineHeight: 1.6, marginBottom: 10 }}>
+              <div style={{ fontSize: 17, color: C.muted, lineHeight: 1.6, marginBottom: 10 }}>
                 Clients pay online by card or bank transfer. Money deposits directly to your bank account.
               </div>
               {/* Fee breakdown */}
@@ -8705,12 +8705,12 @@ function Settings({ user, setUser, logo, onLogoChange, showProfileModal, setShow
                   { label: 'Client pays',   val: '3.9% + $0.30', color: C.text   },
                 ].map(f => (
                   <div key={f.label} style={{ textAlign: 'center' }}>
-                    <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 17, fontWeight: 900, color: f.color }}>{f.val}</div>
-                    <div style={{ fontSize: 12, color: C.muted, marginTop: 3, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{f.label}</div>
+                    <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 19, fontWeight: 900, color: f.color }}>{f.val}</div>
+                    <div style={{ fontSize: 14, color: C.muted, marginTop: 3, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{f.label}</div>
                   </div>
                 ))}
               </div>
-              <div style={{ fontSize: 13, color: C.dim, marginTop: 8, fontStyle: 'italic' }}>
+              <div style={{ fontSize: 15, color: C.dim, marginTop: 8, fontStyle: 'italic' }}>
                 You always receive 100% of your invoice amount. The fee is added to the client's total automatically.
               </div>
             </div>
@@ -8719,7 +8719,7 @@ function Settings({ user, setUser, logo, onLogoChange, showProfileModal, setShow
               disabled={stripeBusy}
               style={{
                 ...s.btn,
-                padding: '12px 22px', fontSize: 15, fontWeight: 700, minHeight: 46, flexShrink: 0,
+                padding: '12px 22px', fontSize: 17, fontWeight: 700, minHeight: 46, flexShrink: 0,
                 background: stripeConnected ? '#fef2f2' : C.orange,
                 border:     stripeConnected ? `1.5px solid ${C.error}44` : 'none',
                 color:      stripeConnected ? C.error : '#ffffff',
@@ -8740,13 +8740,13 @@ function Settings({ user, setUser, logo, onLogoChange, showProfileModal, setShow
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
             <div style={{ flex: 1 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-                <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 18, fontWeight: 800, color: C.text }}>PayPal</div>
-                {payments?.paypal?.connected && <span style={{ fontSize: 13, fontWeight: 700, background: '#f0fdf4', color: C.success, padding: '2px 8px', borderRadius: 3 }}>Connected</span>}
+                <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 20, fontWeight: 800, color: C.text }}>PayPal</div>
+                {payments?.paypal?.connected && <span style={{ fontSize: 15, fontWeight: 700, background: '#f0fdf4', color: C.success, padding: '2px 8px', borderRadius: 3 }}>Connected</span>}
               </div>
-              <div style={{ fontSize: 15, color: C.muted, lineHeight: 1.5 }}>Clients pay via PayPal. Connect your PayPal Business account to receive payments.</div>
+              <div style={{ fontSize: 17, color: C.muted, lineHeight: 1.5 }}>Clients pay via PayPal. Connect your PayPal Business account to receive payments.</div>
             </div>
             <button onClick={() => toggleConnect('paypal')} style={{
-              ...s.btn, padding: '10px 20px', fontSize: 16, minHeight: 44, flexShrink: 0,
+              ...s.btn, padding: '10px 20px', fontSize: 18, minHeight: 44, flexShrink: 0,
               background: payments?.paypal?.connected ? '#fef2f2' : C.raised,
               border: `1.5px solid ${payments?.paypal?.connected ? C.error + '44' : C.border2}`,
               color: payments?.paypal?.connected ? C.error : C.text,
@@ -8765,17 +8765,17 @@ function Settings({ user, setUser, logo, onLogoChange, showProfileModal, setShow
             { key: 'check',   label: 'Check',    prefix: null, ph: 'Mailing address for checks' },
           ].map(({ key, label, prefix, ph }, i, arr) => (
             <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 20px', borderBottom: i < arr.length - 1 ? `1px solid ${C.border}` : 'none', flexWrap: 'wrap' }}>
-              <div style={{ width: 88, fontFamily: "'Inter', sans-serif", fontSize: 17, fontWeight: 700, color: C.text, flexShrink: 0 }}>{label}</div>
+              <div style={{ width: 88, fontFamily: "'Inter', sans-serif", fontSize: 19, fontWeight: 700, color: C.text, flexShrink: 0 }}>{label}</div>
               <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 6, minWidth: 180 }}>
-                {prefix && <span style={{ fontSize: 17, color: C.muted, fontWeight: 700 }}>{prefix}</span>}
+                {prefix && <span style={{ fontSize: 19, color: C.muted, fontWeight: 700 }}>{prefix}</span>}
                 <input
                   value={payments?.[key]?.handle || ''}
                   onChange={e => updateHandle(key, e.target.value)}
                   placeholder={ph}
-                  style={{ ...s.input, flex: 1, padding: '9px 12px', fontSize: 16, minHeight: 44 }}
+                  style={{ ...s.input, flex: 1, padding: '9px 12px', fontSize: 18, minHeight: 44 }}
                 />
               </div>
-              <div style={{ fontSize: 14, color: payments?.[key]?.handle?.trim() ? C.success : C.dim, flexShrink: 0 }}>
+              <div style={{ fontSize: 16, color: payments?.[key]?.handle?.trim() ? C.success : C.dim, flexShrink: 0 }}>
                 {payments?.[key]?.handle?.trim() ? 'Shows on invoices' : 'Not shown'}
               </div>
             </div>
@@ -8785,11 +8785,11 @@ function Settings({ user, setUser, logo, onLogoChange, showProfileModal, setShow
         {/* Cash toggle */}
         <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 4, padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
           <div>
-            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 17, fontWeight: 700, color: C.text }}>Cash</div>
-            <div style={{ fontSize: 14, color: C.muted, marginTop: 2 }}>Shows "Cash accepted" on invoices for in-person jobs</div>
+            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 19, fontWeight: 700, color: C.text }}>Cash</div>
+            <div style={{ fontSize: 16, color: C.muted, marginTop: 2 }}>Shows "Cash accepted" on invoices for in-person jobs</div>
           </div>
           <button onClick={() => toggleEnabled('cash')} style={{
-            ...s.btn, padding: '8px 18px', fontSize: 16, minHeight: 44,
+            ...s.btn, padding: '8px 18px', fontSize: 18, minHeight: 44,
             background: payments?.cash?.enabled ? C.orange : C.raised,
             border: `1.5px solid ${payments?.cash?.enabled ? C.orange : C.border2}`,
             color: payments?.cash?.enabled ? '#fff' : C.muted,
@@ -8806,7 +8806,7 @@ function Settings({ user, setUser, logo, onLogoChange, showProfileModal, setShow
           Same convention as the payment handles above: empty = hidden. */}
       <div style={{ marginBottom: 28 }}>
         <SectionLabel>Social Media</SectionLabel>
-        <div style={{ fontSize: 15, color: C.muted, marginBottom: 16, lineHeight: 1.6 }}>
+        <div style={{ fontSize: 17, color: C.muted, marginBottom: 16, lineHeight: 1.6 }}>
           Add the social accounts you want to promote. Each one with a value will appear at the bottom of every invoice and quote as a "Follow us on …" link. Leave blank to hide.
         </div>
         <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 4, overflow: 'hidden' }}>
@@ -8819,17 +8819,17 @@ function Settings({ user, setUser, logo, onLogoChange, showProfileModal, setShow
             const val = socialHandles?.[key] || '';
             return (
               <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 20px', borderBottom: i < arr.length - 1 ? `1px solid ${C.border}` : 'none', flexWrap: 'wrap' }}>
-                <div style={{ width: 130, fontFamily: "'Inter', sans-serif", fontSize: 17, fontWeight: 700, color: C.text, flexShrink: 0 }}>{label}</div>
+                <div style={{ width: 130, fontFamily: "'Inter', sans-serif", fontSize: 19, fontWeight: 700, color: C.text, flexShrink: 0 }}>{label}</div>
                 <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 6, minWidth: 180 }}>
-                  {prefix && <span style={{ fontSize: 17, color: C.muted, fontWeight: 700 }}>{prefix}</span>}
+                  {prefix && <span style={{ fontSize: 19, color: C.muted, fontWeight: 700 }}>{prefix}</span>}
                   <input
                     value={val}
                     onChange={e => setSocialHandles(prev => ({ ...prev, [key]: e.target.value }))}
                     placeholder={ph}
-                    style={{ ...s.input, flex: 1, padding: '9px 12px', fontSize: 16, minHeight: 44 }}
+                    style={{ ...s.input, flex: 1, padding: '9px 12px', fontSize: 18, minHeight: 44 }}
                   />
                 </div>
-                <div style={{ fontSize: 14, color: val.trim() ? C.success : C.dim, flexShrink: 0 }}>
+                <div style={{ fontSize: 16, color: val.trim() ? C.success : C.dim, flexShrink: 0 }}>
                   {val.trim() ? 'Shows on invoices' : 'Not shown'}
                 </div>
               </div>
@@ -8841,7 +8841,7 @@ function Settings({ user, setUser, logo, onLogoChange, showProfileModal, setShow
       {/* ── Tax Rates ─────────────────────────────────────────────────────── */}
       <div style={{ marginBottom: 28 }}>
         <SectionLabel>Tax Rates</SectionLabel>
-        <div style={{ fontSize: 15, color: C.muted, marginBottom: 16, lineHeight: 1.6 }}>
+        <div style={{ fontSize: 17, color: C.muted, marginBottom: 16, lineHeight: 1.6 }}>
           Default rates come from 2026 state tax law. Update any rate when laws change — your changes override the defaults on all new quotes and invoices.
         </div>
 
@@ -8859,13 +8859,13 @@ function Settings({ user, setUser, logo, onLogoChange, showProfileModal, setShow
             <div key={stateName} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 4, padding: '16px 20px', marginBottom: 10 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
                 <div>
-                  <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 17, fontWeight: 800, color: C.text }}>{stateName}</div>
-                  {def.laborNote && <div style={{ fontSize: 13, color: C.warn, marginTop: 2 }}>{def.laborNote}</div>}
+                  <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 19, fontWeight: 800, color: C.text }}>{stateName}</div>
+                  {def.laborNote && <div style={{ fontSize: 15, color: C.warn, marginTop: 2 }}>{def.laborNote}</div>}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  {isCustomized && <span style={{ fontSize: 12, fontWeight: 700, color: C.orange, background: C.orangeLo, padding: '2px 8px', borderRadius: 10 }}>Customized</span>}
+                  {isCustomized && <span style={{ fontSize: 14, fontWeight: 700, color: C.orange, background: C.orangeLo, padding: '2px 8px', borderRadius: 10 }}>Customized</span>}
                   {isCustomized && (
-                    <button onClick={() => resetStateToDefault(stateKey)} style={{ ...s.btn, background: 'transparent', border: `1px solid ${C.border2}`, color: C.dim, padding: '4px 10px', fontSize: 13, minHeight: 32 }}>
+                    <button onClick={() => resetStateToDefault(stateKey)} style={{ ...s.btn, background: 'transparent', border: `1px solid ${C.border2}`, color: C.dim, padding: '4px 10px', fontSize: 15, minHeight: 32 }}>
                       Reset to default
                     </button>
                   )}
@@ -8878,8 +8878,8 @@ function Settings({ user, setUser, logo, onLogoChange, showProfileModal, setShow
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <NumberInput value={matVal} onChange={v => stateKey && updateTaxRate(stateKey, 'matTax', v)}
                       width={90} fontSize={18} style={{ minHeight: 48, fontWeight: 700, padding: '10px 12px' }} />
-                    <span style={{ fontSize: 18, color: C.muted, fontWeight: 700 }}>%</span>
-                    {def.matTax === 0 && <span style={{ fontSize: 13, color: C.success, fontWeight: 600 }}>No sales tax</span>}
+                    <span style={{ fontSize: 20, color: C.muted, fontWeight: 700 }}>%</span>
+                    {def.matTax === 0 && <span style={{ fontSize: 15, color: C.success, fontWeight: 600 }}>No sales tax</span>}
                   </div>
                 </div>
                 <div>
@@ -8887,9 +8887,9 @@ function Settings({ user, setUser, logo, onLogoChange, showProfileModal, setShow
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <NumberInput value={laborVal} onChange={v => stateKey && updateTaxRate(stateKey, 'laborTax', v)}
                       width={90} fontSize={18} style={{ minHeight: 48, fontWeight: 700, padding: '10px 12px', borderColor: def.laborTax > 0 ? C.warn + '88' : undefined }} />
-                    <span style={{ fontSize: 18, color: C.muted, fontWeight: 700 }}>%</span>
-                    {def.laborTax === 0 && <span style={{ fontSize: 13, color: C.success, fontWeight: 600 }}>Labor not taxed</span>}
-                    {def.laborTax > 0  && <span style={{ fontSize: 13, color: C.warn,    fontWeight: 600 }}>Taxable state</span>}
+                    <span style={{ fontSize: 20, color: C.muted, fontWeight: 700 }}>%</span>
+                    {def.laborTax === 0 && <span style={{ fontSize: 15, color: C.success, fontWeight: 600 }}>Labor not taxed</span>}
+                    {def.laborTax > 0  && <span style={{ fontSize: 15, color: C.warn,    fontWeight: 600 }}>Taxable state</span>}
                   </div>
                 </div>
               </div>
@@ -8897,7 +8897,7 @@ function Settings({ user, setUser, logo, onLogoChange, showProfileModal, setShow
           );
         })}
 
-        <div style={{ fontSize: 13, color: C.dim, marginTop: 8, lineHeight: 1.6, fontStyle: 'italic' }}>
+        <div style={{ fontSize: 15, color: C.dim, marginTop: 8, lineHeight: 1.6, fontStyle: 'italic' }}>
           Local city/county rates may be higher than the state base — adjust accordingly. Consult a tax professional for your specific situation. Existing documents are not retroactively updated.
         </div>
       </div>
@@ -8909,18 +8909,18 @@ function Settings({ user, setUser, logo, onLogoChange, showProfileModal, setShow
 
           {/* Company code card */}
           <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: '16px 20px', marginBottom: 16 }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>Company Code</div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>Company Code</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
-              <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 28, fontWeight: 900, color: C.orange, letterSpacing: '0.12em' }}>{user?.companyCode || 'TV-BRK42X'}</div>
+              <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 30, fontWeight: 900, color: C.orange, letterSpacing: '0.12em' }}>{user?.companyCode || 'TV-BRK42X'}</div>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 13, color: C.muted, lineHeight: 1.5 }}>Share this code with your techs. They download Tradevoice free, tap "Join a company", and enter this code to request access.</div>
+                <div style={{ fontSize: 15, color: C.muted, lineHeight: 1.5 }}>Share this code with your techs. They download Tradevoice free, tap "Join a company", and enter this code to request access.</div>
               </div>
-              <button onClick={() => navigator.clipboard?.writeText(user?.companyCode || 'TV-BRK42X')} style={{ ...s.btn, background: C.raised, border: `1px solid ${C.border2}`, color: C.muted, padding: '8px 16px', fontSize: 13, borderRadius: 50, flexShrink: 0 }}>Copy Code</button>
+              <button onClick={() => navigator.clipboard?.writeText(user?.companyCode || 'TV-BRK42X')} style={{ ...s.btn, background: C.raised, border: `1px solid ${C.border2}`, color: C.muted, padding: '8px 16px', fontSize: 15, borderRadius: 50, flexShrink: 0 }}>Copy Code</button>
             </div>
           </div>
 
           {/* Pricing note */}
-          <div style={{ background: C.orangeLo, border: `1px solid ${C.orange}33`, borderRadius: 8, padding: '12px 16px', marginBottom: 16, fontSize: 14, color: C.muted }}>
+          <div style={{ background: C.orangeLo, border: `1px solid ${C.orange}33`, borderRadius: 8, padding: '12px 16px', marginBottom: 16, fontSize: 16, color: C.muted }}>
             Additional team members are <strong style={{ color: C.orange }}>$19.99/mo per seat</strong>. Each seat gets their own login and custom permissions. You control exactly what they can see and do.
           </div>
 
@@ -8947,7 +8947,7 @@ function Settings({ user, setUser, logo, onLogoChange, showProfileModal, setShow
               didn't actually create a usable account. */}
           <button onClick={() => setShowBuySeat(true)} style={{
             ...s.btn, background: C.orange, color: '#fff', border: 'none',
-            padding: '14px', fontSize: 15, fontWeight: 700, borderRadius: 8,
+            padding: '14px', fontSize: 17, fontWeight: 700, borderRadius: 8,
             width: '100%', textAlign: 'center', minHeight: 50,
             boxShadow: '0 1px 3px rgba(45, 106, 79, 0.3)',
           }}>
@@ -8990,61 +8990,61 @@ function Settings({ user, setUser, logo, onLogoChange, showProfileModal, setShow
           rate sheet PDF and Claude auto-populates; the items then show up
           in the quote/invoice editor's Quick Add menu. */}
       {user?.role === 'owner' && (
-        <Suspense fallback={<div style={{ padding: '16px 0', color: C.dim, fontSize: 14 }}>Loading rate library…</div>}>
+        <Suspense fallback={<div style={{ padding: '16px 0', color: C.dim, fontSize: 16 }}>Loading rate library…</div>}>
           <RateLibraryPanel user={user} />
         </Suspense>
       )}
 
       <div style={{ marginBottom: 28 }}>
-        <div style={{ fontSize: 15, fontWeight: 800, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12, fontFamily: "'Inter', sans-serif" }}>Subscription</div>
+        <div style={{ fontSize: 17, fontWeight: 800, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12, fontFamily: "'Inter', sans-serif" }}>Subscription</div>
         <div style={{ background: '#f0fdf4', border: `1px solid ${C.success}33`, borderRadius: 4, padding: '20px 22px', marginBottom: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
           <div>
-            <div style={{ fontSize: 15, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.success, marginBottom: 4 }}>
+            <div style={{ fontSize: 17, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.success, marginBottom: 4 }}>
               {user.subscription_status === 'trialing' ? 'Trial — Active' :
                user.subscription_status === 'canceled' ? 'Canceled' :
                user.subscription_status === 'past_due' ? 'Past Due' :
                                                           'Active Plan'}
             </div>
-            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 25, fontWeight: 900, color: C.text }}>{planName}</div>
-            <div style={{ fontSize: 17, color: C.muted, marginTop: 2 }}>{user.trades?.join(', ')}</div>
+            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 27, fontWeight: 900, color: C.text }}>{planName}</div>
+            <div style={{ fontSize: 19, color: C.muted, marginTop: 2 }}>{user.trades?.join(', ')}</div>
             {/* Real trial-end or next-billing line — replaces the hardcoded
                 "April 20, 2026" placeholder. Trialing users see trial end
                 date; active subs would show their next billing date once
                 we surface it from the Stripe webhook (not yet wired). */}
             {user.subscription_status === 'trialing' && user.trial_ends_at && (
-              <div style={{ fontSize: 16, color: C.dim, marginTop: 3 }}>
+              <div style={{ fontSize: 18, color: C.dim, marginTop: 3 }}>
                 Trial ends: {new Date(user.trial_ends_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
               </div>
             )}
           </div>
           <div style={{ textAlign: 'right' }}>
-            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 43, fontWeight: 900, color: C.orange, lineHeight: 1 }}>${currentPrice}</div>
-            <div style={{ fontSize: 17, color: C.muted }}>per month</div>
+            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 45, fontWeight: 900, color: C.orange, lineHeight: 1 }}>${currentPrice}</div>
+            <div style={{ fontSize: 19, color: C.muted }}>per month</div>
             <GhostBtn size="sm" style={{ marginTop: 10 }} onClick={handleCancelPlan} disabled={cancelBusy || user.subscription_status === 'canceled'}>
               {cancelBusy
                 ? 'Canceling…'
                 : user.subscription_status === 'canceled' ? 'Canceled' : 'Cancel Plan'}
             </GhostBtn>
             {cancelError && (
-              <div style={{ fontSize: 12, color: C.error, marginTop: 6, maxWidth: 200, textAlign: 'right' }}>{cancelError}</div>
+              <div style={{ fontSize: 14, color: C.error, marginTop: 6, maxWidth: 200, textAlign: 'right' }}>{cancelError}</div>
             )}
           </div>
         </div>
 
         {/* Change plan grid */}
-        <div style={{ fontSize: 14, fontWeight: 700, color: C.muted, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 10, fontFamily: "'Inter', sans-serif" }}>Change Plan</div>
+        <div style={{ fontSize: 16, fontWeight: 700, color: C.muted, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 10, fontFamily: "'Inter', sans-serif" }}>Change Plan</div>
         <div style={{ display: 'grid', gridTemplateColumns: isTablet ? '1fr' : 'repeat(2,1fr)', gap: 10 }}>
           {PLANS.map(p => {
             const active = p.trades === tradeCount;
             return (
               <div key={p.name} style={{ position: 'relative', background: active ? C.orangeLo : C.surface, border: `2px solid ${active ? C.orange : C.border}`, borderRadius: 4, padding: '16px 18px', cursor: 'pointer' }}>
-                {p.badge && <div style={{ position: 'absolute', top: 0, right: 12, background: C.orange, color: '#ffffff', fontSize: 14, fontWeight: 900, padding: '3px 8px', fontFamily: "'Inter', sans-serif", letterSpacing: '0.08em', borderRadius: '0 0 3px 3px' }}>{p.badge}</div>}
-                <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 21, fontWeight: 900, color: active ? C.orange : C.text }}>{p.name}</div>
-                <div style={{ fontSize: 16, color: C.muted, margin: '3px 0 10px' }}>{p.desc}</div>
-                <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 29, fontWeight: 900, color: active ? C.orange : C.text }}>
-                  ${p.price}<span style={{ fontSize: 17, fontWeight: 400, color: C.muted }}>/mo</span>
+                {p.badge && <div style={{ position: 'absolute', top: 0, right: 12, background: C.orange, color: '#ffffff', fontSize: 16, fontWeight: 900, padding: '3px 8px', fontFamily: "'Inter', sans-serif", letterSpacing: '0.08em', borderRadius: '0 0 3px 3px' }}>{p.badge}</div>}
+                <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 23, fontWeight: 900, color: active ? C.orange : C.text }}>{p.name}</div>
+                <div style={{ fontSize: 18, color: C.muted, margin: '3px 0 10px' }}>{p.desc}</div>
+                <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 31, fontWeight: 900, color: active ? C.orange : C.text }}>
+                  ${p.price}<span style={{ fontSize: 19, fontWeight: 400, color: C.muted }}>/mo</span>
                 </div>
-                {active && <div style={{ marginTop: 5, fontSize: 15, fontWeight: 700, color: C.success, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Current</div>}
+                {active && <div style={{ marginTop: 5, fontSize: 17, fontWeight: 700, color: C.success, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Current</div>}
               </div>
             );
           })}
@@ -9053,11 +9053,11 @@ function Settings({ user, setUser, logo, onLogoChange, showProfileModal, setShow
 
       {/* Danger zone */}
       <div>
-        <div style={{ fontSize: 15, fontWeight: 800, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12, fontFamily: "'Inter', sans-serif" }}>Account</div>
+        <div style={{ fontSize: 17, fontWeight: 800, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12, fontFamily: "'Inter', sans-serif" }}>Account</div>
         <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 4, padding: '18px 22px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
           <div>
-            <div style={{ fontSize: 18, fontWeight: 600, color: C.text }}>Sign Out</div>
-            <div style={{ fontSize: 16, color: C.muted, marginTop: 2 }}>Sign out of your Tradevoice account</div>
+            <div style={{ fontSize: 20, fontWeight: 600, color: C.text }}>Sign Out</div>
+            <div style={{ fontSize: 18, color: C.muted, marginTop: 2 }}>Sign out of your Tradevoice account</div>
           </div>
           <GhostBtn size="sm">Sign Out</GhostBtn>
         </div>
@@ -9133,9 +9133,9 @@ function DeveloperPanel({ user }) {
     <div style={{ marginTop: 32, marginBottom: 28, padding: '18px 22px', background: '#fef9c3', border: `1px solid ${C.warn}55`, borderRadius: 10 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
         <div style={{ minWidth: 0, flex: 1 }}>
-          <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', color: C.warn, marginBottom: 4 }}>Developer Tools · Private Preview Only</div>
-          <div style={{ fontSize: 16, fontWeight: 700, color: C.text, marginBottom: 2 }}>Seed Demo Data</div>
-          <div style={{ fontSize: 14, color: C.muted, lineHeight: 1.5 }}>
+          <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', color: C.warn, marginBottom: 4 }}>Developer Tools · Private Preview Only</div>
+          <div style={{ fontSize: 18, fontWeight: 700, color: C.text, marginBottom: 2 }}>Seed Demo Data</div>
+          <div style={{ fontSize: 16, color: C.muted, lineHeight: 1.5 }}>
             Populates your account with clients, team, jobs, quotes, and invoices so you can click through every screen with realistic data. Visible only to allowlisted accounts.
           </div>
         </div>
@@ -9146,7 +9146,7 @@ function DeveloperPanel({ user }) {
             ...s.btn,
             background: busy ? C.dim : C.warn,
             color: '#fff', border: 'none',
-            padding: '12px 22px', fontSize: 15, fontWeight: 800, minHeight: 46,
+            padding: '12px 22px', fontSize: 17, fontWeight: 800, minHeight: 46,
             boxShadow: '0 1px 3px rgba(217, 119, 6, 0.3)',
             flexShrink: 0,
             cursor: busy ? 'wait' : 'pointer',
@@ -9157,12 +9157,12 @@ function DeveloperPanel({ user }) {
         </button>
       </div>
       {progress && (
-        <div style={{ marginTop: 12, padding: '10px 14px', background: '#fff', border: `1px solid ${C.border2}`, borderRadius: 6, fontSize: 13, color: C.muted, fontFamily: 'ui-monospace, monospace' }}>
+        <div style={{ marginTop: 12, padding: '10px 14px', background: '#fff', border: `1px solid ${C.border2}`, borderRadius: 6, fontSize: 15, color: C.muted, fontFamily: 'ui-monospace, monospace' }}>
           {progress}
         </div>
       )}
       {result && (
-        <div style={{ marginTop: 8, fontSize: 13, color: C.success, fontWeight: 600 }}>
+        <div style={{ marginTop: 8, fontSize: 15, color: C.success, fontWeight: 600 }}>
           ✓ Created: {result.clients} clients · {result.techs} techs · {result.plans} plans · {result.jobs} jobs · {result.quotes} quotes · {result.invoices} invoices
         </div>
       )}
@@ -9837,7 +9837,7 @@ function TradevoiceApp() {
   if (authChecking) {
     return (
       <div style={{ minHeight: '100dvh', background: C.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Inter', sans-serif" }}>
-        <div style={{ fontSize: 13, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 700 }}>Loading…</div>
+        <div style={{ fontSize: 15, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 700 }}>Loading…</div>
       </div>
     );
   }
@@ -10093,7 +10093,7 @@ function TradevoiceApp() {
           onClick={() => setSection('billing')}
           style={{
             fontFamily: "'Inter', sans-serif",
-            fontSize: 11, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase',
+            fontSize: 13, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase',
             padding: '7px 14px', borderRadius: 20,
             background: trialColors.bg,
             color: '#ffffff',
@@ -10120,7 +10120,7 @@ function TradevoiceApp() {
           WebkitTapHighlightColor: 'transparent', transition: 'all 0.15s',
           boxShadow: showProfileMenu ? 'none' : '0 1px 3px rgba(45, 106, 79, 0.25)',
         }}>
-          <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 17, fontWeight: 900, color: showProfileMenu ? C.orange : '#fff', letterSpacing: '0.04em' }}>
+          <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 19, fontWeight: 900, color: showProfileMenu ? C.orange : '#fff', letterSpacing: '0.04em' }}>
             {initials}
           </span>
         </button>
@@ -10133,16 +10133,16 @@ function TradevoiceApp() {
           }}>
             {/* Account header — name, email, trades */}
             <div style={{ padding: '16px 18px', borderBottom: `1px solid ${C.border}`, background: C.raised }}>
-              <div style={{ fontSize: 16, fontWeight: 800, color: C.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', letterSpacing: '-0.01em' }}>
+              <div style={{ fontSize: 18, fontWeight: 800, color: C.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', letterSpacing: '-0.01em' }}>
                 {user.name || 'Account'}
               </div>
               {user.email && (
-                <div style={{ fontSize: 14, color: C.muted, marginTop: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                <div style={{ fontSize: 16, color: C.muted, marginTop: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   {user.email}
                 </div>
               )}
               {user.trades?.length > 0 && (
-                <div style={{ fontSize: 13, color: C.dim, marginTop: 4, fontWeight: 500 }}>
+                <div style={{ fontSize: 15, color: C.dim, marginTop: 4, fontWeight: 500 }}>
                   {user.trades.join(' · ')}
                 </div>
               )}
@@ -10158,7 +10158,7 @@ function TradevoiceApp() {
                 background: 'transparent', border: 'none',
                 borderBottom: i < arr.length - 1 ? `1px solid ${C.border}` : 'none',
                 textAlign: 'left', cursor: 'pointer',
-                fontSize: 16, fontWeight: 600, color: item.danger ? C.error : C.text,
+                fontSize: 18, fontWeight: 600, color: item.danger ? C.error : C.text,
                 fontFamily: "'Inter', sans-serif",
                 WebkitTapHighlightColor: 'transparent',
                 transition: 'background 0.12s',
@@ -10236,7 +10236,7 @@ function TradevoiceApp() {
                 color: active ? '#fff' : C.muted,
                 cursor: 'pointer',
                 fontFamily: "'Inter', sans-serif",
-                fontSize: 13,
+                fontSize: 15,
                 fontWeight: active ? 700 : 500,
                 letterSpacing: '-0.005em',
                 whiteSpace: 'nowrap',
@@ -10254,7 +10254,7 @@ function TradevoiceApp() {
         {/* Content fills the rest of the viewport. Calendar pages (Schedule)
             use height: 100% to claim it. List pages scroll inside this. */}
         <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '14px 16px' }}>
-          <Suspense fallback={<div style={{ padding: 24, color: C.dim, fontSize: 13 }}>Loading…</div>}>{content}</Suspense>
+          <Suspense fallback={<div style={{ padding: 24, color: C.dim, fontSize: 15 }}>Loading…</div>}>{content}</Suspense>
         </div>
       </div>
     );
@@ -10282,7 +10282,7 @@ function TradevoiceApp() {
                   color: active ? '#fff' : C.muted,
                   cursor: 'pointer',
                   fontFamily: "'Inter', sans-serif",
-                  fontSize: 14,
+                  fontSize: 16,
                   fontWeight: active ? 600 : 500,
                   letterSpacing: '-0.005em',
                   textAlign: 'left',
@@ -10301,7 +10301,7 @@ function TradevoiceApp() {
         </div>
 
         <div style={{ flex: 1, padding: '36px 40px', overflowY: 'auto', minWidth: 0 }}>
-          <Suspense fallback={<div style={{ padding: 24, color: C.dim, fontSize: 13 }}>Loading…</div>}>{content}</Suspense>
+          <Suspense fallback={<div style={{ padding: 24, color: C.dim, fontSize: 15 }}>Loading…</div>}>{content}</Suspense>
         </div>
       </div>
     </div>

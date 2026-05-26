@@ -37,21 +37,21 @@
   .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
   .btn-primary {
     display: inline-block; background: var(--green); color: #fff;
-    padding: 16px 36px; border-radius: 50px; font-size: 16px; font-weight: 600;
+    padding: 16px 36px; border-radius: 50px; font-size: 18px; font-weight: 600;
     text-decoration: none; border: none; cursor: pointer; transition: background 0.2s, transform 0.1s;
     font-family: 'DM Sans', sans-serif;
   }
   .btn-primary:hover { background: var(--green-dark); transform: translateY(-1px); }
   .btn-ghost {
     display: inline-block; background: transparent; color: var(--green);
-    padding: 14px 32px; border-radius: 50px; font-size: 16px; font-weight: 600;
+    padding: 14px 32px; border-radius: 50px; font-size: 18px; font-weight: 600;
     text-decoration: none; border: 2px solid var(--green); cursor: pointer; transition: all 0.2s;
     font-family: 'DM Sans', sans-serif;
   }
   .btn-ghost:hover { background: var(--green); color: #fff; }
   .section-tag {
     display: inline-block; background: var(--green-light); color: var(--green-dark);
-    padding: 6px 18px; border-radius: 20px; font-size: 13px; font-weight: 700;
+    padding: 6px 18px; border-radius: 20px; font-size: 15px; font-weight: 700;
     letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 18px;
   }
   /* Center the pill on sections whose heading + sub are also centered.
@@ -94,19 +94,19 @@
   @media (max-width: 720px) {
     .nav-logo img { height: 76px !important; max-width: 240px; }
   }
-  .nav-logo-text { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 900; color: var(--green-dark); }
+  .nav-logo-text { font-family: 'Playfair Display', serif; font-size: 24px; font-weight: 900; color: var(--green-dark); }
   .nav-links { display: flex; align-items: center; gap: 28px; }
-  .nav-links a { color: var(--muted); text-decoration: none; font-size: 15px; font-weight: 500; transition: color 0.15s; }
+  .nav-links a { color: var(--muted); text-decoration: none; font-size: 17px; font-weight: 500; transition: color 0.15s; }
   .nav-links a:hover { color: var(--green); }
   .nav-cta { display: flex; align-items: center; gap: 12px; }
-  .nav-signin { color: var(--muted); font-size: 15px; font-weight: 500; text-decoration: none; }
+  .nav-signin { color: var(--muted); font-size: 17px; font-weight: 500; text-decoration: none; }
   .nav-signin:hover { color: var(--green); }
   /* Secondary CTA — outlined dark green. Sits between the muted Sign in
      link and the orange Request Early Access primary button so visitors
      who want to dive straight into account setup have an obvious path
      without it competing with the early-access positioning. */
   .nav-create {
-    color: var(--green); font-size: 14px; font-weight: 700; text-decoration: none;
+    color: var(--green); font-size: 16px; font-weight: 700; text-decoration: none;
     padding: 9px 18px; border: 1.5px solid var(--green); border-radius: 50px;
     white-space: nowrap; transition: background 0.15s, color 0.15s;
   }
@@ -122,20 +122,20 @@
     background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
   }
   .hero-inner { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; position: relative; }
-  .hero-tag { display: inline-block; background: rgba(255,255,255,0.15); color: #fff; padding: 5px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 20px; }
+  .hero-tag { display: inline-block; background: rgba(255,255,255,0.15); color: #fff; padding: 5px 14px; border-radius: 20px; font-size: 14px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 20px; }
   .hero h1 { font-size: clamp(36px, 5vw, 58px); font-weight: 900; color: #fff; line-height: 1.1; margin-bottom: 20px; }
   .hero h1 em { color: var(--green-mist); font-style: normal; }
-  .hero-sub { font-size: 18px; color: rgba(255,255,255,0.85); line-height: 1.6; margin-bottom: 36px; font-weight: 300; }
+  .hero-sub { font-size: 20px; color: rgba(255,255,255,0.85); line-height: 1.6; margin-bottom: 36px; font-weight: 300; }
   .hero-btns { display: flex; gap: 14px; flex-wrap: wrap; }
-  .hero-btn-white { background: #fff; color: var(--green-dark); padding: 16px 36px; border-radius: 50px; font-size: 16px; font-weight: 600; text-decoration: none; display: inline-block; transition: all 0.2s; font-family: 'DM Sans', sans-serif; }
+  .hero-btn-white { background: #fff; color: var(--green-dark); padding: 16px 36px; border-radius: 50px; font-size: 18px; font-weight: 600; text-decoration: none; display: inline-block; transition: all 0.2s; font-family: 'DM Sans', sans-serif; }
   .hero-btn-white:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.15); }
-  .hero-btn-outline { background: transparent; color: #fff; border: 2px solid rgba(255,255,255,0.5); padding: 14px 32px; border-radius: 50px; font-size: 16px; font-weight: 600; text-decoration: none; display: inline-block; transition: all 0.2s; font-family: 'DM Sans', sans-serif; }
+  .hero-btn-outline { background: transparent; color: #fff; border: 2px solid rgba(255,255,255,0.5); padding: 14px 32px; border-radius: 50px; font-size: 18px; font-weight: 600; text-decoration: none; display: inline-block; transition: all 0.2s; font-family: 'DM Sans', sans-serif; }
   .hero-btn-outline:hover { border-color: #fff; background: rgba(255,255,255,0.1); }
   /* Legacy hero-stats styles kept for backward compat in case the strip
      ever gets reintroduced. Hero now uses .hero-promise (below). */
   .hero-stats { display: flex; gap: 32px; margin-top: 48px; }
-  .hero-stat-num { font-family: 'Playfair Display', serif; font-size: 32px; font-weight: 900; color: #fff; }
-  .hero-stat-lbl { font-size: 13px; color: rgba(255,255,255,0.65); margin-top: 2px; }
+  .hero-stat-num { font-family: 'Playfair Display', serif; font-size: 34px; font-weight: 900; color: #fff; }
+  .hero-stat-lbl { font-size: 15px; color: rgba(255,255,255,0.65); margin-top: 2px; }
   .hero-promise {
     font-family: 'Playfair Display', serif;
     font-style: italic;
@@ -163,9 +163,9 @@
   /* Subtle accent underline on each Playfair headline — gives the trio
      visual anchors without the emoji-in-a-square look the section had
      originally. 32px wide green-dark bar sits above the title. */
-  .why-title { font-family: 'Playfair Display', serif; font-size: 24px; font-weight: 800; color: var(--text); margin-bottom: 12px; letter-spacing: -0.01em; line-height: 1.2; position: relative; padding-top: 18px; }
+  .why-title { font-family: 'Playfair Display', serif; font-size: 26px; font-weight: 800; color: var(--text); margin-bottom: 12px; letter-spacing: -0.01em; line-height: 1.2; position: relative; padding-top: 18px; }
   .why-title::before { content: ''; position: absolute; top: 0; left: 0; width: 36px; height: 3px; background: var(--green); border-radius: 2px; }
-  .why-desc { font-size: 15px; color: var(--muted); line-height: 1.7; }
+  .why-desc { font-size: 17px; color: var(--muted); line-height: 1.7; }
 
   /* ── TRUE-NUMBERS STRIP (pre-pricing) ──────────────────────────────────
      A compact stat strip just above the pricing section. Unlike the
@@ -187,7 +187,7 @@
      prices, percentages, and stats; Playfair stays exclusive to
      editorial headlines and the founder pull-quote. */
   .pp-num { font-family: 'DM Sans', sans-serif; font-size: clamp(40px, 5vw, 60px); font-weight: 800; color: var(--green-dark); line-height: 1; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
-  .pp-lbl { font-size: 13px; color: var(--muted); font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; margin-top: 8px; }
+  .pp-lbl { font-size: 15px; color: var(--muted); font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; margin-top: 8px; }
 
   /* ── TECH SEATS ────────────────────────────────────────────────────────
      Dedicated section that explains the multi-tech model: included seats
@@ -198,35 +198,35 @@
      visitor can shop on. */
   .tech-seats { padding: 90px 0; background: var(--white); }
   .tech-seats h2 { font-size: clamp(30px, 4vw, 46px); font-weight: 900; text-align: center; margin-bottom: 12px; line-height: 1.1; }
-  .tech-seats .sub { text-align: center; color: var(--muted); font-size: 18px; margin-bottom: 56px; font-weight: 300; max-width: 720px; margin-left: auto; margin-right: auto; }
+  .tech-seats .sub { text-align: center; color: var(--muted); font-size: 20px; margin-bottom: 56px; font-weight: 300; max-width: 720px; margin-left: auto; margin-right: auto; }
 
   /* "How tech seats work" 3-step strip */
   .ts-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; max-width: 1080px; margin: 0 auto 64px; }
   @media (max-width: 900px) { .ts-steps { grid-template-columns: 1fr; gap: 18px; } }
   .ts-step { padding: 28px 26px; background: var(--cream); border: 1px solid var(--border); border-radius: 14px; transition: transform 0.15s, border-color 0.15s; }
   .ts-step:hover { transform: translateY(-2px); border-color: var(--green-mist); }
-  .ts-step-num { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 50%; background: var(--green); color: #fff; font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 900; margin-bottom: 16px; }
-  .ts-step-title { font-family: 'Playfair Display', serif; font-size: 21px; font-weight: 800; color: var(--text); margin-bottom: 8px; letter-spacing: -0.01em; line-height: 1.2; }
-  .ts-step-desc { font-size: 14px; color: var(--muted); line-height: 1.6; }
-  .ts-step-desc code { background: rgba(45,106,79,0.08); color: var(--green-dark); padding: 1px 6px; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 13px; font-weight: 700; }
+  .ts-step-num { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 50%; background: var(--green); color: #fff; font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 900; margin-bottom: 16px; }
+  .ts-step-title { font-family: 'Playfair Display', serif; font-size: 23px; font-weight: 800; color: var(--text); margin-bottom: 8px; letter-spacing: -0.01em; line-height: 1.2; }
+  .ts-step-desc { font-size: 16px; color: var(--muted); line-height: 1.6; }
+  .ts-step-desc code { background: rgba(45,106,79,0.08); color: var(--green-dark); padding: 1px 6px; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 15px; font-weight: 700; }
 
   /* Plan → included seats table */
   .ts-plans { background: var(--cream); border: 1px solid var(--border); border-radius: 16px; padding: 32px 36px; max-width: 980px; margin: 0 auto 56px; }
-  .ts-plans-head { font-family: 'Playfair Display', serif; font-size: 26px; font-weight: 800; color: var(--text); margin-bottom: 6px; letter-spacing: -0.01em; text-align: center; }
-  .ts-plans-sub { font-size: 14px; color: var(--muted); text-align: center; margin-bottom: 24px; }
+  .ts-plans-head { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 800; color: var(--text); margin-bottom: 6px; letter-spacing: -0.01em; text-align: center; }
+  .ts-plans-sub { font-size: 16px; color: var(--muted); text-align: center; margin-bottom: 24px; }
   .ts-plans-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
   @media (max-width: 720px) { .ts-plans-grid { grid-template-columns: 1fr; } }
   .ts-plan { padding: 28px 24px; background: var(--white); border: 1px solid var(--border); border-radius: 12px; display: flex; flex-direction: column; transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s; }
   .ts-plan:hover { transform: translateY(-2px); border-color: var(--green-mist); box-shadow: 0 12px 24px rgba(15,23,42,0.05); }
   .ts-plan-featured { border-color: var(--green); box-shadow: 0 0 0 1px var(--green); }
-  .ts-plan-name { font-size: 12px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin-bottom: 14px; }
+  .ts-plan-name { font-size: 14px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin-bottom: 14px; }
   /* The "1 / 2 tech seat(s) included" pill — replaces the old big serif
      number. Reads as a positive feature callout instead of "0 included"
      which looked negative. Solo plan doesn't render the pill at all so
      there's no "0" anywhere. */
-  .ts-plan-included-pill { display: inline-flex; align-self: flex-start; align-items: center; background: var(--green-light); color: var(--green-dark); font-size: 13px; font-weight: 800; padding: 6px 12px; border-radius: 999px; margin-bottom: 14px; }
+  .ts-plan-included-pill { display: inline-flex; align-self: flex-start; align-items: center; background: var(--green-light); color: var(--green-dark); font-size: 15px; font-weight: 800; padding: 6px 12px; border-radius: 999px; margin-bottom: 14px; }
   .ts-plan-list { list-style: none; padding: 0; margin: 0 0 18px; display: flex; flex-direction: column; gap: 10px; }
-  .ts-plan-list li { font-size: 14px; color: var(--text); line-height: 1.55; padding-left: 22px; position: relative; }
+  .ts-plan-list li { font-size: 16px; color: var(--text); line-height: 1.55; padding-left: 22px; position: relative; }
   /* Inline green check before each feature, drawn as a CSS pseudo-element
      so we don't ship literal ✓ characters per the no-icons pass. */
   .ts-plan-list li::before {
@@ -238,19 +238,19 @@
     border-bottom: 2px solid var(--green);
     transform: rotate(-45deg);
   }
-  .ts-plan-extra { font-size: 13px; color: var(--muted); padding-top: 14px; border-top: 1px solid var(--border); font-weight: 600; margin-top: auto; }
+  .ts-plan-extra { font-size: 15px; color: var(--muted); padding-top: 14px; border-top: 1px solid var(--border); font-weight: 600; margin-top: auto; }
   .ts-plan-extra-price { color: var(--green-dark); font-weight: 800; }
 
   /* Permission grid */
   .ts-perms-wrap { max-width: 1080px; margin: 0 auto; padding: 36px 36px; background: var(--white); border: 1px solid var(--border); border-radius: 16px; }
-  .ts-perms-head { font-family: 'Playfair Display', serif; font-size: 26px; font-weight: 800; color: var(--text); margin-bottom: 6px; letter-spacing: -0.01em; }
-  .ts-perms-sub { font-size: 14px; color: var(--muted); margin-bottom: 20px; line-height: 1.65; max-width: 640px; }
+  .ts-perms-head { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 800; color: var(--text); margin-bottom: 6px; letter-spacing: -0.01em; }
+  .ts-perms-sub { font-size: 16px; color: var(--muted); margin-bottom: 20px; line-height: 1.65; max-width: 640px; }
   .ts-perms-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px 28px; }
   @media (max-width: 900px) { .ts-perms-grid { grid-template-columns: repeat(2, 1fr); } }
   @media (max-width: 600px) { .ts-perms-grid { grid-template-columns: 1fr; } }
   .ts-perm { display: flex; align-items: flex-start; gap: 10px; }
-  .ts-perm-check { flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%; background: var(--green-light); color: var(--green-dark); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 900; margin-top: 1px; }
-  .ts-perm-text { font-size: 14px; color: var(--text); line-height: 1.5; font-weight: 600; }
+  .ts-perm-check { flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%; background: var(--green-light); color: var(--green-dark); display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 900; margin-top: 1px; }
+  .ts-perm-text { font-size: 16px; color: var(--text); line-height: 1.5; font-weight: 600; }
   .ts-perm-text small { display: block; font-weight: 400; color: var(--muted); margin-top: 2px; }
 
   /* ── CLOSING PROMISE STRIP (pre-CTA) ───────────────────────────────────
@@ -265,7 +265,7 @@
   .closing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 56px; max-width: 1100px; margin: 0 auto; text-align: center; }
   @media (max-width: 900px) { .closing-grid { grid-template-columns: 1fr; gap: 36px; } }
   .cl-head { font-family: 'Playfair Display', serif; font-size: clamp(28px, 3.2vw, 38px); font-weight: 800; color: var(--green-dark); letter-spacing: -0.02em; margin-bottom: 14px; line-height: 1.15; }
-  .cl-sub { font-size: 16px; color: var(--muted); line-height: 1.7; max-width: 320px; margin: 0 auto; }
+  .cl-sub { font-size: 18px; color: var(--muted); line-height: 1.7; max-width: 320px; margin: 0 auto; }
   .hero-mockup {
     background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
     border-radius: 20px; padding: 20px; backdrop-filter: blur(4px);
@@ -274,19 +274,19 @@
   .mockup-dot { width: 10px; height: 10px; border-radius: 50%; background: rgba(255,255,255,0.3); }
   .mockup-screen { background: #f0f4f2; border-radius: 12px; padding: 18px; }
   .mockup-header { background: var(--green-dark); border-radius: 8px 8px 0 0; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; }
-  .mockup-logo-text { font-family: 'Playfair Display', serif; font-size: 13px; color: #fff; font-weight: 700; }
-  .mockup-avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--green-mid); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #fff; }
+  .mockup-logo-text { font-family: 'Playfair Display', serif; font-size: 15px; color: #fff; font-weight: 700; }
+  .mockup-avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--green-mid); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: #fff; }
   .mockup-body { background: #fff; padding: 14px; border-radius: 0 0 8px 8px; }
   .mockup-invoice { background: #fff; border: 1px solid #e5e7eb; border-radius: 6px; padding: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
-  .mockup-inv-name { font-size: 12px; font-weight: 600; color: #111; }
-  .mockup-inv-sub { font-size: 10px; color: #9ca3af; }
-  .mockup-badge { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; }
+  .mockup-inv-name { font-size: 14px; font-weight: 600; color: #111; }
+  .mockup-inv-sub { font-size: 12px; color: #9ca3af; }
+  .mockup-badge { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 10px; }
   .badge-paid { background: #f0fdf4; color: #166534; }
   .badge-sent { background: #eff6ff; color: #1d4ed8; }
   .badge-due { background: #fef2f2; color: #991b1b; }
-  .mockup-amount { font-size: 13px; font-weight: 700; color: var(--green-dark); }
+  .mockup-amount { font-size: 15px; font-weight: 700; color: var(--green-dark); }
   .mockup-tabs { display: flex; gap: 6px; margin-top: 12px; }
-  .mockup-tab { flex: 1; padding: 7px 4px; border-radius: 20px; text-align: center; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; border: 1.5px solid; }
+  .mockup-tab { flex: 1; padding: 7px 4px; border-radius: 20px; text-align: center; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; border: 1.5px solid; }
   .mockup-tab.active { background: var(--green); color: #fff; border-color: var(--green); }
   .mockup-tab.idle { background: transparent; color: #9ca3af; border-color: #e5e7eb; }
 
@@ -300,22 +300,22 @@
      attribution tucked beneath as a single tight line. No floating
      elements, no decorative dashes, no separate stats. */
   .founder-bar-inner { display: flex; flex-direction: column; align-items: center; gap: 28px; max-width: 760px; margin: 0 auto; text-align: center; }
-  .founder-eyebrow { font-size: 12px; font-weight: 700; color: var(--green); letter-spacing: 0.18em; text-transform: uppercase; }
+  .founder-eyebrow { font-size: 14px; font-weight: 700; color: var(--green); letter-spacing: 0.18em; text-transform: uppercase; }
   /* Oversized green Playfair quotation mark — the visual anchor for
      the whole block, replacing the awkward flanking dashes. */
-  .founder-mark { font-family: 'Playfair Display', serif; font-size: 96px; line-height: 0.7; color: var(--green-mist); margin-bottom: -12px; user-select: none; }
+  .founder-mark { font-family: 'Playfair Display', serif; font-size: 98px; line-height: 0.7; color: var(--green-mist); margin-bottom: -12px; user-select: none; }
   .founder-quote { font-family: 'Playfair Display', serif; font-size: clamp(28px, 3.8vw, 40px); font-style: italic; color: var(--green-dark); line-height: 1.3; max-width: 720px; letter-spacing: -0.01em; margin: 0; }
   /* Thin green divider line between the quote and the attribution —
      pulls the eye down to the source without adding more text. */
   .founder-divider-rule { width: 48px; height: 2px; background: var(--green-mist); border: none; margin: 4px 0 0; }
-  .founder-attribution { font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 600; color: var(--text); letter-spacing: 0.02em; line-height: 1.5; }
+  .founder-attribution { font-family: 'DM Sans', sans-serif; font-size: 17px; font-weight: 600; color: var(--text); letter-spacing: 0.02em; line-height: 1.5; }
   .founder-attribution-meta { color: var(--muted); font-weight: 400; }
   .founder-cards { display: flex; align-items: center; gap: 0; flex-wrap: wrap; justify-content: center; }
   .founder-card { display: flex; align-items: center; gap: 16px; padding: 0 40px; }
-  .founder-years { font-family: 'Playfair Display', serif; font-size: 48px; font-weight: 700; color: var(--green); line-height: 1; }
+  .founder-years { font-family: 'Playfair Display', serif; font-size: 50px; font-weight: 700; color: var(--green); line-height: 1; }
   .founder-info { display: flex; flex-direction: column; gap: 3px; }
-  .founder-title { font-size: 13px; font-weight: 600; color: var(--text); letter-spacing: 0.04em; }
-  .founder-trades { font-size: 12px; color: var(--muted); }
+  .founder-title { font-size: 15px; font-weight: 600; color: var(--text); letter-spacing: 0.04em; }
+  .founder-trades { font-size: 14px; color: var(--muted); }
   .founder-divider { width: 1px; height: 48px; background: var(--border); flex-shrink: 0; }
 
   /* ── TRADE SELECTOR ────────────────────────────────────────────────────────── */
@@ -327,7 +327,7 @@
      to stay tonally consistent with the rest of the marketing page. */
   .whats-new { padding: 90px 0 70px; background: var(--cream); }
   .whats-new h2 { font-size: clamp(30px, 4vw, 46px); font-weight: 900; text-align: center; margin-bottom: 12px; }
-  .whats-new .sub { text-align: center; color: var(--muted); font-size: 18px; margin-bottom: 48px; font-weight: 300; max-width: 720px; margin-left: auto; margin-right: auto; }
+  .whats-new .sub { text-align: center; color: var(--muted); font-size: 20px; margin-bottom: 48px; font-weight: 300; max-width: 720px; margin-left: auto; margin-right: auto; }
   .wn-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
   @media (max-width: 900px) { .wn-grid { grid-template-columns: 1fr; gap: 16px; } }
   .wn-card { background: var(--white); border: 1px solid var(--border); border-radius: 14px; padding: 26px 24px; transition: transform 0.15s, box-shadow 0.15s; }
@@ -352,32 +352,32 @@
     pointer-events: none;
   }
   .ai-spotlight .container { position: relative; z-index: 1; }
-  .ai-spot-tag { display: inline-block; background: rgba(255,255,255,0.15); color: #fff; padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 18px; }
+  .ai-spot-tag { display: inline-block; background: rgba(255,255,255,0.15); color: #fff; padding: 6px 16px; border-radius: 20px; font-size: 14px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 18px; }
   .ai-spot-head { font-family: 'Playfair Display', serif; font-size: clamp(32px, 5vw, 56px); font-weight: 900; line-height: 1.1; margin-bottom: 18px; letter-spacing: -0.02em; max-width: 760px; }
   .ai-spot-head em { color: var(--green-mist); font-style: normal; }
-  .ai-spot-sub { font-size: 18px; color: rgba(255,255,255,0.85); line-height: 1.65; font-weight: 300; max-width: 720px; margin-bottom: 56px; }
+  .ai-spot-sub { font-size: 20px; color: rgba(255,255,255,0.85); line-height: 1.65; font-weight: 300; max-width: 720px; margin-bottom: 56px; }
 
   .ai-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 48px; }
   @media (max-width: 900px) { .ai-steps { grid-template-columns: 1fr; gap: 16px; } }
   .ai-step { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 14px; padding: 28px 26px; transition: transform 0.15s, background 0.15s; }
   .ai-step:hover { transform: translateY(-2px); background: rgba(255,255,255,0.12); }
-  .ai-step-num { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 50%; background: #fff; color: var(--green-dark); font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 900; margin-bottom: 18px; }
-  .ai-step-title { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 800; color: #fff; margin-bottom: 10px; letter-spacing: -0.01em; }
-  .ai-step-desc { font-size: 14px; color: rgba(255,255,255,0.8); line-height: 1.65; }
+  .ai-step-num { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 50%; background: #fff; color: var(--green-dark); font-family: 'Playfair Display', serif; font-size: 24px; font-weight: 900; margin-bottom: 18px; }
+  .ai-step-title { font-family: 'Playfair Display', serif; font-size: 24px; font-weight: 800; color: #fff; margin-bottom: 10px; letter-spacing: -0.01em; }
+  .ai-step-desc { font-size: 16px; color: rgba(255,255,255,0.8); line-height: 1.65; }
 
   .ai-spot-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 20px; padding-top: 28px; border-top: 1px solid rgba(255,255,255,0.18); }
-  .ai-spot-foot-line { font-size: 15px; color: rgba(255,255,255,0.85); line-height: 1.6; max-width: 540px; }
+  .ai-spot-foot-line { font-size: 17px; color: rgba(255,255,255,0.85); line-height: 1.6; max-width: 540px; }
   .ai-spot-foot-line strong { color: #fff; font-weight: 700; }
-  .wn-icon { width: 44px; height: 44px; border-radius: 10px; background: var(--green-light); color: var(--green-dark); display: flex; align-items: center; justify-content: center; font-size: 22px; margin-bottom: 16px; }
-  .wn-tag { display: inline-block; background: var(--green); color: #fff; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 3px 10px; border-radius: 12px; margin-bottom: 10px; }
-  .wn-title { font-family: 'Playfair Display', serif; font-size: 21px; font-weight: 800; color: var(--text); margin-bottom: 8px; letter-spacing: -0.01em; line-height: 1.2; }
-  .wn-desc { font-size: 14px; color: var(--muted); line-height: 1.65; }
+  .wn-icon { width: 44px; height: 44px; border-radius: 10px; background: var(--green-light); color: var(--green-dark); display: flex; align-items: center; justify-content: center; font-size: 24px; margin-bottom: 16px; }
+  .wn-tag { display: inline-block; background: var(--green); color: #fff; font-size: 13px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 3px 10px; border-radius: 12px; margin-bottom: 10px; }
+  .wn-title { font-family: 'Playfair Display', serif; font-size: 23px; font-weight: 800; color: var(--text); margin-bottom: 8px; letter-spacing: -0.01em; line-height: 1.2; }
+  .wn-desc { font-size: 16px; color: var(--muted); line-height: 1.65; }
 
   .trade-section { padding: 90px 0; background: var(--white); }
   .trade-section h2 { font-size: clamp(30px, 4vw, 46px); font-weight: 900; text-align: center; margin-bottom: 12px; }
-  .trade-section .sub { text-align: center; color: var(--muted); font-size: 18px; margin-bottom: 48px; font-weight: 300; }
+  .trade-section .sub { text-align: center; color: var(--muted); font-size: 20px; margin-bottom: 48px; font-weight: 300; }
   .trade-tabs { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 40px; }
-  .trade-tab { padding: 12px 28px; border-radius: 50px; border: 2px solid var(--border); background: transparent; font-size: 15px; font-weight: 600; color: var(--muted); cursor: pointer; transition: all 0.2s; font-family: 'DM Sans', sans-serif; }
+  .trade-tab { padding: 12px 28px; border-radius: 50px; border: 2px solid var(--border); background: transparent; font-size: 17px; font-weight: 600; color: var(--muted); cursor: pointer; transition: all 0.2s; font-family: 'DM Sans', sans-serif; }
   .trade-tab:hover { border-color: var(--green); color: var(--green); }
   .trade-tab.active { background: var(--green); color: #fff; border-color: var(--green); }
   .trade-content { display: none; }
@@ -403,73 +403,76 @@
     gap: 18px; padding: 22px 26px 18px;
     border-bottom: 1px solid var(--border);
   }
-  .ti-co-name { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 800; color: var(--text); line-height: 1.2; }
-  .ti-co-meta { font-size: 12px; color: var(--muted); margin-top: 4px; letter-spacing: 0.04em; }
+  .ti-co-name { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 800; color: var(--text); line-height: 1.2; }
+  .ti-co-meta { font-size: 14px; color: var(--muted); margin-top: 4px; letter-spacing: 0.04em; }
   .ti-badge {
-    display: inline-block; font-size: 10px; font-weight: 800;
+    display: inline-block; font-size: 12px; font-weight: 800;
     letter-spacing: 0.1em; text-transform: uppercase;
     color: var(--ti-color, var(--green));
     background: color-mix(in srgb, var(--ti-color, var(--green)) 12%, white);
     padding: 4px 10px; border-radius: 14px; margin-bottom: 6px;
   }
   .ti-num-block { text-align: right; flex-shrink: 0; }
-  .ti-num-lbl { font-size: 10px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; font-weight: 700; }
-  .ti-num-val { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 900; color: var(--ti-color, var(--green)); line-height: 1; margin-top: 4px; }
-  .ti-due { font-size: 11px; color: var(--muted); margin-top: 4px; }
+  .ti-num-lbl { font-size: 12px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; font-weight: 700; }
+  /* Was Playfair Display (a wedding-invite serif) — switched to DM Sans
+     to match the rest of the marketing page. The big bold tabular-numerics
+     read as "invoice number" / "amount due" without the decorative serif. */
+  .ti-num-val { font-family: 'DM Sans', sans-serif; font-size: 24px; font-weight: 900; color: var(--ti-color, var(--green)); line-height: 1; margin-top: 4px; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+  .ti-due { font-size: 13px; color: var(--muted); margin-top: 4px; }
 
   .ti-meta-row {
     display: grid; grid-template-columns: 1fr 1fr; gap: 18px;
     padding: 16px 26px; background: #fafbfa; border-bottom: 1px solid var(--border);
   }
-  .ti-meta-lbl { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
-  .ti-meta-val { font-size: 13px; font-weight: 600; color: var(--text); line-height: 1.4; }
+  .ti-meta-lbl { font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+  .ti-meta-val { font-size: 15px; font-weight: 600; color: var(--text); line-height: 1.4; }
 
   .ti-rows { padding: 4px 26px; }
-  .ti-row { display: grid; grid-template-columns: 1fr 60px 80px 90px; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--border); font-size: 13px; align-items: center; }
+  .ti-row { display: grid; grid-template-columns: 1fr 60px 80px 90px; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--border); font-size: 15px; align-items: center; }
   .ti-row:last-child { border-bottom: none; }
-  .ti-row.head { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); padding: 10px 0 8px; border-bottom: 1.5px solid var(--border); }
+  .ti-row.head { font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); padding: 10px 0 8px; border-bottom: 1.5px solid var(--border); }
   .ti-row .desc { font-weight: 600; color: var(--text); }
   .ti-row .qty, .ti-row .rate { color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; }
   .ti-row .tot { color: var(--text); text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; }
 
   .ti-totals { padding: 14px 26px 18px; background: #fafbfa; border-top: 1px solid var(--border); }
-  .ti-totals-row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 13px; color: var(--muted); }
-  .ti-totals-row.grand { border-top: 1.5px solid var(--border); margin-top: 6px; padding-top: 12px; font-size: 16px; font-weight: 800; color: var(--text); }
-  .ti-totals-row.grand .v { color: var(--ti-color, var(--green)); font-family: 'Playfair Display', serif; font-size: 22px; }
+  .ti-totals-row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 15px; color: var(--muted); }
+  .ti-totals-row.grand { border-top: 1.5px solid var(--border); margin-top: 6px; padding-top: 12px; font-size: 18px; font-weight: 800; color: var(--text); }
+  .ti-totals-row.grand .v { color: var(--ti-color, var(--green)); font-family: 'DM Sans', sans-serif; font-size: 24px; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
 
   .ti-pay { padding: 14px 26px 22px; border-top: 1px solid var(--border); background: #fff; }
-  .ti-pay-lbl { font-size: 10px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+  .ti-pay-lbl { font-size: 12px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
   .ti-pay-chips { display: flex; flex-wrap: wrap; gap: 6px; }
-  .ti-pay-chip { font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 12px; background: var(--green-light); color: var(--green-dark); }
+  .ti-pay-chip { font-size: 13px; font-weight: 700; padding: 4px 10px; border-radius: 12px; background: var(--green-light); color: var(--green-dark); }
   .ti-pay-chip.primary { background: var(--ti-color, var(--green)); color: #fff; }
 
   /* Caption above the invoice — short trade-specific blurb */
-  .ti-caption { text-align: center; max-width: 640px; margin: 0 auto 24px; font-size: 16px; color: var(--muted); line-height: 1.6; }
+  .ti-caption { text-align: center; max-width: 640px; margin: 0 auto 24px; font-size: 18px; color: var(--muted); line-height: 1.6; }
   .ti-caption strong { color: var(--text); font-weight: 700; }
 
   @media (max-width: 640px) {
     .ti-head { flex-direction: column; }
     .ti-num-block { text-align: left; }
     .ti-meta-row { grid-template-columns: 1fr; gap: 10px; }
-    .ti-row { grid-template-columns: 1fr 60px 80px; gap: 8px; font-size: 12px; }
+    .ti-row { grid-template-columns: 1fr 60px 80px; gap: 8px; font-size: 14px; }
     .ti-row .rate { display: none; }
     .ti-row.head { grid-template-columns: 1fr 60px 80px; }
     .ti-row.head span:nth-child(3) { display: none; }
   }
   .trade-feature { display: flex; gap: 14px; margin-bottom: 24px; align-items: flex-start; }
   .trade-icon { width: 4px; height: 36px; background: var(--green); border-radius: 2px; flex-shrink: 0; margin-top: 2px; }
-  .trade-feature-title { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
-  .trade-feature-desc { font-size: 14px; color: var(--muted); line-height: 1.5; }
+  .trade-feature-title { font-size: 18px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+  .trade-feature-desc { font-size: 16px; color: var(--muted); line-height: 1.5; }
   .trade-screenshot { background: var(--green-light); border-radius: 16px; padding: 28px; text-align: center; }
   .trade-screenshot-inner { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); }
-  .trade-badge-large { display: inline-block; background: var(--green); color: #fff; padding: 6px 18px; border-radius: 20px; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 14px; }
-  .sample-quote-line { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
-  .sample-quote-line:last-child { border: none; font-weight: 700; color: var(--green-dark); font-size: 15px; }
+  .trade-badge-large { display: inline-block; background: var(--green); color: #fff; padding: 6px 18px; border-radius: 20px; font-size: 15px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 14px; }
+  .sample-quote-line { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 15px; }
+  .sample-quote-line:last-child { border: none; font-weight: 700; color: var(--green-dark); font-size: 17px; }
 
   /* ── FEATURES (showcase slideshow) ───────────────────────────────────────── */
   .features { padding: 90px 0; background: var(--green-dark); }
   .features h2 { font-size: clamp(30px, 4vw, 46px); font-weight: 900; text-align: center; margin-bottom: 12px; color: #fff; }
-  .features .sub { text-align: center; color: rgba(255,255,255,0.7); font-size: 18px; margin-bottom: 40px; font-weight: 300; }
+  .features .sub { text-align: center; color: rgba(255,255,255,0.7); font-size: 20px; margin-bottom: 40px; font-weight: 300; }
 
   /* Numbered chip nav — jump to any slide */
   .showcase-tabs { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-bottom: 36px; }
@@ -479,7 +482,7 @@
     background: transparent;
     color: rgba(255,255,255,0.65);
     font-family: 'DM Sans', sans-serif;
-    font-size: 13px; font-weight: 600; letter-spacing: 0.04em;
+    font-size: 15px; font-weight: 600; letter-spacing: 0.04em;
     cursor: pointer;
     transition: all 0.2s;
     display: inline-flex; align-items: center; gap: 8px;
@@ -487,7 +490,7 @@
   }
   .showcase-tab:hover { border-color: rgba(255,255,255,0.5); color: #fff; }
   .showcase-tab.active { background: #fff; color: var(--green-dark); border-color: #fff; }
-  .showcase-tab-num { font-family: 'Playfair Display', serif; font-weight: 900; font-size: 14px; opacity: 0.7; }
+  .showcase-tab-num { font-family: 'Playfair Display', serif; font-weight: 900; font-size: 16px; opacity: 0.7; }
   .showcase-tab.active .showcase-tab-num { opacity: 1; }
 
   /* Stage with arrows */
@@ -498,7 +501,7 @@
     background: rgba(255,255,255,0.1);
     border: 1.5px solid rgba(255,255,255,0.25);
     color: #fff;
-    font-size: 22px; font-weight: 700; line-height: 1;
+    font-size: 24px; font-weight: 700; line-height: 1;
     cursor: pointer;
     display: flex; align-items: center; justify-content: center;
     transition: all 0.2s;
@@ -530,32 +533,32 @@
     display: flex; align-items: center; justify-content: space-between;
     padding: 8px 4px 14px; border-bottom: 1px solid var(--border); margin-bottom: 14px;
   }
-  .showcase-frame-title { font-family: 'Playfair Display', serif; font-size: 16px; font-weight: 700; color: var(--green-dark); }
-  .showcase-frame-pill { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+  .showcase-frame-title { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 700; color: var(--green-dark); }
+  .showcase-frame-pill { font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
 
   /* Side caption */
   .showcase-caption { color: #fff; padding: 12px 8px; }
   .showcase-caption .step {
     display: inline-block;
     font-family: 'Playfair Display', serif;
-    font-size: 14px; font-weight: 700;
+    font-size: 16px; font-weight: 700;
     color: var(--green-mist);
     letter-spacing: 0.1em;
     margin-bottom: 14px;
     text-transform: uppercase;
   }
   .showcase-caption h3 {
-    font-size: 28px; font-weight: 900; line-height: 1.2;
+    font-size: 30px; font-weight: 900; line-height: 1.2;
     margin-bottom: 14px; color: #fff;
   }
   .showcase-caption p {
-    font-size: 16px; color: rgba(255,255,255,0.75);
+    font-size: 18px; color: rgba(255,255,255,0.75);
     line-height: 1.6; margin-bottom: 18px;
   }
   .showcase-caption ul { list-style: none; padding: 0; margin: 0; }
   .showcase-caption li {
     padding: 6px 0 6px 22px; position: relative;
-    font-size: 14px; color: rgba(255,255,255,0.85);
+    font-size: 16px; color: rgba(255,255,255,0.85);
   }
   .showcase-caption li::before {
     content: '✓'; position: absolute; left: 0; top: 6px;
@@ -573,14 +576,14 @@
   .showcase-dot.active { background: #fff; width: 24px; border-radius: 4px; }
 
   /* In-frame data styles — used inside the white mockup */
-  .sf-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 14px; }
+  .sf-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 16px; }
   .sf-row:last-child { border-bottom: none; }
   .sf-row.total { background: var(--green-light); margin: 6px -6px -6px; border-radius: 8px; padding: 12px; font-weight: 700; color: var(--green-dark); border: none; }
-  .sf-row.head { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); padding: 6px 12px; }
+  .sf-row.head { font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); padding: 6px 12px; }
   .sf-name { font-weight: 600; color: var(--text); }
-  .sf-sub { font-size: 12px; color: var(--muted); margin-top: 1px; }
+  .sf-sub { font-size: 14px; color: var(--muted); margin-top: 1px; }
   .sf-amt { font-weight: 700; color: var(--green-dark); font-family: 'DM Sans', sans-serif; }
-  .sf-pill { font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 10px; letter-spacing: 0.04em; text-transform: uppercase; }
+  .sf-pill { font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 10px; letter-spacing: 0.04em; text-transform: uppercase; }
   .sf-pill.paid { background: #f0fdf4; color: #166534; }
   .sf-pill.sent { background: #eff6ff; color: #1d4ed8; }
   .sf-pill.due  { background: #fef2f2; color: #991b1b; }
@@ -589,38 +592,38 @@
   /* Stat grid for dashboard slide */
   .sf-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .sf-stat { background: var(--green-light); border-radius: 10px; padding: 14px; }
-  .sf-stat-lbl { font-size: 10px; color: var(--green-dark); font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 4px; }
-  .sf-stat-val { font-family: 'Playfair Display', serif; font-size: 24px; font-weight: 900; color: var(--green-dark); line-height: 1; }
-  .sf-stat-sub { font-size: 11px; color: var(--muted); margin-top: 4px; }
+  .sf-stat-lbl { font-size: 12px; color: var(--green-dark); font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 4px; }
+  .sf-stat-val { font-family: 'Playfair Display', serif; font-size: 26px; font-weight: 900; color: var(--green-dark); line-height: 1; }
+  .sf-stat-sub { font-size: 13px; color: var(--muted); margin-top: 4px; }
 
   /* Calendar mock */
   .sf-cal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-  .sf-cal-month { font-family: 'Playfair Display', serif; font-size: 16px; font-weight: 800; color: var(--green-dark); }
-  .sf-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; font-size: 11px; }
-  .sf-cal-dow { text-align: center; font-weight: 700; color: var(--muted); padding: 4px 0; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; }
+  .sf-cal-month { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 800; color: var(--green-dark); }
+  .sf-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; font-size: 13px; }
+  .sf-cal-dow { text-align: center; font-weight: 700; color: var(--muted); padding: 4px 0; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; }
   .sf-cal-cell { aspect-ratio: 1; border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 4px 2px; background: #fafbfa; border: 1px solid #f0f2f0; position: relative; }
-  .sf-cal-cell .d { font-size: 11px; font-weight: 600; color: var(--text); }
+  .sf-cal-cell .d { font-size: 13px; font-weight: 600; color: var(--text); }
   .sf-cal-cell.today { border-color: var(--green); background: var(--green-light); }
   .sf-cal-cell.today .d { color: var(--green-dark); font-weight: 800; }
-  .sf-cal-job { font-size: 8px; background: var(--green); color: #fff; border-radius: 3px; padding: 1px 3px; margin-top: 2px; font-weight: 700; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sf-cal-job { font-size: 10px; background: var(--green); color: #fff; border-radius: 3px; padding: 1px 3px; margin-top: 2px; font-weight: 700; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .sf-cal-job.elec { background: #b45309; }
   .sf-cal-job.hvac { background: #0891b2; }
 
   /* Bucket list (jobs hub) */
-  .sf-bucket-head { font-size: 11px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; padding: 10px 12px 6px; color: var(--muted); }
+  .sf-bucket-head { font-size: 13px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; padding: 10px 12px 6px; color: var(--muted); }
   .sf-bucket-head.over { color: var(--error); }
   .sf-bucket-head.today { color: var(--green); }
   .sf-bucket-head.tom { color: var(--warn); }
 
   /* Customer-facing payment page */
   .sf-pay-hero { background: linear-gradient(135deg, var(--green-dark), var(--green)); margin: -18px -18px 14px; padding: 18px; border-radius: 16px 16px 0 0; color: #fff; }
-  .sf-pay-co { font-size: 12px; font-weight: 700; opacity: 0.85; letter-spacing: 0.06em; text-transform: uppercase; }
-  .sf-pay-num { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 900; margin-top: 4px; }
-  .sf-pay-amt { font-size: 26px; font-weight: 900; margin-top: 8px; font-family: 'Playfair Display', serif; }
-  .sf-pay-due { font-size: 11px; opacity: 0.8; margin-top: 2px; }
-  .sf-pay-btn { background: var(--green); color: #fff; padding: 12px; border-radius: 10px; text-align: center; font-weight: 700; font-size: 14px; margin-top: 12px; }
+  .sf-pay-co { font-size: 14px; font-weight: 700; opacity: 0.85; letter-spacing: 0.06em; text-transform: uppercase; }
+  .sf-pay-num { font-family: 'Playfair Display', serif; font-size: 24px; font-weight: 900; margin-top: 4px; }
+  .sf-pay-amt { font-size: 28px; font-weight: 900; margin-top: 8px; font-family: 'Playfair Display', serif; }
+  .sf-pay-due { font-size: 13px; opacity: 0.8; margin-top: 2px; }
+  .sf-pay-btn { background: var(--green); color: #fff; padding: 12px; border-radius: 10px; text-align: center; font-weight: 700; font-size: 16px; margin-top: 12px; }
   .sf-pay-methods { display: flex; gap: 6px; justify-content: center; margin-top: 10px; flex-wrap: wrap; }
-  .sf-pay-method { font-size: 10px; padding: 4px 9px; background: var(--green-light); color: var(--green-dark); border-radius: 12px; font-weight: 700; }
+  .sf-pay-method { font-size: 12px; padding: 4px 9px; background: var(--green-light); color: var(--green-dark); border-radius: 12px; font-weight: 700; }
 
   @media (max-width: 768px) {
     .showcase-slide { grid-template-columns: 1fr; gap: 24px; }
@@ -631,228 +634,228 @@
     .showcase-arrow.next { right: -8px; }
     .showcase-caption { order: 2; padding-top: 0; text-align: center; }
     .showcase-caption ul { display: inline-block; text-align: left; }
-    .showcase-caption h3 { font-size: 22px; }
+    .showcase-caption h3 { font-size: 24px; }
   }
 
   /* ── BEFORE / AFTER ────────────────────────────────────────────────────────── */
   .before-after { padding: 90px 0; background: var(--cream); }
   .before-after h2 { font-size: clamp(28px, 4vw, 44px); font-weight: 900; text-align: center; margin-bottom: 12px; }
-  .before-after .sub { text-align: center; color: var(--muted); font-size: 18px; margin-bottom: 56px; font-weight: 300; }
+  .before-after .sub { text-align: center; color: var(--muted); font-size: 20px; margin-bottom: 56px; font-weight: 300; }
   .ba-grid { display: grid; grid-template-columns: 1fr auto 1fr; gap: 24px; align-items: center; }
   .ba-card { border-radius: 16px; padding: 28px; }
   .ba-before { background: #fff; border: 1px solid var(--border); }
   .ba-after { background: var(--green-dark); }
-  .ba-tag { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 16px; display: block; }
+  .ba-tag { font-size: 13px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 16px; display: block; }
   .ba-before .ba-tag { color: var(--error); }
   .ba-after .ba-tag { color: var(--green-mist); }
-  .ba-item { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 14px; font-size: 14px; }
+  .ba-item { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 14px; font-size: 16px; }
   .ba-before .ba-item { color: var(--muted); }
   .ba-after .ba-item { color: rgba(255,255,255,0.85); }
   .ba-x { color: var(--error); font-weight: 700; flex-shrink: 0; }
   .ba-check { color: var(--green-mist); font-weight: 700; flex-shrink: 0; }
-  .ba-vs { width: 48px; height: 48px; background: var(--green); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 900; font-size: 14px; flex-shrink: 0; }
+  .ba-vs { width: 48px; height: 48px; background: var(--green); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 900; font-size: 16px; flex-shrink: 0; }
   .ba-result { display: flex; justify-content: space-between; margin-top: 20px; padding-top: 16px; }
   .ba-before .ba-result { border-top: 1px solid var(--border); }
   .ba-after .ba-result { border-top: 1px solid rgba(255,255,255,0.15); }
-  .ba-result-label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; }
+  .ba-result-label { font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; }
   .ba-before .ba-result-label { color: var(--muted); }
   .ba-after .ba-result-label { color: rgba(255,255,255,0.6); }
-  .ba-result-val { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 900; }
+  .ba-result-val { font-family: 'Playfair Display', serif; font-size: 24px; font-weight: 900; }
   .ba-before .ba-result-val { color: var(--error); }
   .ba-after .ba-result-val { color: #fff; }
 
   /* ── ROI CALCULATOR ────────────────────────────────────────────────────────── */
   .roi { padding: 90px 0; background: #fff; }
   .roi h2 { font-size: clamp(28px, 4vw, 44px); font-weight: 900; text-align: center; margin-bottom: 12px; }
-  .roi .sub { text-align: center; color: var(--muted); font-size: 18px; margin-bottom: 56px; font-weight: 300; }
+  .roi .sub { text-align: center; color: var(--muted); font-size: 20px; margin-bottom: 56px; font-weight: 300; }
   .roi-card { background: var(--green-light); border-radius: 20px; padding: 48px; max-width: 800px; margin: 0 auto; }
   .roi-sliders { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-bottom: 40px; }
-  .roi-label { font-size: 14px; font-weight: 600; color: var(--green-dark); margin-bottom: 6px; }
-  .roi-val { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 900; color: var(--green-dark); margin-bottom: 10px; }
+  .roi-label { font-size: 16px; font-weight: 600; color: var(--green-dark); margin-bottom: 6px; }
+  .roi-val { font-family: 'Playfair Display', serif; font-size: 30px; font-weight: 900; color: var(--green-dark); margin-bottom: 10px; }
   input[type=range] { width: 100%; accent-color: var(--green); height: 6px; }
   .roi-results { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
   .roi-result { background: #fff; border-radius: 12px; padding: 20px; text-align: center; }
-  .roi-result-num { font-family: 'Playfair Display', serif; font-size: 30px; font-weight: 900; color: var(--green); margin-bottom: 4px; }
-  .roi-result-lbl { font-size: 12px; color: var(--muted); font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; }
+  .roi-result-num { font-family: 'Playfair Display', serif; font-size: 32px; font-weight: 900; color: var(--green); margin-bottom: 4px; }
+  .roi-result-lbl { font-size: 14px; color: var(--muted); font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; }
 
   /* ── TESTIMONIALS ──────────────────────────────────────────────────────────── */
   .testimonials { padding: 90px 0; background: var(--cream); }
   .testimonials h2 { font-size: clamp(28px, 4vw, 44px); font-weight: 900; text-align: center; margin-bottom: 12px; }
-  .testimonials .sub { text-align: center; color: var(--muted); font-size: 18px; margin-bottom: 56px; font-weight: 300; }
+  .testimonials .sub { text-align: center; color: var(--muted); font-size: 20px; margin-bottom: 56px; font-weight: 300; }
   .testi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
   .testi-card { background: #fff; border-radius: 16px; padding: 28px; border: 1px solid var(--border); }
-  .testi-stars { color: #d97706; font-size: 15px; margin-bottom: 14px; letter-spacing: 2px; }
+  .testi-stars { color: #d97706; font-size: 17px; margin-bottom: 14px; letter-spacing: 2px; }
   .trade-icon-accent { width: 4px; height: 36px; background: var(--green); border-radius: 2px; flex-shrink: 0; margin-top: 2px; }
-  .testi-quote { font-size: 15px; line-height: 1.7; color: var(--text); margin-bottom: 20px; font-style: italic; }
+  .testi-quote { font-size: 17px; line-height: 1.7; color: var(--text); margin-bottom: 20px; font-style: italic; }
   .testi-author { display: flex; align-items: center; gap: 12px; }
-  .testi-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--green); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; color: #fff; flex-shrink: 0; }
-  .testi-name { font-size: 14px; font-weight: 700; color: var(--text); }
-  .testi-role { font-size: 12px; color: var(--muted); }
+  .testi-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--green); display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700; color: #fff; flex-shrink: 0; }
+  .testi-name { font-size: 16px; font-weight: 700; color: var(--text); }
+  .testi-role { font-size: 14px; color: var(--muted); }
 
   /* ── COMPETITOR COMPARISON ─────────────────────────────────────────────────── */
   .compare { padding: 90px 0; background: var(--green-dark); }
   .compare h2 { font-size: clamp(28px, 4vw, 44px); font-weight: 900; text-align: center; margin-bottom: 12px; color: #fff; }
-  .compare .sub { text-align: center; color: rgba(255,255,255,0.7); font-size: 18px; margin-bottom: 56px; font-weight: 300; }
+  .compare .sub { text-align: center; color: rgba(255,255,255,0.7); font-size: 20px; margin-bottom: 56px; font-weight: 300; }
   .compare-table { width: 100%; border-collapse: collapse; background: rgba(255,255,255,0.05); border-radius: 16px; overflow: hidden; }
-  .compare-table th { padding: 16px 20px; font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; }
+  .compare-table th { padding: 16px 20px; font-size: 16px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; }
   .compare-table th:first-child { text-align: left; color: rgba(255,255,255,0.6); }
   .compare-table th.tv-col { background: rgba(255,255,255,0.1); color: var(--green-mist); }
   .compare-table th.other-col { color: rgba(255,255,255,0.45); }
-  .compare-table td { padding: 14px 20px; font-size: 14px; border-top: 1px solid rgba(255,255,255,0.07); text-align: center; color: rgba(255,255,255,0.7); }
+  .compare-table td { padding: 14px 20px; font-size: 16px; border-top: 1px solid rgba(255,255,255,0.07); text-align: center; color: rgba(255,255,255,0.7); }
   .compare-table td:first-child { text-align: left; font-weight: 500; }
   .compare-table td.tv-col { background: rgba(255,255,255,0.06); color: #fff; font-weight: 600; }
   /* Compare-table cell badges. Was using empty <span class="check-y"></span>
      with only color/font-size set — that rendered as a blank cell because
      no character was ever inserted. Switched to glyph characters directly
      in the HTML so what's there is what renders. */
-  .check-y { color: #4ade80; font-size: 20px; font-weight: 800; }
-  .check-n { color: rgba(255,255,255,0.25); font-size: 20px; font-weight: 800; }
+  .check-y { color: #4ade80; font-size: 22px; font-weight: 800; }
+  .check-n { color: rgba(255,255,255,0.25); font-size: 22px; font-weight: 800; }
   .check-soon {
     display: inline-block; padding: 3px 10px; border-radius: 12px;
     background: rgba(217, 119, 6, 0.15);
     color: #fbbf24;
-    font-size: 11px; font-weight: 800;
+    font-size: 13px; font-weight: 800;
     letter-spacing: 0.06em; text-transform: uppercase;
     border: 1px solid rgba(217, 119, 6, 0.3);
     white-space: nowrap;
   }
   .check-limited {
     display: inline-block; color: rgba(255,255,255,0.55);
-    font-size: 12px; font-style: italic;
+    font-size: 14px; font-style: italic;
   }
-  .compare-note { text-align: center; color: rgba(255,255,255,0.4); font-size: 13px; margin-top: 20px; }
+  .compare-note { text-align: center; color: rgba(255,255,255,0.4); font-size: 15px; margin-top: 20px; }
 
   /* ── PRICING ───────────────────────────────────────────────────────────────── */
   .pricing { padding: 90px 0; background: #fff; }
   .pricing h2 { font-size: clamp(28px, 4vw, 44px); font-weight: 900; text-align: center; margin-bottom: 12px; }
-  .pricing .sub { text-align: center; color: var(--muted); font-size: 18px; margin-bottom: 16px; font-weight: 300; }
-  .billing-toggle { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 48px; font-size: 15px; font-weight: 500; }
+  .pricing .sub { text-align: center; color: var(--muted); font-size: 20px; margin-bottom: 16px; font-weight: 300; }
+  .billing-toggle { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 48px; font-size: 17px; font-weight: 500; }
   .toggle-switch { width: 44px; height: 24px; background: var(--green); border-radius: 20px; position: relative; cursor: pointer; }
   .toggle-switch::after { content: ''; position: absolute; top: 2px; right: 2px; width: 20px; height: 20px; background: #fff; border-radius: 50%; transition: right 0.2s; }
   .toggle-switch.monthly::after { right: 22px; }
-  .save-badge { background: var(--green-light); color: var(--green-dark); padding: 2px 8px; border-radius: 10px; font-size: 12px; font-weight: 600; }
+  .save-badge { background: var(--green-light); color: var(--green-dark); padding: 2px 8px; border-radius: 10px; font-size: 14px; font-weight: 600; }
   .pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; max-width: 900px; margin: 0 auto; }
   .plan-card { border-radius: 20px; padding: 32px 28px; border: 2px solid var(--border); position: relative; background: #fff; }
   .plan-card.popular { border-color: var(--green); }
-  .popular-badge { position: absolute; top: -14px; left: 50%; transform: translateX(-50%); background: var(--green); color: #fff; padding: 4px 16px; border-radius: 20px; font-size: 12px; font-weight: 700; white-space: nowrap; }
-  .plan-name { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 8px; }
-  .plan-price { font-family: 'DM Sans', sans-serif; font-size: 52px; font-weight: 800; color: var(--green-dark); line-height: 1; margin-bottom: 4px; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
-  .plan-price span { font-size: 18px; font-weight: 400; color: var(--muted); }
-  .plan-trades { font-size: 14px; color: var(--muted); margin-bottom: 24px; }
+  .popular-badge { position: absolute; top: -14px; left: 50%; transform: translateX(-50%); background: var(--green); color: #fff; padding: 4px 16px; border-radius: 20px; font-size: 14px; font-weight: 700; white-space: nowrap; }
+  .plan-name { font-size: 16px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 8px; }
+  .plan-price { font-family: 'DM Sans', sans-serif; font-size: 54px; font-weight: 800; color: var(--green-dark); line-height: 1; margin-bottom: 4px; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+  .plan-price span { font-size: 20px; font-weight: 400; color: var(--muted); }
+  .plan-trades { font-size: 16px; color: var(--muted); margin-bottom: 24px; }
   .plan-features { list-style: none; margin-bottom: 28px; }
-  .plan-features li { display: flex; align-items: flex-start; gap: 10px; font-size: 14px; color: var(--text); margin-bottom: 10px; line-height: 1.4; }
+  .plan-features li { display: flex; align-items: flex-start; gap: 10px; font-size: 16px; color: var(--text); margin-bottom: 10px; line-height: 1.4; }
   .plan-features li::before { content: ''; color: var(--green); font-weight: 700; flex-shrink: 0; }
-  .plan-btn { width: 100%; padding: 14px; border-radius: 50px; font-size: 15px; font-weight: 600; font-family: 'DM Sans', sans-serif; cursor: pointer; text-align: center; transition: all 0.2s; border: 2px solid var(--green); background: transparent; color: var(--green); }
+  .plan-btn { width: 100%; padding: 14px; border-radius: 50px; font-size: 17px; font-weight: 600; font-family: 'DM Sans', sans-serif; cursor: pointer; text-align: center; transition: all 0.2s; border: 2px solid var(--green); background: transparent; color: var(--green); }
   .plan-card.popular .plan-btn { background: var(--green); color: #fff; }
   .plan-btn:hover { background: var(--green); color: #fff; }
-  .plan-note { text-align: center; color: var(--muted); font-size: 14px; margin-top: 28px; }
+  .plan-note { text-align: center; color: var(--muted); font-size: 16px; margin-top: 28px; }
 
   /* ── SECURITY ──────────────────────────────────────────────────────────────── */
   .security { padding: 72px 0; background: var(--cream); }
   .security-inner { display: grid; grid-template-columns: 1fr 2fr; gap: 60px; align-items: center; }
   .security h2 { font-size: clamp(26px, 3vw, 38px); font-weight: 900; margin-bottom: 16px; }
-  .security p { color: var(--muted); font-size: 16px; line-height: 1.7; }
+  .security p { color: var(--muted); font-size: 18px; line-height: 1.7; }
   .security-badges { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
   .sec-badge { background: #fff; border-radius: 12px; padding: 18px; border: 1px solid var(--border); display: flex; align-items: flex-start; gap: 12px; }
-  .sec-icon { font-size: 24px; flex-shrink: 0; }
-  .sec-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 3px; }
-  .sec-desc { font-size: 13px; color: var(--muted); }
+  .sec-icon { font-size: 26px; flex-shrink: 0; }
+  .sec-title { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 3px; }
+  .sec-desc { font-size: 15px; color: var(--muted); }
 
   /* ── FAQ ───────────────────────────────────────────────────────────────────── */
   .faq { padding: 90px 0; background: #fff; }
   .faq h2 { font-size: clamp(28px, 4vw, 44px); font-weight: 900; text-align: center; margin-bottom: 12px; }
-  .faq .sub { text-align: center; color: var(--muted); font-size: 18px; margin-bottom: 56px; font-weight: 300; }
+  .faq .sub { text-align: center; color: var(--muted); font-size: 20px; margin-bottom: 56px; font-weight: 300; }
   .faq-list { max-width: 720px; margin: 0 auto; }
   .faq-item { border-bottom: 1px solid var(--border); }
-  .faq-q { width: 100%; background: none; border: none; padding: 20px 0; display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-size: 16px; font-weight: 600; color: var(--text); text-align: left; font-family: 'DM Sans', sans-serif; gap: 16px; }
-  .faq-arrow { color: var(--green); font-size: 20px; flex-shrink: 0; transition: transform 0.2s; }
+  .faq-q { width: 100%; background: none; border: none; padding: 20px 0; display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-size: 18px; font-weight: 600; color: var(--text); text-align: left; font-family: 'DM Sans', sans-serif; gap: 16px; }
+  .faq-arrow { color: var(--green); font-size: 22px; flex-shrink: 0; transition: transform 0.2s; }
   .faq-a { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
   .faq-a.open { max-height: 200px; }
-  .faq-a p { padding-bottom: 20px; color: var(--muted); line-height: 1.7; font-size: 15px; }
+  .faq-a p { padding-bottom: 20px; color: var(--muted); line-height: 1.7; font-size: 17px; }
   .faq-arrow.open { transform: rotate(45deg); }
 
   /* ── REFERRAL ──────────────────────────────────────────────────────────────── */
   .referral { padding: 90px 0; background: var(--green); }
   .referral-inner { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; }
   .referral h2 { font-size: clamp(28px, 4vw, 42px); font-weight: 900; color: #fff; margin-bottom: 16px; }
-  .referral p { color: rgba(255,255,255,0.8); font-size: 17px; line-height: 1.7; margin-bottom: 28px; font-weight: 300; }
-  .referral-btn { background: #fff; color: var(--green-dark); padding: 16px 36px; border-radius: 50px; font-size: 16px; font-weight: 700; text-decoration: none; display: inline-block; transition: all 0.2s; font-family: 'DM Sans', sans-serif; }
+  .referral p { color: rgba(255,255,255,0.8); font-size: 19px; line-height: 1.7; margin-bottom: 28px; font-weight: 300; }
+  .referral-btn { background: #fff; color: var(--green-dark); padding: 16px 36px; border-radius: 50px; font-size: 18px; font-weight: 700; text-decoration: none; display: inline-block; transition: all 0.2s; font-family: 'DM Sans', sans-serif; }
   .referral-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.15); }
   .referral-cards { display: flex; flex-direction: column; gap: 14px; }
   .referral-card { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); border-radius: 14px; padding: 20px 24px; display: flex; align-items: center; gap: 16px; }
-  .ref-amount { font-family: 'Playfair Display', serif; font-size: 32px; font-weight: 900; color: #fff; min-width: 70px; }
-  .ref-title { font-size: 15px; font-weight: 700; color: #fff; margin-bottom: 2px; }
-  .ref-desc { font-size: 13px; color: rgba(255,255,255,0.7); }
+  .ref-amount { font-family: 'Playfair Display', serif; font-size: 34px; font-weight: 900; color: #fff; min-width: 70px; }
+  .ref-title { font-size: 17px; font-weight: 700; color: #fff; margin-bottom: 2px; }
+  .ref-desc { font-size: 15px; color: rgba(255,255,255,0.7); }
 
   /* ── TAX UPDATES ───────────────────────────────────────────────────────────── */
   .tax-updates { padding: 72px 0; background: var(--cream); }
   .tax-inner { display: grid; grid-template-columns: 2fr 1fr; gap: 60px; align-items: center; }
   .tax-updates h2 { font-size: clamp(26px, 3.5vw, 40px); font-weight: 900; margin-bottom: 16px; }
-  .tax-updates p { color: var(--muted); font-size: 16px; line-height: 1.7; margin-bottom: 20px; }
+  .tax-updates p { color: var(--muted); font-size: 18px; line-height: 1.7; margin-bottom: 20px; }
   .tax-steps { display: flex; flex-direction: column; gap: 14px; }
   .tax-step { display: flex; gap: 14px; align-items: flex-start; }
-  .tax-num { width: 30px; height: 30px; background: var(--green); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 13px; font-weight: 700; flex-shrink: 0; margin-top: 1px; }
-  .tax-step-text { font-size: 14px; color: var(--text); line-height: 1.5; }
+  .tax-num { width: 30px; height: 30px; background: var(--green); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 15px; font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+  .tax-step-text { font-size: 16px; color: var(--text); line-height: 1.5; }
   .tax-calendar { background: #fff; border-radius: 16px; padding: 24px; border: 1px solid var(--border); text-align: center; }
-  .cal-month { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 8px; }
-  .cal-num { font-family: 'DM Sans', sans-serif; font-size: 64px; font-weight: 800; color: var(--green); line-height: 1; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
-  .cal-label { font-size: 13px; color: var(--muted); margin-top: 6px; }
-  .cal-badge { display: inline-block; background: var(--green-light); color: var(--green-dark); padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; margin-top: 12px; }
+  .cal-month { font-size: 15px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 8px; }
+  .cal-num { font-family: 'DM Sans', sans-serif; font-size: 66px; font-weight: 800; color: var(--green); line-height: 1; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+  .cal-label { font-size: 15px; color: var(--muted); margin-top: 6px; }
+  .cal-badge { display: inline-block; background: var(--green-light); color: var(--green-dark); padding: 4px 12px; border-radius: 20px; font-size: 14px; font-weight: 600; margin-top: 12px; }
 
   /* ── BLOG ──────────────────────────────────────────────────────────────────── */
   .blog { padding: 90px 0; background: #fff; }
   .blog h2 { font-size: clamp(28px, 4vw, 44px); font-weight: 900; text-align: center; margin-bottom: 12px; }
-  .blog .sub { text-align: center; color: var(--muted); font-size: 18px; margin-bottom: 56px; font-weight: 300; }
+  .blog .sub { text-align: center; color: var(--muted); font-size: 20px; margin-bottom: 56px; font-weight: 300; }
   .blog-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
   .blog-card { border-radius: 16px; overflow: hidden; border: 1px solid var(--border); }
-  .blog-thumb { height: 160px; display: flex; align-items: center; justify-content: center; font-size: 48px; }
+  .blog-thumb { height: 160px; display: flex; align-items: center; justify-content: center; font-size: 50px; }
   .blog-body { padding: 20px; }
-  .blog-category { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--green); margin-bottom: 8px; }
-  .blog-title { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 8px; line-height: 1.4; font-family: 'Playfair Display', serif; }
-  .blog-excerpt { font-size: 13px; color: var(--muted); line-height: 1.6; margin-bottom: 14px; }
-  .blog-read { font-size: 13px; font-weight: 700; color: var(--green); text-decoration: none; }
+  .blog-category { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--green); margin-bottom: 8px; }
+  .blog-title { font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 8px; line-height: 1.4; font-family: 'Playfair Display', serif; }
+  .blog-excerpt { font-size: 15px; color: var(--muted); line-height: 1.6; margin-bottom: 14px; }
+  .blog-read { font-size: 15px; font-weight: 700; color: var(--green); text-decoration: none; }
 
   /* ── APP DOWNLOAD ──────────────────────────────────────────────────────────── */
   .app-download { padding: 90px 0; background: var(--green-dark); text-align: center; }
   .app-download h2 { font-size: clamp(28px, 4vw, 44px); font-weight: 900; color: #fff; margin-bottom: 16px; }
-  .app-download p { color: rgba(255,255,255,0.7); font-size: 18px; margin-bottom: 40px; font-weight: 300; max-width: 500px; margin-left: auto; margin-right: auto; }
+  .app-download p { color: rgba(255,255,255,0.7); font-size: 20px; margin-bottom: 40px; font-weight: 300; max-width: 500px; margin-left: auto; margin-right: auto; }
   .store-btns { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
   .store-btn { display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,0.1); border: 1.5px solid rgba(255,255,255,0.3); border-radius: 14px; padding: 14px 24px; text-decoration: none; transition: all 0.2s; }
   .store-btn:hover { background: rgba(255,255,255,0.18); }
-  .store-icon { font-size: 28px; }
-  .store-sub { font-size: 11px; color: rgba(255,255,255,0.65); text-transform: uppercase; letter-spacing: 0.06em; }
-  .store-name { font-size: 17px; font-weight: 700; color: #fff; }
-  .coming-tag { display: inline-block; background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.6); padding: 2px 10px; border-radius: 10px; font-size: 11px; font-weight: 600; margin-top: 4px; }
+  .store-icon { font-size: 30px; }
+  .store-sub { font-size: 13px; color: rgba(255,255,255,0.65); text-transform: uppercase; letter-spacing: 0.06em; }
+  .store-name { font-size: 19px; font-weight: 700; color: #fff; }
+  .coming-tag { display: inline-block; background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.6); padding: 2px 10px; border-radius: 10px; font-size: 13px; font-weight: 600; margin-top: 4px; }
 
   /* ── CTA BANNER ────────────────────────────────────────────────────────────── */
   /* Bumped padding 90→140 and body sizes a touch so the final CTA
      reads as the closing crescendo, not a small footer ribbon. */
   .cta-banner { padding: 140px 0; background: var(--cream); text-align: center; }
   .cta-banner h2 { font-size: clamp(32px, 4.5vw, 56px); font-weight: 900; margin-bottom: 20px; letter-spacing: -0.02em; line-height: 1.1; }
-  .cta-banner p { color: var(--muted); font-size: 19px; margin-bottom: 40px; font-weight: 300; max-width: 580px; margin-left: auto; margin-right: auto; line-height: 1.65; }
+  .cta-banner p { color: var(--muted); font-size: 21px; margin-bottom: 40px; font-weight: 300; max-width: 580px; margin-left: auto; margin-right: auto; line-height: 1.65; }
   .cta-form { display: flex; gap: 10px; justify-content: center; max-width: 480px; margin: 0 auto 16px; }
-  .cta-input { flex: 1; padding: 16px 20px; border: 2px solid var(--border); border-radius: 50px; font-size: 15px; font-family: 'DM Sans', sans-serif; outline: none; }
+  .cta-input { flex: 1; padding: 16px 20px; border: 2px solid var(--border); border-radius: 50px; font-size: 17px; font-family: 'DM Sans', sans-serif; outline: none; }
   .cta-input:focus { border-color: var(--green); }
-  .cta-disclaimer { font-size: 13px; color: var(--dim); }
+  .cta-disclaimer { font-size: 15px; color: var(--dim); }
 
   /* ── FOOTER ────────────────────────────────────────────────────────────────── */
   footer { background: var(--green-dark); padding: 60px 0 32px; }
   .footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 40px; margin-bottom: 48px; }
-  .footer-brand p { color: rgba(255,255,255,0.6); font-size: 14px; line-height: 1.7; margin-top: 16px; font-weight: 300; }
+  .footer-brand p { color: rgba(255,255,255,0.6); font-size: 16px; line-height: 1.7; margin-top: 16px; font-weight: 300; }
   /* Serif Tradevoice wordmark on the dark-green footer. Replaces the
      base64 logo PNG which had a white background baked in and rendered
      as a giant white block against the dark footer gradient. Native
      transparency, scales cleanly on any device. */
-  .footer-brand-wordmark { font-family: 'Playfair Display', Georgia, serif; font-size: 32px; font-weight: 900; color: #fff; letter-spacing: -0.01em; line-height: 1; }
-  .footer-col-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: rgba(255,255,255,0.5); margin-bottom: 16px; }
+  .footer-brand-wordmark { font-family: 'Playfair Display', Georgia, serif; font-size: 34px; font-weight: 900; color: #fff; letter-spacing: -0.01em; line-height: 1; }
+  .footer-col-title { font-size: 15px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: rgba(255,255,255,0.5); margin-bottom: 16px; }
   .footer-links { list-style: none; }
   .footer-links li { margin-bottom: 10px; }
-  .footer-links a { color: rgba(255,255,255,0.65); font-size: 14px; text-decoration: none; transition: color 0.15s; }
+  .footer-links a { color: rgba(255,255,255,0.65); font-size: 16px; text-decoration: none; transition: color 0.15s; }
   .footer-links a:hover { color: #fff; }
   .footer-bottom { border-top: 1px solid rgba(255,255,255,0.1); padding-top: 28px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
-  .footer-copy { color: rgba(255,255,255,0.4); font-size: 13px; }
+  .footer-copy { color: rgba(255,255,255,0.4); font-size: 15px; }
   .footer-legal { display: flex; gap: 20px; }
-  .footer-legal a { color: rgba(255,255,255,0.4); font-size: 13px; text-decoration: none; }
+  .footer-legal a { color: rgba(255,255,255,0.4); font-size: 15px; text-decoration: none; }
   .footer-legal a:hover { color: rgba(255,255,255,0.8); }
 
   /* ── RESPONSIVE ────────────────────────────────────────────────────────────── */
@@ -866,7 +869,7 @@
     .roi-sliders, .roi-results { grid-template-columns: 1fr; }
     .nav-links { display: none; }
     .hero-stats { gap: 20px; flex-wrap: wrap; }
-    .compare-table { font-size: 12px; }
+    .compare-table { font-size: 14px; }
     .compare-table th, .compare-table td { padding: 10px 12px; }
   }
   @media (max-width: 500px) {
@@ -880,8 +883,8 @@
      Surfaces lockdown state at the top of every page so visitors know
      signup is gated. Removes the friction of clicking a Start Trial button
      and getting bounced. Remove this banner once early access opens up. -->
-<div style="background:#1b4332;color:#fff;padding:10px 20px;text-align:center;font-size:13px;font-weight:600;letter-spacing:0.02em;line-height:1.5;">
-  <strong style="letter-spacing:0.1em;text-transform:uppercase;font-size:11px;background:#f59e0b;color:#1b4332;padding:2px 8px;border-radius:10px;margin-right:8px;">Private Preview</strong>
+<div style="background:#1b4332;color:#fff;padding:10px 20px;text-align:center;font-size: 15px;font-weight:600;letter-spacing:0.02em;line-height:1.5;">
+  <strong style="letter-spacing:0.1em;text-transform:uppercase;font-size: 13px;background:#f59e0b;color:#1b4332;padding:2px 8px;border-radius:10px;margin-right:8px;">Private Preview</strong>
   Tradevoice is invite-only while we finalize features.
   <a href="mailto:hello@thetradevoice.com?subject=Early%20Access%20Request%20—%20Tradevoice" style="color:#f59e0b;font-weight:700;text-decoration:underline;margin-left:6px;">Request access</a>
 </div>
@@ -912,7 +915,7 @@
              (Step 0: email + password) instead of bouncing through login
              first. Mirrors Sign in's session-clear behavior. -->
         <a href="https://app.thetradevoice.com/?signup=1" class="nav-create">Create Account</a>
-        <a href="mailto:hello@thetradevoice.com?subject=Early%20Access%20Request%20—%20Tradevoice&body=Hi%20Tradevoice%2C%0A%0AI%27d%20like%20to%20request%20early%20access.%20A%20bit%20about%20me%3A%0A%0A-%20Name%3A%0A-%20Trade%2Fs%3A%0A-%20State%3A%0A-%20Crew%20size%3A%0A%0AThanks!" class="btn-primary" style="padding:11px 22px;font-size:14px;white-space:nowrap;border-radius:50px">Request Early Access</a>
+        <a href="mailto:hello@thetradevoice.com?subject=Early%20Access%20Request%20—%20Tradevoice&body=Hi%20Tradevoice%2C%0A%0AI%27d%20like%20to%20request%20early%20access.%20A%20bit%20about%20me%3A%0A%0A-%20Name%3A%0A-%20Trade%2Fs%3A%0A-%20State%3A%0A-%20Crew%20size%3A%0A%0AThanks!" class="btn-primary" style="padding:11px 22px;font-size: 16px;white-space:nowrap;border-radius:50px">Request Early Access</a>
       </div>
     </div>
   </div>
@@ -949,7 +952,7 @@
             <div class="mockup-avatar">MB</div>
           </div>
           <div class="mockup-body">
-            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#9ca3af;margin-bottom:10px">Recent Invoices</div>
+            <div style="font-size: 13px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#9ca3af;margin-bottom:10px">Recent Invoices</div>
             <div class="mockup-invoice">
               <div>
                 <div class="mockup-inv-name">Sandra Johnson</div>
@@ -1175,25 +1178,29 @@
     <span class="section-tag">We built this for you</span>
     <h2>Every trade, one tool</h2>
     <p class="sub">Tradevoice knows your trade. Quotes, labor rates, and materials pre-built for how you work — across <strong>56+ trades</strong> from plumbing and electrical to landscaping, restoration, and chimney sweep.</p>
+    <!-- Trade catalog overflow — full list of supported trades shown first so a
+         contractor in a less-common trade (Locksmith, Tree Service, Pool,
+         etc.) sees their work is supported before they meet the showcase
+         tabs below. -->
+    <div style="text-align:center; margin: 30px auto 24px; max-width: 920px; padding: 22px 24px; background: var(--green-light); border-radius: 14px; border: 1px solid var(--green-mist);">
+      <div style="font-size: 14px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--green-dark); margin-bottom: 12px;">Full trade catalog</div>
+      <div style="font-size: 16px; color: var(--text); line-height: 1.9;">
+        Plumber · Electrician · HVAC · Roofer · Carpenter · Painter · Drywall · Flooring · Tile · Concrete · Mason · Insulation · Siding · Gutters · Solar · Stucco · Garage Door · Fence · Deck/Patio · Foundation · Waterproofing · Excavation · Demolition · Sheet Metal · Glass / Window · Septic · Pool / Spa · Welder · Locksmith · Asphalt · Refrigeration · Fire Protection · Asbestos / Mold · Boiler · Low Voltage · Security / Alarm · Audio / Video · Well / Pump · Landscaping · Lawn Care · Tree Service · Cleaning · Pressure Washing · Window Cleaning · Carpet Cleaning · Restoration · Chimney Sweep · Pest Control · Snow Removal · Junk Removal · Handyman · Appliance Repair · Commercial Cleaning · Gutter Cleaning · Mobile Auto Detailing · Multi-Trade
+      </div>
+      <div style="font-size: 14px; color: var(--muted); margin-top: 12px; font-style: italic;">
+        Each trade ships with a curated starter library of common line items. Where there's a recognized industry codebook — NEC for electrical, ASHRAE for HVAC, ASPE for plumbing, NRCA for roofing, IICRC for restoration — our defaults reference it directly.
+      </div>
+    </div>
+    <!-- Trade tab selector — sits immediately above the demo invoice so the
+         "selection key" reads as a label for the invoice it controls.
+         (Previously this was at the top of the section, above the catalog
+         box — too far from the invoice it was switching.) -->
     <div class="trade-tabs">
       <button class="trade-tab active" onclick="selectTrade('plumber',this)"> Plumber</button>
       <button class="trade-tab" onclick="selectTrade('electrician',this)"> Electrician</button>
       <button class="trade-tab" onclick="selectTrade('hvac',this)"> HVAC</button>
       <button class="trade-tab" onclick="selectTrade('roofer',this)"> Roofer</button>
       <button class="trade-tab" onclick="selectTrade('specialty',this)"> Specialty</button>
-    </div>
-    <!-- Trade catalog overflow — clicking the showcase tabs above flips to
-         specific deep-dives, but we surface the full list here so a
-         contractor in a less-common trade (Locksmith, Tree Service, Pool,
-         etc.) sees their work is supported. -->
-    <div style="text-align:center; margin: 30px auto 24px; max-width: 920px; padding: 22px 24px; background: var(--green-light); border-radius: 14px; border: 1px solid var(--green-mist);">
-      <div style="font-size: 12px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--green-dark); margin-bottom: 12px;">Full trade catalog</div>
-      <div style="font-size: 14px; color: var(--text); line-height: 1.9;">
-        Plumber · Electrician · HVAC · Roofer · Carpenter · Painter · Drywall · Flooring · Tile · Concrete · Mason · Insulation · Siding · Gutters · Solar · Stucco · Garage Door · Fence · Deck/Patio · Foundation · Waterproofing · Excavation · Demolition · Sheet Metal · Glass / Window · Septic · Pool / Spa · Welder · Locksmith · Asphalt · Refrigeration · Fire Protection · Asbestos / Mold · Boiler · Low Voltage · Security / Alarm · Audio / Video · Well / Pump · Landscaping · Lawn Care · Tree Service · Cleaning · Pressure Washing · Window Cleaning · Carpet Cleaning · Restoration · Chimney Sweep · Pest Control · Snow Removal · Junk Removal · Handyman · Appliance Repair · Commercial Cleaning · Gutter Cleaning · Mobile Auto Detailing · Multi-Trade
-      </div>
-      <div style="font-size: 12px; color: var(--muted); margin-top: 12px; font-style: italic;">
-        Each trade ships with a curated starter library of common line items. Where there's a recognized industry codebook — NEC for electrical, ASHRAE for HVAC, ASPE for plumbing, NRCA for roofing, IICRC for restoration — our defaults reference it directly.
-      </div>
     </div>
     <!-- ── Plumber ── -->
     <div id="trade-plumber" class="trade-content active">
@@ -1295,7 +1302,7 @@
         <div class="ti-head">
           <div>
             <span class="ti-badge">HVAC</span>
-            <div class="ti-co-name">Burke Mechanical Services</div>
+            <div class="ti-co-name">James HVAC Services</div>
             <div class="ti-co-meta">License TX-AC-08711 · San Antonio, TX</div>
           </div>
           <div class="ti-num-block">
@@ -2083,13 +2090,13 @@
         <!-- Tech seats — important for owners with crews. Used to be only
              surfaced after sign-up; mention it here so multi-tech shops can
              plan their seat budget before they buy. -->
-        <div style="font-size:15px;color:var(--text);font-weight:500;line-height:1.6;">
+        <div style="font-size: 17px;color:var(--text);font-weight:500;line-height:1.6;">
           Need a crew? Add tech seats for <strong style="color:var(--green-dark);font-weight:800;">$19.99/mo each</strong>.
           Every tech gets their own login with a unique Tech ID and custom permissions you control.
         </div>
         <!-- Honest fee breakdown. Was buried on Settings → Payment Setup;
              the "you keep 100%" line works better here at the moment of decision. -->
-        <div style="font-size:13px;color:var(--muted);line-height:1.6;">
+        <div style="font-size: 15px;color:var(--muted);line-height:1.6;">
           Card &amp; ACH payments via Stripe — 2.9% + $0.30 Stripe fee + 1% Tradevoice fee, all passed to the client.
           <strong style="color:var(--text);">You keep 100% of every invoice.</strong>
         </div>
@@ -2160,13 +2167,13 @@
              from copying a dark-hero pattern and rendered as invisible
              white-on-cream). -->
         <div style="margin-top:24px;padding:16px 20px;background:#fff;border-radius:10px;border:1px solid var(--green-mist)">
-          <div style="font-size:12px;font-weight:800;color:var(--green-dark);text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px">Coming later</div>
-          <div style="font-size:15px;color:var(--text);line-height:1.6">Rooftop-accurate live tax lookups by city + county + zip are on the roadmap. We'll wire them in once we partner with a tax-API provider. Until then, the defaults give you a solid starting point and you can override per invoice in seconds.</div>
+          <div style="font-size: 14px;font-weight:800;color:var(--green-dark);text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px">Coming later</div>
+          <div style="font-size: 17px;color:var(--text);line-height:1.6">Rooftop-accurate live tax lookups by city + county + zip are on the roadmap. We'll wire them in once we partner with a tax-API provider. Until then, the defaults give you a solid starting point and you can override per invoice in seconds.</div>
         </div>
       </div>
       <div class="tax-calendar">
         <div class="cal-month">All 50 States</div>
-        <div class="cal-num" style="font-family:'DM Sans',sans-serif;font-size:72px;font-weight:800;color:var(--green-dark);line-height:1;letter-spacing:-0.03em;font-variant-numeric:tabular-nums;">50</div>
+        <div class="cal-num" style="font-family:'DM Sans',sans-serif;font-size: 74px;font-weight:800;color:var(--green-dark);line-height:1;letter-spacing:-0.03em;font-variant-numeric:tabular-nums;">50</div>
         <div class="cal-label">State-level defaults shipping today; finer per-city / per-county lookups on the roadmap</div>
         <span class="cal-badge">Included in every plan</span>
       </div>
@@ -2186,56 +2193,56 @@
       <div>
         <span class="section-tag">Know your requirements</span>
         <h2 style="font-size:clamp(26px,3.5vw,40px);font-weight:900;margin:12px 0 16px;line-height:1.15;">License codes for all 50 states — built right in</h2>
-        <p style="font-size:17px;color:#666;line-height:1.75;margin-bottom:24px;">Every state has different licensing requirements for residential and commercial work. TradeVoice has them all built in — so when you set up your profile, we show you exactly what license type you need for your state and trade.</p>
+        <p style="font-size: 19px;color:#666;line-height:1.75;margin-bottom:24px;">Every state has different licensing requirements for residential and commercial work. TradeVoice has them all built in — so when you set up your profile, we show you exactly what license type you need for your state and trade.</p>
         <div style="display:flex;flex-direction:column;gap:14px">
           <div style="display:flex;align-items:flex-start;gap:14px">
             <div style="width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0;margin-top:9px;"></div>
             <div>
-              <div style="font-size:15px;font-weight:700;color:#111;margin-bottom:3px">Residential & commercial — all 50 states</div>
-              <div style="font-size:14px;color:#888;line-height:1.6">Separate license types for residential and commercial work, with the governing board and website for each state.</div>
+              <div style="font-size: 17px;font-weight:700;color:#111;margin-bottom:3px">Residential & commercial — all 50 states</div>
+              <div style="font-size: 16px;color:#888;line-height:1.6">Separate license types for residential and commercial work, with the governing board and website for each state.</div>
             </div>
           </div>
           <div style="display:flex;align-items:flex-start;gap:14px">
             <div style="width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0;margin-top:9px;"></div>
             <div>
-              <div style="font-size:15px;font-weight:700;color:#111;margin-bottom:3px">Trade-specific requirements</div>
-              <div style="font-size:14px;color:#888;line-height:1.6">Plumbing, electrical, HVAC, roofing — each trade has its own license requirements. We cover all of them.</div>
+              <div style="font-size: 17px;font-weight:700;color:#111;margin-bottom:3px">Trade-specific requirements</div>
+              <div style="font-size: 16px;color:#888;line-height:1.6">Plumbing, electrical, HVAC, roofing — each trade has its own license requirements. We cover all of them.</div>
             </div>
           </div>
           <div style="display:flex;align-items:flex-start;gap:14px">
             <div style="width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0;margin-top:9px;"></div>
             <div>
-              <div style="font-size:15px;font-weight:700;color:#111;margin-bottom:3px">Shows on every invoice</div>
-              <div style="font-size:14px;color:#888;line-height:1.6">Your license number appears automatically on every invoice and quote — so clients can verify your credentials and your paperwork reads professionally.</div>
+              <div style="font-size: 17px;font-weight:700;color:#111;margin-bottom:3px">Shows on every invoice</div>
+              <div style="font-size: 16px;color:#888;line-height:1.6">Your license number appears automatically on every invoice and quote — so clients can verify your credentials and your paperwork reads professionally.</div>
             </div>
           </div>
         </div>
       </div>
       <div style="background:#f7f7f5;border-radius:16px;padding:28px;border:1px solid #e8e8e8">
-        <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:#aaa;margin-bottom:16px">Example: Texas Plumber</div>
+        <div style="font-size: 14px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:#aaa;margin-bottom:16px">Example: Texas Plumber</div>
         <div style="background:#fff;border-radius:10px;border:1px solid #e0e0e0;overflow:hidden">
           <div style="background:#2d6a4f;padding:12px 16px">
-            <div style="font-size:11px;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.1em">State</div>
-            <div style="font-size:18px;font-weight:700;color:#fff">Texas</div>
+            <div style="font-size: 13px;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.1em">State</div>
+            <div style="font-size: 20px;font-weight:700;color:#fff">Texas</div>
           </div>
           <div style="padding:16px">
             <div style="margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid #f0f0f0">
-              <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#aaa;margin-bottom:4px">Residential</div>
-              <div style="font-size:14px;font-weight:600;color:#111">No state GC license required</div>
-              <div style="font-size:13px;color:#888;margin-top:2px">Local jurisdiction only — Dallas, Houston, Austin have their own requirements</div>
+              <div style="font-size: 13px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#aaa;margin-bottom:4px">Residential</div>
+              <div style="font-size: 16px;font-weight:600;color:#111">No state GC license required</div>
+              <div style="font-size: 15px;color:#888;margin-top:2px">Local jurisdiction only — Dallas, Houston, Austin have their own requirements</div>
             </div>
             <div style="margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid #f0f0f0">
-              <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#aaa;margin-bottom:4px">Plumbing License (State)</div>
-              <div style="font-size:14px;font-weight:600;color:#111">Texas State Plumber License Required</div>
-              <div style="font-size:13px;color:#888;margin-top:2px">Texas State Board of Plumbing Examiners · tsbpe.texas.gov</div>
+              <div style="font-size: 13px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#aaa;margin-bottom:4px">Plumbing License (State)</div>
+              <div style="font-size: 16px;font-weight:600;color:#111">Texas State Plumber License Required</div>
+              <div style="font-size: 15px;color:#888;margin-top:2px">Texas State Board of Plumbing Examiners · tsbpe.texas.gov</div>
             </div>
             <div>
-              <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#aaa;margin-bottom:4px">Governing Board</div>
-              <div style="font-size:13px;color:#2d6a4f;font-weight:600">tsbpe.texas.gov</div>
+              <div style="font-size: 13px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#aaa;margin-bottom:4px">Governing Board</div>
+              <div style="font-size: 15px;color:#2d6a4f;font-weight:600">tsbpe.texas.gov</div>
             </div>
           </div>
         </div>
-        <div style="font-size:12px;color:#aaa;text-align:center;margin-top:12px">All 50 states · 56+ trades · Residential & Commercial</div>
+        <div style="font-size: 14px;color:#aaa;text-align:center;margin-top:12px">All 50 states · 56+ trades · Residential & Commercial</div>
       </div>
     </div>
     <!-- Inline fine-print footnote — replaced the previous amber warning
@@ -2245,7 +2252,7 @@
          (reference data, not legal advice) without screaming "warning"
          to a prospect just discovering the feature. Same legal
          protection, less defensive presentation. -->
-    <div style="margin-top:36px;font-size:13px;color:var(--muted);line-height:1.65;text-align:center;max-width:760px;margin-left:auto;margin-right:auto">
+    <div style="margin-top:36px;font-size: 15px;color:var(--muted);line-height:1.65;text-align:center;max-width:760px;margin-left:auto;margin-right:auto">
       Reference data, kept current from official state board sources. Always confirm current requirements with your state board before bidding — full terms in our <a href="/terms" style="color:var(--green);font-weight:600;text-decoration:underline">Terms of Service</a>.
     </div>
   </div>
@@ -2266,7 +2273,7 @@
            on the roadmap. -->
       <a href="https://app.thetradevoice.com" class="store-btn">
         <span class="store-icon"></span>
-        <div><div class="store-sub">Open now in any browser</div><div class="store-name">thetradevoice.com</div><div style="font-size:11px;color:#4ade80;font-weight:600;margin-top:4px">Available Now · iPad &amp; Laptop</div></div>
+        <div><div class="store-sub">Open now in any browser</div><div class="store-name">thetradevoice.com</div><div style="font-size: 13px;color:#4ade80;font-weight:600;margin-top:4px">Available Now · iPad &amp; Laptop</div></div>
       </a>
       <span class="store-btn" style="opacity:0.6;cursor:default" aria-disabled="true">
         <span class="store-icon"></span>
@@ -2315,7 +2322,7 @@
     <h2>We're rolling out access in waves</h2>
     <p>Tradevoice is in private preview while we finalize features and pricing. Email us — we're letting in trade businesses one at a time.</p>
     <div class="cta-form" style="justify-content:center">
-      <a href="mailto:hello@thetradevoice.com?subject=Early%20Access%20Request%20—%20Tradevoice&body=Hi%20Tradevoice%2C%0A%0AI%27d%20like%20to%20request%20early%20access.%20A%20bit%20about%20me%3A%0A%0A-%20Name%3A%0A-%20Trade%2Fs%3A%0A-%20State%3A%0A-%20Crew%20size%3A%0A%0AThanks!" class="btn-primary" style="font-size:18px;padding:18px 44px">Request Early Access</a>
+      <a href="mailto:hello@thetradevoice.com?subject=Early%20Access%20Request%20—%20Tradevoice&body=Hi%20Tradevoice%2C%0A%0AI%27d%20like%20to%20request%20early%20access.%20A%20bit%20about%20me%3A%0A%0A-%20Name%3A%0A-%20Trade%2Fs%3A%0A-%20State%3A%0A-%20Crew%20size%3A%0A%0AThanks!" class="btn-primary" style="font-size: 20px;padding:18px 44px">Request Early Access</a>
     </div>
     <p class="cta-disclaimer">hello@thetradevoice.com · We respond within 24 hours</p>
   </div>

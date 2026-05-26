@@ -102,13 +102,13 @@ export default function TotpScreen({ user, mode = 'unlock', onUnlocked, onSignOu
       }}>
         {/* Header */}
         <div style={{ marginBottom: 24 }}>
-          <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.18em', textTransform: 'uppercase', color: C.muted, marginBottom: 6 }}>
+          <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.18em', textTransform: 'uppercase', color: C.muted, marginBottom: 6 }}>
             Founder Access
           </div>
-          <div style={{ fontSize: 22, fontWeight: 800, color: C.text }}>
+          <div style={{ fontSize: 24, fontWeight: 800, color: C.text }}>
             {mode === 'setup' ? 'Set up two-factor authentication' : 'Verify your identity'}
           </div>
-          <div style={{ fontSize: 13, color: C.muted, marginTop: 6, lineHeight: 1.55 }}>
+          <div style={{ fontSize: 15, color: C.muted, marginTop: 6, lineHeight: 1.55 }}>
             {mode === 'setup'
               ? 'One-time setup. Scan the QR code with Google Authenticator, 1Password, or Authy. Then enter the 6-digit code your app shows to confirm.'
               : 'Enter the current 6-digit code from your authenticator app. The session stays unlocked for 30 minutes of activity.'}
@@ -119,12 +119,12 @@ export default function TotpScreen({ user, mode = 'unlock', onUnlocked, onSignOu
         {mode === 'setup' && (
           <div style={{ marginBottom: 22 }}>
             {setupLoading && (
-              <div style={{ padding: 24, textAlign: 'center', color: C.muted, fontSize: 13 }}>
+              <div style={{ padding: 24, textAlign: 'center', color: C.muted, fontSize: 15 }}>
                 Generating secret…
               </div>
             )}
             {setupErr && (
-              <div style={{ background: C.redBg, color: '#fecaca', padding: 12, borderRadius: 8, fontSize: 13, marginBottom: 12 }}>
+              <div style={{ background: C.redBg, color: '#fecaca', padding: 12, borderRadius: 8, fontSize: 15, marginBottom: 12 }}>
                 {setupErr}
               </div>
             )}
@@ -137,19 +137,19 @@ export default function TotpScreen({ user, mode = 'unlock', onUnlocked, onSignOu
                 }}>
                   <img src={setupData.qrDataUrl} alt="TOTP QR" style={{ width: 220, height: 220, display: 'block' }} />
                 </div>
-                <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', color: C.muted, marginBottom: 6 }}>
+                <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', color: C.muted, marginBottom: 6 }}>
                   Or enter manually
                 </div>
                 <div style={{
                   background: '#0b1220', border: `1px solid ${C.border}`,
                   borderRadius: 8, padding: '12px 14px',
                   fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace",
-                  fontSize: 14, color: C.text, letterSpacing: '0.1em',
+                  fontSize: 16, color: C.text, letterSpacing: '0.1em',
                   wordBreak: 'break-all',
                 }}>
                   {setupData.secret.replace(/(.{4})/g, '$1 ').trim()}
                 </div>
-                <div style={{ fontSize: 12, color: C.dim, marginTop: 8, lineHeight: 1.5 }}>
+                <div style={{ fontSize: 14, color: C.dim, marginTop: 8, lineHeight: 1.5 }}>
                   Store this secret somewhere safe before continuing — if you lose your phone, you'll need it (or the recovery flow) to re-pair.
                 </div>
               </>
@@ -159,7 +159,7 @@ export default function TotpScreen({ user, mode = 'unlock', onUnlocked, onSignOu
 
         {/* Code entry — same form in both modes */}
         <form onSubmit={handleSubmit}>
-          <label style={{ display: 'block', fontSize: 11, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', color: C.muted, marginBottom: 8 }}>
+          <label style={{ display: 'block', fontSize: 13, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', color: C.muted, marginBottom: 8 }}>
             6-digit code
           </label>
           <input
@@ -173,7 +173,7 @@ export default function TotpScreen({ user, mode = 'unlock', onUnlocked, onSignOu
             disabled={busy || (mode === 'setup' && !setupData)}
             style={{
               width: '100%', boxSizing: 'border-box',
-              padding: '16px 18px', fontSize: 28, fontWeight: 700,
+              padding: '16px 18px', fontSize: 30, fontWeight: 700,
               letterSpacing: '0.5em', textAlign: 'center',
               fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace",
               background: '#0b1220',
@@ -182,7 +182,7 @@ export default function TotpScreen({ user, mode = 'unlock', onUnlocked, onSignOu
             }}
           />
           {err && (
-            <div style={{ fontSize: 13, color: '#fca5a5', marginTop: 8 }}>{err}</div>
+            <div style={{ fontSize: 15, color: '#fca5a5', marginTop: 8 }}>{err}</div>
           )}
 
           <button
@@ -193,7 +193,7 @@ export default function TotpScreen({ user, mode = 'unlock', onUnlocked, onSignOu
               padding: '14px 20px', borderRadius: 10,
               background: code.length === 6 && !busy ? C.green : '#1e293b',
               border: 'none', color: '#fff',
-              fontSize: 15, fontWeight: 800, letterSpacing: '0.02em',
+              fontSize: 17, fontWeight: 800, letterSpacing: '0.02em',
               cursor: busy || code.length !== 6 ? 'wait' : 'pointer',
               opacity: code.length === 6 && !busy ? 1 : 0.5,
               fontFamily: 'inherit',
@@ -210,7 +210,7 @@ export default function TotpScreen({ user, mode = 'unlock', onUnlocked, onSignOu
           style={{
             display: 'block', margin: '20px auto 0', padding: '8px 14px',
             background: 'transparent', border: 'none', color: C.dim,
-            fontSize: 12, fontWeight: 600, cursor: 'pointer', textDecoration: 'underline',
+            fontSize: 14, fontWeight: 600, cursor: 'pointer', textDecoration: 'underline',
             fontFamily: 'inherit',
           }}
         >
@@ -220,7 +220,7 @@ export default function TotpScreen({ user, mode = 'unlock', onUnlocked, onSignOu
         {/* Account context — small reminder at the bottom of who's
             authenticating (helps when the founder has multiple
             authenticator entries for different apps). */}
-        <div style={{ fontSize: 11, color: C.dim, textAlign: 'center', marginTop: 14, letterSpacing: '0.04em' }}>
+        <div style={{ fontSize: 13, color: C.dim, textAlign: 'center', marginTop: 14, letterSpacing: '0.04em' }}>
           {user?.email}
         </div>
       </div>
