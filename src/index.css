@@ -43,17 +43,23 @@ html, body {
   overflow-x: clip;
 }
 
-/* Break long unbreakable strings (URLs, stripe IDs, emails without
-   spaces) so they wrap instead of forcing horizontal scroll. */
-* {
-  word-wrap: break-word;
-  overflow-wrap: anywhere;
+/* Targeted wrapping: only break long unbreakable strings where they
+   actually overflow (long URLs, stripe IDs, etc.). The previous
+   universal `overflow-wrap: anywhere` on every element was too
+   aggressive — it was breaking short button labels like "Remove"
+   mid-word ("Re/mo/ve" stacked vertically) when the parent column
+   was narrow. The safer rule below uses `break-word`, which only
+   breaks mid-word as a LAST RESORT and never on naturally-wrappable
+   content like button text. */
+body, #root, div, p, span, td, th, li {
+  overflow-wrap: break-word;
 }
-/* Re-allow normal wrapping for inputs and code — they should keep
-   their native sizing behavior. */
-input, textarea, select, pre, code {
+/* Buttons and form labels should never wrap mid-word — their text
+   is always short and a vertical "R/e/m/o/v/e" stack is a layout
+   bug, not a feature. */
+button, label, .pill, [role="button"] {
   overflow-wrap: normal;
-  word-wrap: normal;
+  word-break: keep-all;
 }
 
 /* Tabular numerics on every number-y element so $1,234.56 columns line up. */
