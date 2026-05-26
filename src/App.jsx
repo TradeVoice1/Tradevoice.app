@@ -6053,15 +6053,27 @@ function QuoteEditor({ initial, clients, existingQuotes = [], user, setUser, onS
       licenseNumber: quoteLicense || '',
     };
 
+    // Hang-safe save with diagnostic logging. Previously a network hang
+    // (Supabase unreachable, RLS policy reject, etc.) could leave the
+    // "Saving…" button stuck forever because the await onSave(q) never
+    // resolved. 30-second timeout races against the actual save so we
+    // always reset the button state and surface a useful error.
     setSaving(true);
+    console.log('[QuoteEditor] save start', { id: q.id, title: q.title, hasClient: !!q.clientId, trade: q.trade });
+    const SAVE_TIMEOUT_MS = 30000;
+    let timedOut = false;
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => {
+        timedOut = true;
+        reject(new Error('Save timed out after 30 seconds. Check your network connection and try again.'));
+      }, SAVE_TIMEOUT_MS);
+    });
     try {
-      // onSave is async and may throw — let the parent's try/catch alert; we
-      // just clean up our own UI state here.
-      await onSave(q);
+      await Promise.race([onSave(q), timeoutPromise]);
+      console.log('[QuoteEditor] save success', q.id);
     } catch (e) {
-      // Defensive: if the parent didn't already alert, show an error.
-      console.error('quote save failed', e);
-      alert(e?.message || 'Could not save quote.');
+      console.error('[QuoteEditor] save failed', e, { timedOut, payload: q });
+      alert(e?.message || 'Could not save quote. Check the browser console (F12 → Console) for details.');
     } finally {
       setSaving(false);
     }
