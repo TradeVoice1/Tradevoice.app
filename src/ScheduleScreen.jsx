@@ -277,13 +277,383 @@ function PhotoTile({ photo, onView, onCycleLabel, onSetCaption, onDelete }) {
   );
 }
 
+// ─── JOB PERMITS SECTION ─────────────────────────────────────────────────────
+// Many construction jobs need MULTIPLE permits before work can begin —
+// a remodel might require a Building permit + Electrical permit + Plumbing
+// permit, each from a different authority with its own number and expiration.
+// This section lives inside JobDetailModal and lets the contractor add
+// permits as they're pulled, mark them expired/closed, and see at a glance
+// whether anything is about to lapse.
+//
+// Each permit is stored as a plain object on job.permits (JSONB array).
+// Shape mirrored in migration 0039 + src/data/jobs.js.
+const PERMIT_TYPES = [
+  'Building',
+  'Electrical',
+  'Plumbing',
+  'Mechanical (HVAC)',
+  'Gas',
+  'Roofing',
+  'Demolition',
+  'Excavation / Grading',
+  'Right-of-Way / ROW',
+  'Sign',
+  'Pool / Spa',
+  'Solar',
+  'Other',
+];
+
+const PERMIT_STATUSES = [
+  { value: 'pending',  label: 'Pending',  bg: '#fffbeb', fg: '#b45309', border: '#fde68a' },
+  { value: 'active',   label: 'Active',   bg: '#f0fdf4', fg: '#166534', border: '#bbf7d0' },
+  { value: 'expired',  label: 'Expired',  bg: '#fef2f2', fg: '#991b1b', border: '#fecaca' },
+  { value: 'closed',   label: 'Closed',   bg: '#f3f4f6', fg: '#374151', border: '#d1d5db' },
+];
+
+// "Expires in 14 days or less" threshold — gives the contractor enough
+// runway to re-pull or extend before a hard expiration kills inspections.
+const PERMIT_EXPIRY_WARN_DAYS = 14;
+
+// Derive a permit's effective status. Auto-flag as expired if the date has
+// passed even though the stored status says active — the contractor may
+// have forgotten to update it. Returns one of: 'pending' | 'active' |
+// 'expiring' | 'expired' | 'closed'.
+function permitEffectiveStatus(p) {
+  if (!p) return 'pending';
+  if (p.status === 'closed') return 'closed';
+  if (p.expirationDate) {
+    const exp = new Date(p.expirationDate + 'T23:59:59');
+    const now = new Date();
+    if (exp < now) return 'expired';
+    const daysLeft = (exp - now) / (1000 * 60 * 60 * 24);
+    if (daysLeft <= PERMIT_EXPIRY_WARN_DAYS && p.status === 'active') return 'expiring';
+  }
+  return p.status || 'pending';
+}
+
+// Stable client-side id so we can map/key permits without a server round-trip.
+// crypto.randomUUID is available everywhere we ship; fallback for older envs.
+const newPermitId = () => {
+  try { return crypto.randomUUID(); }
+  catch { return 'p_' + Math.random().toString(36).slice(2) + Date.now().toString(36); }
+};
+
+function JobPermitsSection({ permits = [], onChange, userId, sLabel, readOnly = false }) {
+  const [adding,   setAdding]   = useState(false);
+  const [editing,  setEditing]  = useState(null); // permit id being edited
+  const [draft,    setDraft]    = useState(null); // form state for add/edit
+
+  const startAdd = () => {
+    setDraft({
+      id:               newPermitId(),
+      number:           '',
+      type:             'Building',
+      issuingAuthority: '',
+      issueDate:        '',
+      expirationDate:   '',
+      status:           'pending',
+      notes:            '',
+      addedBy:          userId || null,
+      addedAt:          new Date().toISOString(),
+    });
+    setEditing(null);
+    setAdding(true);
+  };
+  const startEdit = (p) => {
+    setDraft({ ...p });
+    setAdding(false);
+    setEditing(p.id);
+  };
+  const cancel = () => { setAdding(false); setEditing(null); setDraft(null); };
+
+  const save = () => {
+    if (!draft || !onChange) return;
+    const clean = {
+      ...draft,
+      number:           (draft.number || '').trim(),
+      issuingAuthority: (draft.issuingAuthority || '').trim(),
+      notes:            (draft.notes || '').trim() || null,
+    };
+    // Require at minimum a permit number — everything else is optional so
+    // a contractor can stub one in fast and fill the rest later.
+    if (!clean.number) {
+      alert('Permit number is required.');
+      return;
+    }
+    if (adding) {
+      onChange([...permits, clean]);
+    } else {
+      onChange(permits.map(p => p.id === clean.id ? clean : p));
+    }
+    cancel();
+  };
+
+  const remove = (p) => {
+    if (!onChange) return;
+    if (!window.confirm(`Remove permit "${p.number}"? This cannot be undone.`)) return;
+    onChange(permits.filter(x => x.id !== p.id));
+    if (editing === p.id) cancel();
+  };
+
+  const formatPermitDate = (iso) => {
+    if (!iso) return '—';
+    try {
+      const d = new Date(iso + 'T12:00:00');
+      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    } catch { return iso; }
+  };
+
+  // Field styles — share across the add/edit form.
+  const fieldLabel = { fontSize: 10, fontWeight: 800, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: 4 };
+  const fieldInput = {
+    width: '100%', padding: '10px 12px', minHeight: 40,
+    border: '1.5px solid #e5e7eb', borderRadius: 6,
+    fontSize: 16, // 16px keeps iOS Safari from zooming on focus
+    fontFamily: 'inherit', background: '#fff', boxSizing: 'border-box',
+  };
+
+  const renderForm = () => (
+    <div style={{
+      background: '#fbfdfc', border: `1.5px solid ${COLORS.greenBorder}`,
+      borderRadius: 8, padding: 14, marginBottom: 12,
+    }}>
+      <div style={{ fontSize: 13, fontWeight: 800, color: COLORS.green, marginBottom: 12 }}>
+        {adding ? 'Add permit' : 'Edit permit'}
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+        <label>
+          <span style={fieldLabel}>Permit number *</span>
+          <input
+            type="text"
+            value={draft.number}
+            onChange={e => setDraft(d => ({ ...d, number: e.target.value }))}
+            placeholder="e.g. BLD-2026-01234"
+            style={fieldInput}
+          />
+        </label>
+        <label>
+          <span style={fieldLabel}>Type</span>
+          <select
+            value={draft.type}
+            onChange={e => setDraft(d => ({ ...d, type: e.target.value }))}
+            style={fieldInput}
+          >
+            {PERMIT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+          </select>
+        </label>
+        <label style={{ gridColumn: 'span 2' }}>
+          <span style={fieldLabel}>Issuing authority</span>
+          <input
+            type="text"
+            value={draft.issuingAuthority}
+            onChange={e => setDraft(d => ({ ...d, issuingAuthority: e.target.value }))}
+            placeholder="City of Birmingham Permit Office"
+            style={fieldInput}
+          />
+        </label>
+        <label>
+          <span style={fieldLabel}>Issue date</span>
+          <input
+            type="date"
+            value={draft.issueDate || ''}
+            onChange={e => setDraft(d => ({ ...d, issueDate: e.target.value }))}
+            style={fieldInput}
+          />
+        </label>
+        <label>
+          <span style={fieldLabel}>Expiration date</span>
+          <input
+            type="date"
+            value={draft.expirationDate || ''}
+            onChange={e => setDraft(d => ({ ...d, expirationDate: e.target.value }))}
+            style={fieldInput}
+          />
+        </label>
+        <label style={{ gridColumn: 'span 2' }}>
+          <span style={fieldLabel}>Status</span>
+          <select
+            value={draft.status}
+            onChange={e => setDraft(d => ({ ...d, status: e.target.value }))}
+            style={fieldInput}
+          >
+            {PERMIT_STATUSES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+          </select>
+        </label>
+        <label style={{ gridColumn: 'span 2' }}>
+          <span style={fieldLabel}>Notes</span>
+          <textarea
+            value={draft.notes || ''}
+            onChange={e => setDraft(d => ({ ...d, notes: e.target.value }))}
+            placeholder="Inspector contact, special conditions, etc."
+            rows={2}
+            style={{ ...fieldInput, minHeight: 60, resize: 'vertical' }}
+          />
+        </label>
+      </div>
+      <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
+        <button
+          type="button"
+          onClick={cancel}
+          style={{
+            flex: 1, padding: '10px', border: '1.5px solid #d1d5db', background: '#fff',
+            color: '#6b7280', borderRadius: 6, fontSize: 14, fontWeight: 700, cursor: 'pointer',
+            minHeight: 44, fontFamily: 'inherit',
+          }}
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          onClick={save}
+          style={{
+            flex: 2, padding: '10px', border: 'none', background: COLORS.green,
+            color: '#fff', borderRadius: 6, fontSize: 14, fontWeight: 800, cursor: 'pointer',
+            minHeight: 44, fontFamily: 'inherit',
+          }}
+        >
+          {adding ? 'Add permit' : 'Save changes'}
+        </button>
+      </div>
+    </div>
+  );
+
+  return (
+    <div style={{ padding: '10px 0' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+        <div style={sLabel}>
+          Permits {permits.length > 0 && <span style={{ color: '#666', fontWeight: 600 }}>({permits.length})</span>}
+        </div>
+        {!readOnly && !adding && !editing && (
+          <button
+            type="button"
+            onClick={startAdd}
+            style={{
+              background: COLORS.green, color: '#fff', border: 'none', borderRadius: 6,
+              padding: '6px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer',
+              fontFamily: 'inherit',
+            }}
+          >
+            + Add Permit
+          </button>
+        )}
+      </div>
+
+      {(adding || editing) && draft && renderForm()}
+
+      {permits.length === 0 && !adding ? (
+        <div style={{ fontSize: 13, color: '#999', fontStyle: 'italic' }}>
+          No permits attached yet. Add building / electrical / plumbing
+          permits as you pull them so expirations don't sneak up on you.
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {permits.map(p => {
+            const eff = permitEffectiveStatus(p);
+            const palette = PERMIT_STATUSES.find(s => s.value === eff) || {
+              label: eff === 'expiring' ? 'Expires soon' : (p.status || 'pending'),
+              bg: eff === 'expiring' ? '#fff7ed' : '#f3f4f6',
+              fg: eff === 'expiring' ? '#9a3412' : '#374151',
+              border: eff === 'expiring' ? '#fed7aa' : '#d1d5db',
+            };
+            const isEditingThis = editing === p.id;
+            // Hide row chrome while inline editing this permit (the form
+            // above already shows everything).
+            if (isEditingThis) return null;
+            return (
+              <div
+                key={p.id}
+                style={{
+                  border: `1.5px solid ${eff === 'expired' ? '#fecaca' : eff === 'expiring' ? '#fed7aa' : '#e5e7eb'}`,
+                  borderRadius: 8,
+                  padding: 12,
+                  background: eff === 'expired' ? '#fef2f2' : eff === 'expiring' ? '#fffbeb' : '#fff',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, marginBottom: 6 }}>
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <div style={{ fontSize: 11, fontWeight: 800, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>
+                      {p.type || 'Permit'}
+                    </div>
+                    <div style={{ fontSize: 15, fontWeight: 800, color: '#0f172a', wordBreak: 'break-all' }}>
+                      {p.number}
+                    </div>
+                    {p.issuingAuthority && (
+                      <div style={{ fontSize: 12, color: '#4b5563', marginTop: 2 }}>
+                        {p.issuingAuthority}
+                      </div>
+                    )}
+                  </div>
+                  <span style={{
+                    display: 'inline-block', padding: '4px 10px', borderRadius: 20,
+                    fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em',
+                    background: palette.bg, color: palette.fg,
+                    border: `1px solid ${palette.border}`, whiteSpace: 'nowrap',
+                  }}>
+                    {palette.label}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', gap: 14, fontSize: 12, color: '#475569', flexWrap: 'wrap' }}>
+                  <div>
+                    <span style={{ fontWeight: 700, color: '#6b7280' }}>Issued:</span>{' '}
+                    {formatPermitDate(p.issueDate)}
+                  </div>
+                  <div>
+                    <span style={{ fontWeight: 700, color: '#6b7280' }}>Expires:</span>{' '}
+                    <span style={{
+                      color: eff === 'expired' ? '#991b1b' : eff === 'expiring' ? '#9a3412' : '#475569',
+                      fontWeight: eff === 'expired' || eff === 'expiring' ? 700 : 500,
+                    }}>
+                      {formatPermitDate(p.expirationDate)}
+                    </span>
+                  </div>
+                </div>
+                {p.notes && (
+                  <div style={{ fontSize: 13, color: '#374151', marginTop: 8, lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>
+                    {p.notes}
+                  </div>
+                )}
+                {!readOnly && (
+                  <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+                    <button
+                      type="button"
+                      onClick={() => startEdit(p)}
+                      style={{
+                        padding: '6px 12px', border: '1.5px solid #d1d5db', background: '#fff',
+                        color: '#374151', borderRadius: 6, fontSize: 12, fontWeight: 700,
+                        cursor: 'pointer', fontFamily: 'inherit', minHeight: 36,
+                      }}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => remove(p)}
+                      style={{
+                        padding: '6px 12px', border: '1.5px solid #fecaca', background: '#fff',
+                        color: '#b91c1c', borderRadius: 6, fontSize: 12, fontWeight: 700,
+                        cursor: 'pointer', fontFamily: 'inherit', minHeight: 36,
+                      }}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── JOB DETAIL MODAL ────────────────────────────────────────────────────────
 // Renders the full job sheet — when, where, who, photos, status. Also where
 // the user can reschedule a job inline without dragging it on the calendar
 // (drag-reschedule still works on Schedule, but Jobs/list and phone use cases
 // need a tap-to-edit path). When `onReschedule` is provided, the date/time
 // row exposes a Change button that flips the row into an editor.
-export function JobDetailModal({ job, techs, jobs = [], onClose, onStatusChange, onCreateInvoice, onPhotosChange, onReschedule, userId, isTech = false }) {
+export function JobDetailModal({ job, techs, jobs = [], onClose, onStatusChange, onCreateInvoice, onPhotosChange, onPermitsChange, onReschedule, userId, isTech = false }) {
   useEscapeClose(onClose);
   // Layout breakpoint — desktop gets a 720px modal with a 2-col body so
   // the form doesn't feel claustrophobic when there's plenty of room
@@ -593,6 +963,15 @@ export function JobDetailModal({ job, techs, jobs = [], onClose, onStatusChange,
               </div>
             )}
           </div>
+
+          {/* Permits — multiple permits per job. Techs see read-only; owners can edit. */}
+          <JobPermitsSection
+            permits={Array.isArray(job.permits) ? job.permits : []}
+            onChange={onPermitsChange ? (next) => onPermitsChange(next) : null}
+            userId={userId}
+            sLabel={s.label}
+            readOnly={isTech}
+          />
 
           <div style={{ marginTop: 8 }}>
             <div style={s.label}>Update Status</div>
@@ -1484,6 +1863,29 @@ export default function ScheduleScreen({
     }
   };
 
+  // Persist a new permits array for a job. Same shape as photos — optimistic
+  // local update, then upsertJob, then reconcile to whatever the DB returned.
+  // On failure roll back the modal + list so we don't lie about server state.
+  const handleJobPermitsChange = async (jobId, permits) => {
+    if (!user?.id) return;
+    const target = jobs.find(j => j.id === jobId);
+    if (!target) return;
+    const original   = target;
+    const optimistic = { ...target, permits };
+    setJobs(prev => prev.map(j => j.id === jobId ? optimistic : j));
+    setSelectedJob(prev => prev && prev.id === jobId ? optimistic : prev);
+    try {
+      const saved = await upsertJob(user.id, optimistic);
+      setJobs(prev => prev.map(j => j.id === saved.id ? saved : j));
+      setSelectedJob(prev => prev && prev.id === saved.id ? saved : prev);
+    } catch (e) {
+      console.error('permits save failed', e);
+      alert(e?.message || 'Could not save permits.');
+      setJobs(prev => prev.map(j => j.id === original.id ? original : j));
+      setSelectedJob(prev => prev && prev.id === original.id ? original : prev);
+    }
+  };
+
   // Drag-and-drop reschedule. `dayIso` is yyyy-mm-dd (local), `hour` is 0-23.
   // We update local state optimistically, then persist via upsertJob. If the
   // save fails we roll back so the calendar doesn't lie about server state.
@@ -1901,6 +2303,7 @@ export default function ScheduleScreen({
           isTech={isTech}
           userId={user?.id}
           onPhotosChange={(photos) => handleJobPhotosChange(selectedJob.id, photos)}
+          onPermitsChange={(permits) => handleJobPermitsChange(selectedJob.id, permits)}
           onClose={() => setSelectedJob(null)}
           onStatusChange={handleStatusChange}
           // Inline reschedule from the modal — same engine drag-reschedule uses,

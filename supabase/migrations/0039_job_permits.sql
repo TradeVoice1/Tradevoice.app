@@ -1,0 +1,34 @@
+-- =============================================================================
+-- Tradevoice — job permits
+-- =============================================================================
+-- Many construction jobs need one OR MORE permits before work can begin —
+-- a kitchen remodel might need a Building permit AND an Electrical permit
+-- AND a Plumbing permit, each issued by a different local authority with
+-- its own number, issue date, and expiration date. Letting a permit lapse
+-- mid-job can void inspections and trigger fines, so the system needs to
+-- track them per-job and surface expiration dates the contractor can see
+-- at a glance.
+--
+-- Stored as a JSONB array on the jobs row (same pattern as photos in
+-- migration 0007) — small, denormalized, and avoids a separate table +
+-- RLS policies for what is effectively a child-of-job list.
+--
+-- Each entry shape (mirrored in src/data/jobs.js):
+--   {
+--     id:               uuid string (generated client-side),
+--     number:           string,            -- e.g. "BLD-2026-01234"
+--     type:             string,            -- Building / Electrical / Plumbing / Mechanical / Other
+--     issuingAuthority: string,            -- "City of Birmingham Permit Office"
+--     issueDate:        ISO yyyy-mm-dd | null,
+--     expirationDate:   ISO yyyy-mm-dd | null,
+--     status:           string,            -- pending / active / expired / closed
+--     notes:            string | null,
+--     addedBy:          uuid string,
+--     addedAt:          ISO timestamp
+--   }
+-- =============================================================================
+
+-- Permits array on the job. Default to an empty array so existing rows
+-- don't break older client code that reads job.permits.
+alter table public.jobs
+  add column if not exists permits jsonb not null default '[]'::jsonb;

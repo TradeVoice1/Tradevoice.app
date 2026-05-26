@@ -26,6 +26,10 @@ const dbToJob = (r) => ({
   trade:      r.trade         ?? '',
   notes:      r.notes         ?? '',
   photos:     Array.isArray(r.photos) ? r.photos : [],
+  // Permits attached to this job (migration 0039). A job may carry several
+  // permits — Building + Electrical + Plumbing on the same remodel — so
+  // we keep them as a denormalized JSONB array on the row.
+  permits:    Array.isArray(r.permits) ? r.permits : [],
 });
 
 const jobToDb = (j) => ({
@@ -45,6 +49,10 @@ const jobToDb = (j) => ({
   trade:         j.trade      ?? null,
   notes:         j.notes      ?? null,
   photos:        Array.isArray(j.photos) ? j.photos : [],
+  // Permits array (migration 0039). Always send an array — even when empty —
+  // so a "remove last permit" save persists the empty list instead of
+  // letting the DB column keep its previous non-empty value.
+  permits:       Array.isArray(j.permits) ? j.permits : [],
 });
 
 export async function listJobs() {

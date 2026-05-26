@@ -106,6 +106,41 @@ function renderPhotosBadge({ photos, C, large = false }) {
   );
 }
 
+// Permits badge — surfaces "3 permits", or escalates to red "Expired" /
+// amber "Expires soon" when any attached permit is past or within 14 days
+// of its expiration. Lets the contractor spot the lapsed-permit problem
+// from the jobs list without opening the job.
+function renderPermitsBadge({ permits, C, large = false }) {
+  if (!Array.isArray(permits) || permits.length === 0) return null;
+  const now = new Date();
+  let worst = 'ok'; // ok | expiring | expired
+  for (const p of permits) {
+    if (p.status === 'closed') continue;
+    if (!p.expirationDate) continue;
+    const exp = new Date(p.expirationDate + 'T23:59:59');
+    if (exp < now) { worst = 'expired'; break; }
+    const daysLeft = (exp - now) / (1000 * 60 * 60 * 24);
+    if (daysLeft <= 14 && worst !== 'expired') worst = 'expiring';
+  }
+  const tone =
+    worst === 'expired'  ? { bg: '#fef2f2', fg: '#991b1b', border: '#fecaca', text: `${permits.length} permit${permits.length === 1 ? '' : 's'} · Expired` } :
+    worst === 'expiring' ? { bg: '#fffbeb', fg: '#9a3412', border: '#fed7aa', text: `${permits.length} permit${permits.length === 1 ? '' : 's'} · Expires soon` } :
+                           { bg: '#eef7f2', fg: '#2d6a4f', border: '#2d6a4f33', text: `${permits.length} permit${permits.length === 1 ? '' : 's'}` };
+  return (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+      fontSize: 12, fontWeight: 700,
+      padding: large ? '10px 12px' : '7px 10px',
+      minHeight: large ? 44 : 36,
+      borderRadius: 6,
+      background: tone.bg, color: tone.fg, border: `1px solid ${tone.border}`,
+      whiteSpace: 'nowrap',
+    }}>
+      {tone.text}
+    </span>
+  );
+}
+
 function renderStatusPill({ sc, large = false }) {
   return (
     <span style={{
@@ -283,6 +318,27 @@ export default function JobsScreen({ user, team = [], onCreateInvoice }) {
     catch (e) { console.error('JobsScreen photos save failed', e); }
   };
 
+  // Permits — same optimistic-then-persist pattern as photos. Rollback on
+  // failure so the modal and list don't drift from the server.
+  const handlePermitsChange = async (jobId, permits) => {
+    const target = jobs.find(j => j.id === jobId);
+    if (!target || !user?.id) return;
+    const original = target;
+    const updated  = { ...target, permits };
+    setJobs(prev => prev.map(j => j.id === jobId ? updated : j));
+    setSelectedJob(prev => prev && prev.id === jobId ? updated : prev);
+    try {
+      const saved = await upsertJob(user.id, updated);
+      setJobs(prev => prev.map(j => j.id === saved.id ? saved : j));
+      setSelectedJob(prev => prev && prev.id === saved.id ? saved : prev);
+    } catch (e) {
+      console.error('JobsScreen permits save failed', e);
+      alert(e?.message || 'Could not save permits.');
+      setJobs(prev => prev.map(j => j.id === original.id ? original : j));
+      setSelectedJob(prev => prev && prev.id === original.id ? original : prev);
+    }
+  };
+
   // Reschedule a job from inside the JobDetailModal. Optimistic update,
   // rollback on save failure (mirrors ScheduleScreen.handleReschedule but
   // without the calendar-specific drag/drop and time-off prompts — Jobs is
@@ -344,7 +400,8 @@ export default function JobsScreen({ user, team = [], onCreateInvoice }) {
   const Row = ({ job }) => {
     const tech = techs.find(t => t.id === job.techUserId);
     const sc = STATUS_PALETTE[job.status] || STATUS_PALETTE.scheduled;
-    const photos = Array.isArray(job.photos) ? job.photos : [];
+    const photos  = Array.isArray(job.photos)  ? job.photos  : [];
+    const permits = Array.isArray(job.permits) ? job.permits : [];
     const date = new Date(job.date);
 
     return (
@@ -362,7 +419,9 @@ export default function JobsScreen({ user, team = [], onCreateInvoice }) {
           display: 'grid',
           gridTemplateColumns: isTablet
             ? 'auto 1fr'
-            : 'auto 1fr auto auto auto',
+            // tech | permits | photos | status — the permits column is `auto`
+            // so it collapses to 0 width when the badge wrapper is display:none.
+            : 'auto 1fr auto auto auto auto',
           gap: 14, alignItems: 'center',
         }}>
           {/* Date + time micro-block */}
@@ -389,8 +448,16 @@ export default function JobsScreen({ user, team = [], onCreateInvoice }) {
             </div>
           </div>
 
-          {/* Laptop-only inline actions (tablet renders these below in a separate row) */}
+          {/* Laptop-only inline actions (tablet renders these below in a separate row).
+              Permits badge only renders when the job actually has permits attached —
+              the conditional means the column collapses to 0 width and an extra 14px
+              gap is hidden by `display:none` on the wrapper. */}
           {!isTablet && renderTechSelector({ job, tech, isTech, techs, handleTechChange, C })}
+          {!isTablet && (
+            <div style={{ display: permits.length > 0 ? 'inline-flex' : 'none' }}>
+              {renderPermitsBadge({ permits, C })}
+            </div>
+          )}
           {!isTablet && renderPhotosBadge({ photos, C })}
           {!isTablet && renderStatusPill({ sc })}
         </div>
@@ -405,6 +472,7 @@ export default function JobsScreen({ user, team = [], onCreateInvoice }) {
             <div style={{ flex: '1 1 180px', minWidth: 160 }}>
               {renderTechSelector({ job, tech, isTech, techs, handleTechChange, C, fullWidth: true })}
             </div>
+            {permits.length > 0 && renderPermitsBadge({ permits, C, large: true })}
             {renderPhotosBadge({ photos, C, large: true })}
             {renderStatusPill({ sc, large: true })}
           </div>
@@ -528,6 +596,7 @@ export default function JobsScreen({ user, team = [], onCreateInvoice }) {
           isTech={isTech}
           userId={user?.id}
           onPhotosChange={(photos) => handlePhotosChange(selectedJob.id, photos)}
+          onPermitsChange={(permits) => handlePermitsChange(selectedJob.id, permits)}
           onClose={() => setSelectedJob(null)}
           onStatusChange={handleStatusChange}
           onCreateInvoice={handleCreateInvoiceFromJob}
