@@ -177,8 +177,14 @@ export function PrivacyPolicyScreen({ onBack }) {
         <p style={s.p}>We may update this Privacy Policy from time to time. For material changes that affect your rights, we will notify you by email or by a prominent notice in the platform at least 14 days before the change takes effect. The "Last updated" date at the top of this policy reflects the date of the most recent revision.</p>
 
         <div style={s.contact}>
-          <div style={{ fontSize: 16, fontWeight: 700, color: '#2d6a4f', marginBottom: 4 }}>Questions about your privacy?</div>
-          <div style={{ fontSize: 16, color: '#444' }}>Contact us at <strong>privacy@thetradevoice.com</strong> — Tiny's Apps LLC · thetradevoice.com</div>
+          <div style={{ fontSize: 16, fontWeight: 700, color: '#2d6a4f', marginBottom: 8 }}>How to reach us</div>
+          <div style={{ fontSize: 15, color: '#444', lineHeight: 1.8 }}>
+            <div><strong>privacy@thetradevoice.com</strong> — privacy-rights requests, data exports, deletion under CCPA / state laws (primary contact for anything in this policy)</div>
+            <div><strong>support@thetradevoice.com</strong> — general product questions or account help</div>
+            <div><strong>legal@thetradevoice.com</strong> — formal legal notices, DMCA, disputes</div>
+            <div><strong>security@thetradevoice.com</strong> — vulnerability reports, coordinated security disclosures</div>
+            <div style={{ marginTop: 10, color: '#666', fontSize: 14 }}>Tiny's Apps LLC · thetradevoice.com</div>
+          </div>
         </div>
       </div>
     </div>
@@ -278,6 +284,7 @@ export function TermsScreen({ onBack }) {
         <p style={s.p}><strong>Auto-renewal disclosure:</strong> Subscriptions automatically renew at the end of each billing period (monthly or yearly) until you cancel. Monthly subscriptions renew every month; yearly subscriptions renew every year. You authorize us to charge your saved payment method for each renewal. You may cancel at any time from Settings → Billing. Cancellation takes effect at the end of the current billing period and you retain access through that period.</p>
         <p style={s.p}><strong>All payments are final and non-refundable.</strong> When the final paid period ends, your account access is locked and your Content is retained per the Privacy Policy retention schedule in case you choose to resubscribe. To regain access, you must start a new subscription. Tech seats added above any plan-included allowance are billed pro-rata when added; they are non-refundable for the remainder of the current period.</p>
         <p style={s.p}>We reserve the right to change pricing at any time. Price changes for existing subscriptions take effect at the next billing cycle following at least 30 days written notice to you.</p>
+        <p style={s.p}><strong>Billing questions, invoice disputes, or payment-method changes:</strong> email <strong>billing@thetradevoice.com</strong>. For account-cancellation requests where the in-app Settings → Billing flow isn't working, billing@ is also the right address.</p>
 
         <div style={s.h2}>6. Payment Processing</div>
         <p style={s.p}>TradeVoice uses Stripe Connect to process payments from your Customers and to handle your subscription billing with us. By enabling payment collection you agree to be bound by Stripe's Connected Account Agreement and Services Agreement, which are incorporated by reference. You acknowledge that the relationship for Customer payments is between you, your Customer, and Stripe — TradeVoice is not a party to that payment relationship.</p>
@@ -350,7 +357,7 @@ export function TermsScreen({ onBack }) {
         <p style={s.p}>TradeVoice does not currently provide a contractual service-level agreement (SLA). Such commitments may be offered in future plans, in which case they will be set forth in a separate addendum.</p>
 
         <div style={s.h2}>14. Termination</div>
-        <p style={s.p}><strong>By you:</strong> You may terminate your account at any time from Settings → Billing or by emailing legal@thetradevoice.com. Termination takes effect at the end of your current billing period.</p>
+        <p style={s.p}><strong>By you:</strong> You may terminate your account at any time from Settings → Billing, by emailing <strong>billing@thetradevoice.com</strong> (for routine cancellations), or by emailing <strong>legal@thetradevoice.com</strong> (for dispute-related terminations or when you need a formal records-retention confirmation). Termination takes effect at the end of your current billing period.</p>
         <p style={s.p}><strong>By us:</strong> We may suspend or terminate your account, with or without prior notice, if:</p>
         <ul style={s.ul}>
           <li style={s.li}>You fail to pay subscription fees by the due date.</li>
@@ -417,8 +424,15 @@ export function TermsScreen({ onBack }) {
         </ul>
 
         <div style={s.contact}>
-          <div style={{ fontSize: 16, fontWeight: 700, color: '#2d6a4f', marginBottom: 4 }}>Questions?</div>
-          <div style={{ fontSize: 16, color: '#444' }}>Contact us at <strong>legal@thetradevoice.com</strong> — Tiny's Apps LLC · thetradevoice.com</div>
+          <div style={{ fontSize: 16, fontWeight: 700, color: '#2d6a4f', marginBottom: 8 }}>How to reach us</div>
+          <div style={{ fontSize: 15, color: '#444', lineHeight: 1.8 }}>
+            <div><strong>support@thetradevoice.com</strong> — general product help, bugs, feature questions</div>
+            <div><strong>billing@thetradevoice.com</strong> — subscription billing, payment-method changes, routine cancellations</div>
+            <div><strong>privacy@thetradevoice.com</strong> — privacy-rights requests, data exports, deletion under CCPA / state laws</div>
+            <div><strong>legal@thetradevoice.com</strong> — DMCA notices, disputes, arbitration opt-out, formal legal notices</div>
+            <div><strong>security@thetradevoice.com</strong> — vulnerability reports, coordinated security disclosures</div>
+            <div style={{ marginTop: 10, color: '#666', fontSize: 14 }}>Tiny's Apps LLC · thetradevoice.com</div>
+          </div>
         </div>
       </div>
     </div>
