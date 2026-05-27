@@ -2157,7 +2157,7 @@
   <div class="container">
     <span class="section-tag">Got questions?</span>
     <h2>Frequently asked</h2>
-    <p class="sub">If it's not here, email us at <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="bfd7dad3d3d0ffcbd7dacbcddedbdac9d0d6dcda91dcd0d2">[email&#160;protected]</a></p>
+    <p class="sub">If it's not here, email us at <a href="mailto:support@thetradevoice.com" style="color:var(--green);font-weight:600;text-decoration:underline">support@thetradevoice.com</a></p>
     <div class="faq-list">
       <div class="faq-item"><button class="faq-q" onclick="toggleFAQ(this)">Does it work without internet on a job site? <span class="faq-arrow">+</span></button><div class="faq-a"><p>Offline mode is on our roadmap and coming soon. For now you need a data connection — most job sites have cell signal. We recommend building quotes before you lose signal.</p></div></div>
       <div class="faq-item"><button class="faq-q" onclick="toggleFAQ(this)">Can my client pay by card? <span class="faq-arrow">+</span></button><div class="faq-a"><p>Yes. Stripe is built in. Your client gets a payment link on their invoice and pays by card, Apple Pay, or Google Pay. You keep 100% of the invoice amount — the 2.9% + $0.30 Stripe fee plus a 1% Tradevoice fee is added to the client's total and shown clearly on the invoice before they pay.</p></div></div>
@@ -2415,7 +2415,13 @@
   </div>
 </footer>
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+<!-- Cloudflare email-decode script removed: it only exists when the site
+     is served through Cloudflare's CDN, and we're served via Vercel.
+     The script reference here was 404ing on every page load AND keeping
+     the FAQ contact email permanently rendered as "[email protected]"
+     because the obfuscation never decoded. All emails on the page are
+     now plain mailto: links, so the decoder isn't needed at all. -->
+<script>
   // Trade selector
   function selectTrade(trade, btn) {
     document.querySelectorAll('.trade-tab').forEach(t => t.classList.remove('active'));
