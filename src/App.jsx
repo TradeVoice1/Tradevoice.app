@@ -31,6 +31,10 @@ const PrivacyPolicyScreen  = lazy(() => import("./LegalScreens").then(m => ({ de
 const TermsScreen          = lazy(() => import("./LegalScreens").then(m => ({ default: m.TermsScreen })));
 import { signIn, signUp, signOut, getProfile, upsertProfile, getSessionUser, onAuthChange, techSignIn, techChangePassword, signInWithGoogle } from "./data/auth";
 import { isUnlockValid } from "./data/superOwnerTotp";
+// Shared hang-safe promise wrapper — see src/lib/withTimeout.js for the
+// pattern. Use it on any await that goes to Supabase (auth, REST, RPC)
+// so a stalled fetch can't wedge the UI on "Saving…" / "Signing in…".
+import { withTimeout } from "./lib/withTimeout";
 import { listClients, addClient as apiAddClient, updateClient as apiUpdateClient, deleteClient as apiDeleteClient } from "./data/clients";
 import { listInvoices, upsertInvoice as apiUpsertInvoice, deleteInvoice as apiDeleteInvoice } from "./data/invoices";
 import { listQuotes,   upsertQuote   as apiUpsertQuote,   deleteQuote   as apiDeleteQuote   } from "./data/quotes";
@@ -519,28 +523,36 @@ function LoginScreen({ onLogin, onSignup, onForgot }) {
   };
 
   const handleLogin = async () => {
+    // Hang-safe: wrap signIn + getProfile in withTimeout so neither call can
+    // wedge the "Signing in…" button forever. Also fixes a separate latent
+    // bug where setLoading(false) was only called in the catch block — on
+    // the success path the parent onLogin handler is expected to navigate
+    // away, but if the navigation itself stalled the button was stuck.
+    // The finally now always releases the button.
     if (mode === 'owner') {
       if (!email.trim() || !password.trim()) { setError('Please enter your email and password.'); return; }
       setLoading(true); setError('');
       try {
-        const authUser = await signIn(email.trim(), password);
-        const profile  = await getProfile(authUser.id, authUser.email);
+        const authUser = await withTimeout(signIn(email.trim(), password), { label: 'auth.signIn' });
+        const profile  = await withTimeout(getProfile(authUser.id, authUser.email), { label: 'auth.getProfile' });
         onLogin(profile ?? { id: authUser.id, email: authUser.email, role: 'owner', trades: [], states: [] });
       } catch (e) {
         setError(e?.message || 'Could not sign in. Check your email and password.');
+      } finally {
         setLoading(false);
       }
     } else {
       if (!techId.trim() || !password.trim()) { setError('Please enter your Tech ID and password.'); return; }
       setLoading(true); setError('');
       try {
-        const authUser = await techSignIn(techId.trim(), password);
-        const profile  = await getProfile(authUser.id, authUser.email);
+        const authUser = await withTimeout(techSignIn(techId.trim(), password), { label: 'auth.techSignIn' });
+        const profile  = await withTimeout(getProfile(authUser.id, authUser.email), { label: 'auth.getProfile' });
         // Tech profile should already have role='tech' from createTechAccount;
         // fall back to 'tech' explicitly if the profile patch missed.
         onLogin(profile ? { ...profile, role: profile.role || 'tech' } : { id: authUser.id, email: authUser.email, role: 'tech', trades: [], states: [] });
       } catch (e) {
         setError(e?.message || 'Could not sign in. Check your Tech ID and password.');
+      } finally {
         setLoading(false);
       }
     }
