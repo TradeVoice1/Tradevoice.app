@@ -498,22 +498,28 @@
   .showcase-tab-num { font-family: 'Playfair Display', serif; font-weight: 900; font-size: 16px; opacity: 0.7; }
   .showcase-tab.active .showcase-tab-num { opacity: 1; }
 
-  /* Stage with arrows */
+  /* Stage with arrows.
+     Was white-tint-on-dark-green which made the chevron nearly invisible
+     against the showcase background — the user couldn't see they could
+     navigate the carousel. Switched to a solid white circle with a
+     dark-green chevron + soft shadow so it reads clearly against any
+     part of the gradient. */
   .showcase-stage { position: relative; max-width: 920px; margin: 0 auto; }
   .showcase-arrow {
     position: absolute; top: 50%; transform: translateY(-50%);
-    width: 44px; height: 44px; border-radius: 50%;
-    background: rgba(255,255,255,0.1);
-    border: 1.5px solid rgba(255,255,255,0.25);
-    color: #fff;
-    font-size: 24px; font-weight: 700; line-height: 1;
+    width: 48px; height: 48px; border-radius: 50%;
+    background: #ffffff;
+    border: 2px solid var(--green-dark);
+    color: var(--green-dark);
+    font-size: 28px; font-weight: 800; line-height: 1;
     cursor: pointer;
     display: flex; align-items: center; justify-content: center;
     transition: all 0.2s;
     z-index: 5;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
     -webkit-tap-highlight-color: transparent;
   }
-  .showcase-arrow:hover { background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.5); }
+  .showcase-arrow:hover { background: var(--green-dark); color: #fff; transform: translateY(-50%) scale(1.05); }
   .showcase-arrow.prev { left: -22px; }
   .showcase-arrow.next { right: -22px; }
 
