@@ -2035,8 +2035,17 @@
       </div>
       <div>
         <div class="pp-num">100<span style="font-size:0.55em;color:var(--muted);">%</span></div>
-        <div class="pp-lbl">Of every invoice · to you</div>
+        <div class="pp-lbl">Of your invoice total · fees ride with the client*</div>
       </div>
+    </div>
+    <!-- Honest carve-out for the "100%" stat. Bare "100% of every invoice
+         to you" is misleading on its own — card/ACH transactions still
+         carry Stripe + Tradevoice processing fees. The mechanic is fee
+         pass-through (default ON, toggleable per invoice). This footnote
+         spells out the actual flow so prospects don't feel bait-and-
+         switched at checkout configuration. -->
+    <div style="margin-top:24px;max-width:780px;margin-left:auto;margin-right:auto;font-size:13px;color:var(--muted);line-height:1.6;text-align:center;padding:14px 20px;background:rgba(255,255,255,0.6);border:1px solid var(--border);border-radius:10px;">
+      *<strong style="color:var(--text);">How "100%" actually works:</strong> when a client pays by card or ACH, the transaction carries a 2.9% + $0.30 Stripe fee and a 1% Tradevoice platform fee. By default these are added to the client's invoice total so you receive the full amount you billed. You can choose to absorb the fees yourself on any individual invoice. Zelle, Venmo, Cash App, check, and cash carry no fees in either direction.
     </div>
   </div>
 </section>
@@ -2449,21 +2458,19 @@
     isAnnual = !isAnnual;
     const btn = document.getElementById('toggle-btn');
     btn.classList.toggle('monthly', !isAnnual);
-    // Hardcoded display strings for each cadence so we don't depend on
-    // runtime math + rounding (the old Math.round(monthly * 0.75) +
-    // hardcoded ".99" suffix overstated every annual price by $0.50-$1.00
-    // because the true cents don't all land at .99 when you divide an
-    // annual total by 12). These display values track the Stripe Prices:
-    //   Solo  $719.99/yr  ÷ 12 = $59.999/mo  → display $59.99/mo
-    //   Pro   $1,124.99/yr ÷ 12 = $93.749/mo → display $93.74/mo
-    //   Elite $2,249.99/yr ÷ 12 = $187.499/mo → display $187.49/mo
-    // When you change pricing, update BOTH the monthly + annual blocks
-    // here AND the matching values in src/App.jsx PLANS_SU / PLANS.
+    // Pricing display values — hardcoded per cadence to avoid runtime
+    // rounding bugs. Annual mode shows the actual yearly TOTAL (cleaner
+    // and more honest than computing an "effective monthly" rate that
+    // doesn't land on .99 cents). The "Save 25%" badge on the Annual
+    // toggle label tells the customer the discount, so we don't repeat
+    // it per card. Values must match Stripe + src/App.jsx PLANS_SU.
+    //   Monthly:  Solo $79.99/mo  · Pro $124.99/mo  · Elite $249.99/mo
+    //   Yearly:   Solo $719.99/yr · Pro $1,124.99/yr · Elite $2,249.99/yr
     const display = isAnnual
       ? {
-          solo: '$59<span>.99/mo billed annually</span>',
-          pro:  '$93<span>.74/mo billed annually</span>',
-          all:  '$187<span>.49/mo billed annually</span>',
+          solo: '$719<span>.99/yr</span>',
+          pro:  '$1,124<span>.99/yr</span>',
+          all:  '$2,249<span>.99/yr</span>',
         }
       : {
           solo: '$79<span>.99/mo</span>',
