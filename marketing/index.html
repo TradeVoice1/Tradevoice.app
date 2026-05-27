@@ -1819,7 +1819,7 @@
       </thead>
       <tbody>
         <!-- Pricing -->
-        <tr><td>Starting price / mo</td><td class="tv-col"><strong>$49.99</strong></td><td>$69</td><td>$79</td><td>$9.99</td></tr>
+        <tr><td>Starting price / mo</td><td class="tv-col"><strong>$79.99</strong></td><td>$69</td><td>$79</td><td>$9.99</td></tr>
 
         <!-- Quotes / Invoicing differentiators -->
         <tr><td>Trade-specific quote sheets (56+ trades)</td><td class="tv-col"><span class="check-y">✓</span></td><td><span class="check-n">—</span></td><td><span class="check-n">—</span></td><td><span class="check-n">—</span></td></tr>
@@ -2055,7 +2055,7 @@
     <div class="pricing-grid">
       <div class="plan-card">
         <div class="plan-name">Solo</div>
-        <div class="plan-price" id="solo-price">$49<span>.99/mo</span></div>
+        <div class="plan-price" id="solo-price">$79<span>.99/mo</span></div>
         <div class="plan-trades">1 trade — perfect for specialists</div>
         <ul class="plan-features">
           <li>Unlimited quotes & invoices</li>
@@ -2070,7 +2070,7 @@
       <div class="plan-card popular">
         <div class="popular-badge">Most Popular</div>
         <div class="plan-name">Pro</div>
-        <div class="plan-price" id="pro-price">$99<span>.99/mo</span></div>
+        <div class="plan-price" id="pro-price">$124<span>.99/mo</span></div>
         <div class="plan-trades">Up to 3 trades — for growing contractors</div>
         <ul class="plan-features">
           <li>Everything in Solo</li>
@@ -2084,7 +2084,7 @@
       </div>
       <div class="plan-card">
         <div class="plan-name">Elite</div>
-        <div class="plan-price" id="all-price">$199<span>.99/mo</span></div>
+        <div class="plan-price" id="all-price">$249<span>.99/mo</span></div>
         <div class="plan-trades">All 56+ trades — for full-service contractors</div>
         <ul class="plan-features">
           <li>Everything in Pro</li>
@@ -2146,7 +2146,7 @@
     <div class="faq-list">
       <div class="faq-item"><button class="faq-q" onclick="toggleFAQ(this)">Does it work without internet on a job site? <span class="faq-arrow">+</span></button><div class="faq-a"><p>Offline mode is on our roadmap and coming soon. For now you need a data connection — most job sites have cell signal. We recommend building quotes before you lose signal.</p></div></div>
       <div class="faq-item"><button class="faq-q" onclick="toggleFAQ(this)">Can my client pay by card? <span class="faq-arrow">+</span></button><div class="faq-a"><p>Yes. Stripe is built in. Your client gets a payment link on their invoice and pays by card, Apple Pay, or Google Pay. You keep 100% of the invoice amount — the 2.9% + $0.30 Stripe fee plus a 1% Tradevoice fee is added to the client's total and shown clearly on the invoice before they pay.</p></div></div>
-      <div class="faq-item"><button class="faq-q" onclick="toggleFAQ(this)">Is there a contract or long-term commitment? <span class="faq-arrow">+</span></button><div class="faq-a"><p>No contract. Month-to-month on all plans. Cancel any time from your account settings. Annual plans are billed upfront and save 20%, but are non-refundable after 30 days.</p></div></div>
+      <div class="faq-item"><button class="faq-q" onclick="toggleFAQ(this)">Is there a contract or long-term commitment? <span class="faq-arrow">+</span></button><div class="faq-a"><p>No contract. Month-to-month on all plans. Cancel any time from your account settings. Annual plans are billed upfront and save 25% (essentially 3 months free), but are non-refundable after 30 days.</p></div></div>
       <div class="faq-item"><button class="faq-q" onclick="toggleFAQ(this)">Do you store my clients' payment info? <span class="faq-arrow">+</span></button><div class="faq-a"><p>No. All payment processing goes through Stripe, which is PCI-DSS Level 1 certified. Tradevoice never sees or stores your clients' card numbers.</p></div></div>
       <div class="faq-item"><button class="faq-q" onclick="toggleFAQ(this)">How do the tax rates work? <span class="faq-arrow">+</span></button><div class="faq-a"><p>Tradevoice ships with default state-level sales-tax rates for all 50 states plus contractor-labor rules for the states where labor is taxable (Texas, Kansas, Mississippi, etc.). The defaults are refreshed weekly from each state's official tax-authority page. You can override any rate in Settings → Tax Rates. Final tax responsibility is always yours — see our Terms of Service.</p></div></div>
       <div class="faq-item"><button class="faq-q" onclick="toggleFAQ(this)">Can I use my own company logo? <span class="faq-arrow">+</span></button><div class="faq-a"><p>Yes. Upload your logo in Settings → Profile and it appears on every quote and invoice your clients receive. You can also choose your own accent color to match your brand.</p></div></div>
@@ -2449,8 +2449,11 @@
     isAnnual = !isAnnual;
     const btn = document.getElementById('toggle-btn');
     btn.classList.toggle('monthly', !isAnnual);
-    const mult = isAnnual ? 0.8 : 1;
-    const prices = { solo: 49.99, pro: 99.99, all: 199.99 };
+    // 0.75 = 25% off when annual (≈ 3 months free). Beats every major
+    // competitor's 20% standard. Keep the multiplier and the prices map
+    // in sync with PLANS_SU in src/App.jsx (the in-app signup screen).
+    const mult = isAnnual ? 0.75 : 1;
+    const prices = { solo: 79.99, pro: 124.99, all: 249.99 };
     document.getElementById('solo-price').innerHTML = `$${Math.round(prices.solo * mult)}<span>.${isAnnual ? '99' : '99'}/mo${isAnnual ? ' billed annually' : ''}</span>`;
     document.getElementById('pro-price').innerHTML  = `$${Math.round(prices.pro  * mult)}<span>.${isAnnual ? '99' : '99'}/mo${isAnnual ? ' billed annually' : ''}</span>`;
     document.getElementById('all-price').innerHTML  = `$${Math.round(prices.all  * mult)}<span>.${isAnnual ? '99' : '99'}/mo${isAnnual ? ' billed annually' : ''}</span>`;

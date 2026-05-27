@@ -269,14 +269,14 @@ export function TermsScreen({ onBack }) {
             <tr>
               <th style={s.th}>Plan</th>
               <th style={s.th}>Monthly</th>
-              <th style={s.th}>Yearly (save 20%)</th>
+              <th style={s.th}>Yearly (save 25% — 3 months free)</th>
               <th style={s.th}>Scope</th>
             </tr>
           </thead>
           <tbody>
-            <tr><td style={s.td}>Solo</td><td style={s.td}>$49.99/mo</td><td style={s.td}>$479.99/yr</td><td style={s.td}>1 trade</td></tr>
-            <tr><td style={s.td}>Pro</td><td style={s.td}>$99.99/mo</td><td style={s.td}>$959.99/yr</td><td style={s.td}>Up to 3 trades + 1 tech seat</td></tr>
-            <tr><td style={s.td}>Elite</td><td style={s.td}>$199.99/mo</td><td style={s.td}>$1,919.99/yr</td><td style={s.td}>All 56+ trades + 2 tech seats included</td></tr>
+            <tr><td style={s.td}>Solo</td><td style={s.td}>$79.99/mo</td><td style={s.td}>$719.99/yr</td><td style={s.td}>1 trade</td></tr>
+            <tr><td style={s.td}>Pro</td><td style={s.td}>$124.99/mo</td><td style={s.td}>$1,124.99/yr</td><td style={s.td}>Up to 3 trades + 1 tech seat</td></tr>
+            <tr><td style={s.td}>Elite</td><td style={s.td}>$249.99/mo</td><td style={s.td}>$2,249.99/yr</td><td style={s.td}>All 56+ trades + 2 tech seats included</td></tr>
             <tr><td style={s.td}>Additional Technician</td><td style={s.td}>$19.99/mo per seat</td><td style={s.td}>—</td><td style={s.td}>Per additional user beyond plan-included seats</td></tr>
           </tbody>
         </table>
