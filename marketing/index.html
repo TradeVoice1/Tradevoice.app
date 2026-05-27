@@ -2050,7 +2050,7 @@
     <div class="billing-toggle" id="billing-toggle">
       <span style="color:var(--muted)">Monthly</span>
       <div class="toggle-switch" onclick="toggleBilling()" id="toggle-btn"></div>
-      <span style="color:var(--green-dark);font-weight:600">Annual <span class="save-badge">Save 20%</span></span>
+      <span style="color:var(--green-dark);font-weight:600">Annual <span class="save-badge">Save 25%</span></span>
     </div>
     <div class="pricing-grid">
       <div class="plan-card">
@@ -2449,14 +2449,30 @@
     isAnnual = !isAnnual;
     const btn = document.getElementById('toggle-btn');
     btn.classList.toggle('monthly', !isAnnual);
-    // 0.75 = 25% off when annual (≈ 3 months free). Beats every major
-    // competitor's 20% standard. Keep the multiplier and the prices map
-    // in sync with PLANS_SU in src/App.jsx (the in-app signup screen).
-    const mult = isAnnual ? 0.75 : 1;
-    const prices = { solo: 79.99, pro: 124.99, all: 249.99 };
-    document.getElementById('solo-price').innerHTML = `$${Math.round(prices.solo * mult)}<span>.${isAnnual ? '99' : '99'}/mo${isAnnual ? ' billed annually' : ''}</span>`;
-    document.getElementById('pro-price').innerHTML  = `$${Math.round(prices.pro  * mult)}<span>.${isAnnual ? '99' : '99'}/mo${isAnnual ? ' billed annually' : ''}</span>`;
-    document.getElementById('all-price').innerHTML  = `$${Math.round(prices.all  * mult)}<span>.${isAnnual ? '99' : '99'}/mo${isAnnual ? ' billed annually' : ''}</span>`;
+    // Hardcoded display strings for each cadence so we don't depend on
+    // runtime math + rounding (the old Math.round(monthly * 0.75) +
+    // hardcoded ".99" suffix overstated every annual price by $0.50-$1.00
+    // because the true cents don't all land at .99 when you divide an
+    // annual total by 12). These display values track the Stripe Prices:
+    //   Solo  $719.99/yr  ÷ 12 = $59.999/mo  → display $59.99/mo
+    //   Pro   $1,124.99/yr ÷ 12 = $93.749/mo → display $93.74/mo
+    //   Elite $2,249.99/yr ÷ 12 = $187.499/mo → display $187.49/mo
+    // When you change pricing, update BOTH the monthly + annual blocks
+    // here AND the matching values in src/App.jsx PLANS_SU / PLANS.
+    const display = isAnnual
+      ? {
+          solo: '$59<span>.99/mo billed annually</span>',
+          pro:  '$93<span>.74/mo billed annually</span>',
+          all:  '$187<span>.49/mo billed annually</span>',
+        }
+      : {
+          solo: '$79<span>.99/mo</span>',
+          pro:  '$124<span>.99/mo</span>',
+          all:  '$249<span>.99/mo</span>',
+        };
+    document.getElementById('solo-price').innerHTML = display.solo;
+    document.getElementById('pro-price').innerHTML  = display.pro;
+    document.getElementById('all-price').innerHTML  = display.all;
   }
 
   // ROI Calculator
