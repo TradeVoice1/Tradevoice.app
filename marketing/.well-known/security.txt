@@ -1,0 +1,21 @@
+# Tradevoice — security disclosure policy
+# RFC 9116 — https://www.rfc-editor.org/rfc/rfc9116
+#
+# If you've found a security issue with Tradevoice — the marketing site
+# (thetradevoice.com), the app (app.thetradevoice.com), or our public
+# APIs — we want to hear from you. Please send a private email to the
+# Contact address below before disclosing publicly. We'll acknowledge
+# your report within 72 hours and work with you on a coordinated
+# disclosure timeline.
+
+Contact: mailto:security@thetradevoice.com
+Expires: 2027-12-31T23:59:59.000Z
+Preferred-Languages: en
+Canonical: https://thetradevoice.com/.well-known/security.txt
+Policy: https://app.thetradevoice.com/legal/terms
+
+# We don't currently offer a paid bug-bounty program, but we will
+# publicly credit researchers who report valid vulnerabilities through
+# responsible disclosure (with your permission). Please don't access
+# customer data beyond the minimum necessary to demonstrate the issue,
+# and don't disrupt production service while investigating.

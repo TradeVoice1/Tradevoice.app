@@ -1,0 +1,53 @@
+# Dependabot — automated dependency security updates
+# https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+#
+# This config tells Dependabot to scan our package.json + lockfile every
+# week, open a PR whenever a dependency releases a security fix or a
+# version bump, and group routine version bumps so the PR queue doesn't
+# get noisy. Major-version bumps stay separate so they can be reviewed
+# individually (they're usually breaking).
+#
+# Why grouped: dozens of minor `@vercel/*` / `@supabase/*` bumps per
+# week is signal-to-noise hell. One grouped weekly PR per ecosystem
+# keeps the queue manageable while still catching real CVEs fast
+# (security advisories ALWAYS open their own PR, regardless of group
+# settings — that's a Dependabot guarantee).
+
+version: 2
+updates:
+  # npm dependencies (the main app)
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "America/Chicago"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+    groups:
+      # Group routine minor + patch bumps into one PR per ecosystem.
+      # Security PRs always come through individually (Dependabot rule).
+      minor-and-patch:
+        applies-to: version-updates
+        update-types:
+          - "minor"
+          - "patch"
+    # Don't auto-bump these — they require manual coordination with
+    # downstream config / migration steps.
+    ignore:
+      - dependency-name: "@supabase/supabase-js"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "stripe"
+        update-types: ["version-update:semver-major"]
+
+  # GitHub Actions (if/when we add CI workflows) — keep action versions
+  # current so we don't accumulate pinned-but-vulnerable action refs.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    labels:
+      - "dependencies"
+      - "ci"
