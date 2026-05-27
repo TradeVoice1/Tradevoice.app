@@ -7475,14 +7475,28 @@ function Quotes({ user, setUser, logo, taxRates, onConvertToInvoice, onScheduleJ
   // Returns the created client so callers (e.g. inline "+ New" inside QuoteEditor)
   // can auto-select it after creation. Keeps the existing modal flow working too —
   // NewClientModal doesn't care about the return value.
+  // Hang-safe: 30s timeout race + console diagnostics, same pattern as
+  // QuoteEditor.handleSave + Clients.addClient. Whatever the actual root
+  // cause of the recurring "Saving…" freeze is, this guarantees the
+  // button always returns to a clickable state and surfaces the cause.
   const addClient = async (c) => {
+    console.log('[Quotes] add client start', { name: c?.name, ownerId: ownerForRow });
+    let timedOut = false;
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => {
+        timedOut = true;
+        reject(new Error('Save timed out after 30 seconds. Check your network and try again — if this keeps happening, share the browser console output (F12 → Console).'));
+      }, 30000);
+    });
     try {
-      const created = await apiAddClient(ownerForRow, c);
+      const created = await Promise.race([apiAddClient(ownerForRow, c), timeoutPromise]);
+      console.log('[Quotes] add client success', created?.id);
       setClients(prev => [...prev, created].sort((a, b) => a.name.localeCompare(b.name)));
       setNewClient(false);
       return created;
     } catch (e) {
-      alert(e?.message || 'Could not save client.');
+      console.error('[Quotes] add client failed', e, { timedOut, payload: c });
+      alert(e?.message || 'Could not save client. Check the browser console (F12 → Console) for details.');
       throw e;
     }
   };
@@ -7800,15 +7814,34 @@ function Clients({ user, nav, invoices = [] }) {
 
   const addClient = async () => {
     if (!newClient.name.trim() || saving) return;
+    // Same hang-safe pattern we use in QuoteEditor.handleSave: race the
+    // actual save against a 30-second timeout so a stalled Supabase fetch
+    // (network blip, PostgREST schema-cache reload after a migration,
+    // gotrue lock contention, etc.) can't leave the "Saving…" button
+    // wedged forever. Also logs to console for diagnosis on next freeze.
     setSaving(true);
+    console.log('[Clients] add start', { name: newClient.name, company: newClient.company, ownerId: user?.effectiveOwnerId || user?.id });
+    const SAVE_TIMEOUT_MS = 30000;
+    let timedOut = false;
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => {
+        timedOut = true;
+        reject(new Error('Save timed out after 30 seconds. Check your network and try again — if this keeps happening, share the browser console output (F12 → Console).'));
+      }, SAVE_TIMEOUT_MS);
+    });
     try {
       // Tech writes under their owner's id (RLS migration 0016 enforces this).
-      const created = await apiAddClient(user?.effectiveOwnerId || user?.id, newClient);
+      const created = await Promise.race([
+        apiAddClient(user?.effectiveOwnerId || user?.id, newClient),
+        timeoutPromise,
+      ]);
+      console.log('[Clients] add success', created?.id);
       setClients(prev => [...prev, created].sort((a, b) => a.name.localeCompare(b.name)));
       setNewClient({ name: '', company: '', email: '', phone: '' });
       setShowAdd(false);
     } catch (e) {
-      alert(e?.message || 'Could not save client.');
+      console.error('[Clients] add failed', e, { timedOut, payload: newClient });
+      alert(e?.message || 'Could not save client. Check the browser console (F12 → Console) for details.');
     } finally {
       setSaving(false);
     }
