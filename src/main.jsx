@@ -1,6 +1,7 @@
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.jsx'
+import { initIosInstallHint } from './pwa-install-hint.js'
 
 // Note: React StrictMode disabled in dev because its double-invoke of effects
 // orphans the supabase-js gotrue auth lock (a localStorage mutex), which makes
@@ -18,3 +19,8 @@ if (import.meta.env.PROD && 'serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js').catch(() => {})
   })
 }
+
+// ── iOS "Add to Home Screen" hint ──
+// Self-gated: only shows on iOS Safari, not-yet-installed, not-dismissed.
+// Safe to call everywhere; it no-ops off iOS (e.g. dev on Windows).
+initIosInstallHint()
