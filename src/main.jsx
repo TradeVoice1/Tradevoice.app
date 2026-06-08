@@ -7,3 +7,14 @@ import App from './App.jsx'
 // sign-in hang for 5+ seconds on every refresh. Re-enable for a final QA pass
 // before launch to surface any double-effect bugs.
 createRoot(document.getElementById('root')).render(<App />)
+
+// ── PWA service worker (Phase 0) ──
+// Registered in production only — keeping it out of dev avoids SW caching
+// surprises while iterating. The SW (public/sw.js) caches the app shell so
+// Tradevoice opens with no signal after one online visit; it never caches
+// /api/ or auth traffic. Failure to register is non-fatal.
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {})
+  })
+}
