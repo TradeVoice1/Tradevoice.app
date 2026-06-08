@@ -19,13 +19,31 @@ export async function uploadLogo(userId, file) {
   const ext = (file.name.split('.').pop() || 'png').toLowerCase();
   const path = `${userId}/logo-${Date.now()}.${ext}`;
 
-  const { error: uploadError } = await supabase.storage
-    .from(BUCKET)
-    .upload(path, file, {
-      contentType: file.type,
-      cacheControl: '31536000',   // 1 year — we change the path on every replace, so this is safe
-      upsert: false,
-    });
+  // Hang-safe: never let a stalled upload wedge the "Uploading…" button. The
+  // supabase client already times out the underlying request, but we add an
+  // independent backstop so this call ALWAYS settles — with an upload-specific
+  // message — even if the request neither resolves nor rejects.
+  const UPLOAD_BACKSTOP_MS = 50000;
+  let backstop;
+  const timeout = new Promise((_, reject) => {
+    backstop = setTimeout(
+      () => reject(new Error("Logo upload timed out — couldn't reach the server. Check your connection (try cellular instead of Wi-Fi) or use a smaller image, then try again.")),
+      UPLOAD_BACKSTOP_MS
+    );
+  });
+  let uploadError;
+  try {
+    ({ error: uploadError } = await Promise.race([
+      supabase.storage.from(BUCKET).upload(path, file, {
+        contentType: file.type,
+        cacheControl: '31536000',   // 1 year — we change the path on every replace, so this is safe
+        upsert: false,
+      }),
+      timeout,
+    ]));
+  } finally {
+    clearTimeout(backstop);
+  }
   if (uploadError) throw uploadError;
 
   const { data: { publicUrl } } = supabase.storage.from(BUCKET).getPublicUrl(path);

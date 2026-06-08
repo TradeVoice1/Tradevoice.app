@@ -21,14 +21,20 @@ const noOpLock = async (_name, _acquireTimeout, fn) => fn();
 // truly cancelled and the caller gets a fast, clear, retryable error.
 // Any AbortSignal supabase-js passes for its own internal timeouts is honored.
 const REQUEST_TIMEOUT_MS = 20000;
+const UPLOAD_TIMEOUT_MS  = 45000;   // Storage moves real file bytes — needs more headroom than an API/auth call.
 const fetchWithTimeout = (input, init = {}) => {
   const controller = new AbortController();
+  // File uploads/downloads (Supabase Storage) legitimately take longer than an
+  // API call, especially on weak job-site connections — give them more time so
+  // a valid 2 MB logo isn't killed mid-upload by the 20s default.
+  const reqUrl = typeof input === 'string' ? input : (input && input.url) || '';
+  const timeoutMs = reqUrl.includes('/storage/v1/') ? UPLOAD_TIMEOUT_MS : REQUEST_TIMEOUT_MS;
   const timer = setTimeout(() => {
     const msg = "We couldn't reach the server. Check your internet connection and try again — " +
                 "if you're on office or job-site Wi-Fi, try cellular data, as some networks block our servers.";
     try { controller.abort(new DOMException(msg, 'TimeoutError')); }
     catch { controller.abort(); }
-  }, REQUEST_TIMEOUT_MS);
+  }, timeoutMs);
 
   const upstream = init.signal;
   if (upstream) {
