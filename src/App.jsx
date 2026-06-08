@@ -2383,7 +2383,7 @@ function Stat({ label, value, color }) {
   );
 }
 
-function Dashboard({ user, nav, invoices = [], plans = [], onScheduleFromPlan, teamMembers = [] }) {
+function Dashboard({ user, nav, invoices = [], quotes = [], jobs = [], plans = [], onScheduleFromPlan, teamMembers = [] }) {
   const { isTablet } = useBreakpoint();
   const firstName = user.name?.split(' ')[0] || 'Contractor';
 
@@ -2454,6 +2454,37 @@ function Dashboard({ user, nav, invoices = [], plans = [], onScheduleFromPlan, t
     .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''))
     .slice(0, 4);
 
+  // ── Quotes pipeline (top of funnel) ──────────────────────────────────────
+  // Lifecycle is draft → sent → accepted → invoiced. "Sent" is the live
+  // pipeline (out for bid, awaiting a reply); "accepted" is won and ready to
+  // invoice. No "declined" status exists, so we show honest counts/values
+  // rather than a fuzzy win-rate.
+  const sentQuotes     = quotes.filter(q => q.status === 'sent');
+  const acceptedQuotes = quotes.filter(q => q.status === 'accepted');
+  const draftQuotes    = quotes.filter(q => q.status === 'draft');
+  const pipelineValue  = sentQuotes.reduce((s, q) => s + calcQuote(q, user?.state).total, 0);
+  const acceptedValue  = acceptedQuotes.reduce((s, q) => s + calcQuote(q, user?.state).total, 0);
+
+  // ── Today's schedule ─────────────────────────────────────────────────────
+  const fmtHour = (h) => {
+    const hr = Math.floor(h ?? 0), min = Math.round(((h ?? 0) - hr) * 60);
+    const ampm = hr < 12 ? 'AM' : 'PM', h12 = ((hr + 11) % 12) + 1;
+    return `${h12}:${String(min).padStart(2, '0')} ${ampm}`;
+  };
+  const sameDay = (d, ref) => d instanceof Date && d.getFullYear() === ref.getFullYear() && d.getMonth() === ref.getMonth() && d.getDate() === ref.getDate();
+  const today = new Date();
+  const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const activeJobs = jobs.filter(j => j.status !== 'canceled' && j.date instanceof Date);
+  const todaysJobs = activeJobs.filter(j => sameDay(j.date, today)).sort((a, b) => (a.startHour || 0) - (b.startHour || 0));
+  const nextJob = activeJobs
+    .filter(j => j.date >= startOfToday && !sameDay(j.date, today))
+    .sort((a, b) => (a.date - b.date) || (a.startHour || 0) - (b.startHour || 0))[0] || null;
+  const techName = (id) => {
+    if (!id) return 'Unassigned';
+    if (id === user?.id) return 'You';
+    return teamMembers.find(m => m.userId === id)?.name || 'Tech';
+  };
+
   const subtitleParts = [user.company, user.trades?.join(' — '), user.states?.join(', ') || user.state].filter(Boolean);
 
   return (
@@ -2489,6 +2520,91 @@ function Dashboard({ user, nav, invoices = [], plans = [], onScheduleFromPlan, t
           color={C.accent}
           sub={`${invoices.length} invoice${invoices.length === 1 ? '' : 's'} all-time`}
         />
+      </div>
+
+      {/* ── Quotes & Pipeline ─────────────────────────────────────────────
+          Top of the funnel — what's out for bid, what's won and ready to
+          bill, what's still in draft. The dashboard was invoice-only before. */}
+      <div style={{ marginBottom: 22 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, gap: 10 }}>
+          <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, fontWeight: 800, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+            Quotes &amp; Pipeline
+          </div>
+          <button onClick={() => nav('quotes')} style={{ background: 'none', border: 'none', color: C.orange, fontSize: 15, fontWeight: 700, cursor: 'pointer', padding: 0 }}>View all →</button>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12 }}>
+          <StatCard
+            label="Out for Bid"
+            value={fmtMoney(pipelineValue)}
+            color={C.accent}
+            sub={sentQuotes.length ? `${sentQuotes.length} quote${sentQuotes.length === 1 ? '' : 's'} awaiting reply` : 'Nothing out for bid'}
+          />
+          <StatCard
+            label="Accepted"
+            value={fmtMoney(acceptedValue)}
+            color={C.success}
+            sub={acceptedQuotes.length ? `${acceptedQuotes.length} ready to invoice` : 'None pending'}
+          />
+          <StatCard
+            label="Drafts"
+            value={String(draftQuotes.length)}
+            color={C.muted}
+            sub={draftQuotes.length ? 'in progress' : 'No drafts'}
+          />
+        </div>
+      </div>
+
+      {/* ── Today's Schedule ──────────────────────────────────────────────
+          Surfaces today's scheduled jobs (scheduling is a core feature but
+          wasn't on the dashboard). Falls back to the next upcoming job when
+          today is clear, so the widget is never a dead end. */}
+      <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: '18px 20px', marginBottom: 22, boxShadow: C.shadow1 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14, gap: 10, flexWrap: 'wrap' }}>
+          <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, fontWeight: 800, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+            Today&apos;s Schedule
+            <span style={{ marginLeft: 10, color: C.dim, fontWeight: 600, textTransform: 'none', letterSpacing: 0 }}>
+              {today.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
+            </span>
+          </div>
+          <button onClick={() => nav('schedule')} style={{ background: 'none', border: 'none', color: C.orange, fontSize: 15, fontWeight: 700, cursor: 'pointer', padding: 0 }}>Open calendar →</button>
+        </div>
+        {todaysJobs.length === 0 ? (
+          <div style={{ padding: '16px 0', color: C.dim, fontSize: 16, textAlign: 'center', lineHeight: 1.6 }}>
+            No jobs scheduled today.
+            {nextJob && (
+              <div style={{ marginTop: 6, color: C.muted }}>
+                Next up: <strong style={{ color: C.text }}>{nextJob.title || nextJob.clientName || 'Job'}</strong>
+                {' '}— {nextJob.date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} at {fmtHour(nextJob.startHour)}
+              </div>
+            )}
+          </div>
+        ) : todaysJobs.map((j, i) => (
+          <button key={j.id} onClick={() => nav('schedule')} style={{
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', textAlign: 'left',
+            padding: '12px 10px', margin: '0 -10px', gap: 12, borderRadius: 8, cursor: 'pointer',
+            background: 'none',
+            border: 'none',
+            borderBottom: i < todaysJobs.length - 1 ? `1px solid ${C.border}` : 'none',
+            WebkitTapHighlightColor: 'transparent',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, minWidth: 0 }}>
+              <div style={{ fontSize: 16, fontWeight: 800, color: C.orange, fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap', minWidth: 78 }}>{fmtHour(j.startHour)}</div>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: 18, fontWeight: 700, color: C.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', letterSpacing: '-0.01em' }}>{j.title || j.clientName || 'Job'}</div>
+                <div style={{ fontSize: 15, color: C.muted, marginTop: 3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: 500 }}>
+                  {[j.clientName, j.trade, techName(j.techUserId)].filter(Boolean).join(' · ')}
+                </div>
+              </div>
+            </div>
+            <span style={{
+              flexShrink: 0,
+              fontSize: 13, fontWeight: 800, letterSpacing: '0.06em', textTransform: 'uppercase',
+              padding: '3px 9px', borderRadius: 4,
+              background: j.status === 'completed' ? C.successLo : C.warnLo,
+              color: j.status === 'completed' ? C.success : C.warn,
+            }}>{j.status || 'scheduled'}</span>
+          </button>
+        ))}
       </div>
 
       {/* ── 12-Month Invoice Trend ─────────────────────────────────────────
@@ -9603,6 +9719,8 @@ function TradevoiceApp() {
   // InvoiceHub's effect picks it up, sets its own month filter, then clears.
   const [pendingMonthFilter, setPendingMonthFilter] = useState(null);
   const [plans, setPlans] = useState([]);
+  const [quotes, setQuotes] = useState([]);   // dashboard pipeline widget
+  const [jobs, setJobs] = useState([]);        // dashboard today's-schedule widget
   const [timeOff, setTimeOff] = useState([]);
   // When the user clicks "Schedule Job" on a plan, we stash a prefilled job draft here
   // and switch to the Schedule screen. ScheduleScreen reads it on mount, opens AddJobModal
@@ -9615,17 +9733,21 @@ function TradevoiceApp() {
     let cancelled = false;
     (async () => {
       try {
-        const [invs, tm, pl, to] = await Promise.all([
+        const [invs, tm, pl, to, qs, jbs] = await Promise.all([
           listInvoices().catch(e => { console.error('listInvoices', e); return []; }),
           listTeam().catch(e => { console.error('listTeam', e); return []; }),
           listPlans().catch(e => { console.error('listPlans', e); return []; }),
           listTimeOff().catch(e => { console.error('listTimeOff', e); return []; }),
+          listQuotes().catch(e => { console.error('listQuotes', e); return []; }),
+          listJobs().catch(e => { console.error('listJobs', e); return []; }),
         ]);
         if (cancelled) return;
         setSharedInvoices(invs);
         setTeamMembers(tm);
         setPlans(pl);
         setTimeOff(to);
+        setQuotes(qs);
+        setJobs(jbs);
       } catch (e) {
         console.error('hydration failed', e);
       }
@@ -10154,7 +10276,7 @@ function TradevoiceApp() {
 
   const content = {
     ...(user?.isSuperOwner && founderTotpReady ? { founder: <OwnerDashboard user={user} /> } : {}),
-    dashboard: <Dashboard    user={user} nav={navigateTo} invoices={sharedInvoices} plans={plans} onScheduleFromPlan={handleScheduleFromPlan} teamMembers={teamMembers} />,
+    dashboard: <Dashboard    user={user} nav={navigateTo} invoices={sharedInvoices} quotes={quotes} jobs={jobs} plans={plans} onScheduleFromPlan={handleScheduleFromPlan} teamMembers={teamMembers} />,
     invoice:   <VoiceInvoice user={user} logo={logo} payments={payments} taxRates={taxRates} teamMembers={teamMembers} sharedInvoices={sharedInvoices} setSharedInvoices={setSharedInvoices} persistInvoice={persistInvoice} removeInvoice={removeInvoice} handleUnInvoice={handleUnInvoice} pendingInvoiceId={pendingInvoiceId} clearPendingInvoice={() => setPendingInvoiceId(null)} pendingMonthFilter={pendingMonthFilter} clearPendingMonthFilter={() => setPendingMonthFilter(null)} />,
     billing:   <Billing      user={user} setUser={setUser} payments={payments} />,
     quotes:    <Quotes       user={user} setUser={setUser} logo={logo} taxRates={taxRates} onConvertToInvoice={handleConvertToInvoice} onScheduleJob={handleScheduleFromQuote} />,
