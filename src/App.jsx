@@ -2383,7 +2383,7 @@ function Stat({ label, value, color }) {
   );
 }
 
-function Dashboard({ user, nav, invoices = [], quotes = [], jobs = [], plans = [], onScheduleFromPlan, teamMembers = [] }) {
+function Dashboard({ user, nav, invoices = [], quotes = [], jobs = [], clients = [], plans = [], onScheduleFromPlan, teamMembers = [] }) {
   const { isTablet } = useBreakpoint();
   const firstName = user.name?.split(' ')[0] || 'Contractor';
 
@@ -2392,10 +2392,15 @@ function Dashboard({ user, nav, invoices = [], quotes = [], jobs = [], plans = [
   // below is wrapped in a flex item whose CSS `order` + display is driven by
   // this state, so we reorder/hide without touching the section internals.
   const WIDGETS = [
+    { id: 'setupChecklist',   label: 'Get set up' },
     { id: 'invoiceStats',     label: 'Money stats' },
+    { id: 'getPaid',          label: 'Get paid (overdue)' },
     { id: 'pipeline',         label: 'Quotes & pipeline' },
+    { id: 'acceptedQuotes',   label: 'Won — ready to schedule' },
     { id: 'schedule',         label: "Today's schedule" },
+    { id: 'jobsToInvoice',    label: 'Ready to invoice' },
     { id: 'trend',            label: '12-month trend' },
+    { id: 'compliance',       label: 'Insurance & license' },
     { id: 'techPerformance',  label: 'Tech performance' },
     { id: 'recentAndActions', label: 'Recent invoices & quick actions' },
     { id: 'maintenancePlans', label: 'Maintenance plans' },
@@ -2575,6 +2580,49 @@ function Dashboard({ user, nav, invoices = [], quotes = [], jobs = [], plans = [
     return teamMembers.find(m => m.userId === id)?.name || 'Tech';
   };
 
+  // The owner's chosen accent color (set in Settings for invoice branding) now
+  // also tints the dashboard's links/accents. Falls back to brand green.
+  const accent = user?.accentColor || C.orange;
+  const todayIso = new Date().toISOString().split('T')[0];
+
+  // ── Get Paid (overdue A/R) ───────────────────────────────────────────────
+  const isOverdue = (i) => i.status !== 'paid' && i.status !== 'draft' && i.status !== 'void'
+    && (i.status === 'overdue' || (i.dueAt && i.dueAt < todayIso));
+  const overdueAll = invoices.filter(isOverdue)
+    .map(i => ({ inv: i, bal: calcInvoice(i, user?.state).balance, daysOver: i.dueAt ? Math.round((new Date(todayIso) - new Date(i.dueAt)) / 86400000) : 0 }))
+    .filter(x => x.bal > 0)
+    .sort((a, b) => b.daysOver - a.daysOver);
+  const overdueTop = overdueAll.slice(0, 5);
+  const overdueTotal = overdueAll.reduce((s, x) => s + x.bal, 0);
+
+  // ── Jobs ready to invoice (completed, not yet invoiced) ──────────────────
+  const jobsToInvoice = jobs
+    .filter(j => j.status === 'completed' && !j.invoiceId)
+    .sort((a, b) => (b.date instanceof Date ? +b.date : 0) - (a.date instanceof Date ? +a.date : 0))
+    .slice(0, 5);
+
+  // ── Accepted quotes (won, ready to schedule / invoice) ───────────────────
+  const acceptedList = acceptedQuotes.slice()
+    .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''))
+    .slice(0, 5);
+
+  // ── Setup checklist (drives new-account activation) ──────────────────────
+  const setupSteps = [
+    { label: 'Add your company name', done: !!user?.company, to: 'settings' },
+    { label: 'Upload your logo',       done: !!user?.logoUrl, to: 'settings' },
+    { label: 'Connect card payments',  done: !!user?.stripe_account_charges_enabled, to: 'settings' },
+    { label: 'Add your first client',  done: clients.length > 0, to: 'clients' },
+    { label: 'Create your first quote', done: quotes.length > 0, to: 'quotes' },
+    { label: 'Send your first invoice', done: invoices.length > 0, to: 'invoice' },
+  ];
+  const setupDone = setupSteps.filter(s => s.done).length;
+  const setupComplete = setupDone === setupSteps.length;
+
+  // ── Insurance / COI expiry ───────────────────────────────────────────────
+  const coiDays = user?.coiExpiresAt
+    ? Math.round((new Date(user.coiExpiresAt + 'T12:00:00') - new Date(todayIso + 'T12:00:00')) / 86400000)
+    : null;
+
   const subtitleParts = [user.company, user.trades?.join(' — '), user.states?.join(', ') || user.state].filter(Boolean);
 
   return (
@@ -2586,8 +2634,8 @@ function Dashboard({ user, nav, invoices = [], quotes = [], jobs = [], plans = [
             sub={subtitleParts.length ? subtitleParts.join('  —  ') : 'Welcome to Tradevoice'} />
           <button onClick={() => setCustomizing(c => !c)} style={{
             flexShrink: 0, marginTop: 4, padding: '8px 14px', minHeight: 40,
-            background: customizing ? C.orange : C.surface, color: customizing ? '#fff' : C.muted,
-            border: `1.5px solid ${customizing ? C.orange : C.border}`, borderRadius: 8,
+            background: customizing ? accent : C.surface, color: customizing ? '#fff' : C.muted,
+            border: `1.5px solid ${customizing ? accent : C.border}`, borderRadius: 8,
             fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: "'Inter', sans-serif",
             WebkitTapHighlightColor: 'transparent', whiteSpace: 'nowrap',
           }}>{customizing ? '✓ Done' : '⚙ Customize'}</button>
@@ -2601,6 +2649,26 @@ function Dashboard({ user, nav, invoices = [], quotes = [], jobs = [], plans = [
           </div>
         )}
       </div>
+
+      <DashWidget {...wprops('setupChecklist')}>
+      {!setupComplete && (
+        <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: '18px 20px', marginBottom: 22, boxShadow: C.shadow1 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, gap: 10 }}>
+            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, fontWeight: 800, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase' }}>Get set up</div>
+            <div style={{ fontSize: 14, fontWeight: 800, color: accent }}>{setupDone} / {setupSteps.length} done</div>
+          </div>
+          {setupSteps.map((s, i) => (
+            <div key={s.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '10px 0', borderBottom: i < setupSteps.length - 1 ? `1px solid ${C.border}` : 'none' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
+                <span style={{ width: 24, height: 24, borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 800, background: s.done ? C.success : C.surface2, color: s.done ? '#fff' : C.dim, border: s.done ? 'none' : `1.5px solid ${C.border}` }}>{s.done ? '✓' : ''}</span>
+                <span style={{ fontSize: 16, fontWeight: 600, color: s.done ? C.dim : C.text, textDecoration: s.done ? 'line-through' : 'none', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.label}</span>
+              </div>
+              {!s.done && <button onClick={() => nav(s.to)} style={{ flexShrink: 0, background: 'none', border: 'none', color: accent, fontSize: 15, fontWeight: 700, cursor: 'pointer', padding: 0 }}>Do it →</button>}
+            </div>
+          ))}
+        </div>
+      )}
+      </DashWidget>
 
       <DashWidget {...wprops('invoiceStats')}>
       {/* Stats — 2×2 on tablet, 4 across on laptop. Each card now shows the
@@ -2634,6 +2702,31 @@ function Dashboard({ user, nav, invoices = [], quotes = [], jobs = [], plans = [
       </div>
       </DashWidget>
 
+      <DashWidget {...wprops('getPaid')}>
+      {overdueTop.length > 0 && (
+        <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: '18px 20px', marginBottom: 22, boxShadow: C.shadow1 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14, gap: 10, flexWrap: 'wrap' }}>
+            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, fontWeight: 800, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+              Get Paid <span style={{ color: C.errorBold, marginLeft: 8 }}>{fmtMoney(overdueTotal)} overdue</span>
+            </div>
+            <button onClick={() => nav('invoice')} style={{ background: 'none', border: 'none', color: accent, fontSize: 15, fontWeight: 700, cursor: 'pointer', padding: 0 }}>View all →</button>
+          </div>
+          {overdueTop.map((x, i) => (
+            <button key={x.inv.id} onClick={() => nav('invoice')} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', textAlign: 'left', padding: '12px 10px', margin: '0 -10px', gap: 12, borderRadius: 8, cursor: 'pointer', background: 'none', border: 'none', borderBottom: i < overdueTop.length - 1 ? `1px solid ${C.border}` : 'none', WebkitTapHighlightColor: 'transparent' }}>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: 18, fontWeight: 700, color: C.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{x.inv.clientName || '—'}</div>
+                <div style={{ fontSize: 15, color: C.muted, marginTop: 3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: 500 }}>{x.inv.title || x.inv.number}</div>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6, flexShrink: 0 }}>
+                <div style={{ fontSize: 19, fontWeight: 800, color: C.text, fontVariantNumeric: 'tabular-nums' }}>{fmtMoney(x.bal)}</div>
+                <span style={{ fontSize: 13, fontWeight: 800, letterSpacing: '0.04em', textTransform: 'uppercase', padding: '3px 9px', borderRadius: 4, background: C.errorBold, color: '#fff' }}>{x.daysOver > 0 ? `${x.daysOver}d overdue` : 'Due'}</span>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+      </DashWidget>
+
       <DashWidget {...wprops('pipeline')}>
       {/* ── Quotes & Pipeline ─────────────────────────────────────────────
           Top of the funnel — what's out for bid, what's won and ready to
@@ -2643,7 +2736,7 @@ function Dashboard({ user, nav, invoices = [], quotes = [], jobs = [], plans = [
           <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, fontWeight: 800, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
             Quotes &amp; Pipeline
           </div>
-          <button onClick={() => nav('quotes')} style={{ background: 'none', border: 'none', color: C.orange, fontSize: 15, fontWeight: 700, cursor: 'pointer', padding: 0 }}>View all →</button>
+          <button onClick={() => nav('quotes')} style={{ background: 'none', border: 'none', color: accent, fontSize: 15, fontWeight: 700, cursor: 'pointer', padding: 0 }}>View all →</button>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12 }}>
           <StatCard
@@ -2668,6 +2761,29 @@ function Dashboard({ user, nav, invoices = [], quotes = [], jobs = [], plans = [
       </div>
       </DashWidget>
 
+      <DashWidget {...wprops('acceptedQuotes')}>
+      {acceptedList.length > 0 && (
+        <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: '18px 20px', marginBottom: 22, boxShadow: C.shadow1 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14, gap: 10 }}>
+            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, fontWeight: 800, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase' }}>Won — Ready to Schedule</div>
+            <button onClick={() => nav('quotes')} style={{ background: 'none', border: 'none', color: accent, fontSize: 15, fontWeight: 700, cursor: 'pointer', padding: 0 }}>View all →</button>
+          </div>
+          {acceptedList.map((q, i) => (
+            <button key={q.id} onClick={() => nav('quotes')} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', textAlign: 'left', padding: '12px 10px', margin: '0 -10px', gap: 12, borderRadius: 8, cursor: 'pointer', background: 'none', border: 'none', borderBottom: i < acceptedList.length - 1 ? `1px solid ${C.border}` : 'none', WebkitTapHighlightColor: 'transparent' }}>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: 18, fontWeight: 700, color: C.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{q.title || 'Quote'}</div>
+                <div style={{ fontSize: 15, color: C.muted, marginTop: 3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: 500 }}>{q.number}{q.trade ? ` · ${q.trade}` : ''}</div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+                <div style={{ fontSize: 19, fontWeight: 800, color: C.success, fontVariantNumeric: 'tabular-nums' }}>{fmtMoney(calcQuote(q, user?.state).total)}</div>
+                <span style={{ fontSize: 16, fontWeight: 800, color: accent }}>→</span>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+      </DashWidget>
+
       <DashWidget {...wprops('schedule')}>
       {/* ── Today's Schedule ──────────────────────────────────────────────
           Surfaces today's scheduled jobs (scheduling is a core feature but
@@ -2681,7 +2797,7 @@ function Dashboard({ user, nav, invoices = [], quotes = [], jobs = [], plans = [
               {today.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
             </span>
           </div>
-          <button onClick={() => nav('schedule')} style={{ background: 'none', border: 'none', color: C.orange, fontSize: 15, fontWeight: 700, cursor: 'pointer', padding: 0 }}>Open calendar →</button>
+          <button onClick={() => nav('schedule')} style={{ background: 'none', border: 'none', color: accent, fontSize: 15, fontWeight: 700, cursor: 'pointer', padding: 0 }}>Open calendar →</button>
         </div>
         {todaysJobs.length === 0 ? (
           <div style={{ padding: '16px 0', color: C.dim, fontSize: 16, textAlign: 'center', lineHeight: 1.6 }}>
@@ -2721,6 +2837,28 @@ function Dashboard({ user, nav, invoices = [], quotes = [], jobs = [], plans = [
           </button>
         ))}
       </div>
+      </DashWidget>
+
+      <DashWidget {...wprops('jobsToInvoice')}>
+      {jobsToInvoice.length > 0 && (
+        <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: '18px 20px', marginBottom: 22, boxShadow: C.shadow1 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14, gap: 10 }}>
+            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, fontWeight: 800, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+              Ready to Invoice <span style={{ color: accent, marginLeft: 6 }}>{jobsToInvoice.length}</span>
+            </div>
+            <button onClick={() => nav('schedule')} style={{ background: 'none', border: 'none', color: accent, fontSize: 15, fontWeight: 700, cursor: 'pointer', padding: 0 }}>Open calendar →</button>
+          </div>
+          {jobsToInvoice.map((j, i) => (
+            <button key={j.id} onClick={() => nav('schedule')} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', textAlign: 'left', padding: '12px 10px', margin: '0 -10px', gap: 12, borderRadius: 8, cursor: 'pointer', background: 'none', border: 'none', borderBottom: i < jobsToInvoice.length - 1 ? `1px solid ${C.border}` : 'none', WebkitTapHighlightColor: 'transparent' }}>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: 18, fontWeight: 700, color: C.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{j.title || j.clientName || 'Job'}</div>
+                <div style={{ fontSize: 15, color: C.muted, marginTop: 3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: 500 }}>{[j.clientName, j.date instanceof Date ? j.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : null].filter(Boolean).join(' · ')}</div>
+              </div>
+              <span style={{ flexShrink: 0, fontSize: 14, fontWeight: 700, color: accent }}>Invoice →</span>
+            </button>
+          ))}
+        </div>
+      )}
       </DashWidget>
 
       <DashWidget {...wprops('trend')}>
@@ -2798,6 +2936,28 @@ function Dashboard({ user, nav, invoices = [], quotes = [], jobs = [], plans = [
           })}
         </div>
       </div>
+      </DashWidget>
+
+      <DashWidget {...wprops('compliance')}>
+      {coiDays != null && (
+        <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: '18px 20px', marginBottom: 22, boxShadow: C.shadow1 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, gap: 10 }}>
+            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, fontWeight: 800, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase' }}>Insurance &amp; License</div>
+            <button onClick={() => nav('settings')} style={{ background: 'none', border: 'none', color: accent, fontSize: 15, fontWeight: 700, cursor: 'pointer', padding: 0 }}>Update →</button>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: 18, fontWeight: 700, color: C.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Certificate of Insurance{user?.coiCarrier ? ` · ${user.coiCarrier}` : ''}</div>
+              <div style={{ fontSize: 15, color: C.muted, marginTop: 3, fontWeight: 500 }}>Expires {user.coiExpiresAt}</div>
+            </div>
+            <span style={{ flexShrink: 0, fontSize: 13, fontWeight: 800, letterSpacing: '0.04em', textTransform: 'uppercase', padding: '4px 10px', borderRadius: 4,
+              background: coiDays < 0 ? C.errorBold : coiDays <= 30 ? C.warn : C.successLo,
+              color: (coiDays < 0 || coiDays <= 30) ? '#fff' : C.success }}>
+              {coiDays < 0 ? `${Math.abs(coiDays)}d expired` : coiDays === 0 ? 'Expires today' : `${coiDays}d left`}
+            </span>
+          </div>
+        </div>
+      )}
       </DashWidget>
 
       <DashWidget {...wprops('techPerformance')}>
@@ -9898,6 +10058,7 @@ function TradevoiceApp() {
   const [plans, setPlans] = useState([]);
   const [quotes, setQuotes] = useState([]);   // dashboard pipeline widget
   const [jobs, setJobs] = useState([]);        // dashboard today's-schedule widget
+  const [dashClients, setDashClients] = useState([]); // dashboard setup-checklist
   const [timeOff, setTimeOff] = useState([]);
   // When the user clicks "Schedule Job" on a plan, we stash a prefilled job draft here
   // and switch to the Schedule screen. ScheduleScreen reads it on mount, opens AddJobModal
@@ -9910,13 +10071,14 @@ function TradevoiceApp() {
     let cancelled = false;
     (async () => {
       try {
-        const [invs, tm, pl, to, qs, jbs] = await Promise.all([
+        const [invs, tm, pl, to, qs, jbs, cl] = await Promise.all([
           listInvoices().catch(e => { console.error('listInvoices', e); return []; }),
           listTeam().catch(e => { console.error('listTeam', e); return []; }),
           listPlans().catch(e => { console.error('listPlans', e); return []; }),
           listTimeOff().catch(e => { console.error('listTimeOff', e); return []; }),
           listQuotes().catch(e => { console.error('listQuotes', e); return []; }),
           listJobs().catch(e => { console.error('listJobs', e); return []; }),
+          listClients().catch(e => { console.error('listClients', e); return []; }),
         ]);
         if (cancelled) return;
         setSharedInvoices(invs);
@@ -9925,6 +10087,7 @@ function TradevoiceApp() {
         setTimeOff(to);
         setQuotes(qs);
         setJobs(jbs);
+        setDashClients(cl);
       } catch (e) {
         console.error('hydration failed', e);
       }
@@ -10453,7 +10616,7 @@ function TradevoiceApp() {
 
   const content = {
     ...(user?.isSuperOwner && founderTotpReady ? { founder: <OwnerDashboard user={user} /> } : {}),
-    dashboard: <Dashboard    user={user} nav={navigateTo} invoices={sharedInvoices} quotes={quotes} jobs={jobs} plans={plans} onScheduleFromPlan={handleScheduleFromPlan} teamMembers={teamMembers} />,
+    dashboard: <Dashboard    user={user} nav={navigateTo} invoices={sharedInvoices} quotes={quotes} jobs={jobs} clients={dashClients} plans={plans} onScheduleFromPlan={handleScheduleFromPlan} teamMembers={teamMembers} />,
     invoice:   <VoiceInvoice user={user} logo={logo} payments={payments} taxRates={taxRates} teamMembers={teamMembers} sharedInvoices={sharedInvoices} setSharedInvoices={setSharedInvoices} persistInvoice={persistInvoice} removeInvoice={removeInvoice} handleUnInvoice={handleUnInvoice} pendingInvoiceId={pendingInvoiceId} clearPendingInvoice={() => setPendingInvoiceId(null)} pendingMonthFilter={pendingMonthFilter} clearPendingMonthFilter={() => setPendingMonthFilter(null)} />,
     billing:   <Billing      user={user} setUser={setUser} payments={payments} />,
     quotes:    <Quotes       user={user} setUser={setUser} logo={logo} taxRates={taxRates} onConvertToInvoice={handleConvertToInvoice} onScheduleJob={handleScheduleFromQuote} />,
