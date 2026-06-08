@@ -32,21 +32,28 @@ async function lionTile() {
     .extract({ left: 0, top: 0, width: cropW, height: meta.height })
     .png().toBuffer();
   const { data, info } = await sharp(cropBuf).trim({ threshold: 10 }).toBuffer({ resolveWithObject: true });
-  const side = Math.round(Math.max(info.width, info.height) * 1.1);
+  const side = Math.round(Math.max(info.width, info.height) * 1.02);
   return sharp({ create: { width: side, height: side, channels: 4, background: WHITE_RGB } })
     .composite([{ input: data, gravity: 'center' }])
     .png().toBuffer();
 }
 
 // ── Lion in a white circle "coin" (for placing on green) ──
+// CONTAIN the lion to 76% of the coin so no part of the mane/laurel reaches
+// the rim (that was the "bleeding"). A clean white ring frames it; the mask
+// only trims the white tile corners, never the art.
 async function lionCircle(tile, d) {
-  const filled = await sharp(tile).resize(d, d, { fit: 'cover' }).png().toBuffer();
+  const inner = Math.round(d * 0.76);
+  const lion = await sharp(tile).resize(inner, inner, { fit: 'contain', background: WHITE_RGB }).png().toBuffer();
+  const base = await sharp({ create: { width: d, height: d, channels: 4, background: WHITE_RGB } })
+    .composite([{ input: lion, gravity: 'center' }])
+    .png().toBuffer();
   const mask = Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="${d}" height="${d}"><circle cx="${d / 2}" cy="${d / 2}" r="${d / 2}" fill="#fff"/></svg>`);
-  return sharp(filled).composite([{ input: mask, blend: 'dest-in' }]).png().toBuffer();
+  return sharp(base).composite([{ input: mask, blend: 'dest-in' }]).png().toBuffer();
 }
 
 // ── Two-line slogan SVG. Returns { buf, w, h }; line 2 italic. ──
-function slogan({ size, color, line1 = 'Lead your business', line2 = 'with pride' }) {
+function slogan({ size, color, line1 = 'Lead Your Business', line2 = 'With Pride' }) {
   const w = Math.round(size * Math.max(line1.length, line2.length) * 0.68);
   const h = Math.round(size * 2.6);
   const buf = Buffer.from(
@@ -82,7 +89,7 @@ async function main() {
     const W = 1080, H = 1080, D = 470;
     const lc = await lionCircle(tile, D);
     const s = slogan({ size: 74, color: CREAM });
-    const u = urlStrip({ size: 27, color: 'rgba(243,246,244,0.72)' });
+    const u = urlStrip({ size: 27, color: 'rgba(243,246,244,0.88)' });
     await sharp({ create: { width: W, height: H, channels: 4, background: GREEN_RGB } })
       .composite([
         { input: lc, top: 140, left: cx(W, D) },
@@ -98,7 +105,7 @@ async function main() {
     const W = 1200, H = 630, D = 400;
     const lc = await lionCircle(tile, D);
     const s = slogan({ size: 60, color: CREAM });
-    const u = urlStrip({ size: 23, color: 'rgba(243,246,244,0.72)' });
+    const u = urlStrip({ size: 23, color: 'rgba(243,246,244,0.88)' });
     const CXr = 840;                                   // center of the right text column
     await sharp({ create: { width: W, height: H, channels: 4, background: GREEN_RGB } })
       .composite([
