@@ -6095,7 +6095,7 @@ function QuoteEditor({ initial, clients, existingQuotes = [], user, setUser, onS
       console.log('[QuoteEditor] save success', q.id);
     } catch (e) {
       console.error('[QuoteEditor] save failed', e, { timedOut, payload: q });
-      alert(e?.message || 'Could not save quote. Check the browser console (F12 → Console) for details.');
+      alert(e?.message || 'Could not save quote. Check your connection and try again.');
     } finally {
       setSaving(false);
     }
@@ -7507,7 +7507,7 @@ function Quotes({ user, setUser, logo, taxRates, onConvertToInvoice, onScheduleJ
     const timeoutPromise = new Promise((_, reject) => {
       setTimeout(() => {
         timedOut = true;
-        reject(new Error('Save timed out after 30 seconds. Check your network and try again — if this keeps happening, share the browser console output (F12 → Console).'));
+        reject(new Error("We couldn't reach the server. Check your internet connection and try again. If this keeps happening on the same network, try a different connection — some office or job-site Wi-Fi blocks our servers — or email support@thetradevoice.com."));
       }, 30000);
     });
     try {
@@ -7518,7 +7518,7 @@ function Quotes({ user, setUser, logo, taxRates, onConvertToInvoice, onScheduleJ
       return created;
     } catch (e) {
       console.error('[Quotes] add client failed', e, { timedOut, payload: c });
-      alert(e?.message || 'Could not save client. Check the browser console (F12 → Console) for details.');
+      alert(e?.message || 'Could not save client. Check your connection and try again.');
       throw e;
     }
   };
@@ -7849,7 +7849,7 @@ function Clients({ user, nav, invoices = [] }) {
     const timeoutPromise = new Promise((_, reject) => {
       setTimeout(() => {
         timedOut = true;
-        reject(new Error('Save timed out after 30 seconds. Check your network and try again — if this keeps happening, share the browser console output (F12 → Console).'));
+        reject(new Error("We couldn't reach the server. Check your internet connection and try again. If this keeps happening on the same network, try a different connection — some office or job-site Wi-Fi blocks our servers — or email support@thetradevoice.com."));
       }, SAVE_TIMEOUT_MS);
     });
     try {
@@ -7864,7 +7864,7 @@ function Clients({ user, nav, invoices = [] }) {
       setShowAdd(false);
     } catch (e) {
       console.error('[Clients] add failed', e, { timedOut, payload: newClient });
-      alert(e?.message || 'Could not save client. Check the browser console (F12 → Console) for details.');
+      alert(e?.message || 'Could not save client. Check your connection and try again.');
     } finally {
       setSaving(false);
     }

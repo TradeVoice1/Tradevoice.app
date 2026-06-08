@@ -35,10 +35,10 @@ export async function withTimeout(promise, opts = {}) {
   const timeoutPromise = new Promise((_, reject) => {
     setTimeout(() => {
       timedOut = true;
-      const sec = (timeoutMs / 1000).toFixed(0);
       reject(new Error(
-        `${label} timed out after ${sec} seconds. Check your network and try again — ` +
-        `if this keeps happening, screenshot the browser console (F12 → Console) so we can diagnose.`
+        "We couldn't reach the server. Check your internet connection and try again. " +
+        "If this keeps happening on the same network, try a different connection — some " +
+        "office or job-site Wi-Fi blocks our servers — or email support@thetradevoice.com."
       ));
     }, timeoutMs);
   });
