@@ -2387,6 +2387,56 @@ function Dashboard({ user, nav, invoices = [], quotes = [], jobs = [], plans = [
   const { isTablet } = useBreakpoint();
   const firstName = user.name?.split(' ')[0] || 'Contractor';
 
+  // ── Dashboard personalization (show/hide + reorder) ──────────────────────
+  // Layout is saved per-account in localStorage (this device). Each section
+  // below is wrapped in a flex item whose CSS `order` + display is driven by
+  // this state, so we reorder/hide without touching the section internals.
+  const WIDGETS = [
+    { id: 'invoiceStats',     label: 'Money stats' },
+    { id: 'pipeline',         label: 'Quotes & pipeline' },
+    { id: 'schedule',         label: "Today's schedule" },
+    { id: 'trend',            label: '12-month trend' },
+    { id: 'techPerformance',  label: 'Tech performance' },
+    { id: 'recentAndActions', label: 'Recent invoices & quick actions' },
+    { id: 'maintenancePlans', label: 'Maintenance plans' },
+  ];
+  const DEFAULT_ORDER = WIDGETS.map(w => w.id);
+  const LS_KEY = `tv_dash_layout_${user?.id || 'anon'}`;
+  const [customizing, setCustomizing] = useState(false);
+  const [layout, setLayout] = useState(() => {
+    try {
+      const p = JSON.parse(localStorage.getItem(LS_KEY) || 'null');
+      if (p && Array.isArray(p.order)) {
+        // Sanitize: keep known ids in saved order, then append any new widgets
+        // that didn't exist when the layout was saved (forward-compatible).
+        const known = p.order.filter(id => DEFAULT_ORDER.includes(id));
+        const order = [...known, ...DEFAULT_ORDER.filter(id => !known.includes(id))];
+        const hidden = (p.hidden || []).filter(id => DEFAULT_ORDER.includes(id));
+        return { order, hidden };
+      }
+    } catch { /* ignore corrupt/blocked storage */ }
+    return { order: DEFAULT_ORDER, hidden: [] };
+  });
+  const persistLayout = (next) => {
+    setLayout(next);
+    try { localStorage.setItem(LS_KEY, JSON.stringify(next)); } catch { /* storage blocked — keep in-memory */ }
+  };
+  const isHidden = (id) => layout.hidden.includes(id);
+  const orderOf  = (id) => { const i = layout.order.indexOf(id); return i < 0 ? WIDGETS.length : i; };
+  const wrapStyle = (id) => ({ order: orderOf(id), display: isHidden(id) ? 'none' : 'block' });
+  const moveWidget = (id, dir) => {
+    const order = [...layout.order];
+    const i = order.indexOf(id), j = i + dir;
+    if (i < 0 || j < 0 || j >= order.length) return;
+    [order[i], order[j]] = [order[j], order[i]];
+    persistLayout({ ...layout, order });
+  };
+  const toggleWidget = (id) => persistLayout({
+    ...layout,
+    hidden: isHidden(id) ? layout.hidden.filter(x => x !== id) : [...layout.hidden, id],
+  });
+  const resetLayout = () => persistLayout({ order: DEFAULT_ORDER, hidden: [] });
+
   // Maintenance plans coming due in the next 14 days (active only).
   // Sorted soonest-first so the most urgent ones surface at the top of the widget.
   const plansDueSoon = dueWithinDays(plans, 14)
@@ -2488,10 +2538,61 @@ function Dashboard({ user, nav, invoices = [], quotes = [], jobs = [], plans = [
   const subtitleParts = [user.company, user.trades?.join(' — '), user.states?.join(', ') || user.state].filter(Boolean);
 
   return (
-    <div>
-      <SectionHead icon="" title={`Hey, ${firstName}`}
-        sub={subtitleParts.length ? subtitleParts.join('  —  ') : 'Welcome to Tradevoice'} />
+    <div style={{ display: 'flex', flexDirection: 'column' }}>
+      {/* Header (greeting + Customize) — pinned to the top, not reorderable. */}
+      <div style={{ order: -1 }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+          <SectionHead icon="" title={`Hey, ${firstName}`}
+            sub={subtitleParts.length ? subtitleParts.join('  —  ') : 'Welcome to Tradevoice'} />
+          <button onClick={() => setCustomizing(c => !c)} style={{
+            flexShrink: 0, marginTop: 4, padding: '8px 14px', minHeight: 40,
+            background: customizing ? C.orange : C.surface, color: customizing ? '#fff' : C.muted,
+            border: `1.5px solid ${customizing ? C.orange : C.border}`, borderRadius: 8,
+            fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: "'Inter', sans-serif",
+            WebkitTapHighlightColor: 'transparent', whiteSpace: 'nowrap',
+          }}>{customizing ? '✓ Done' : '⚙ Customize'}</button>
+        </div>
+        {customizing && (
+          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: '14px 16px', marginBottom: 22, boxShadow: C.shadow1 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6, gap: 10 }}>
+              <div style={{ fontSize: 15, fontWeight: 800, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase' }}>Customize Dashboard</div>
+              <button onClick={resetLayout} style={{ background: 'none', border: 'none', color: C.orange, fontSize: 14, fontWeight: 700, cursor: 'pointer', padding: 0 }}>Reset to default</button>
+            </div>
+            <div style={{ fontSize: 14, color: C.dim, marginBottom: 10 }}>Reorder with ↑ ↓ or toggle a section off. Saved on this device.</div>
+            {layout.order.map((id, idx) => {
+              const w = WIDGETS.find(x => x.id === id);
+              if (!w) return null;
+              const hidden = isHidden(id);
+              const navBtn = (label, onClick, disabled) => (
+                <button onClick={onClick} disabled={disabled} style={{
+                  width: 36, height: 36, borderRadius: 8, border: `1px solid ${C.border}`,
+                  background: C.surface, color: disabled ? C.border2 : C.text, fontSize: 16, fontWeight: 800,
+                  cursor: disabled ? 'default' : 'pointer', opacity: disabled ? 0.5 : 1,
+                  WebkitTapHighlightColor: 'transparent',
+                }}>{label}</button>
+              );
+              return (
+                <div key={id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '8px 0', borderBottom: idx < layout.order.length - 1 ? `1px solid ${C.border}` : 'none' }}>
+                  <div style={{ fontSize: 16, fontWeight: 600, color: hidden ? C.dim : C.text, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {w.label}{hidden && <span style={{ color: C.dim, fontWeight: 500 }}> — hidden</span>}
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                    {navBtn('↑', () => moveWidget(id, -1), idx === 0)}
+                    {navBtn('↓', () => moveWidget(id, 1), idx === layout.order.length - 1)}
+                    <button onClick={() => toggleWidget(id)} style={{
+                      minWidth: 64, height: 36, borderRadius: 8, border: `1.5px solid ${hidden ? C.border : C.orange}`,
+                      background: hidden ? C.surface : C.orangeLo, color: hidden ? C.dim : C.orange,
+                      fontSize: 14, fontWeight: 700, cursor: 'pointer', WebkitTapHighlightColor: 'transparent',
+                    }}>{hidden ? 'Show' : 'Hide'}</button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
 
+      <div style={wrapStyle('invoiceStats')}>
       {/* Stats — 2×2 on tablet, 4 across on laptop. Each card now shows the
           dollar total this month + how it compares to last month so the
           owner sees momentum at a glance, not just a count. */}
@@ -2521,7 +2622,9 @@ function Dashboard({ user, nav, invoices = [], quotes = [], jobs = [], plans = [
           sub={`${invoices.length} invoice${invoices.length === 1 ? '' : 's'} all-time`}
         />
       </div>
+      </div>
 
+      <div style={wrapStyle('pipeline')}>
       {/* ── Quotes & Pipeline ─────────────────────────────────────────────
           Top of the funnel — what's out for bid, what's won and ready to
           bill, what's still in draft. The dashboard was invoice-only before. */}
@@ -2553,7 +2656,9 @@ function Dashboard({ user, nav, invoices = [], quotes = [], jobs = [], plans = [
           />
         </div>
       </div>
+      </div>
 
+      <div style={wrapStyle('schedule')}>
       {/* ── Today's Schedule ──────────────────────────────────────────────
           Surfaces today's scheduled jobs (scheduling is a core feature but
           wasn't on the dashboard). Falls back to the next upcoming job when
@@ -2606,7 +2711,9 @@ function Dashboard({ user, nav, invoices = [], quotes = [], jobs = [], plans = [
           </button>
         ))}
       </div>
+      </div>
 
+      <div style={wrapStyle('trend')}>
       {/* ── 12-Month Invoice Trend ─────────────────────────────────────────
           Bar chart of monthly invoiced totals so the owner can spot the
           slow seasons and the boom months at a glance. Tap any bar to jump
@@ -2681,7 +2788,9 @@ function Dashboard({ user, nav, invoices = [], quotes = [], jobs = [], plans = [
           })}
         </div>
       </div>
+      </div>
 
+      <div style={wrapStyle('techPerformance')}>
       {/* ── Tech Performance ────────────────────────────────────────────────
           Per-tech revenue breakdown with a period selector. Owner shows up
           as a "tech" too since they often do work themselves. Sorted by
@@ -2694,7 +2803,9 @@ function Dashboard({ user, nav, invoices = [], quotes = [], jobs = [], plans = [
         teamMembers={teamMembers}
         nav={nav}
       />
+      </div>
 
+      <div style={wrapStyle('recentAndActions')}>
       {/* Body — stacks fully on tablet */}
       <div style={{ display: 'grid', gridTemplateColumns: isTablet ? '1fr' : '1fr 290px', gap: 14 }}>
 
@@ -2779,7 +2890,9 @@ function Dashboard({ user, nav, invoices = [], quotes = [], jobs = [], plans = [
           </div>
         </div>
       </div>
+      </div>
 
+      <div style={wrapStyle('maintenancePlans')}>
       {/* Maintenance plans due soon — surfaces recurring work that's about to come up.
           Hidden entirely if the user has no plans yet, so it doesn't add noise to fresh accounts. */}
       {plans.length > 0 && (
@@ -2840,6 +2953,7 @@ function Dashboard({ user, nav, invoices = [], quotes = [], jobs = [], plans = [
           })}
         </div>
       )}
+      </div>
     </div>
   );
 }
