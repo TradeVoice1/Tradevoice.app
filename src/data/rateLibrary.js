@@ -8,6 +8,7 @@
 
 import { supabase } from "../supabase";
 import { authedFetch } from "../lib/authedFetch";
+import { cachedRead } from "../lib/offlineCache";
 
 const dbToItem = (r) => ({
   id:          r.id,
@@ -37,13 +38,18 @@ const itemToDb = (i, ownerId, defaults = {}) => ({
 });
 
 export async function listRateLibrary() {
-  const { data, error } = await supabase
-    .from('rate_library_items')
-    .select('*')
-    .order('kind',        { ascending: true })
-    .order('description', { ascending: true });
-  if (error) throw error;
-  return (data ?? []).map(dbToItem);
+  // Cached for offline (PWA Phase 1): network-first, falls back to the last
+  // synced copy with no signal — so the QuickAdd panel still has the
+  // contractor's line items when building a quote in the field.
+  return cachedRead('rateLibrary', async () => {
+    const { data, error } = await supabase
+      .from('rate_library_items')
+      .select('*')
+      .order('kind',        { ascending: true })
+      .order('description', { ascending: true });
+    if (error) throw error;
+    return (data ?? []).map(dbToItem);
+  });
 }
 
 // Insert one item (used by the existing QuickAddPanel "Save to Library").

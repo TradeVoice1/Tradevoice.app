@@ -2,6 +2,7 @@
 // so we don't need to filter by owner_id ourselves on read — Supabase does it.
 
 import { supabase } from "../supabase";
+import { cachedRead } from "../lib/offlineCache";
 
 const dbToClient = (r) => ({
   id:                 r.id,
@@ -35,12 +36,16 @@ const clientToDb = (c) => ({
 });
 
 export async function listClients() {
-  const { data, error } = await supabase
-    .from('clients')
-    .select('*')
-    .order('name', { ascending: true });
-  if (error) throw error;
-  return (data ?? []).map(dbToClient);
+  // Cached for offline (PWA Phase 1): network-first, falls back to the last
+  // synced copy with no signal. Transparent when online.
+  return cachedRead('clients', async () => {
+    const { data, error } = await supabase
+      .from('clients')
+      .select('*')
+      .order('name', { ascending: true });
+    if (error) throw error;
+    return (data ?? []).map(dbToClient);
+  });
 }
 
 export async function addClient(ownerId, client) {
