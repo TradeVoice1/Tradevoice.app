@@ -2423,19 +2423,59 @@ function Dashboard({ user, nav, invoices = [], quotes = [], jobs = [], plans = [
   };
   const isHidden = (id) => layout.hidden.includes(id);
   const orderOf  = (id) => { const i = layout.order.indexOf(id); return i < 0 ? WIDGETS.length : i; };
-  const wrapStyle = (id) => ({ order: orderOf(id), display: isHidden(id) ? 'none' : 'block' });
-  const moveWidget = (id, dir) => {
-    const order = [...layout.order];
-    const i = order.indexOf(id), j = i + dir;
-    if (i < 0 || j < 0 || j >= order.length) return;
-    [order[i], order[j]] = [order[j], order[i]];
-    persistLayout({ ...layout, order });
-  };
   const toggleWidget = (id) => persistLayout({
     ...layout,
     hidden: isHidden(id) ? layout.hidden.filter(x => x !== id) : [...layout.hidden, id],
   });
   const resetLayout = () => persistLayout({ order: DEFAULT_ORDER, hidden: [] });
+
+  // Drag-to-reorder (touch + mouse via pointer events). In Customize mode you
+  // press a card and drag it over another card to drop it there — the card
+  // under your finger becomes the drop target, and we splice the order on drop.
+  const [dragId, setDragId] = useState(null);
+  const [dropId, setDropId] = useState(null);
+  const [dragDY, setDragDY] = useState(0);
+  const dragStartY = useRef(0);
+  const handleGrab = (e, id) => {
+    e.preventDefault();
+    dragStartY.current = e.clientY;
+    setDragId(id); setDropId(id); setDragDY(0);
+    try { e.currentTarget.setPointerCapture(e.pointerId); } catch { /* capture optional */ }
+  };
+  const handleDragMove = (e) => {
+    if (!dragId) return;
+    setDragDY(e.clientY - dragStartY.current);
+    // Geometry-based drop detection (robust on touch — no elementFromPoint or
+    // pointer-events tricks): the drop target is the non-dragged card whose
+    // vertical span currently contains the pointer.
+    if (typeof document === 'undefined') return;
+    const els = document.querySelectorAll('[data-wid]');
+    for (let k = 0; k < els.length; k++) {
+      const wid = els[k].getAttribute('data-wid');
+      if (!wid || wid === dragId) continue;
+      const r = els[k].getBoundingClientRect();
+      if (e.clientY >= r.top && e.clientY <= r.bottom) { setDropId(wid); break; }
+    }
+  };
+  const handleDrop = () => {
+    if (!dragId) { return; }
+    if (dropId && dropId !== dragId) {
+      const order = layout.order.filter(x => x !== dragId);
+      const ti = order.indexOf(dropId);
+      if (ti >= 0) {
+        order.splice(ti + (dragDY > 0 ? 1 : 0), 0, dragId);
+        persistLayout({ ...layout, order });
+      }
+    }
+    setDragId(null); setDropId(null); setDragDY(0);
+  };
+  const wprops = (id) => ({
+    id,
+    label: WIDGETS.find(w => w.id === id)?.label || id,
+    customizing, hidden: isHidden(id), order: orderOf(id),
+    dragId, dropId, dragDY,
+    onGrab: handleGrab, onDragMove: handleDragMove, onDrop: handleDrop, onToggle: toggleWidget,
+  });
 
   // Maintenance plans coming due in the next 14 days (active only).
   // Sorted soonest-first so the most urgent ones surface at the top of the widget.
@@ -2553,46 +2593,16 @@ function Dashboard({ user, nav, invoices = [], quotes = [], jobs = [], plans = [
           }}>{customizing ? '✓ Done' : '⚙ Customize'}</button>
         </div>
         {customizing && (
-          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: '14px 16px', marginBottom: 22, boxShadow: C.shadow1 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6, gap: 10 }}>
-              <div style={{ fontSize: 15, fontWeight: 800, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase' }}>Customize Dashboard</div>
-              <button onClick={resetLayout} style={{ background: 'none', border: 'none', color: C.orange, fontSize: 14, fontWeight: 700, cursor: 'pointer', padding: 0 }}>Reset to default</button>
+          <div style={{ background: C.orangeLo, border: `1px solid ${C.orangeMd}`, borderRadius: 12, padding: '12px 16px', marginBottom: 22, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+            <div style={{ fontSize: 15, color: C.orange, fontWeight: 700, lineHeight: 1.4 }}>
+              Press and drag any card to reorder it. Tap <strong>× Remove</strong> to hide a section, <strong>+ Add</strong> to bring it back. Saved on this device.
             </div>
-            <div style={{ fontSize: 14, color: C.dim, marginBottom: 10 }}>Reorder with ↑ ↓ or toggle a section off. Saved on this device.</div>
-            {layout.order.map((id, idx) => {
-              const w = WIDGETS.find(x => x.id === id);
-              if (!w) return null;
-              const hidden = isHidden(id);
-              const navBtn = (label, onClick, disabled) => (
-                <button onClick={onClick} disabled={disabled} style={{
-                  width: 36, height: 36, borderRadius: 8, border: `1px solid ${C.border}`,
-                  background: C.surface, color: disabled ? C.border2 : C.text, fontSize: 16, fontWeight: 800,
-                  cursor: disabled ? 'default' : 'pointer', opacity: disabled ? 0.5 : 1,
-                  WebkitTapHighlightColor: 'transparent',
-                }}>{label}</button>
-              );
-              return (
-                <div key={id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '8px 0', borderBottom: idx < layout.order.length - 1 ? `1px solid ${C.border}` : 'none' }}>
-                  <div style={{ fontSize: 16, fontWeight: 600, color: hidden ? C.dim : C.text, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {w.label}{hidden && <span style={{ color: C.dim, fontWeight: 500 }}> — hidden</span>}
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-                    {navBtn('↑', () => moveWidget(id, -1), idx === 0)}
-                    {navBtn('↓', () => moveWidget(id, 1), idx === layout.order.length - 1)}
-                    <button onClick={() => toggleWidget(id)} style={{
-                      minWidth: 64, height: 36, borderRadius: 8, border: `1.5px solid ${hidden ? C.border : C.orange}`,
-                      background: hidden ? C.surface : C.orangeLo, color: hidden ? C.dim : C.orange,
-                      fontSize: 14, fontWeight: 700, cursor: 'pointer', WebkitTapHighlightColor: 'transparent',
-                    }}>{hidden ? 'Show' : 'Hide'}</button>
-                  </div>
-                </div>
-              );
-            })}
+            <button onClick={resetLayout} style={{ flexShrink: 0, background: 'none', border: 'none', color: C.orange, fontSize: 14, fontWeight: 800, cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>Reset to default</button>
           </div>
         )}
       </div>
 
-      <div style={wrapStyle('invoiceStats')}>
+      <DashWidget {...wprops('invoiceStats')}>
       {/* Stats — 2×2 on tablet, 4 across on laptop. Each card now shows the
           dollar total this month + how it compares to last month so the
           owner sees momentum at a glance, not just a count. */}
@@ -2622,9 +2632,9 @@ function Dashboard({ user, nav, invoices = [], quotes = [], jobs = [], plans = [
           sub={`${invoices.length} invoice${invoices.length === 1 ? '' : 's'} all-time`}
         />
       </div>
-      </div>
+      </DashWidget>
 
-      <div style={wrapStyle('pipeline')}>
+      <DashWidget {...wprops('pipeline')}>
       {/* ── Quotes & Pipeline ─────────────────────────────────────────────
           Top of the funnel — what's out for bid, what's won and ready to
           bill, what's still in draft. The dashboard was invoice-only before. */}
@@ -2656,9 +2666,9 @@ function Dashboard({ user, nav, invoices = [], quotes = [], jobs = [], plans = [
           />
         </div>
       </div>
-      </div>
+      </DashWidget>
 
-      <div style={wrapStyle('schedule')}>
+      <DashWidget {...wprops('schedule')}>
       {/* ── Today's Schedule ──────────────────────────────────────────────
           Surfaces today's scheduled jobs (scheduling is a core feature but
           wasn't on the dashboard). Falls back to the next upcoming job when
@@ -2711,9 +2721,9 @@ function Dashboard({ user, nav, invoices = [], quotes = [], jobs = [], plans = [
           </button>
         ))}
       </div>
-      </div>
+      </DashWidget>
 
-      <div style={wrapStyle('trend')}>
+      <DashWidget {...wprops('trend')}>
       {/* ── 12-Month Invoice Trend ─────────────────────────────────────────
           Bar chart of monthly invoiced totals so the owner can spot the
           slow seasons and the boom months at a glance. Tap any bar to jump
@@ -2788,9 +2798,9 @@ function Dashboard({ user, nav, invoices = [], quotes = [], jobs = [], plans = [
           })}
         </div>
       </div>
-      </div>
+      </DashWidget>
 
-      <div style={wrapStyle('techPerformance')}>
+      <DashWidget {...wprops('techPerformance')}>
       {/* ── Tech Performance ────────────────────────────────────────────────
           Per-tech revenue breakdown with a period selector. Owner shows up
           as a "tech" too since they often do work themselves. Sorted by
@@ -2803,9 +2813,9 @@ function Dashboard({ user, nav, invoices = [], quotes = [], jobs = [], plans = [
         teamMembers={teamMembers}
         nav={nav}
       />
-      </div>
+      </DashWidget>
 
-      <div style={wrapStyle('recentAndActions')}>
+      <DashWidget {...wprops('recentAndActions')}>
       {/* Body — stacks fully on tablet */}
       <div style={{ display: 'grid', gridTemplateColumns: isTablet ? '1fr' : '1fr 290px', gap: 14 }}>
 
@@ -2890,9 +2900,9 @@ function Dashboard({ user, nav, invoices = [], quotes = [], jobs = [], plans = [
           </div>
         </div>
       </div>
-      </div>
+      </DashWidget>
 
-      <div style={wrapStyle('maintenancePlans')}>
+      <DashWidget {...wprops('maintenancePlans')}>
       {/* Maintenance plans due soon — surfaces recurring work that's about to come up.
           Hidden entirely if the user has no plans yet, so it doesn't add noise to fresh accounts. */}
       {plans.length > 0 && (
@@ -2953,7 +2963,71 @@ function Dashboard({ user, nav, invoices = [], quotes = [], jobs = [], plans = [
           })}
         </div>
       )}
-      </div>
+      </DashWidget>
+    </div>
+  );
+}
+
+// One reorderable / hideable dashboard section. In Customize mode it overlays a
+// press-and-drag handle (the whole card) plus an Add/Remove toggle. Outside
+// Customize mode it's just the section, with CSS `order` + display applied so
+// the owner's saved layout takes effect.
+function DashWidget({ id, label, customizing, hidden, order, dragId, dropId, dragDY, onGrab, onDragMove, onDrop, onToggle, children }) {
+  const isDragging   = dragId === id;
+  const isDropTarget = customizing && dragId && dropId === id && !isDragging;
+  return (
+    <div
+      data-wid={id}
+      style={{
+        order,
+        display: (customizing || !hidden) ? 'block' : 'none',
+        position: 'relative',
+        opacity: isDragging ? 0.97 : (customizing && hidden ? 0.5 : 1),
+        transform: isDragging ? `translateY(${dragDY}px) scale(1.02)` : undefined,
+        zIndex: isDragging ? 50 : (isDropTarget ? 5 : undefined),
+        boxShadow: isDragging ? '0 14px 30px rgba(15,23,42,0.20)' : undefined,
+        borderRadius: isDragging ? 14 : undefined,
+        transition: isDragging ? 'none' : 'opacity 0.15s',
+        touchAction: customizing ? 'none' : undefined,
+        outline: isDropTarget ? `2px dashed ${C.orange}` : undefined,
+        outlineOffset: isDropTarget ? 4 : undefined,
+      }}
+    >
+      {children}
+      {customizing && (
+        <div
+          onPointerDown={(e) => onGrab(e, id)}
+          onPointerMove={onDragMove}
+          onPointerUp={onDrop}
+          onPointerCancel={onDrop}
+          style={{
+            position: 'absolute', inset: 0, zIndex: 3,
+            cursor: isDragging ? 'grabbing' : 'grab',
+            background: hidden ? 'rgba(241,245,249,0.66)' : 'rgba(255,255,255,0.32)',
+            border: `2px dashed ${isDragging ? C.orange : C.border2}`,
+            borderRadius: 14,
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            padding: '0 14px', gap: 10,
+            touchAction: 'none', userSelect: 'none', WebkitUserSelect: 'none',
+            WebkitTapHighlightColor: 'transparent',
+          }}
+        >
+          <span style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 16, fontWeight: 800, color: C.muted, pointerEvents: 'none' }}>
+            <span style={{ fontSize: 22, color: C.dim }}>⠿</span>
+            {label}{hidden && <span style={{ fontWeight: 600, color: C.dim }}> (hidden)</span>}
+          </span>
+          <button
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => { e.stopPropagation(); onToggle(id); }}
+            style={{
+              flexShrink: 0, padding: '7px 14px', borderRadius: 8,
+              border: `1.5px solid ${hidden ? C.success : C.error}`, background: '#fff',
+              color: hidden ? C.success : C.error, fontSize: 14, fontWeight: 800, cursor: 'pointer',
+              WebkitTapHighlightColor: 'transparent',
+            }}
+          >{hidden ? '+ Add' : '× Remove'}</button>
+        </div>
+      )}
     </div>
   );
 }
