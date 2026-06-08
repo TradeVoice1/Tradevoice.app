@@ -2777,15 +2777,6 @@ function Dashboard({ user, nav, invoices = [], quotes = [], jobs = [], plans = [
               </button>
             ))}
           </div>
-          {!isTablet && (
-            <div style={{ marginTop: 16, padding: '12px', background: C.orangeLo, border: `1px solid ${C.orangeMd}`, borderRadius: 3 }}>
-              <div style={{ fontSize: 13, color: C.orange, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 3 }}>Your Plan</div>
-              <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 24, fontWeight: 900, color: C.orange }}>
-                ${getPrice(user.trades?.length || 1)}<span style={{ fontSize: 15, fontWeight: 400, color: C.muted }}>/mo</span>
-              </div>
-              <div style={{ fontSize: 14, color: C.muted, marginTop: 3 }}>{user.trades?.join(', ')}</div>
-            </div>
-          )}
         </div>
       </div>
 
