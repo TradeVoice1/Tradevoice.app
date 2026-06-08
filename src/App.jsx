@@ -2982,43 +2982,35 @@ function DashWidget({ id, label, customizing, hidden, order, dragId, dropId, dra
         order,
         display: (customizing || !hidden) ? 'block' : 'none',
         position: 'relative',
-        opacity: isDragging ? 0.97 : (customizing && hidden ? 0.5 : 1),
-        transform: isDragging ? `translateY(${dragDY}px) scale(1.02)` : undefined,
+        transform: isDragging ? `translateY(${dragDY}px) scale(1.01)` : undefined,
         zIndex: isDragging ? 50 : (isDropTarget ? 5 : undefined),
-        boxShadow: isDragging ? '0 14px 30px rgba(15,23,42,0.20)' : undefined,
-        borderRadius: isDragging ? 14 : undefined,
         transition: isDragging ? 'none' : 'opacity 0.15s',
-        touchAction: customizing ? 'none' : undefined,
-        // In Customize mode, guarantee a draggable bar even for widgets that
-        // render no content (Tech Performance with no data, Maintenance Plans
-        // with no plans) — otherwise the overlay collapses and its handle +
-        // Remove button bunch up over the section below.
-        minHeight: customizing ? 64 : undefined,
         marginBottom: customizing ? 12 : undefined,
-        outline: isDropTarget ? `2px dashed ${C.orange}` : undefined,
-        outlineOffset: isDropTarget ? 4 : undefined,
       }}
     >
-      {children}
-      {customizing && (
+      {customizing ? (
+        // While customizing, the card collapses to a single draggable bar so the
+        // handle never overlaps the section's own title. Drag the bar to reorder;
+        // the real card returns (in its new spot) when you tap Done.
         <div
           onPointerDown={(e) => onGrab(e, id)}
           onPointerMove={onDragMove}
           onPointerUp={onDrop}
           onPointerCancel={onDrop}
           style={{
-            position: 'absolute', inset: 0, zIndex: 3,
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
+            minHeight: 62, padding: '12px 16px',
+            background: hidden ? C.surface2 : C.surface,
+            border: `2px dashed ${isDragging || isDropTarget ? C.orange : C.border2}`,
+            borderRadius: 12,
+            boxShadow: isDragging ? '0 14px 30px rgba(15,23,42,0.20)' : 'none',
+            opacity: hidden ? 0.7 : 1,
             cursor: isDragging ? 'grabbing' : 'grab',
-            background: hidden ? 'rgba(241,245,249,0.66)' : 'rgba(255,255,255,0.32)',
-            border: `2px dashed ${isDragging ? C.orange : C.border2}`,
-            borderRadius: 14,
-            display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between',
-            padding: '12px 14px', gap: 10,
             touchAction: 'none', userSelect: 'none', WebkitUserSelect: 'none',
             WebkitTapHighlightColor: 'transparent',
           }}
         >
-          <span style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 16, fontWeight: 800, color: C.muted, pointerEvents: 'none' }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 17, fontWeight: 800, color: hidden ? C.dim : C.text, pointerEvents: 'none' }}>
             <span style={{ fontSize: 22, color: C.dim }}>⠿</span>
             {label}{hidden && <span style={{ fontWeight: 600, color: C.dim }}> (hidden)</span>}
           </span>
@@ -3026,14 +3018,14 @@ function DashWidget({ id, label, customizing, hidden, order, dragId, dropId, dra
             onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => { e.stopPropagation(); onToggle(id); }}
             style={{
-              flexShrink: 0, padding: '7px 14px', borderRadius: 8,
+              flexShrink: 0, padding: '8px 15px', borderRadius: 8,
               border: `1.5px solid ${hidden ? C.success : C.error}`, background: '#fff',
               color: hidden ? C.success : C.error, fontSize: 14, fontWeight: 800, cursor: 'pointer',
               WebkitTapHighlightColor: 'transparent',
             }}
           >{hidden ? '+ Add' : '× Remove'}</button>
         </div>
-      )}
+      ) : children}
     </div>
   );
 }
