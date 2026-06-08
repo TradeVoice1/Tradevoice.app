@@ -2989,6 +2989,12 @@ function DashWidget({ id, label, customizing, hidden, order, dragId, dropId, dra
         borderRadius: isDragging ? 14 : undefined,
         transition: isDragging ? 'none' : 'opacity 0.15s',
         touchAction: customizing ? 'none' : undefined,
+        // In Customize mode, guarantee a draggable bar even for widgets that
+        // render no content (Tech Performance with no data, Maintenance Plans
+        // with no plans) — otherwise the overlay collapses and its handle +
+        // Remove button bunch up over the section below.
+        minHeight: customizing ? 64 : undefined,
+        marginBottom: customizing ? 12 : undefined,
         outline: isDropTarget ? `2px dashed ${C.orange}` : undefined,
         outlineOffset: isDropTarget ? 4 : undefined,
       }}
@@ -3006,8 +3012,8 @@ function DashWidget({ id, label, customizing, hidden, order, dragId, dropId, dra
             background: hidden ? 'rgba(241,245,249,0.66)' : 'rgba(255,255,255,0.32)',
             border: `2px dashed ${isDragging ? C.orange : C.border2}`,
             borderRadius: 14,
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            padding: '0 14px', gap: 10,
+            display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between',
+            padding: '12px 14px', gap: 10,
             touchAction: 'none', userSelect: 'none', WebkitUserSelect: 'none',
             WebkitTapHighlightColor: 'transparent',
           }}
