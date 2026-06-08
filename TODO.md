@@ -5,19 +5,13 @@ to pick up cold. Update this as we go.
 
 ---
 
-## 🚨 Add PERPLEXITY_API_KEY to Vercel env vars (added 2026-05-22)
+## ✅ PERPLEXITY_API_KEY in Vercel — DONE (2026-06)
 
-Shipped the Elite-tier AI scope analyzer tonight (`/api/quotes/analyze-scope`)
-which chains Claude → Perplexity → Claude for PDF scope extraction. The
-Perplexity step needs `PERPLEXITY_API_KEY` set in Vercel Production
-(+ Preview if you want testing).
-
-Get a key at perplexity.ai/account → API tab. Sonar (online search)
-tier is fine; ~$0.05-0.10 per analysis depending on PDF size.
-
-Without this env var set, dropping a PDF will show a generic "Analysis
-failed" error in the UI. Backend logs will show "PERPLEXITY_API_KEY
-env var not set".
+`PERPLEXITY_API_KEY` set in Vercel Production and the app redeployed
+(prod commit 579ad9b). The Elite-tier AI scope analyzer
+(`/api/quotes/analyze-scope`, Claude → Perplexity → Claude) is live.
+Endpoint verified routed (405 on GET). Full live run folded into the
+launch smoke test.
 
 ---
 
@@ -51,13 +45,12 @@ accounts.
    NULL. ~1 hour. Worth doing if you have customers in this state
    when you open the allowlist.
 
-### 🟡 Cron secret hard-fail (audit finding, MEDIUM)
+### ✅ Cron secret hard-fail — DONE (verified 2026-06 audit)
 
-`api/cron/refresh-sales-tax.js` lines 315-323 check `CRON_SECRET` via
-header OR query-param fallback, but if the env var is unset the
-endpoint has no enforcement at all — it'd be publicly callable. Vercel
-cron always sets the header so it's theoretical in production, but
-worth tightening to a hard fail. ~10 min.
+`api/cron/refresh-sales-tax.js` now hard-fails: returns 500
+`cron_secret_not_configured` if `CRON_SECRET` is unset, and the
+query-param fallback was removed (header-only `Bearer` match). No
+longer publicly callable.
 
 ### 🟡 Founder TOTP recovery flow
 
@@ -74,18 +67,15 @@ just want belt-and-suspenders) consider:
    unlocks the gate. Tied to the auth email — if THAT's compromised
    too you have bigger problems. ~45 min.
 
-### 🟢 URL validation on Google Review Link
+### ✅ URL validation on Google Review Link — DONE (verified 2026-06 audit)
 
-Settings → Edit Profile → Google Review Link accepts any string and
-sends it as-is in marketing emails. If a contractor pastes garbage
-they break their own customer emails (self-inflicted) but a regex
-check would catch the typo case. ~5 min.
+Profile editor (`src/App.jsx` ~7341) validates the review link against
+`^https?://`, flags a bad value with a red border + inline warning.
 
-### 🟢 Webhook error log verbosity (audit finding, LOW)
+### ✅ Webhook error log verbosity — DONE (verified 2026-06 audit)
 
-`api/stripe/webhook.js` logs raw error messages on signature
-verification failure. Minor info leak in your own Vercel logs only.
-~5 min cosmetic.
+`api/stripe/webhook.js` line ~89 logs a generic
+`signature verification failed` message — no raw error text leaked.
 
 ### 🟢 Stripe callback O(N) state lookup (audit finding, LOW)
 
@@ -102,13 +92,11 @@ shows "no events recorded yet" for accounts whose history predates
 that migration. Stripe's Events API can fill this in — ~1 hour
 script. Skip unless you have customers asking for older history.
 
-### 🟢 Marketing send: server-side email format validation
+### ✅ Marketing send: email format validation — DONE (verified 2026-06 audit)
 
-`api/marketing/send.js` doesn't validate that the recipient's
-client.email actually looks like an email. If a contractor's clients
-table has bad data, Resend will reject and the row gets logged as
-'failed'. Mild — adds a "tell me why before I burn the API call"
-check. ~10 min.
+`api/marketing/send.js` has `looksLikeEmail()` and rejects bad-format
+recipients before the Resend call, logging `bad_email_format` (no
+wasted API spend).
 
 ### 🟢 Existing accounts missing state field
 
