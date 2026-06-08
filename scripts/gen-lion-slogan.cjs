@@ -31,10 +31,31 @@ async function lionTile() {
   const cropBuf = await sharp(SRC)
     .extract({ left: 0, top: 0, width: cropW, height: meta.height })
     .png().toBuffer();
-  const { data, info } = await sharp(cropBuf).trim({ threshold: 10 }).toBuffer({ resolveWithObject: true });
-  const side = Math.round(Math.max(info.width, info.height) * 1.02);
+  const trimmed = await sharp(cropBuf).trim({ threshold: 10 }).png().toBuffer();
+  const { width: tw, height: th } = await sharp(trimmed).metadata();
+
+  // Despeckle the right edge: the 25.5% crop catches a ~4px sliver of the
+  // vine divider to the right of the lion, separated by a white gap. Find the
+  // first vertical gap >= 6px of all-white columns and drop everything to its
+  // right, leaving only the lion + laurel blob.
+  const rgb = await sharp(trimmed).removeAlpha().raw().toBuffer();
+  const ink = new Array(tw).fill(false);
+  for (let x = 0; x < tw; x++) {
+    for (let y = 0; y < th; y++) {
+      const i = (y * tw + x) * 3;
+      if ((rgb[i] + rgb[i + 1] + rgb[i + 2]) / 3 < 230) { ink[x] = true; break; }
+    }
+  }
+  let cut = tw, gapStart = -1;
+  for (let x = 0; x < tw; x++) {
+    if (!ink[x]) { if (gapStart < 0) gapStart = x; }
+    else { if (gapStart >= 0 && x - gapStart >= 6) { cut = gapStart; break; } gapStart = -1; }
+  }
+  const body = await sharp(trimmed).extract({ left: 0, top: 0, width: cut, height: th }).png().toBuffer();
+
+  const side = Math.round(Math.max(cut, th) * 1.02);
   return sharp({ create: { width: side, height: side, channels: 4, background: WHITE_RGB } })
-    .composite([{ input: data, gravity: 'center' }])
+    .composite([{ input: body, gravity: 'center' }])
     .png().toBuffer();
 }
 
