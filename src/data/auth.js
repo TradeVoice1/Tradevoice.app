@@ -273,7 +273,19 @@ export async function signOut() {
 }
 
 // Convenience: subscribe to auth changes (sign-in/out across tabs, token refresh, etc.)
+//
+// CRITICAL: never run Supabase calls (getProfile, getSession, signOut, …)
+// directly inside the onAuthStateChange callback. supabase-js fires this while
+// it is still settling the sign-in, so an in-callback DB/auth call can stall
+// the signInWithPassword promise — handleLogin then never navigates and the
+// user is stuck on "Signing in…" until they manually refresh (the session was
+// already written to localStorage, which is why a refresh logs them in). The
+// fix is to hand the work off to a fresh macrotask so the callback returns
+// immediately and the auth library can finish.
 export function onAuthChange(handler) {
-  const { data } = supabase.auth.onAuthStateChange((_event, session) => handler(session?.user ?? null));
+  const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+    const sessionUser = session?.user ?? null;
+    setTimeout(() => handler(sessionUser), 0);
+  });
   return () => data.subscription.unsubscribe();
 }
