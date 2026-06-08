@@ -49,6 +49,7 @@ import { invoicesToQbCsv, downloadCsv } from "./lib/qbExport";
 import { useBreakpoint } from "./lib/useBreakpoint";
 import { buildSocialLinks } from "./lib/socialHandles";
 import { authedFetch } from "./lib/authedFetch";
+import { deleteAccount } from "./data/account";
 import { can, caps, tierLabel, tierOf } from "./lib/tier";
 
 // ─── FONTS ─────────────────────────────────────────────────────────────────────
@@ -8478,10 +8479,74 @@ function TimeOffPanel({ team = [], timeOff = [], onAdd, onRemove }) {
   );
 }
 
+// ── Delete-account confirmation modal ──
+// App-Store-required self-service deletion. Requires typing DELETE, then
+// calls /api/account/delete (cancels subscription, purges storage, deletes
+// the auth user → cascades all data), signs out, and returns to landing.
+function DeleteAccountModal({ open, onClose }) {
+  const [confirm, setConfirm] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+  if (!open) return null;
+  const canDelete = confirm.trim().toUpperCase() === 'DELETE' && !busy;
+  const doDelete = async () => {
+    setBusy(true); setErr('');
+    try {
+      await deleteAccount();
+      try { await signOut(); } catch { /* session is already gone */ }
+      window.location.href = '/';
+    } catch (e) {
+      setErr(e?.message || 'Could not delete your account. Please try again.');
+      setBusy(false);
+    }
+  };
+  return (
+    <div
+      onClick={(e) => { if (e.target === e.currentTarget && !busy) onClose(); }}
+      style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.45)', zIndex: 4000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
+    >
+      <div style={{ background: C.surface, borderRadius: 12, maxWidth: 440, width: '100%', padding: 24, boxShadow: '0 20px 60px rgba(15,23,42,0.35)' }}>
+        <div style={{ fontSize: 22, fontWeight: 800, color: '#dc2626', marginBottom: 10 }}>Delete account</div>
+        <p style={{ fontSize: 15, color: C.text, lineHeight: 1.55, margin: '0 0 10px' }}>
+          This permanently deletes your Tradevoice account and <b>all of your data</b> —
+          clients, quotes, invoices, jobs, and settings. Your subscription will be
+          canceled. <b>This cannot be undone.</b>
+        </p>
+        <p style={{ fontSize: 13, color: C.muted, lineHeight: 1.5, margin: '0 0 16px' }}>
+          Payments you've already collected stay in your own Stripe account. Type <b>DELETE</b> below to confirm.
+        </p>
+        <input
+          type="text"
+          value={confirm}
+          onChange={(e) => setConfirm(e.target.value)}
+          placeholder="DELETE"
+          autoCapitalize="characters"
+          disabled={busy}
+          style={{ width: '100%', padding: '10px 12px', fontSize: 15, border: `1px solid ${C.border2}`, borderRadius: 6, boxSizing: 'border-box', color: C.text }}
+        />
+        {err && <div style={{ color: '#dc2626', fontSize: 13, marginTop: 10 }}>{err}</div>}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 18 }}>
+          <button
+            onClick={onClose}
+            disabled={busy}
+            style={{ padding: '10px 18px', borderRadius: 8, border: `1px solid ${C.border2}`, background: C.surface, color: C.muted, fontSize: 15, fontWeight: 600, cursor: busy ? 'default' : 'pointer' }}
+          >Cancel</button>
+          <button
+            onClick={doDelete}
+            disabled={!canDelete}
+            style={{ padding: '10px 18px', borderRadius: 8, border: 'none', background: canDelete ? '#dc2626' : '#fca5a5', color: '#fff', fontSize: 15, fontWeight: 700, cursor: canDelete ? 'pointer' : 'default' }}
+          >{busy ? 'Deleting…' : 'Permanently delete'}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ══════════════════════════════════════════════════════════════════════════════
 // SETTINGS
 // ══════════════════════════════════════════════════════════════════════════════
 function Settings({ user, setUser, logo, onLogoChange, showProfileModal, setShowProfileModal, payments, setPayments, taxRates, setTaxRates, socialHandles, setSocialHandles, teamMembers, setTeamMembers, persistTeamMember, removeTeamMember, createTechAccount: createTechAccountFn, timeOff = [], persistTimeOff, removeTimeOff }) {
+  const [showDeleteAccount, setShowDeleteAccount] = useState(false);
   const { isTablet } = useBreakpoint();
   const tradeCount   = user.trades?.length || 1;
   const currentPrice = getPrice(tradeCount);
@@ -9116,7 +9181,21 @@ function Settings({ user, setUser, logo, onLogoChange, showProfileModal, setShow
           </div>
           <GhostBtn size="sm">Sign Out</GhostBtn>
         </div>
+
+        {/* Delete account — destructive, self-service (App Store requirement) */}
+        <div style={{ background: C.surface, border: '1px solid #fecaca', borderRadius: 4, padding: '18px 22px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginTop: 12 }}>
+          <div>
+            <div style={{ fontSize: 20, fontWeight: 600, color: '#dc2626' }}>Delete Account</div>
+            <div style={{ fontSize: 18, color: C.muted, marginTop: 2 }}>Permanently delete your account and all your data. This can't be undone.</div>
+          </div>
+          <button
+            onClick={() => setShowDeleteAccount(true)}
+            style={{ padding: '9px 18px', borderRadius: 50, border: '1px solid #fca5a5', background: C.surface, color: '#dc2626', fontSize: 15, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}
+          >Delete Account</button>
+        </div>
       </div>
+
+      <DeleteAccountModal open={showDeleteAccount} onClose={() => setShowDeleteAccount(false)} />
 
       {/* ── Developer tools — only visible for allowlisted dev emails ──
           Hidden in production for everyone except the founder's test
