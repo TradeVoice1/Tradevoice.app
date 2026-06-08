@@ -27,7 +27,7 @@ const fetchWithTimeout = (input, init = {}) => {
   // File uploads/downloads (Supabase Storage) legitimately take longer than an
   // API call, especially on weak job-site connections — give them more time so
   // a valid 2 MB logo isn't killed mid-upload by the 20s default.
-  const reqUrl = typeof input === 'string' ? input : (input && input.url) || '';
+  const reqUrl = typeof input === 'string' ? input : (input?.url || input?.href || String(input || ''));
   const timeoutMs = reqUrl.includes('/storage/v1/') ? UPLOAD_TIMEOUT_MS : REQUEST_TIMEOUT_MS;
   const timer = setTimeout(() => {
     const msg = "We couldn't reach the server. Check your internet connection and try again — " +
@@ -37,13 +37,17 @@ const fetchWithTimeout = (input, init = {}) => {
   }, timeoutMs);
 
   const upstream = init.signal;
+  const onUpstreamAbort = () => controller.abort(upstream.reason);
   if (upstream) {
     if (upstream.aborted) controller.abort(upstream.reason);
-    else upstream.addEventListener('abort', () => controller.abort(upstream.reason), { once: true });
+    else upstream.addEventListener('abort', onUpstreamAbort, { once: true });
   }
 
   return fetch(input, { ...init, signal: controller.signal })
-    .finally(() => clearTimeout(timer));
+    .finally(() => {
+      clearTimeout(timer);
+      if (upstream) upstream.removeEventListener('abort', onUpstreamAbort);
+    });
 };
 
 export const supabase = createClient(supabaseUrl, supabaseKey, {

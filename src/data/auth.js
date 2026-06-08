@@ -283,9 +283,15 @@ export async function signOut() {
 // fix is to hand the work off to a fresh macrotask so the callback returns
 // immediately and the auth library can finish.
 export function onAuthChange(handler) {
+  const timers = new Set();
   const { data } = supabase.auth.onAuthStateChange((_event, session) => {
     const sessionUser = session?.user ?? null;
-    setTimeout(() => handler(sessionUser), 0);
+    const t = setTimeout(() => { timers.delete(t); handler(sessionUser); }, 0);
+    timers.add(t);
   });
-  return () => data.subscription.unsubscribe();
+  return () => {
+    timers.forEach(clearTimeout);
+    timers.clear();
+    data.subscription.unsubscribe();
+  };
 }
