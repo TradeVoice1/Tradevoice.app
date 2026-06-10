@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useMemo, lazy, Suspense, Fragment } from "react";
+import QRCode from "qrcode";
 // Heavy screens are code-split — they load on demand the first time the user
 // visits them. The auth bundle stays small so first paint is fast.
 const ForgotPasswordScreen = lazy(() => import("./ForgotPassword").then(m => ({ default: m.ForgotPasswordScreen })));
@@ -5014,6 +5015,11 @@ function InvoiceDocument({ invoice, user, logo, payments, onEdit, onBack, onReco
           return (
             <div style={{ padding: '18px 44px', borderTop: '1.5px solid #ebebeb', background: '#fafafa' }}>
               <div style={{ fontSize: 15, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#aaa', marginBottom: 12, fontFamily: "'Inter', sans-serif" }}>How to Pay</div>
+              {invoice.shareToken && payments.stripe?.connected && (
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
+                  <PayQR url={`https://app.thetradevoice.com/i/${invoice.shareToken}`} label="Scan to pay online" />
+                </div>
+              )}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '10px 24px' }}>
                 {methods.map(m => (
                   <div key={m.label} style={{ padding: m.highlight ? '10px 12px' : '0', background: m.highlight ? '#fff7ed' : 'transparent', border: m.highlight ? `1px solid ${C.orange}44` : 'none', borderRadius: m.highlight ? 3 : 0 }}>
@@ -5114,6 +5120,30 @@ function InvoiceDocument({ invoice, user, logo, payments, onEdit, onBack, onReco
   );
 }
 
+// ── Scan-to-Pay QR ───────────────────────────────────────────────────────────
+// Renders the invoice's public pay link (/i/<shareToken>) as a QR so a client
+// can scan a printed/emailed invoice — or the contractor's phone screen — and
+// land straight on the Stripe pay page. Generated client-side with the bundled
+// `qrcode` lib (no third party ever sees the link). Returns null until ready.
+function PayQR({ url, size = 128, label = 'Scan to pay' }) {
+  const [src, setSrc] = useState('');
+  useEffect(() => {
+    let alive = true;
+    if (!url) { setSrc(''); return undefined; }
+    QRCode.toDataURL(url, { width: size, margin: 1, errorCorrectionLevel: 'M', color: { dark: '#0f172a', light: '#ffffff' } })
+      .then(d => { if (alive) setSrc(d); })
+      .catch(() => { if (alive) setSrc(''); });
+    return () => { alive = false; };
+  }, [url, size]);
+  if (!src) return null;
+  return (
+    <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+      <img src={src} alt={label} width={size} height={size} style={{ display: 'block', borderRadius: 10, border: `1px solid ${C.border}`, background: '#fff', padding: 6 }} />
+      <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: C.muted, fontFamily: "'Inter', sans-serif" }}>{label}</div>
+    </div>
+  );
+}
+
 // ── Share Invoice Modal — public link + send actions ─────────────────────────
 // Surfaces the /i/<share_token> URL and gives the user three quick ways to
 // hand it to the customer: copy link, text (mobile sms: scheme), or email
@@ -5188,6 +5218,13 @@ function ShareInvoiceModal({ invoice, onClose, onSend }) {
               color: copied === 'url' ? C.success : C.muted, fontSize: 16, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap',
             }}>{copied === 'url' ? '✓ Copied' : 'Copy'}</button>
           </div>
+
+          {/* Scan-to-Pay QR — show the client your screen to scan, or save it. */}
+          {invoice.shareToken && (
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 18 }}>
+              <PayQR url={url} label="Scan to pay" />
+            </div>
+          )}
 
           {/* Send via... */}
           <div style={{ ...s.label, marginBottom: 6 }}>Send Via</div>
