@@ -30,7 +30,7 @@ const OwnerDashboard       = lazy(() => import("./OwnerDashboard"));
 const TotpScreen           = lazy(() => import("./TotpScreen"));
 const PrivacyPolicyScreen  = lazy(() => import("./LegalScreens").then(m => ({ default: m.PrivacyPolicyScreen })));
 const TermsScreen          = lazy(() => import("./LegalScreens").then(m => ({ default: m.TermsScreen })));
-import { signIn, signUp, signOut, getProfile, upsertProfile, getSessionUser, onAuthChange, techSignIn, techChangePassword, signInWithGoogle } from "./data/auth";
+import { signIn, signUp, signOut, getProfile, upsertProfile, getSessionUser, onAuthChange, techSignIn, techChangePassword, signInWithGoogle, listMfaFactors, enrollTotp, verifyTotp, unenrollTotp, needsMfaChallenge } from "./data/auth";
 import { isUnlockValid } from "./data/superOwnerTotp";
 // Shared hang-safe promise wrapper — see src/lib/withTimeout.js for the
 // pattern. Use it on any await that goes to Supabase (auth, REST, RPC)
@@ -498,7 +498,77 @@ function AuthShell({ children, maxWidth = 420 }) {
 }
 
 // ── LOGIN ─────────────────────────────────────────────────────────────────────
-function LoginScreen({ onLogin, onSignup, onForgot }) {
+// ── 2FA challenge — full-screen gate after password, before the app ──────────
+// Shown when a session is signed in (password accepted) but the account has a
+// verified authenticator factor it hasn't satisfied yet (AAL1 with AAL2
+// available). Verifying upgrades the session to AAL2 and reloads so the boot
+// path routes with full context. Backing out signs out entirely — a
+// half-authenticated session should never linger.
+function MfaChallengeScreen({ onBack }) {
+  const [code, setCode] = useState('');
+  const [err,  setErr]  = useState('');
+  const [busy, setBusy] = useState(false);
+
+  const submit = async () => {
+    const clean = code.replace(/\D/g, '');
+    if (busy || clean.length !== 6) { setErr('Enter the 6-digit code from your authenticator app.'); return; }
+    setBusy(true); setErr('');
+    try {
+      const { verified } = await listMfaFactors();
+      if (!verified.length) throw new Error('No authenticator is set up on this account.');
+      await verifyTotp(verified[0].id, clean);
+      // Session is now AAL2 — reload and let the boot path route to the app.
+      window.location.reload();
+    } catch (e) {
+      setErr(/invalid|expired|code/i.test(e?.message || '')
+        ? "That code didn't match. Codes change every 30 seconds — try the current one."
+        : (e?.message || 'Could not verify the code.'));
+      setBusy(false);
+    }
+  };
+
+  const back = async () => {
+    try { await signOut(); } catch { /* session may already be gone */ }
+    onBack();
+  };
+
+  return (
+    <div style={{ minHeight: '100dvh', background: C.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+      <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: '32px 28px', width: '100%', maxWidth: 420 }}>
+        <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 26, fontWeight: 800, color: C.text, marginBottom: 6 }}>Two-step verification</div>
+        <div style={{ fontSize: 16, color: C.muted, lineHeight: 1.55, marginBottom: 18 }}>
+          Enter the 6-digit code from your authenticator app to finish signing in.
+        </div>
+        {err && <div style={{ background: '#fef2f2', border: `1px solid ${C.error}33`, borderRadius: 6, padding: '9px 12px', fontSize: 15, color: C.error, marginBottom: 14 }}>{err}</div>}
+        <input
+          autoFocus
+          inputMode="numeric"
+          autoComplete="one-time-code"
+          maxLength={6}
+          value={code}
+          onChange={e => setCode(e.target.value.replace(/\D/g, ''))}
+          onKeyDown={e => { if (e.key === 'Enter') submit(); }}
+          placeholder="000000"
+          style={{
+            width: '100%', boxSizing: 'border-box', padding: '14px 16px', minHeight: 52,
+            fontSize: 28, letterSpacing: '0.4em', textAlign: 'center', fontFamily: 'ui-monospace, monospace',
+            border: `1.5px solid ${C.border2}`, borderRadius: 8, background: C.raised, color: C.text, marginBottom: 14,
+          }}
+        />
+        <button onClick={submit} disabled={busy} style={{
+          width: '100%', padding: '13px', minHeight: 50, border: 'none', borderRadius: 50,
+          background: C.orange, color: '#fff', fontSize: 17, fontWeight: 700, cursor: 'pointer',
+          opacity: busy ? 0.7 : 1, fontFamily: "'Inter', sans-serif", marginBottom: 12,
+        }}>{busy ? 'Verifying…' : 'Verify'}</button>
+        <button onClick={back} style={{ width: '100%', background: 'none', border: 'none', color: C.muted, fontSize: 15, fontWeight: 600, cursor: 'pointer', padding: 6 }}>
+          ← Back to sign in
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function LoginScreen({ onLogin, onSignup, onForgot, onMfaNeeded }) {
   // Two modes share this screen: 'owner' (email + password) and 'tech' (Tech ID + password).
   // Default mode is owner since most logins are them; techs flip the toggle.
   const [mode,     setMode]     = useState('owner');
@@ -540,10 +610,15 @@ function LoginScreen({ onLogin, onSignup, onForgot }) {
       setLoading(true); setError('');
       try {
         const authUser = await withTimeout(signIn(email.trim(), password), { label: 'auth.signIn' });
+        // 2FA gate: password accepted, but the account has an authenticator
+        // enrolled — hand off to the code screen instead of granting access.
+        if (await needsMfaChallenge()) { onMfaNeeded?.(); return; }
         const profile  = await withTimeout(getProfile(authUser.id, authUser.email), { label: 'auth.getProfile' });
         onLogin(profile ?? { id: authUser.id, email: authUser.email, role: 'owner', trades: [], states: [] });
       } catch (e) {
-        setError(e?.message || 'Could not sign in. Check your email and password.');
+        setError(/email not confirmed/i.test(e?.message || '')
+          ? 'Confirm your email first — check your inbox for the confirmation link, then sign in.'
+          : (e?.message || 'Could not sign in. Check your email and password.'));
       } finally {
         setLoading(false);
       }
@@ -552,6 +627,7 @@ function LoginScreen({ onLogin, onSignup, onForgot }) {
       setLoading(true); setError('');
       try {
         const authUser = await withTimeout(techSignIn(techId.trim(), password), { label: 'auth.techSignIn' });
+        if (await needsMfaChallenge()) { onMfaNeeded?.(); return; }
         const profile  = await withTimeout(getProfile(authUser.id, authUser.email), { label: 'auth.getProfile' });
         // Tech profile should already have role='tech' from createTechAccount;
         // fall back to 'tech' explicitly if the profile patch missed.
@@ -9032,11 +9108,134 @@ function DeleteAccountModal({ open, onClose }) {
   );
 }
 
+// ── 2FA setup modal — enroll an authenticator app ────────────────────────────
+// enroll → QR (the otpauth:// uri rendered with the bundled qrcode lib) +
+// manual-entry secret → user types the 6-digit code → verify → factor active.
+// Closing before verifying unenrolls the half-created factor so a stale
+// pending factor never blocks a future attempt.
+function MfaSetupModal({ open, onClose }) {
+  const [enrolling, setEnrolling] = useState(null); // { factorId, uri, secret }
+  const [qr,   setQr]   = useState('');
+  const [code, setCode] = useState('');
+  const [err,  setErr]  = useState('');
+  const [busy, setBusy] = useState(false);
+  const [done, setDone] = useState(false);
+
+  useEffect(() => {
+    if (!open) { setEnrolling(null); setQr(''); setCode(''); setErr(''); setBusy(false); setDone(false); return undefined; }
+    let alive = true;
+    enrollTotp()
+      .then(e => {
+        if (!alive) return null;
+        setEnrolling(e);
+        return QRCode.toDataURL(e.uri, { width: 200, margin: 1, color: { dark: '#0f172a', light: '#ffffff' } });
+      })
+      .then(d => { if (alive && d) setQr(d); })
+      .catch(e => { if (alive) setErr(e?.message || 'Could not start 2FA setup.'); });
+    return () => { alive = false; };
+  }, [open]);
+
+  if (!open) return null;
+
+  const cancel = () => {
+    // Abandoning setup: clean up the unverified factor (fire-and-forget).
+    if (enrolling && !done) unenrollTotp(enrolling.factorId).catch(() => {});
+    onClose();
+  };
+
+  const submit = async () => {
+    const clean = code.replace(/\D/g, '');
+    if (busy || !enrolling || clean.length !== 6) { setErr('Enter the 6-digit code from your authenticator app.'); return; }
+    setBusy(true); setErr('');
+    try {
+      await verifyTotp(enrolling.factorId, clean);
+      setDone(true);
+    } catch (e) {
+      setErr(/invalid|expired|code/i.test(e?.message || '')
+        ? "That code didn't match. Codes change every 30 seconds — try the current one."
+        : (e?.message || 'Could not verify the code.'));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div onClick={cancel} style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: 14, width: '100%', maxWidth: 460, boxShadow: '0 20px 60px rgba(0,0,0,0.25)', padding: '26px 26px 22px' }}>
+        {done ? (
+          <>
+            <div style={{ fontSize: 22, fontWeight: 800, color: C.success, marginBottom: 8 }}>✓ Two-factor authentication is on</div>
+            <div style={{ fontSize: 16, color: C.muted, lineHeight: 1.6, marginBottom: 18 }}>
+              From now on, signing in takes your password plus a 6-digit code from your authenticator app. Keep the app installed — without it you can't sign in.
+            </div>
+            <button onClick={onClose} style={{ width: '100%', padding: '12px', minHeight: 48, border: 'none', borderRadius: 50, background: C.orange, color: '#fff', fontSize: 16, fontWeight: 700, cursor: 'pointer' }}>Done</button>
+          </>
+        ) : (
+          <>
+            <div style={{ fontSize: 22, fontWeight: 800, color: C.text, marginBottom: 6 }}>Set up two-factor authentication</div>
+            <div style={{ fontSize: 15, color: C.muted, lineHeight: 1.6, marginBottom: 16 }}>
+              Scan this QR code with an authenticator app (Google Authenticator, Microsoft Authenticator, Authy, or 1Password), then enter the 6-digit code it shows.
+            </div>
+            {err && <div style={{ background: '#fef2f2', border: `1px solid ${C.error}33`, borderRadius: 6, padding: '9px 12px', fontSize: 15, color: C.error, marginBottom: 12 }}>{err}</div>}
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 14 }}>
+              {qr
+                ? <img src={qr} alt="Scan with your authenticator app" width={200} height={200} style={{ borderRadius: 10, border: `1px solid ${C.border}` }} />
+                : <div style={{ width: 200, height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.dim, fontSize: 15, border: `1px dashed ${C.border2}`, borderRadius: 10 }}>{err ? '—' : 'Generating…'}</div>}
+            </div>
+            {enrolling?.secret && (
+              <div style={{ fontSize: 13, color: C.dim, textAlign: 'center', marginBottom: 14, lineHeight: 1.5 }}>
+                Can't scan? Enter this key manually:<br />
+                <span style={{ fontFamily: 'ui-monospace, monospace', fontSize: 14, color: C.muted, userSelect: 'all', wordBreak: 'break-all' }}>{enrolling.secret}</span>
+              </div>
+            )}
+            <input
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              maxLength={6}
+              value={code}
+              onChange={e => setCode(e.target.value.replace(/\D/g, ''))}
+              onKeyDown={e => { if (e.key === 'Enter') submit(); }}
+              placeholder="000000"
+              style={{ width: '100%', boxSizing: 'border-box', padding: '12px 14px', minHeight: 50, fontSize: 26, letterSpacing: '0.4em', textAlign: 'center', fontFamily: 'ui-monospace, monospace', border: `1.5px solid ${C.border2}`, borderRadius: 8, background: C.raised, color: C.text, marginBottom: 12 }}
+            />
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button onClick={cancel} style={{ flex: 1, padding: '12px', minHeight: 48, borderRadius: 50, border: `1.5px solid ${C.border2}`, background: '#fff', color: C.muted, fontSize: 16, fontWeight: 700, cursor: 'pointer' }}>Cancel</button>
+              <button onClick={submit} disabled={busy || !enrolling} style={{ flex: 1, padding: '12px', minHeight: 48, borderRadius: 50, border: 'none', background: C.orange, color: '#fff', fontSize: 16, fontWeight: 700, cursor: 'pointer', opacity: (busy || !enrolling) ? 0.6 : 1 }}>{busy ? 'Verifying…' : 'Turn On'}</button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ══════════════════════════════════════════════════════════════════════════════
 // SETTINGS
 // ══════════════════════════════════════════════════════════════════════════════
 function Settings({ user, setUser, logo, onLogoChange, showProfileModal, setShowProfileModal, payments, setPayments, taxRates, setTaxRates, socialHandles, setSocialHandles, teamMembers, setTeamMembers, persistTeamMember, removeTeamMember, createTechAccount: createTechAccountFn, timeOff = [], persistTimeOff, removeTimeOff }) {
   const [showDeleteAccount, setShowDeleteAccount] = useState(false);
+  // Two-factor auth state: factorId is the verified TOTP factor (null = off).
+  // Re-checked whenever the setup modal closes (it may have just enrolled).
+  const [mfaFactorId, setMfaFactorId] = useState(null);
+  const [mfaLoading,  setMfaLoading]  = useState(true);
+  const [showMfaSetup, setShowMfaSetup] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    listMfaFactors()
+      .then(({ verified }) => { if (alive) { setMfaFactorId(verified[0]?.id || null); setMfaLoading(false); } })
+      .catch(() => { if (alive) setMfaLoading(false); });
+    return () => { alive = false; };
+  }, [showMfaSetup]);
+  const disableMfa = async () => {
+    if (!mfaFactorId) return;
+    if (!window.confirm('Turn off two-factor authentication?\n\nYour password alone will sign you in.')) return;
+    try {
+      await unenrollTotp(mfaFactorId);
+      setMfaFactorId(null);
+    } catch (e) {
+      alert(e?.message || 'Could not turn off 2FA. Try again.');
+    }
+  };
   const { isTablet } = useBreakpoint();
   const tradeCount   = user.trades?.length || 1;
   const currentPrice = getPrice(tradeCount);
@@ -9661,6 +9860,29 @@ function Settings({ user, setUser, logo, onLogoChange, showProfileModal, setShow
         </div>
       </div>
 
+      {/* Security — two-factor authentication */}
+      <div>
+        <div style={{ fontSize: 17, fontWeight: 800, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12, fontFamily: "'Inter', sans-serif" }}>Security</div>
+        <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 4, padding: '18px 22px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontSize: 20, fontWeight: 600, color: C.text, display: 'flex', alignItems: 'center', gap: 10 }}>
+              Two-Factor Authentication
+              {!mfaLoading && mfaFactorId && <span style={{ fontSize: 13, fontWeight: 800, background: '#f0fdf4', color: C.success, padding: '3px 10px', borderRadius: 12, letterSpacing: '0.04em' }}>ON</span>}
+            </div>
+            <div style={{ fontSize: 18, color: C.muted, marginTop: 2, lineHeight: 1.5 }}>
+              {mfaFactorId
+                ? 'Signing in requires your password plus a 6-digit code from your authenticator app.'
+                : 'Require a 6-digit authenticator code at sign-in. Protects your clients, invoices, and payments if your password ever leaks.'}
+            </div>
+          </div>
+          {mfaLoading ? null : mfaFactorId ? (
+            <button onClick={disableMfa} style={{ padding: '9px 18px', borderRadius: 50, border: `1.5px solid ${C.border2}`, background: C.surface, color: C.muted, fontSize: 15, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}>Turn Off</button>
+          ) : (
+            <button onClick={() => setShowMfaSetup(true)} style={{ padding: '9px 18px', borderRadius: 50, border: 'none', background: C.orange, color: '#fff', fontSize: 15, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}>Enable</button>
+          )}
+        </div>
+      </div>
+
       {/* Danger zone */}
       <div>
         <div style={{ fontSize: 17, fontWeight: 800, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12, fontFamily: "'Inter', sans-serif" }}>Account</div>
@@ -9686,6 +9908,7 @@ function Settings({ user, setUser, logo, onLogoChange, showProfileModal, setShow
       </div>
 
       <DeleteAccountModal open={showDeleteAccount} onClose={() => setShowDeleteAccount(false)} />
+      <MfaSetupModal open={showMfaSetup} onClose={() => setShowMfaSetup(false)} />
 
       {/* ── Developer tools — only visible for allowlisted dev emails ──
           Hidden in production for everyone except the founder's test
@@ -9961,6 +10184,16 @@ function TradevoiceApp() {
     //     SignupScreen detects the active session on mount, skips
     //     Step 0 (Account) and lets the user finish company+plan+card.
     const routeAuthed = async (sessionUser) => {
+      // 2FA gate — covers every entry point that isn't the password form
+      // (Google OAuth redirect, restored session that never finished its
+      // challenge). Token refreshes keep AAL2, so an already-verified
+      // session passes straight through on normal page loads.
+      if (await needsMfaChallenge()) {
+        if (cancelled) return;
+        setUser(null);
+        setAuthScreen('mfa');
+        return;
+      }
       const profile = await getProfile(sessionUser.id, sessionUser.email);
       if (cancelled) return;
       // Lockout path: paid customer whose subscription ended. They have
@@ -10491,14 +10724,15 @@ function TradevoiceApp() {
 
   // Show auth screens when no user
   if (!user) {
-    if (authScreen === 'login')    return <LoginScreen    onLogin={u => { setUser(u); setAuthScreen(null); }} onSignup={() => setAuthScreen('signup')} onForgot={() => setAuthScreen('forgot')} />;
+    if (authScreen === 'mfa')      return <MfaChallengeScreen onBack={() => setAuthScreen('login')} />;
+    if (authScreen === 'login')    return <LoginScreen    onLogin={u => { setUser(u); setAuthScreen(null); }} onSignup={() => setAuthScreen('signup')} onForgot={() => setAuthScreen('forgot')} onMfaNeeded={() => setAuthScreen('mfa')} />;
     if (authScreen === 'signup')   return <SignupScreen onComplete={handleSignupComplete} onBack={() => setAuthScreen('login')} />;
     // Legacy 'join' route — redirect to login. The proper tech sign-in lives
     // inside the LoginScreen as a mode toggle now (Owner / Tech sign in).
     if (authScreen === 'join')     { setAuthScreen('login'); return null; }
     if (authScreen === 'forgot')   return <Suspense fallback={<div style={{ minHeight: '100dvh', background: C.bg }} />}><ForgotPasswordScreen onBack={() => setAuthScreen('login')} /></Suspense>;
     if (authScreen === 'onboarding') return <Onboarding  onComplete={data => { setUser({ ...data, state: data.states?.join(', '), role: 'owner', companyCode: 'TV-' + Math.random().toString(36).slice(2,8).toUpperCase() }); setAuthScreen(null); }} />;
-    return <LoginScreen onLogin={u => { setUser(u); setAuthScreen(null); }} onSignup={() => setAuthScreen('signup')} onForgot={() => setAuthScreen('forgot')} />;
+    return <LoginScreen onLogin={u => { setUser(u); setAuthScreen(null); }} onSignup={() => setAuthScreen('signup')} onForgot={() => setAuthScreen('forgot')} onMfaNeeded={() => setAuthScreen('mfa')} />;
   }
 
   const handleConvertToInvoice = async (quote, client) => {

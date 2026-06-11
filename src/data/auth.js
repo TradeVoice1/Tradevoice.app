@@ -272,6 +272,64 @@ export async function signOut() {
   if (error) throw error;
 }
 
+// ── Two-factor authentication (TOTP via authenticator apps) ─────────────────
+// Wraps supabase.auth.mfa.*. TOTP only — free on our plan, works offline,
+// and immune to SIM-swap (unlike SMS codes). The founder account has its own
+// separate TOTP gate (superOwnerTotp); this is the per-user opt-in version.
+
+// All TOTP factors on the signed-in account, split by verification status.
+export async function listMfaFactors() {
+  const { data, error } = await supabase.auth.mfa.listFactors();
+  if (error) throw error;
+  const all = data?.all ?? [];
+  return {
+    verified:   all.filter(f => f.factor_type === 'totp' && f.status === 'verified'),
+    unverified: all.filter(f => f.factor_type === 'totp' && f.status !== 'verified'),
+  };
+}
+
+// Begin TOTP enrollment. Cleans up any stale unverified factor first — a
+// half-finished setup otherwise blocks re-enrollment with a name conflict.
+// Returns { factorId, uri, secret }: uri feeds the QR code, secret is the
+// "can't scan? type this instead" key.
+export async function enrollTotp() {
+  const { unverified } = await listMfaFactors();
+  for (const f of unverified) {
+    await supabase.auth.mfa.unenroll({ factorId: f.id }).catch(() => {});
+  }
+  const { data, error } = await supabase.auth.mfa.enroll({ factorType: 'totp', friendlyName: 'Authenticator app' });
+  if (error) throw error;
+  return { factorId: data.id, uri: data.totp?.uri || '', secret: data.totp?.secret || '' };
+}
+
+// Verify a 6-digit code. The same challenge+verify pair completes BOTH the
+// enrollment flow and the at-sign-in challenge; success upgrades the session
+// to AAL2.
+export async function verifyTotp(factorId, code) {
+  const { data: ch, error: chErr } = await supabase.auth.mfa.challenge({ factorId });
+  if (chErr) throw chErr;
+  const { error } = await supabase.auth.mfa.verify({ factorId, challengeId: ch.id, code: String(code).trim() });
+  if (error) throw error;
+  return true;
+}
+
+export async function unenrollTotp(factorId) {
+  const { error } = await supabase.auth.mfa.unenroll({ factorId });
+  if (error) throw error;
+}
+
+// Does the current session still owe a 2FA code? True when the account has a
+// verified factor (nextLevel aal2) but this session only completed the
+// password step (currentLevel aal1). Token refreshes keep AAL2, so this only
+// triggers on fresh sign-ins — not every page load.
+export async function needsMfaChallenge() {
+  try {
+    const { data, error } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (error || !data) return false;
+    return data.nextLevel === 'aal2' && data.currentLevel !== 'aal2';
+  } catch { return false; }
+}
+
 // Convenience: subscribe to auth changes (sign-in/out across tabs, token refresh, etc.)
 //
 // CRITICAL: never run Supabase calls (getProfile, getSession, signOut, …)
