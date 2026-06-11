@@ -6266,26 +6266,51 @@ function QuickAddPanel({ library, onInsert, onSaveNew, onDelete, type }) {
     resetForm();
   };
 
-  const handleCardClick = (item) => {
+  // ── Unit-variant grouping ──
+  // Rate sheets store one row per billing unit ("Crane — 45/hr", "Crane —
+  // 390/day", "Crane — 1,210/week"), which used to render as three near-
+  // identical cards. Group rows that share a description into ONE card; when
+  // selected, the unit becomes a tappable picker and Add inserts the chosen
+  // variant's rate. Pure presentation — the library rows are untouched, so
+  // the AI import and Settings → Rate Library keep working as-is. Manage
+  // mode stays flat so each variant can be deleted individually.
+  const UNIT_ORDER = { hr: 0, day: 1, week: 2, month: 3 };
+  const groups = (() => {
+    if (managing) return visible.map(i => ({ key: `id:${i.id}`, desc: i.desc, variants: [i] }));
+    const m = new Map();
+    for (const it of visible) {
+      const k = (it.desc || '').trim() ? (it.desc || '').toLowerCase().trim() : `id:${it.id}`;
+      if (!m.has(k)) m.set(k, { key: k, desc: it.desc, variants: [] });
+      m.get(k).variants.push(it);
+    }
+    const arr = [...m.values()];
+    for (const g of arr) g.variants.sort((a, b) => (UNIT_ORDER[a.unit] ?? 9) - (UNIT_ORDER[b.unit] ?? 9));
+    return arr;
+  })();
+  const [selVar, setSelVar] = useState(null);   // chosen variant id within the selected group
+
+  const handleCardClick = (group) => {
     if (managing) return;
-    if (selItem === item.id) {
+    if (selItem === group.key) {
       // second tap — deselect
       setSelItem(null);
+      setSelVar(null);
       setSelQty(1);
     } else {
-      setSelItem(item.id);
-      setSelQty(isMat ? item.qty : item.qty);
+      setSelItem(group.key);
+      setSelVar(group.variants[0].id);
+      setSelQty(group.variants[0].qty || 1);
     }
   };
 
   const handleInsert = (item, qty) => {
-    onInsert(isMat
-      ? { ...item, qty }
-      : { ...item, qty }
-    );
+    onInsert({ ...item, qty });
     setSelItem(null);
+    setSelVar(null);
     setSelQty(1);
   };
+
+  const priceOf = (v) => Number(isMat ? v.cost : v.rate).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   return (
     <div style={{ marginBottom: 18, background: '#f8f9fa', border: `1px solid ${C.border2}`, borderRadius: 4, overflow: 'hidden' }}>
@@ -6406,12 +6431,14 @@ function QuickAddPanel({ library, onInsert, onSaveNew, onDelete, type }) {
             <button onClick={() => setSearch('')} style={{ background: 'none', border: 'none', color: C.orange, cursor: 'pointer', fontSize: 18, fontWeight: 700, padding: 0 }}>Clear search</button>
           </div>
         )}
-        {visible.map(item => {
-          const isSel = selItem === item.id;
+        {groups.map(group => {
+          const isSel   = selItem === group.key;
+          const multi   = group.variants.length > 1;
+          const variant = isSel ? (group.variants.find(v => v.id === selVar) || group.variants[0]) : group.variants[0];
           return (
-            <div key={item.id} style={{ position: 'relative' }}>
+            <div key={group.key} style={{ position: 'relative' }}>
               <button
-                onClick={() => handleCardClick(item)}
+                onClick={() => handleCardClick(group)}
                 style={{
                   width: '100%', background: isSel ? '#fff7ed' : managing ? C.raised : C.surface,
                   border: `1.5px solid ${isSel ? C.orange : managing ? C.error + '50' : C.border2}`,
@@ -6423,37 +6450,60 @@ function QuickAddPanel({ library, onInsert, onSaveNew, onDelete, type }) {
                 onPointerLeave={e => { if (!managing && !isSel) e.currentTarget.style.borderColor = C.border2; }}
               >
                 <div style={{ fontSize: 19, fontWeight: isSel ? 700 : 600, color: isSel ? C.text : managing ? C.muted : C.text, lineHeight: 1.4, marginBottom: 3 }}>
-                  {item.desc}
+                  {group.desc}
                 </div>
                 <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 18, color: C.orange, fontWeight: 700 }}>
-                  {isMat
-                    ? `${item.qty} ${item.unit} — ${Number(item.cost).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})} ea.`
-                    : `${item.qty} ${item.unit} — ${Number(item.rate).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}/${item.unit}`}
+                  {multi
+                    ? group.variants.map(v => `${priceOf(v)}/${v.unit}`).join(' · ')
+                    : (isMat
+                        ? `${variant.qty} ${variant.unit} — ${priceOf(variant)} ea.`
+                        : `${variant.qty} ${variant.unit} — ${priceOf(variant)}/${variant.unit}`)}
                 </div>
               </button>
 
-              {/* Selected state — qty controls + add + remove */}
+              {/* Selected state — unit picker (when grouped) + qty + add + remove */}
               {isSel && !managing && (
-                <div style={{ marginTop: 6, display: 'flex', alignItems: 'center', gap: 6, padding: '0 2px' }}>
-                  {/* − qty + */}
-                  <button onClick={e => { e.stopPropagation(); setSelQty(q => Math.max(1, q - 1)); }}
-                    style={{ ...s.btn, width: 36, height: 36, minHeight: 36, padding: 0, background: C.raised, border: `1.5px solid ${C.border2}`, color: C.text, fontSize: 22, lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>−</button>
-                  <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 22, fontWeight: 900, color: C.orange, minWidth: 24, textAlign: 'center' }}>{selQty}</span>
-                  <button onClick={e => { e.stopPropagation(); setSelQty(q => q + 1); }}
-                    style={{ ...s.btn, width: 36, height: 36, minHeight: 36, padding: 0, background: C.raised, border: `1.5px solid ${C.border2}`, color: C.text, fontSize: 22, lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>+</button>
-                  {/* Add to quote/invoice */}
-                  <button onClick={e => { e.stopPropagation(); handleInsert(item, selQty); }}
-                    style={{ ...s.btn, flex: 1, height: 36, minHeight: 36, padding: '0 10px', background: C.orange, border: 'none', color: '#fff', fontSize: 17, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Add</button>
-                  {/* Remove from library */}
-                  <button onClick={e => { e.stopPropagation(); onDelete(item.id); setSelItem(null); }}
-                    style={{ ...s.btn, width: 36, height: 36, minHeight: 36, padding: 0, background: '#fef2f2', border: `1.5px solid ${C.error}44`, color: C.error, fontSize: 20, lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>✕</button>
-                </div>
+                <>
+                  {multi && (
+                    <div style={{ marginTop: 6, display: 'flex', gap: 6, padding: '0 2px', flexWrap: 'wrap' }}>
+                      {group.variants.map(v => {
+                        const on = v.id === variant.id;
+                        return (
+                          <button key={v.id} onClick={e => { e.stopPropagation(); setSelVar(v.id); setSelQty(v.qty || 1); }}
+                            style={{
+                              ...s.btn, flex: 1, minWidth: 0, height: 36, minHeight: 36, padding: '0 8px',
+                              background: on ? C.orange : C.raised, color: on ? '#fff' : C.muted,
+                              border: `1.5px solid ${on ? C.orange : C.border2}`,
+                              fontSize: 15, fontWeight: 800, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            }}>
+                            {`${v.unit} · $${priceOf(v)}`}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                  <div style={{ marginTop: 6, display: 'flex', alignItems: 'center', gap: 6, padding: '0 2px' }}>
+                    {/* − qty + */}
+                    <button onClick={e => { e.stopPropagation(); setSelQty(q => Math.max(1, q - 1)); }}
+                      style={{ ...s.btn, width: 36, height: 36, minHeight: 36, padding: 0, background: C.raised, border: `1.5px solid ${C.border2}`, color: C.text, fontSize: 22, lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>−</button>
+                    <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 22, fontWeight: 900, color: C.orange, minWidth: 24, textAlign: 'center' }}>{selQty}</span>
+                    <button onClick={e => { e.stopPropagation(); setSelQty(q => q + 1); }}
+                      style={{ ...s.btn, width: 36, height: 36, minHeight: 36, padding: 0, background: C.raised, border: `1.5px solid ${C.border2}`, color: C.text, fontSize: 22, lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>+</button>
+                    {/* Add to quote/invoice — inserts the chosen unit variant */}
+                    <button onClick={e => { e.stopPropagation(); handleInsert(variant, selQty); }}
+                      style={{ ...s.btn, flex: 1, height: 36, minHeight: 36, padding: '0 10px', background: C.orange, border: 'none', color: '#fff', fontSize: 17, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Add</button>
+                    {/* Remove the selected unit variant from the library */}
+                    <button onClick={e => { e.stopPropagation(); onDelete(variant.id); setSelItem(null); setSelVar(null); }}
+                      style={{ ...s.btn, width: 36, height: 36, minHeight: 36, padding: 0, background: '#fef2f2', border: `1.5px solid ${C.error}44`, color: C.error, fontSize: 20, lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>✕</button>
+                  </div>
+                </>
               )}
 
-              {/* Manage mode remove button */}
+              {/* Manage mode remove button (manage mode renders flat, one card per variant) */}
               {managing && (
                 <button
-                  onClick={() => onDelete(item.id)}
+                  onClick={() => onDelete(group.variants[0].id)}
                   style={{
                     position: 'absolute', top: 6, right: 6,
                     background: C.error, border: 'none', borderRadius: 2,
