@@ -1,0 +1,18 @@
+{
+  "appId": "com.thetradevoice.app",
+  "appName": "Tradevoice",
+  "webDir": "dist",
+  "server": {
+    "url": "https://app.thetradevoice.com",
+    "allowNavigation": [
+      "app.thetradevoice.com",
+      "*.supabase.co",
+      "*.stripe.com",
+      "accounts.google.com",
+      "appleid.apple.com"
+    ]
+  },
+  "ios": {
+    "contentInset": "automatic"
+  }
+}
