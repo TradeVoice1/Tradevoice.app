@@ -8780,6 +8780,9 @@ function BuyTechSeatModal({ user, onClose, onCreate }) {
           </div>
 
           <label style={s.label}>Permissions — what this tech can access</label>
+          <div style={{ fontSize: 14, color: C.dim, marginTop: -2, marginBottom: 8 }}>
+            Not locked in — you can change these anytime by expanding the tech's row in your Team list.
+          </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6, background: C.raised, borderRadius: 8, padding: '12px 14px', marginBottom: 12 }}>
             {[
               { key: 'createQuotes',    label: 'Create quotes' },
@@ -8794,6 +8797,13 @@ function BuyTechSeatModal({ user, onClose, onCreate }) {
                 <span>{label}</span>
               </label>
             ))}
+          </div>
+
+          {/* Recurring-billing warning — this is a subscription change, make it unmissable. */}
+          <div style={{ background: '#fef9c3', border: `1px solid ${C.warn}55`, borderRadius: 8, padding: '12px 14px', fontSize: 15, color: '#854d0e', lineHeight: 1.55, marginBottom: 10 }}>
+            <strong>Heads up — this adds a monthly charge.</strong> Creating this account adds a
+            <strong> $19.99/mo tech seat</strong> to your subscription and bills automatically every month
+            until you remove this tech from your Team list. Removing the tech stops the seat charge.
           </div>
 
           <div style={{ background: C.orangeLo, border: `1px solid ${C.orange}33`, borderRadius: 8, padding: '12px 14px', fontSize: 15, color: C.muted, lineHeight: 1.5 }}>
