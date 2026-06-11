@@ -69,6 +69,10 @@ const dbToProfile = (row) => row && ({
   stripe_payment_method_id:       row.stripe_payment_method_id       ?? null,
   trial_ends_at:                  row.trial_ends_at                  ?? null,
   subscription_status:             row.subscription_status            ?? 'trialing',
+  // True while a cancellation is scheduled but the paid period hasn't ended
+  // (migration 0035, kept current by the Stripe webhook). Drives the
+  // "Resume Subscription" button in Settings → Billing.
+  cancel_at_period_end:            row.cancel_at_period_end           ?? false,
   createdAt:        row.created_at        ?? null,    // when the profile row was inserted (≈ signup time) — used for trial countdown
   // Founder / super-owner flag (migration 0030). True only for the
   // single Tradevoice founder account, which is created directly via

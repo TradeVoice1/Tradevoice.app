@@ -94,7 +94,8 @@ export default async function handler(req, res) {
   if (action === 'create')      return handleCreate(req, res);
   if (action === 'sync_seats')  return handleSyncSeats(req, res);
   if (action === 'cancel')      return handleCancel(req, res);
-  return res.status(400).json({ error: 'unknown_action', detail: `action must be 'create', 'sync_seats', or 'cancel' (got ${JSON.stringify(action)})` });
+  if (action === 'resume')      return handleResume(req, res);
+  return res.status(400).json({ error: 'unknown_action', detail: `action must be 'create', 'sync_seats', 'cancel', or 'resume' (got ${JSON.stringify(action)})` });
 }
 
 // ─── handleCancel ────────────────────────────────────────────────────────────
@@ -143,12 +144,16 @@ async function handleCancel(req, res) {
       });
     }
 
-    // Optimistically update local subscription_status so the UI shows
-    // the new state without waiting for the webhook to land. The
-    // webhook will reconcile authoritatively a few seconds later.
+    // Optimistically update local subscription_status (and the canceling
+    // flag) so the UI shows the new state without waiting for the webhook
+    // to land. The webhook will reconcile authoritatively a few seconds
+    // later via update_subscription_status.
     await supabase
       .from('profiles')
-      .update({ subscription_status: updated.status })
+      .update({
+        subscription_status:  updated.status,
+        cancel_at_period_end: !!updated.cancel_at_period_end,
+      })
       .eq('id', userId);
 
     return res.status(200).json({
@@ -160,6 +165,64 @@ async function handleCancel(req, res) {
     });
   } catch (e) {
     console.error('[create-subscription:cancel] stripe call failed', e);
+    return res.status(502).json({ error: 'stripe_error', detail: e?.message });
+  }
+}
+
+// ─── handleResume ────────────────────────────────────────────────────────────
+// Undo a scheduled cancellation while the paid period is still running.
+// Cancel sets cancel_at_period_end=true (access continues until period end);
+// until that period actually ends, Stripe lets us flip the flag back with no
+// new charge and no new subscription — the renewal simply resumes. This is
+// the "I changed my mind" path that previously required emailing support.
+// Once status is truly 'canceled' (period ended / immediate cancel) this
+// returns 400 — that's the resubscribe flow, not resume.
+async function handleResume(req, res) {
+  const auth = await requireAuth(req, { requireUserMatch: req.body?.userId });
+  if (!auth.ok) return res.status(auth.status).json({ error: auth.error });
+  const userId = auth.userId;
+
+  const supabase = getServiceClient();
+  const { data: profile, error: profErr } = await supabase
+    .from('profiles')
+    .select('stripe_subscription_id, subscription_status')
+    .eq('id', userId)
+    .maybeSingle();
+  if (profErr) {
+    console.error('[create-subscription:resume] profile lookup failed', profErr);
+    return res.status(500).json({ error: 'profile_lookup_failed' });
+  }
+  if (!profile?.stripe_subscription_id) {
+    return res.status(400).json({ error: 'no_subscription', detail: 'No subscription on file to resume.' });
+  }
+  if (profile.subscription_status === 'canceled') {
+    return res.status(400).json({ error: 'already_canceled', detail: 'This subscription has fully ended — resubscribe instead of resuming.' });
+  }
+
+  try {
+    const sub = await stripe.subscriptions.retrieve(profile.stripe_subscription_id);
+    if (sub.status === 'canceled') {
+      return res.status(400).json({ error: 'already_canceled', detail: 'This subscription has fully ended — resubscribe instead of resuming.' });
+    }
+    const updated = sub.cancel_at_period_end
+      ? await stripe.subscriptions.update(profile.stripe_subscription_id, { cancel_at_period_end: false })
+      : sub; // nothing scheduled — idempotent no-op
+
+    await supabase
+      .from('profiles')
+      .update({
+        subscription_status:  updated.status,
+        cancel_at_period_end: !!updated.cancel_at_period_end,
+      })
+      .eq('id', userId);
+
+    return res.status(200).json({
+      ok:                true,
+      status:            updated.status,
+      cancelAtPeriodEnd: !!updated.cancel_at_period_end,
+    });
+  } catch (e) {
+    console.error('[create-subscription:resume] stripe call failed', e);
     return res.status(502).json({ error: 'stripe_error', detail: e?.message });
   }
 }

@@ -9393,14 +9393,38 @@ function Settings({ user, setUser, logo, onLogoChange, showProfileModal, setShow
       const j = await r.json();
       if (!r.ok) throw new Error(j.detail || j.error || 'Could not cancel subscription.');
       // Reflect new status locally so the UI updates immediately.
-      setUser(prev => ({ ...prev, subscription_status: j.status }));
+      setUser(prev => ({ ...prev, subscription_status: j.status, cancel_at_period_end: !!j.cancelAtPeriodEnd }));
       window.alert(
         isTrialing
           ? 'Your trial has been canceled. You will not be charged.'
-          : 'Your subscription is set to cancel at the end of the current billing period.'
+          : 'Your subscription is set to cancel at the end of the current billing period. Changed your mind? You can resume it anytime before the period ends.'
       );
     } catch (e) {
       setCancelError(e?.message || 'Could not cancel. Try again.');
+    } finally {
+      setCancelBusy(false);
+    }
+  };
+
+  // Undo a scheduled cancellation while the paid period is still running —
+  // flips cancel_at_period_end back to false on Stripe. No new charge, no
+  // new subscription; billing simply resumes on the normal date.
+  const handleResumePlan = async () => {
+    if (cancelBusy) return;
+    setCancelBusy(true);
+    setCancelError('');
+    try {
+      const r = await authedFetch('/api/stripe/create-subscription', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ action: 'resume', userId: user.id }),
+      });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.detail || j.error || 'Could not resume subscription.');
+      setUser(prev => ({ ...prev, subscription_status: j.status, cancel_at_period_end: !!j.cancelAtPeriodEnd }));
+      window.alert('Welcome back — your subscription will continue as normal.');
+    } catch (e) {
+      setCancelError(e?.message || 'Could not resume. Try again.');
     } finally {
       setCancelBusy(false);
     }
@@ -9941,11 +9965,28 @@ function Settings({ user, setUser, logo, onLogoChange, showProfileModal, setShow
           <div style={{ textAlign: 'right' }}>
             <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 45, fontWeight: 900, color: C.orange, lineHeight: 1 }}>${currentPrice}</div>
             <div style={{ fontSize: 19, color: C.muted }}>per month</div>
-            <GhostBtn size="sm" style={{ marginTop: 10 }} onClick={handleCancelPlan} disabled={cancelBusy || user.subscription_status === 'canceled'}>
-              {cancelBusy
-                ? 'Canceling…'
-                : user.subscription_status === 'canceled' ? 'Canceled' : 'Cancel Plan'}
-            </GhostBtn>
+            {user.cancel_at_period_end && user.subscription_status !== 'canceled' ? (
+              <>
+                {/* Cancellation scheduled — the paid period is still running, so
+                    offer the one-tap undo instead of a dead "Canceled" state. */}
+                <div style={{ fontSize: 14, fontWeight: 700, color: C.warn, marginTop: 8, maxWidth: 220, textAlign: 'right', lineHeight: 1.4 }}>
+                  Cancellation scheduled — access until your period ends.
+                </div>
+                <button onClick={handleResumePlan} disabled={cancelBusy} style={{
+                  marginTop: 8, padding: '9px 18px', borderRadius: 50, border: 'none',
+                  background: C.orange, color: '#fff', fontSize: 15, fontWeight: 700,
+                  cursor: cancelBusy ? 'wait' : 'pointer', opacity: cancelBusy ? 0.7 : 1, whiteSpace: 'nowrap',
+                }}>
+                  {cancelBusy ? 'Resuming…' : 'Resume Subscription'}
+                </button>
+              </>
+            ) : (
+              <GhostBtn size="sm" style={{ marginTop: 10 }} onClick={handleCancelPlan} disabled={cancelBusy || user.subscription_status === 'canceled'}>
+                {cancelBusy
+                  ? 'Canceling…'
+                  : user.subscription_status === 'canceled' ? 'Canceled' : 'Cancel Plan'}
+              </GhostBtn>
+            )}
             {cancelError && (
               <div style={{ fontSize: 14, color: C.error, marginTop: 6, maxWidth: 200, textAlign: 'right' }}>{cancelError}</div>
             )}
