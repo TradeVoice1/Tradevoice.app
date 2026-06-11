@@ -6232,22 +6232,30 @@ function QuickAddPanel({ library, onInsert, onSaveNew, onDelete, type }) {
   const [adding,    setAdding]    = useState(false);
   const [selItem,   setSelItem]   = useState(null);  // selected card id
   const [selQty,    setSelQty]    = useState(1);      // qty for selected card
+  const [search,    setSearch]    = useState('');     // filters the saved-item grid
+
+  const isMat   = type === 'materials';
+  const isLabor = type === 'labor';
 
   // New item form state
   const [newDesc, setNewDesc] = useState('');
   const [newQty,  setNewQty]  = useState(1);
-  const [newUnit, setNewUnit] = useState(type === 'materials' ? 'ea' : 'day');
+  const [newUnit, setNewUnit] = useState(isMat ? 'ea' : (isLabor ? 'hr' : 'day'));
   const [newCost, setNewCost] = useState(0);
   const [newDays, setNewDays] = useState(1);
   const [newRate, setNewRate] = useState(0);
 
-  const isMat = type === 'materials';
-
   const resetForm = () => {
-    setNewDesc(''); setNewQty(1); setNewUnit(isMat ? 'ea' : 'day');
+    setNewDesc(''); setNewQty(1); setNewUnit(isMat ? 'ea' : (isLabor ? 'hr' : 'day'));
     setNewCost(0); setNewDays(1); setNewRate(0);
     setAdding(false);
   };
+
+  // Search filter — matches description + unit, case-insensitive. A big
+  // imported rate sheet easily holds hundreds of items; scrolling a 3-column
+  // grid for "3/4 inch ball valve" is not a field-friendly workflow.
+  const q = search.trim().toLowerCase();
+  const visible = q ? library.filter(i => `${i.desc || ''} ${i.unit || ''}`.toLowerCase().includes(q)) : library;
 
   const saveNew = () => {
     if (!newDesc.trim()) return;
@@ -6314,7 +6322,7 @@ function QuickAddPanel({ library, onInsert, onSaveNew, onDelete, type }) {
             <div>
               <label style={{ ...s.label, marginBottom: 4 }}>Description</label>
               <input value={newDesc} onChange={e => setNewDesc(e.target.value)}
-                placeholder={isMat ? 'e.g. 3/4" Gate Valve' : 'e.g. Jackhammer Rental'}
+                placeholder={isMat ? 'e.g. 3/4" Gate Valve' : (isLabor ? 'e.g. Journeyman Plumber' : 'e.g. Jackhammer Rental')}
                 style={{ ...s.input, width: '100%', padding: '9px 10px', boxSizing: 'border-box', minHeight: 44 }} />
             </div>
             {isMat && <>
@@ -6347,7 +6355,7 @@ function QuickAddPanel({ library, onInsert, onSaveNew, onDelete, type }) {
                 <label style={{ ...s.label, marginBottom: 4 }}>Unit</label>
                 <select value={newUnit} onChange={e => setNewUnit(e.target.value)}
                   style={{ ...s.input, width: '100%', padding: '9px 5px', minHeight: 44 }}>
-                  {['hr','day','week','month'].map(u => <option key={u}>{u}</option>)}
+                  {(isLabor ? ['hr'] : ['hr','day','week','month']).map(u => <option key={u}>{u}</option>)}
                 </select>
               </div>
               <div>
@@ -6366,6 +6374,25 @@ function QuickAddPanel({ library, onInsert, onSaveNew, onDelete, type }) {
         </div>
       )}
 
+      {/* Search — only when the library is big enough for scrolling to hurt */}
+      {library.length > 5 && (
+        <div style={{ padding: '10px 14px 0', position: 'relative' }}>
+          <input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder={`Search ${library.length} saved item${library.length === 1 ? '' : 's'}…`}
+            style={{ ...s.input, width: '100%', boxSizing: 'border-box', padding: '10px 40px 10px 12px', minHeight: 44, fontSize: 17, background: '#fff' }}
+          />
+          {search && (
+            <button onClick={() => setSearch('')} aria-label="Clear search" style={{
+              position: 'absolute', right: 22, top: '50%', transform: 'translateY(-29%)',
+              width: 28, height: 28, borderRadius: '50%', border: 'none', background: C.raised,
+              color: C.muted, fontSize: 16, fontWeight: 700, cursor: 'pointer', lineHeight: 1,
+            }}>×</button>
+          )}
+        </div>
+      )}
+
       {/* Quick-add grid */}
       <div style={{ padding: '12px 14px', display: 'grid', gridTemplateColumns: isTablet ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)', gap: 8 }}>
         {library.length === 0 && (
@@ -6373,7 +6400,13 @@ function QuickAddPanel({ library, onInsert, onSaveNew, onDelete, type }) {
             No saved items yet. Use "Save New Item" to build your library.
           </div>
         )}
-        {library.map(item => {
+        {library.length > 0 && visible.length === 0 && (
+          <div style={{ gridColumn: '1 / -1', padding: '16px 0', textAlign: 'center', fontSize: 18, color: C.dim }}>
+            No items match “{search.trim()}”.{' '}
+            <button onClick={() => setSearch('')} style={{ background: 'none', border: 'none', color: C.orange, cursor: 'pointer', fontSize: 18, fontWeight: 700, padding: 0 }}>Clear search</button>
+          </div>
+        )}
+        {visible.map(item => {
           const isSel = selItem === item.id;
           return (
             <div key={item.id} style={{ position: 'relative' }}>
@@ -6518,13 +6551,17 @@ function QuoteEditor({ initial, clients, existingQuotes = [], user, setUser, onS
   // appear right alongside the starter content.
   const [matLibrary,  setMatLibrary]  = useState(() => tradeConf.matLibrary.map(i => ({ ...i })));
   const [equipLibrary,setEquipLibrary]= useState(() => tradeConf.equipLibrary.map(i => ({ ...i })));
+  // Labor has no per-trade defaults — its library is purely the contractor's
+  // own saved/imported rates (the AI rate-sheet import writes kind='labor'
+  // rows that were previously invisible in this editor).
+  const [laborLibrary, setLaborLibrary] = useState([]);
 
   // ── Persistent rate library hydration ──
   // Owner-scoped, fetched once on mount. We keep the data in a ref-like
   // state (`persistedLib`) so trade changes can re-merge without a fresh
   // fetch. Items are de-duped against trade defaults by description
   // (case-insensitive) — user's persisted item wins.
-  const [persistedLib, setPersistedLib] = useState({ materials: [], equipment: [] });
+  const [persistedLib, setPersistedLib] = useState({ materials: [], equipment: [], labor: [] });
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -6545,7 +6582,14 @@ function QuoteEditor({ initial, clients, existingQuotes = [], user, setUser, onS
           unit: r.unit || 'day',
           rate: r.rate != null ? r.rate : 0,
         }));
-        setPersistedLib({ materials: toMat, equipment: toEq });
+        const toLabor = rows.filter(r => r.kind === 'labor').map(r => ({
+          id:   r.id,
+          desc: r.description,
+          qty:  r.qty != null ? r.qty : 1,
+          unit: r.unit || 'hr',
+          rate: r.rate != null ? r.rate : 0,
+        }));
+        setPersistedLib({ materials: toMat, equipment: toEq, labor: toLabor });
       } catch (e) {
         // Soft-fail — migration 0025 may not be applied locally, or RLS
         // may block. The editor still works with trade defaults only.
@@ -6568,6 +6612,7 @@ function QuoteEditor({ initial, clients, existingQuotes = [], user, setUser, onS
   useEffect(() => {
     setMatLibrary(mergeLib(persistedLib.materials,  tradeConf.matLibrary.map(i => ({ ...i }))));
     setEquipLibrary(mergeLib(persistedLib.equipment, tradeConf.equipLibrary.map(i => ({ ...i }))));
+    setLaborLibrary([...(persistedLib.labor || [])]);
     // Intentionally NOT including tradeConf in deps — it changes by reference
     // every render. The `trade` string is the stable dependency we want.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -6984,6 +7029,13 @@ function QuoteEditor({ initial, clients, existingQuotes = [], user, setUser, onS
                 only rendered when isBundle. */}
             {tab === 'labor' && (
               <div style={{ overflowX: 'auto' }}>
+                <QuickAddPanel
+                  type="labor"
+                  library={laborLibrary}
+                  onInsert={item => addRow(setLabor, { desc: item.desc, hrs: item.qty || 1, rate: item.rate || 0, ...(isBundle ? { _trade: user?.trades?.[0] || 'Plumber' } : {}) })}
+                  onSaveNew={item => setLaborLibrary(prev => [...prev, item])}
+                  onDelete={id  => setLaborLibrary(prev => prev.filter(i => i.id !== id))}
+                />
                 <div style={{ marginBottom: 10, padding: '8px 12px', background: tradeConf.color + '18', border: `1px solid ${tradeConf.color}33`, borderRadius: 3, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
                   <span style={{ fontSize: 18, fontWeight: 800, color: tradeConf.color, fontFamily: "'Inter', sans-serif", letterSpacing: '0.06em', textTransform: 'uppercase' }}>
                     {tradeConf.laborTitle}
