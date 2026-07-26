@@ -84,6 +84,32 @@ across all users (acknowledged tech debt in a code comment). Works
 correctly today; scales poorly past ~10k accounts. Build the proper
 short-TTL state table when needed.
 
+### 🟡 Client type selector — Company is the wrong field for homeowners (added 2026-07-26)
+
+New Client (and Edit Client) has a free-text **Company** box. For a
+residential customer there IS no company, so people type "Individual",
+"Homeowner", "N/A", "Indavidual" (observed live during testing — typo
+included). Whatever they type is stored as `clients.company` and then
+**prints on quotes and invoices as the company name**, so this is a
+document-quality problem, not just messy data.
+
+Fix: add a **Client Type** selector ahead of the company field —
+Individual · Company · Organization · Franchise · Property Manager ·
+Government/Municipal (final list TBD; these map to how trades actually
+bill). Then:
+  - Type = Individual → hide the Company input entirely; documents show
+    the person's name alone.
+  - Any other type → Company stays required-ish and keeps today's behavior.
+
+Needs a migration: `clients.client_type text` (nullable, default null so
+existing rows are untouched), plus dbToClient/clientToDb in
+`src/data/clients.js`, the New/Edit Client modals in App.jsx, and the
+company line on the quote + invoice document renderers.
+
+Backfill idea for existing rows: treat company values matching
+/^(individual|homeowner|home ?owner|n\/?a|none|self)$/i as Individual and
+clear the company string.
+
 ### 🟢 Time off — tech request/approval workflow (added 2026-06-11)
 
 Today's Time Off is **owner-managed availability**, not an HR system, and
