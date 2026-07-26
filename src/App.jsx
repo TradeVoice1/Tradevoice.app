@@ -32,6 +32,7 @@ const PrivacyPolicyScreen  = lazy(() => import("./LegalScreens").then(m => ({ de
 const TermsScreen          = lazy(() => import("./LegalScreens").then(m => ({ default: m.TermsScreen })));
 import { signIn, signUp, signOut, getProfile, upsertProfile, getSessionUser, onAuthChange, techSignIn, techChangePassword, signInWithGoogle, listMfaFactors, enrollTotp, verifyTotp, unenrollTotp, needsMfaChallenge } from "./data/auth";
 import { useDraftGuard } from "./lib/useDraftGuard";
+import { isNativeApp } from "./lib/platform";
 import { isUnlockValid } from "./data/superOwnerTotp";
 // Shared hang-safe promise wrapper — see src/lib/withTimeout.js for the
 // pattern. Use it on any await that goes to Supabase (auth, REST, RPC)
@@ -751,16 +752,33 @@ function LoginScreen({ onLogin, onSignup, onForgot, onMfaNeeded }) {
             <div style={{ background: '#fef3c7', border: `1px solid ${C.warn}55`, borderRadius: 6, padding: '8px 12px', marginBottom: 8, color: C.warn, fontSize: 13, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
               Private Preview · Invite Only
             </div>
-            Not invited yet?{' '}
-            <a href="mailto:hello@thetradevoice.com?subject=Early%20Access%20Request%20—%20Tradevoice" style={{ color: C.orange, fontWeight: 700, textDecoration: 'none' }}>
-              Request access →
-            </a>
-            <div style={{ marginTop: 6, fontSize: 13, color: C.dim }}>
-              Already invited?{' '}
-              <button onClick={onSignup} style={{ background: 'none', border: 'none', padding: 0, color: C.orange, fontWeight: 700, cursor: 'pointer', fontSize: 13, fontFamily: "'Inter', sans-serif", textDecoration: 'underline' }}>
-                Create your account
-              </button>
-            </div>
+            {/* Native (iOS) builds are LOGIN-ONLY — no signup, no card entry,
+                no pricing. Selling a digital subscription through our own
+                payment sheet inside the app is the classic App Store 3.1.1
+                rejection. Accounts are created on the web; the app signs you
+                in. See src/lib/platform.js. */}
+            {isNativeApp() ? (
+              <>
+                New to Tradevoice?
+                <div style={{ marginTop: 6, fontSize: 13, color: C.dim, lineHeight: 1.6 }}>
+                  Create your account at <strong style={{ color: C.text }}>thetradevoice.com</strong>,
+                  then sign in here.
+                </div>
+              </>
+            ) : (
+              <>
+                Not invited yet?{' '}
+                <a href="mailto:hello@thetradevoice.com?subject=Early%20Access%20Request%20—%20Tradevoice" style={{ color: C.orange, fontWeight: 700, textDecoration: 'none' }}>
+                  Request access →
+                </a>
+                <div style={{ marginTop: 6, fontSize: 13, color: C.dim }}>
+                  Already invited?{' '}
+                  <button onClick={onSignup} style={{ background: 'none', border: 'none', padding: 0, color: C.orange, fontWeight: 700, cursor: 'pointer', fontSize: 13, fontFamily: "'Inter', sans-serif", textDecoration: 'underline' }}>
+                    Create your account
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </>
       )}
@@ -8488,8 +8506,15 @@ function Billing({ user, setUser, payments }) {
               {subStatus === 'canceled' && <>Subscription is canceled. Add a payment method to reactivate.</>}
             </div>
           </div>
-          {/* CTA button — varies by state */}
-          {!hasCard || subStatus === 'past_due' || subStatus === 'canceled' ? (
+          {/* CTA button — varies by state. On native (iOS) every card-entry
+              path is replaced with a "manage on the web" note: no payment
+              sheet, no plan purchase, per App Store 3.1.1. */}
+          {isNativeApp() ? (
+            <div style={{ flexShrink: 0, maxWidth: 230, fontSize: 14, color: C.muted, lineHeight: 1.5, textAlign: 'right' }}>
+              Manage billing at<br />
+              <strong style={{ color: C.text }}>app.thetradevoice.com</strong>
+            </div>
+          ) : !hasCard || subStatus === 'past_due' || subStatus === 'canceled' ? (
             <button
               onClick={() => setShowCard(true)}
               style={{
@@ -9991,9 +10016,16 @@ function Settings({ user, setUser, logo, onLogoChange, showProfileModal, setShow
             </div>
           </div>
 
-          {/* Pricing note */}
+          {/* Pricing note. Adding a seat raises the subscription, so on native
+              it's a purchase — price and the buy button are replaced with a
+              pointer to the web. Existing seats stay fully manageable
+              (permissions, removal); only BUYING is gated. */}
           <div style={{ background: C.orangeLo, border: `1px solid ${C.orange}33`, borderRadius: 8, padding: '12px 16px', marginBottom: 16, fontSize: 16, color: C.muted }}>
-            Additional team members are <strong style={{ color: C.orange }}>$19.99/mo per seat</strong>. Each seat gets their own login and custom permissions. You control exactly what they can see and do.
+            {isNativeApp() ? (
+              <>Add or remove tech seats at <strong style={{ color: C.orange }}>app.thetradevoice.com</strong>. You can manage the permissions of existing techs right here.</>
+            ) : (
+              <>Additional team members are <strong style={{ color: C.orange }}>$19.99/mo per seat</strong>. Each seat gets their own login and custom permissions. You control exactly what they can see and do.</>
+            )}
           </div>
 
           {/* Team member list */}
@@ -10017,14 +10049,16 @@ function Settings({ user, setUser, logo, onLogoChange, showProfileModal, setShow
               a real Supabase auth account and gives the owner a Tech ID +
               password to share. Replaces the old "blank row" stub which
               didn't actually create a usable account. */}
-          <button onClick={() => setShowBuySeat(true)} style={{
-            ...s.btn, background: C.orange, color: '#fff', border: 'none',
-            padding: '14px', fontSize: 17, fontWeight: 700, borderRadius: 8,
-            width: '100%', textAlign: 'center', minHeight: 50,
-            boxShadow: '0 1px 3px rgba(45, 106, 79, 0.3)',
-          }}>
-            + Buy a Tech Seat — $19.99/mo
-          </button>
+          {!isNativeApp() && (
+            <button onClick={() => setShowBuySeat(true)} style={{
+              ...s.btn, background: C.orange, color: '#fff', border: 'none',
+              padding: '14px', fontSize: 17, fontWeight: 700, borderRadius: 8,
+              width: '100%', textAlign: 'center', minHeight: 50,
+              boxShadow: '0 1px 3px rgba(45, 106, 79, 0.3)',
+            }}>
+              + Buy a Tech Seat — $19.99/mo
+            </button>
+          )}
         </div>
       )}
 
@@ -10120,7 +10154,10 @@ function Settings({ user, setUser, logo, onLogoChange, showProfileModal, setShow
           </div>
         </div>
 
-        {/* Change plan grid */}
+        {/* Change plan grid — hidden on native. A price list with selectable
+            tiers reads as an in-app purchase offer to App Store review even
+            when the transaction itself happens elsewhere. */}
+        {!isNativeApp() && <>
         <div style={{ fontSize: 16, fontWeight: 700, color: C.muted, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 10, fontFamily: "'Inter', sans-serif" }}>Change Plan</div>
         <div style={{ display: 'grid', gridTemplateColumns: isTablet ? '1fr' : 'repeat(2,1fr)', gap: 10 }}>
           {PLANS.map(p => {
@@ -10138,6 +10175,7 @@ function Settings({ user, setUser, logo, onLogoChange, showProfileModal, setShow
             );
           })}
         </div>
+        </>}
       </div>
 
       {/* Security — two-factor authentication */}
@@ -11029,7 +11067,13 @@ function TradevoiceApp() {
   if (!user) {
     if (authScreen === 'mfa')      return <MfaChallengeScreen onBack={() => setAuthScreen('login')} />;
     if (authScreen === 'login')    return <LoginScreen    onLogin={u => { setUser(u); setAuthScreen(null); }} onSignup={() => setAuthScreen('signup')} onForgot={() => setAuthScreen('forgot')} onMfaNeeded={() => setAuthScreen('mfa')} />;
-    if (authScreen === 'signup')   return <SignupScreen onComplete={handleSignupComplete} onBack={() => setAuthScreen('login')} />;
+    // Hard gate, not just a hidden button: ?signup=1 (marketing CTA), a stale
+    // deep link, or /signup would otherwise reach the card step inside the iOS
+    // shell. Native always falls through to sign-in.
+    if (authScreen === 'signup')   {
+      if (isNativeApp()) { setAuthScreen('login'); return null; }
+      return <SignupScreen onComplete={handleSignupComplete} onBack={() => setAuthScreen('login')} />;
+    }
     // Legacy 'join' route — redirect to login. The proper tech sign-in lives
     // inside the LoginScreen as a mode toggle now (Owner / Tech sign in).
     if (authScreen === 'join')     { setAuthScreen('login'); return null; }
