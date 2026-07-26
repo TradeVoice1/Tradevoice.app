@@ -5052,9 +5052,18 @@ function InvoiceDocument({ invoice, user, logo, payments, onEdit, onDuplicate, o
                   <div style={{ height:8 }} />
                 </div>
               )}
+              {/* Markup disclosure (migration 0041). By default markup is NOT
+                  broken out — it's absorbed into the subtotal exactly as the
+                  quote document already does, so the customer never gets a
+                  "Markup 15%" line to argue with. Contractors who prefer full
+                  transparency flip Settings → Invoices → "Show markup as its
+                  own line item". Either way the Total Due is identical. */}
               {[
-                ['Subtotal',                           fmtMoney(calc.sub),  '#777', '#444'],
-                [`Markup (${invoice.markup}%) — mat+equip`, fmtMoney(calc.mkAmt), '#777', '#444'],
+                ['Subtotal',
+                  fmtMoney(user?.showMarkupLine ? calc.sub : calc.sub + calc.mkAmt), '#777', '#444'],
+                ...(user?.showMarkupLine
+                  ? [[`Markup (${invoice.markup}%) — mat+equip`, fmtMoney(calc.mkAmt), '#777', '#444']]
+                  : []),
                 ...(calc.discount > 0
                   ? [[`Discount${invoice.discountLabel ? ` — ${invoice.discountLabel}` : ''}`,
                        '−' + fmtMoney(calc.discount), '#15803d', '#15803d']]
@@ -7727,6 +7736,8 @@ function ProfileModal({ profile, onSave, onClose }) {
   const [coiPolicyNumber,      setCoiPolicyNumber]      = useState(profile.coiPolicyNumber      || '');
   const [coiExpiresAt,         setCoiExpiresAt]         = useState(profile.coiExpiresAt         || '');
   const [defaultLateFeePolicy, setDefaultLateFeePolicy] = useState(profile.defaultLateFeePolicy || '');
+  // Invoice markup disclosure (migration 0041) — see the checkbox below.
+  const [showMarkupLine,       setShowMarkupLine]       = useState(!!profile.showMarkupLine);
   const fileRef = useRef(null);
 
   const PRESET_COLORS = [
@@ -7816,6 +7827,7 @@ function ProfileModal({ profile, onSave, onClose }) {
       coiPolicyNumber:      coiPolicyNumber.trim(),
       coiExpiresAt:         coiExpiresAt || '',
       defaultLateFeePolicy: defaultLateFeePolicy.trim(),
+      showMarkupLine,
     });
   };
 
@@ -8177,6 +8189,26 @@ function ProfileModal({ profile, onSave, onClose }) {
           <F label="Default Late Fee Policy" hint="Pre-fills the late-fee line on every new invoice. Editable per invoice if you cut a customer slack.">
             {I(defaultLateFeePolicy, setDefaultLateFeePolicy, '1.5% per month after Net 30')}
           </F>
+
+          {/* Markup disclosure (migration 0041). Off by default: markup is
+              absorbed into the subtotal exactly like the quote document, so a
+              customer never sees a "Markup 15%" line to push back on. */}
+          <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '12px 14px', background: showMarkupLine ? C.orangeLo : C.raised, border: `1.5px solid ${showMarkupLine ? C.orange : C.border2}`, borderRadius: 8, cursor: 'pointer', WebkitTapHighlightColor: 'transparent' }}>
+            <input
+              type="checkbox"
+              checked={showMarkupLine}
+              onChange={e => setShowMarkupLine(e.target.checked)}
+              style={{ marginTop: 3, width: 16, height: 16, accentColor: C.orange, cursor: 'pointer', flexShrink: 0 }}
+            />
+            <span style={{ fontSize: 15, color: C.text, lineHeight: 1.5 }}>
+              <strong>Show markup as its own line on invoices</strong>
+              <span style={{ display: 'block', color: C.muted, marginTop: 2 }}>
+                Off (recommended): markup is folded into the materials total, the same way your
+                quotes already show it — the customer sees one number. On: the invoice lists
+                “Markup ({'{'}%{'}'})” separately. The total due is identical either way.
+              </span>
+            </span>
+          </label>
 
         </div>
 
@@ -9756,6 +9788,8 @@ function Settings({ user, setUser, logo, onLogoChange, showProfileModal, setShow
                 coiPolicyNumber:      p.coiPolicyNumber,
                 coiExpiresAt:         p.coiExpiresAt,
                 defaultLateFeePolicy: p.defaultLateFeePolicy,
+                // Invoice markup disclosure (migration 0041)
+                showMarkupLine:       p.showMarkupLine,
               });
               if (setUser) setUser(prev => ({ ...prev, ...saved }));
             } catch (e) {

@@ -48,6 +48,10 @@ const dbToProfile = (row) => row && ({
   // Default late-fee policy text — pre-fills new invoices; can be
   // overridden per invoice. "1.5% per month after Net 30" style.
   defaultLateFeePolicy: row.default_late_fee_policy  ?? '',
+  // Invoice markup disclosure (migration 0041). false = fold markup into the
+  // Materials & Parts total like the quote does; true = show it as its own
+  // line item. Defaults to the discreet behavior.
+  showMarkupLine:       row.show_markup_line         ?? false,
   payments:         row.payments          ?? {},
   taxRates:         row.tax_rates         ?? {},
   // Social-media handles (migration 0027) — Facebook / X / Instagram /
@@ -127,6 +131,7 @@ const PROFILE_COLUMNS = {
   coiPolicyNumber:        ['coi_policy_number',       null],
   coiExpiresAt:           ['coi_expires_at',          null],
   defaultLateFeePolicy:   ['default_late_fee_policy', null],
+  showMarkupLine:         ['show_markup_line',        false],
   payments:               ['payments',                null],
   taxRates:               ['tax_rates',               null],
   socialHandles:          ['social_handles',          {}],
