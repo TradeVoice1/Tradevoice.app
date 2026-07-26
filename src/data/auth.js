@@ -89,34 +89,64 @@ const dbToProfile = (row) => row && ({
   superOwnerUnlockAt:      row.super_owner_unlock_at       ?? null,
 });
 
-const profileToDb = (p) => ({
-  name:               p.name              ?? null,
-  company:            p.company           ?? null,
-  phone:              p.phone             ?? null,
-  trades:             p.trades            ?? [],
-  specialty_types:    p.specialtyTypes    ?? [],
-  work_type:          p.workType          ?? null,
-  states:             p.states            ?? [],
-  tagline:            p.tagline           ?? null,
-  license:            p.license           ?? null,
-  state_licenses:     p.stateLicenses     ?? {},
-  ai_scope_terms_accepted_at: p.aiScopeTermsAcceptedAt ?? null,
-  accent_color:       p.accentColor       ?? null,
-  default_terms:      p.defaultTerms      ?? null,
-  plan:               p.plan              ?? null,
-  role:               p.role              ?? 'owner',
-  company_code:       p.companyCode       ?? null,
-  accepted_terms_at:  p.acceptedTermsAt   ?? null,
-  logo_url:           p.logoUrl           ?? null,
-  review_link:        p.reviewLink        ?? null,
-  coi_carrier:              p.coiCarrier              ?? null,
-  coi_policy_number:        p.coiPolicyNumber         ?? null,
-  coi_expires_at:           p.coiExpiresAt            || null,
-  default_late_fee_policy:  p.defaultLateFeePolicy    ?? null,
-  payments:           p.payments,
-  tax_rates:          p.taxRates,
-  social_handles:     p.socialHandles    ?? {},
-});
+// camelCase profile key → DB column, with the empty-value each column wants
+// when the caller passes it explicitly as null/undefined.
+//
+// CRITICAL: only keys PRESENT in the patch are written. The previous version
+// built the full row with `?? null` defaults and then tried to strip
+// `undefined` keys — but the `??` had already converted every missing field
+// to null, so the strip was a no-op and EVERY partial save nulled every
+// field the caller didn't mention.
+//
+// That silently wiped accepted_terms_at / plan / company_code whenever the
+// settings autosave or the profile modal ran, which failed the
+// profileIsComplete gate and threw paying customers back into the signup
+// wizard — locked out of their own account with an active subscription.
+// Found in smoke testing on 2026-07-26.
+const PROFILE_COLUMNS = {
+  name:                   ['name',                    null],
+  company:                ['company',                 null],
+  phone:                  ['phone',                   null],
+  trades:                 ['trades',                  []],
+  specialtyTypes:         ['specialty_types',         []],
+  workType:               ['work_type',               null],
+  states:                 ['states',                  []],
+  tagline:                ['tagline',                 null],
+  license:                ['license',                 null],
+  stateLicenses:          ['state_licenses',          {}],
+  aiScopeTermsAcceptedAt: ['ai_scope_terms_accepted_at', null],
+  accentColor:            ['accent_color',            null],
+  defaultTerms:           ['default_terms',           null],
+  plan:                   ['plan',                    null],
+  role:                   ['role',                    'owner'],
+  companyCode:            ['company_code',            null],
+  acceptedTermsAt:        ['accepted_terms_at',       null],
+  logoUrl:                ['logo_url',                null],
+  reviewLink:             ['review_link',             null],
+  coiCarrier:             ['coi_carrier',             null],
+  coiPolicyNumber:        ['coi_policy_number',       null],
+  coiExpiresAt:           ['coi_expires_at',          null],
+  defaultLateFeePolicy:   ['default_late_fee_policy', null],
+  payments:               ['payments',                null],
+  taxRates:               ['tax_rates',               null],
+  socialHandles:          ['social_handles',          {}],
+};
+
+const profileToDb = (p) => {
+  const row = {};
+  for (const [key, [column, empty]] of Object.entries(PROFILE_COLUMNS)) {
+    if (!p || !(key in p)) continue;           // untouched by this caller — leave the column alone
+    const val = p[key];
+    // Empty string on a date column is not a valid timestamp; treat it as
+    // "cleared" (previously handled by the `|| null` on coi_expires_at).
+    if (val === undefined || val === null || (val === '' && column.endsWith('_at'))) {
+      row[column] = empty;
+    } else {
+      row[column] = val;
+    }
+  }
+  return row;
+};
 
 // ── Public API ───────────────────────────────────────────────────────────────
 
@@ -156,9 +186,16 @@ export async function getProfile(userId, authEmail) {
 }
 
 export async function upsertProfile(userId, patch) {
-  // Drop undefined keys so we don't null out fields the caller didn't intend to touch.
+  // profileToDb only emits columns the caller actually passed, so a partial
+  // save can never clobber fields it didn't mention. See PROFILE_COLUMNS.
   const dbPatch = profileToDb(patch);
-  Object.keys(dbPatch).forEach(k => dbPatch[k] === undefined && delete dbPatch[k]);
+  if (Object.keys(dbPatch).length === 0) {
+    // Nothing to write — return the current row rather than issuing an empty
+    // UPDATE (which would match 0 columns and fall through to a duplicate INSERT).
+    const { data: current } = await supabase.from('profiles').select('*').eq('id', userId).maybeSingle();
+    const { data: { user: cu } } = await supabase.auth.getUser();
+    return current ? { ...dbToProfile(current), email: cu?.email ?? '' } : null;
+  }
 
   // Try UPDATE first — covers the common case where the handle_new_user
   // trigger has already created a profile row for this auth user.
