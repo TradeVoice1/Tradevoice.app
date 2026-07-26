@@ -1689,9 +1689,13 @@ function SignupScreen({ onComplete, onBack }) {
             />
             <span style={{ fontSize: 15, color: C.text, lineHeight: 1.5 }}>
               I agree to the{' '}
-              <a href="https://thetradevoice.com/terms" target="_blank" rel="noopener noreferrer" style={{ color: C.orange, fontWeight: 700, textDecoration: 'underline' }} onClick={e => e.stopPropagation()}>Terms of Service</a>
+              {/* Same-origin /legal/* routes — the in-app legal screens. These were
+                  pointed at thetradevoice.com/terms and /privacy, which 404 (the
+                  marketing site only serves /terms.html). Relative paths also keep
+                  working in dev and inside the Capacitor iOS shell. */}
+              <a href="/legal/terms" target="_blank" rel="noopener noreferrer" style={{ color: C.orange, fontWeight: 700, textDecoration: 'underline' }} onClick={e => e.stopPropagation()}>Terms of Service</a>
               {' '}and{' '}
-              <a href="https://thetradevoice.com/privacy" target="_blank" rel="noopener noreferrer" style={{ color: C.orange, fontWeight: 700, textDecoration: 'underline' }} onClick={e => e.stopPropagation()}>Privacy Policy</a>.
+              <a href="/legal/privacy" target="_blank" rel="noopener noreferrer" style={{ color: C.orange, fontWeight: 700, textDecoration: 'underline' }} onClick={e => e.stopPropagation()}>Privacy Policy</a>.
             </span>
           </label>
           </div> {/* end constrained-column wrapper for Step 2 below-grid */}
@@ -10320,7 +10324,30 @@ export default function Tradevoice() {
     const m = path.match(/^\/q\/([0-9a-f-]{36})/i);
     return m ? m[1] : null;
   })();
+  // Public legal pages. These MUST render without a session — the signup
+  // screen links to them before an account exists, and the marketing site
+  // links here too. Previously /legal/* fell through to the app shell and
+  // rendered the login screen, so both sets of links were dead ends.
+  const legalPage = (() => {
+    const m = path.match(/^\/legal\/(terms|privacy)\/?$/i);
+    return m ? m[1].toLowerCase() : null;
+  })();
 
+  if (legalPage) {
+    // Opened in a new tab from signup, so "Back" usually has nowhere to go —
+    // fall through to the app root when there's no history to pop.
+    const goBack = () => {
+      if (typeof window !== 'undefined' && window.history.length > 1) window.history.back();
+      else window.location.href = '/';
+    };
+    return (
+      <Suspense fallback={<div style={{ minHeight: '100dvh', background: C.bg }} />}>
+        {legalPage === 'terms'
+          ? <TermsScreen onBack={goBack} />
+          : <PrivacyPolicyScreen onBack={goBack} />}
+      </Suspense>
+    );
+  }
   if (publicInvoiceToken) {
     return (
       <Suspense fallback={<div style={{ minHeight: '100dvh', background: C.bg }} />}>
