@@ -1263,6 +1263,11 @@ function AddJobModal({ techs, jobs = [], onClose, onAdd, defaultDate, prefill = 
       techUserId: prefill.techUserId  ?? base.techUserId,
       notes:      prefill.notes       ?? base.notes,
       planId:     prefill.planId      ?? base.planId,
+      // Carry the client's contact details through so a tech dispatched from
+      // a quote or plan has the address and phone on the job — previously the
+      // caller had them and they were dropped here.
+      address:    prefill.address     ?? base.address,
+      phone:      prefill.phone       ?? base.phone,
       date:       prefill.date ? new Date(prefill.date + 'T12:00:00') : base.date,
     };
   });

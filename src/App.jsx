@@ -6630,7 +6630,10 @@ function QuoteEditor({ initial, clients, existingQuotes = [], user, setUser, onS
     setShowNewClient(false);
   };
   const [scope,    setScope]    = useState(initial?.scope    || '');
-  const [labor,    setLabor]    = useState(initial?.labor    || [{ id: 1, desc: '', hrs: 1, rate: 0 }]);
+  // Seed the first labor row at the trade's default rate, not $0 — the tab
+  // header advertises "DEFAULT RATE: $X/HR", so a 0 in the row contradicted it
+  // and quietly produced $0 labor if the user didn't notice.
+  const [labor,    setLabor]    = useState(initial?.labor    || [{ id: 1, desc: '', hrs: 1, rate: getTradeConfig(initial?.trade || user?.trades?.[0] || 'Plumber', user?.trades)?.defaultLaborRate ?? 0 }]);
   const [mats,     setMats]     = useState(initial?.materials|| [{ id: 1, desc: '', qty: 1, unit: 'ea', cost: 0 }]);
   const [equip,    setEquip]    = useState(initial?.equipment|| []);
   const [selMat,   setSelMat]   = useState(null);
@@ -6817,6 +6820,14 @@ function QuoteEditor({ initial, clients, existingQuotes = [], user, setUser, onS
       return;
     }
 
+    // Drop rows the user never filled in. Each tab seeds a blank row so
+    // there's something to type into, but if they used Quick Add instead the
+    // empty row would persist and print as a blank line on the customer's
+    // quote. A row counts as real if it has a description or any money on it.
+    const usedLabor = labor.filter(r => (r.desc || '').trim() || Number(r.rate) > 0);
+    const usedMats  = mats.filter(r  => (r.desc || '').trim() || Number(r.cost) > 0);
+    const usedEquip = equip.filter(r => (r.desc || '').trim() || Number(r.rate) > 0);
+
     const q = {
       id: initial?.id || uid(),
       // Null for new quotes — DB trigger (assign_quote_number_trigger, migration
@@ -6827,7 +6838,7 @@ function QuoteEditor({ initial, clients, existingQuotes = [], user, setUser, onS
       trade,
       status: asDraft ? 'draft' : (initial?.status || 'draft'),
       scope,
-      labor, materials: mats, equipment: equip,
+      labor: usedLabor, materials: usedMats, equipment: usedEquip,
       markup, tax, terms,
       createdAt: initial?.createdAt || new Date().toISOString().split('T')[0],
       sentAt: initial?.sentAt || null,
@@ -7436,7 +7447,7 @@ function QuoteEditor({ initial, clients, existingQuotes = [], user, setUser, onS
                   <NumberInput value={markup} onChange={setMarkup} width={64} fontSize={18}
                     style={{ minHeight: 38, fontWeight: 700 }} />
                   <span style={{ fontSize: 18, color: C.dim }}>%</span>
-                  <span style={{ fontSize: 18, color: C.dim, width: 52, textAlign: 'right', fontFamily: "'Inter', sans-serif" }}>{fmt(calc.mkAmt)}</span>
+                  <span style={{ fontSize: 18, color: C.dim, minWidth: 76, textAlign: 'right', fontFamily: "'Inter', sans-serif", whiteSpace: 'nowrap' }}>{fmt(calc.mkAmt)}</span>
                 </div>
               </div>
               {/* Tax — with labor tax indicator */}
@@ -7452,7 +7463,7 @@ function QuoteEditor({ initial, clients, existingQuotes = [], user, setUser, onS
                   <NumberInput value={tax} onChange={setTax} width={64} fontSize={18}
                     style={{ minHeight: 38, fontWeight: 700 }} />
                   <span style={{ fontSize: 18, color: C.dim }}>%</span>
-                  <span style={{ fontSize: 18, color: C.dim, width: 52, textAlign: 'right', fontFamily: "'Inter', sans-serif" }}>{fmt(calc.txAmt)}</span>
+                  <span style={{ fontSize: 18, color: C.dim, minWidth: 76, textAlign: 'right', fontFamily: "'Inter', sans-serif", whiteSpace: 'nowrap' }}>{fmt(calc.txAmt)}</span>
                 </div>
               </div>
             </div>
@@ -10968,6 +10979,10 @@ function TradevoiceApp() {
       clientName:   quote.clientName ?? client?.name ?? '',
       trade:        quote.trade      ?? '',
       duration,
+      // Client contact details so the tech has an address and number on the
+      // job without re-looking-up the client record.
+      address:      client?.address ?? '',
+      phone:        client?.phone   ?? '',
       techUserId:   null, // owner picks at schedule time; quotes don't carry a tech assignment
       notes:        `Job scheduled from quote ${quote.number || ''}. Estimated ${laborHours || '—'} labor hr per quote.`.trim(),
       quoteId:      quote.id,
