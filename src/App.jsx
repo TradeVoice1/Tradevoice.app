@@ -31,6 +31,7 @@ const TotpScreen           = lazy(() => import("./TotpScreen"));
 const PrivacyPolicyScreen  = lazy(() => import("./LegalScreens").then(m => ({ default: m.PrivacyPolicyScreen })));
 const TermsScreen          = lazy(() => import("./LegalScreens").then(m => ({ default: m.TermsScreen })));
 import { signIn, signUp, signOut, getProfile, upsertProfile, getSessionUser, onAuthChange, techSignIn, techChangePassword, signInWithGoogle, listMfaFactors, enrollTotp, verifyTotp, unenrollTotp, needsMfaChallenge } from "./data/auth";
+import { useDraftGuard } from "./lib/useDraftGuard";
 import { isUnlockValid } from "./data/superOwnerTotp";
 // Shared hang-safe promise wrapper — see src/lib/withTimeout.js for the
 // pattern. Use it on any await that goes to Supabase (auth, REST, RPC)
@@ -161,13 +162,17 @@ const Btn = ({ children, onClick, disabled, style = {}, variant = 'primary', siz
   );
 };
 
-const Input = ({ value, onChange, placeholder, type = 'text', style = {}, rows }) => {
+// autoFocus lands the cursor in a modal's first field so a phone user doesn't
+// have to tap twice; onSubmit fires on Enter (single-line only — Enter in a
+// textarea must stay a newline).
+const Input = ({ value, onChange, placeholder, type = 'text', style = {}, rows, autoFocus, onSubmit }) => {
   if (rows) return (
-    <textarea value={value} onChange={e => onChange(e.target.value)} rows={rows} placeholder={placeholder}
+    <textarea value={value} onChange={e => onChange(e.target.value)} rows={rows} placeholder={placeholder} autoFocus={autoFocus}
       style={{ ...s.input, width: '100%', padding: '11px 13px', boxSizing: 'border-box', resize: typeof window !== 'undefined' && window.innerWidth < 1024 ? 'none' : 'vertical', lineHeight: 1.65, ...style }} />
   );
   return (
-    <input type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
+    <input type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} autoFocus={autoFocus}
+      onKeyDown={onSubmit ? (e) => { if (e.key === 'Enter') { e.preventDefault(); onSubmit(); } } : undefined}
       style={{ ...s.input, width: '100%', padding: '11px 13px', boxSizing: 'border-box', ...style }} />
   );
 };
@@ -4084,6 +4089,29 @@ function InvoiceEditor({ initial, user, teamMembers = [], existingInvoices = [],
   const calc = calcInvoice({ labor, materials, equipment, markup, tax:taxRate, state: invoiceState }, user?.state);
 
   const [saving, setSaving] = useState(false);
+
+  // ── Unsaved-work protection (see QuoteEditor for the rationale) ──
+  const invSavedRef = useRef(false);
+  const invDraftData = { title, clientName, clientEmail, clientPhone, clientAddr, trade, terms, dueAt, notes, markup, taxRate, labor, materials, equipment };
+  const invInitialSnapshot = useRef(JSON.stringify({
+    title: initial?.title || '', clientName: initial?.clientName || '',
+    clientEmail: initial?.clientEmail || '', clientPhone: initial?.clientPhone || '',
+    clientAddr: initial?.clientAddress || '', trade: initial?.trade || user?.trades?.[0] || 'Plumber',
+    terms: initial?.terms || 'Net 30', dueAt: initial?.dueAt || addDays(today(), 30),
+    notes: initial?.notes || '', markup: initial?.markup ?? 15, taxRate: initial?.tax ?? 8.5,
+    labor: initial?.labor || null, materials: initial?.materials || [], equipment: initial?.equipment || [],
+  }));
+  // New invoices seed a labor row with a random uid, so a fresh editor never
+  // matches the snapshot by value — compare against the non-labor payload for
+  // brand-new invoices and let any real edit flip it dirty.
+  const invDirty = !invSavedRef.current && (initial
+    ? JSON.stringify(invDraftData) !== invInitialSnapshot.current
+    : JSON.stringify({ ...invDraftData, labor: null }) !== invInitialSnapshot.current);
+  const invDraftGuard = useDraftGuard({
+    kind: 'invoice', ownerId: user?.id, id: initial?.id || 'new',
+    data: invDraftData, dirty: invDirty,
+  });
+
   const handleSave = async (asDraft) => {
     if (saving) return;
 
@@ -4153,12 +4181,23 @@ function InvoiceEditor({ initial, user, teamMembers = [], existingInvoices = [],
     setSaving(true);
     try {
       await onSave(inv);
+      invDraftGuard.clear();
+      invSavedRef.current = true;
     } catch (e) {
       console.error('invoice save failed', e);
       alert(e?.message || 'Could not save invoice.');
     } finally {
       setSaving(false);
     }
+  };
+
+  // Cancel with a confirmation when there's unsaved work (see QuoteEditor).
+  const handleCancelInvoice = () => {
+    if (invDirty && !invSavedRef.current) {
+      if (!window.confirm('Discard this invoice?\n\nYour unsaved changes will be lost.')) return;
+    }
+    invDraftGuard.clear();
+    onCancel();
   };
 
   const TABS = [
@@ -4192,7 +4231,8 @@ function InvoiceEditor({ initial, user, teamMembers = [], existingInvoices = [],
       {/* Top bar */}
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20, flexWrap:'wrap', gap:12 }}>
         <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-          <Btn variant="ghost" size="sm" onClick={onCancel} style={{ fontSize: 23, padding:'12px 24px', minHeight:52 }}>Cancel</Btn>
+          <Btn variant="ghost" size="sm" onClick={handleCancelInvoice} style={{ fontSize: 23, padding:'12px 24px', minHeight:52 }}>Cancel</Btn>
+          {invDirty && <span style={{ fontSize: 14, fontWeight: 700, color: C.warn, whiteSpace: 'nowrap' }}>• Unsaved</span>}
           <span style={{ fontFamily:"'Inter', sans-serif", fontSize: 20, fontWeight:700, color:C.text, letterSpacing:'-0.02em' }}>
             {initial ? `Edit ${initial.number}` : 'New Invoice'}
           </span>
@@ -4649,7 +4689,7 @@ function InvoiceEditor({ initial, user, teamMembers = [], existingInvoices = [],
 }
 
 // ── Invoice Document ───────────────────────────────────────────────────────────
-function InvoiceDocument({ invoice, user, logo, payments, onEdit, onBack, onRecordPayment, onVoid, onDelete, onUnInvoice, onSendReminder, onSend }) {
+function InvoiceDocument({ invoice, user, logo, payments, onEdit, onDuplicate, onBack, onRecordPayment, onVoid, onDelete, onUnInvoice, onSendReminder, onSend }) {
   const [showShare, setShowShare] = useState(false);
   const { isTablet } = useBreakpoint();
   const calc = calcInvoice(invoice, user?.state);
@@ -4703,6 +4743,9 @@ function InvoiceDocument({ invoice, user, logo, payments, onEdit, onBack, onReco
         )}
         <div style={{ marginLeft:'auto', display:'flex', gap:8, flexWrap:'wrap' }}>
           {!isVoid && !isPaid && <Btn variant="ghost" size="sm" onClick={onEdit} style={{ fontSize: 20, padding:'10px 18px', minHeight:48 }}>Edit</Btn>}
+          {/* Duplicate — available even on paid/void invoices; billing the
+              same scope again is exactly when you want a copy. */}
+          {onDuplicate && <Btn variant="ghost" size="sm" onClick={onDuplicate} style={{ fontSize: 20, padding:'10px 18px', minHeight:48 }}>Duplicate</Btn>}
           {/* Download PDF — uses the browser's print dialog to "save as PDF".
               Crude but works on every browser; a real PDF generator can come later. */}
           <Btn variant="ghost" size="sm" onClick={() => window.print()} style={{ fontSize: 20, padding:'10px 18px', minHeight:48 }}>Download PDF</Btn>
@@ -5596,6 +5639,19 @@ function VoiceInvoice({ user, logo, payments, teamMembers = [], sharedInvoices, 
           payments={payments}
           onBack={()=>setView('hub')}
           onEdit={()=>{ setEditingInv(active); setView('editor'); }}
+          onDuplicate={()=>{
+            // New draft from this invoice's line items — repeat work, new
+            // date. Strip identity/payment history so nothing carries over
+            // that would misrepresent the copy as already sent or paid.
+            setEditingInv({
+              ...active, id: undefined, number: null, status: 'draft',
+              title: `${active.title || 'Invoice'} (copy)`,
+              createdAt: today(), dueAt: addDays(today(), 30),
+              sentAt: null, paidAt: null, payments: [], activity: [],
+              shareToken: null, customerSignedName: null, customerSignedAt: null,
+            });
+            setView('editor');
+          }}
           onRecordPayment={()=>setPaymentModal(true)}
           onVoid={()=>voidInvoice(active.id)}
           onDelete={()=>deleteInvoiceFlow(active.id)}
@@ -5657,7 +5713,7 @@ const fmt = n => '$' + Number(n || 0).toLocaleString('en-US', { minimumFractionD
 // ══════════════════════════════════════════════════════════════════════════════
 // QUOTE DOCUMENT (read-only, print-ready, trade-aware)
 // ══════════════════════════════════════════════════════════════════════════════
-function QuoteDocument({ quote, client, user, logo, onRevise, onBack, onConvertToInvoice, onScheduleJob, onDelete, onSend }) {
+function QuoteDocument({ quote, client, user, logo, onRevise, onDuplicate, onBack, onConvertToInvoice, onScheduleJob, onDelete, onSend }) {
   const { isTablet } = useBreakpoint();
   const calc      = calcQuote(quote, user?.state);
   const locked    = quote.status === 'accepted' || quote.status === 'invoiced';
@@ -5737,6 +5793,12 @@ function QuoteDocument({ quote, client, user, logo, onRevise, onBack, onConvertT
             </Btn>
           )}
           {!locked && quote.status !== 'draft' && <Btn variant="flat" size="sm" style={{ flex: isTablet ? 1 : undefined }} onClick={onRevise}>Revise</Btn>}
+          {/* Duplicate — start a new quote from this one's line items. Works on
+              any quote, including locked/invoiced ones (that's the most common
+              case: bill the same job again for a different customer). */}
+          {onDuplicate && (
+            <Btn variant="flat" size="sm" style={{ flex: isTablet ? 1 : undefined }} onClick={onDuplicate}>Duplicate</Btn>
+          )}
           {/* Schedule-Job from quote — quick path to put the work on the
               calendar without retyping client + trade. Shown on quotes
               that are out (sent / accepted / draft is fine too) but not
@@ -6347,6 +6409,8 @@ function QuickAddPanel({ library, onInsert, onSaveNew, onDelete, type }) {
             <div>
               <label style={{ ...s.label, marginBottom: 4 }}>Description</label>
               <input value={newDesc} onChange={e => setNewDesc(e.target.value)}
+                autoFocus
+                onKeyDown={e => { if (e.key === 'Enter' && newDesc.trim()) { e.preventDefault(); saveNew(); } }}
                 placeholder={isMat ? 'e.g. 3/4" Gate Valve' : (isLabor ? 'e.g. Journeyman Plumber' : 'e.g. Jackhammer Rental')}
                 style={{ ...s.input, width: '100%', padding: '9px 10px', boxSizing: 'border-box', minHeight: 44 }} />
             </div>
@@ -6680,6 +6744,28 @@ function QuoteEditor({ initial, clients, existingQuotes = [], user, setUser, onS
   const isRevision = !!initial?.id;
   const calc       = calcQuote({ labor, materials: mats, equipment: equip, markup, tax }, user?.state);
 
+  // ── Unsaved-work protection ──
+  // Snapshot the editor payload and compare against what we opened with, so
+  // "dirty" means real edits — not just visiting a tab. Arms the browser's
+  // leave-prompt and stashes a local recovery draft while dirty.
+  const savedRef  = useRef(false);
+  const draftData = { title, clientId, trade, scope, labor, materials: mats, equipment: equip, markup, tax, terms, expires };
+  const initialSnapshot = useRef(JSON.stringify({
+    title: initial?.title || '', clientId: initial?.clientId || (clients[0]?.id || ''),
+    trade: initial?.trade || trade, scope: initial?.scope || '',
+    labor: initial?.labor || [{ id: 1, desc: '', hrs: 1, rate: 0 }],
+    materials: initial?.materials || [{ id: 1, desc: '', qty: 1, unit: 'ea', cost: 0 }],
+    equipment: initial?.equipment || [],
+    markup: initial?.markup ?? 15, tax: initial?.tax ?? 8.5,
+    terms: initial?.terms || user?.defaultTerms || 'Quote valid for 30 days. 50% deposit required to schedule. Balance due upon completion.',
+    expires: initial?.expiresAt || '',
+  }));
+  const dirty = !savedRef.current && JSON.stringify(draftData) !== initialSnapshot.current;
+  const draftGuard = useDraftGuard({
+    kind: 'quote', ownerId: user?.id, id: initial?.id || 'new',
+    data: draftData, dirty,
+  });
+
   // ── Row helpers ──
   const nextId = arr => Math.max(0, ...arr.map(r => r.id)) + 1;
   const addRow = (setter, tmpl) => setter(a => [...a, { ...tmpl, id: nextId(a) }]);
@@ -6754,12 +6840,25 @@ function QuoteEditor({ initial, clients, existingQuotes = [], user, setUser, onS
     try {
       await Promise.race([onSave(q), timeoutPromise]);
       console.log('[QuoteEditor] save success', q.id);
+      // Saved to the server — the local recovery draft is now redundant.
+      draftGuard.clear();
+      savedRef.current = true;
     } catch (e) {
       console.error('[QuoteEditor] save failed', e, { timedOut, payload: q });
       alert(e?.message || 'Could not save quote. Check your connection and try again.');
     } finally {
       setSaving(false);
     }
+  };
+
+  // Cancel with a confirmation when there's unsaved work — the Cancel button
+  // sits inches from Save on a tablet and used to discard everything silently.
+  const handleCancel = () => {
+    if (dirty && !savedRef.current) {
+      if (!window.confirm('Discard this quote?\n\nYour unsaved changes will be lost.')) return;
+    }
+    draftGuard.clear();
+    onCancel();
   };
 
   // ── Shared table helpers ──
@@ -6805,10 +6904,15 @@ function QuoteEditor({ initial, clients, existingQuotes = [], user, setUser, onS
       {/* Top bar */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <Btn variant="ghost" size="sm" onClick={onCancel} style={{ fontSize: 23, padding: '12px 24px', minHeight: 52 }}>Cancel</Btn>
+          <Btn variant="ghost" size="sm" onClick={handleCancel} style={{ fontSize: 23, padding: '12px 24px', minHeight: 52 }}>Cancel</Btn>
           <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 20, fontWeight: 700, color: C.text, letterSpacing: '-0.02em' }}>
             {isRevision ? `Revising ${initial.number}` : 'New Quote'}
           </span>
+          {dirty && (
+            <span style={{ fontSize: 14, fontWeight: 700, color: C.warn, whiteSpace: 'nowrap' }}>
+              • Unsaved
+            </span>
+          )}
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <Btn variant="ghost"   size="sm" onClick={() => handleSave(true)}  disabled={saving} style={{ fontSize: 23, padding: '12px 24px', minHeight: 52, opacity: saving ? 0.6 : 1 }}>{saving ? 'Saving…' : 'Save Draft'}</Btn>
@@ -7498,20 +7602,21 @@ function NewClientModal({ onSave, onClose }) {
   const [company, setCompany] = useState('');
   const [email,   setEmail]   = useState('');
   const [phone,   setPhone]   = useState('');
+  const submit = () => { if (name.trim()) onSave({ id: uid(), name: name.trim(), company: company.trim(), email, phone }); };
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: '#000000aa', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 999, padding: 20 }}>
       <div style={{ background: C.surface, border: `1px solid ${C.border2}`, borderRadius: 4, padding: 32, width: '100%', maxWidth: 560 }}>
         <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 27, fontWeight: 900, color: C.text, marginBottom: 20, textTransform: 'uppercase' }}>New Client</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <div><Label>Name *</Label><Input value={name}    onChange={setName}    placeholder="Sandra Johnson" /></div>
-          <div><Label>Company</Label><Input value={company} onChange={setCompany} placeholder="ABC Rentals LLC" /></div>
-          <div><Label>Email</Label><Input type="email" value={email} onChange={setEmail} placeholder="client@email.com" /></div>
-          <div><Label>Phone</Label><Input type="tel" value={phone} onChange={setPhone} placeholder="(512) 555-0000" /></div>
+          <div><Label>Name *</Label><Input value={name}    onChange={setName}    placeholder="Sandra Johnson" autoFocus onSubmit={submit} /></div>
+          <div><Label>Company</Label><Input value={company} onChange={setCompany} placeholder="ABC Rentals LLC" onSubmit={submit} /></div>
+          <div><Label>Email</Label><Input type="email" value={email} onChange={setEmail} placeholder="client@email.com" onSubmit={submit} /></div>
+          <div><Label>Phone</Label><Input type="tel" value={phone} onChange={setPhone} placeholder="(512) 555-0000" onSubmit={submit} /></div>
         </div>
         <div style={{ display: 'flex', gap: 10, marginTop: 20, justifyContent: 'flex-end' }}>
           <Btn variant="ghost" onClick={onClose}>Cancel</Btn>
-          <Btn variant="primary" onClick={() => name.trim() && onSave({ id: uid(), name: name.trim(), company: company.trim(), email, phone })} disabled={!name.trim()}>Add Client</Btn>
+          <Btn variant="primary" onClick={submit} disabled={!name.trim()}>Add Client</Btn>
         </div>
       </div>
     </div>
@@ -8112,6 +8217,23 @@ function Quotes({ user, setUser, logo, taxRates, onConvertToInvoice, onScheduleJ
     setView('editor');
   };
 
+  // Duplicate — repeat work is the norm in the trades (same water-heater swap,
+  // different address). Copies the line items into a brand-new draft with no
+  // revision lineage: it's a NEW quote, not a revision of the old one. Client
+  // is intentionally kept (usually the same customer or an easy swap).
+  const duplicateQuote = (q) => {
+    const copy = {
+      ...q, id: undefined, number: null, status: 'draft',
+      title: `${q.title || 'Quote'} (copy)`,
+      revisionOf: null, revisionNumber: 1,
+      createdAt: new Date().toISOString().split('T')[0],
+      sentAt: null, shareToken: null,
+      expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    };
+    setEditingQ(copy);
+    setView('editor');
+  };
+
   // Auto-bumps a draft quote to 'sent' the first time the user opens the
   // share modal. Mirrors VoiceInvoice.sendInvoice. Idempotent — calling on
   // a non-draft quote no-ops, so reopening the share modal is safe.
@@ -8217,6 +8339,7 @@ function Quotes({ user, setUser, logo, taxRates, onConvertToInvoice, onScheduleJ
           quote={active} client={activeC} user={user} logo={logo}
           onBack={() => setView('hub')}
           onRevise={() => startRevision(active)}
+          onDuplicate={() => duplicateQuote(active)}
           onConvertToInvoice={() => convertToInvoice(active)}
           onScheduleJob={onScheduleJob ? () => onScheduleJob(active, activeC) : null}
           onDelete={() => deleteQuoteFlow(active)}
@@ -8853,7 +8976,7 @@ function BuyTechSeatModal({ user, onClose, onCreate }) {
           {err && <div style={{ background: C.errorLo, border: `1px solid ${C.error}33`, color: C.errorBold, padding: '10px 14px', borderRadius: 8, fontSize: 16, marginBottom: 16 }}>{err}</div>}
 
           <label style={{ ...s.label, marginTop: 0 }}>Tech Name <span style={{ color: C.errorBold }}>*</span></label>
-          <input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Carlos Reyes"
+          <input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Carlos Reyes" autoFocus
             style={{ ...s.input, width: '100%', padding: '12px 14px', minHeight: 48, fontSize: 18, fontWeight: 600, marginBottom: 14, boxSizing: 'border-box' }} />
 
           <label style={s.label}>Trade(s) — what this tech can do <span style={{ color: C.errorBold }}>*</span></label>
