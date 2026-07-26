@@ -43,6 +43,18 @@ async function rawBody(req) {
   return Buffer.concat(chunks);
 }
 
+// current_period_end moved off the subscription object and onto subscription
+// ITEMS in newer Stripe API versions (our destinations are pinned to
+// 2026-03-25.dahlia). Reading sub.current_period_end alone silently produced
+// null on every event, so profiles.current_period_end never got populated.
+// Check the item first, fall back to the legacy top-level field so older
+// API versions and replayed historical events still work.
+function periodEndIso(sub) {
+  if (!sub) return null;
+  const raw = sub.items?.data?.[0]?.current_period_end ?? sub.current_period_end ?? null;
+  return raw ? new Date(raw * 1000).toISOString() : null;
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
@@ -163,9 +175,7 @@ export default async function handler(req, res) {
         const sub = event.data.object;
         if (isConnectEvent) {
           // Service contract sub. Use the dedicated RPC.
-          const periodEnd = sub.current_period_end
-            ? new Date(sub.current_period_end * 1000).toISOString()
-            : null;
+          const periodEnd = periodEndIso(sub);
           const canceledAt = event.type === 'customer.subscription.deleted'
             ? new Date().toISOString()
             : (sub.canceled_at ? new Date(sub.canceled_at * 1000).toISOString() : null);
@@ -182,7 +192,7 @@ export default async function handler(req, res) {
         } else {
           // Platform subscription (Tradevoice's own customer).
           const trialEnd      = sub.trial_end          ? new Date(sub.trial_end          * 1000).toISOString() : null;
-          const periodEnd     = sub.current_period_end ? new Date(sub.current_period_end * 1000).toISOString() : null;
+          const periodEnd     = periodEndIso(sub);
           const canceledAtIso = sub.canceled_at        ? new Date(sub.canceled_at        * 1000).toISOString() : null;
           const effectiveStatus = event.type === 'customer.subscription.deleted' ? 'canceled' : sub.status;
           await supabase.rpc('update_subscription_status', {
@@ -339,9 +349,7 @@ export default async function handler(req, res) {
             session.subscription,
             { stripeAccount: event.account }
           );
-          periodEnd = sub.current_period_end
-            ? new Date(sub.current_period_end * 1000).toISOString()
-            : null;
+          periodEnd = periodEndIso(sub);
           subStatus = sub.status || 'active';
         } catch (e) {
           console.warn('[stripe webhook] could not retrieve sub for session:', session.id, e?.message);

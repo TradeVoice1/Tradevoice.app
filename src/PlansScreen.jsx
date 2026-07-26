@@ -815,7 +815,9 @@ export default function PlansScreen({
         <div>
           <h1 style={{ margin: 0, fontSize: 30, fontWeight: 700, color: C.text, letterSpacing: '-0.025em' }}>Maintenance Plans</h1>
           <p style={{ margin: '6px 0 0', fontSize: 17, color: C.muted, fontWeight: 500 }}>
-            {counts.all} plan{counts.all === 1 ? '' : 's'}
+            {/* Hold the count until the fetch resolves — otherwise an owner
+                with plans sees a momentary, wrong "0 plans" on every load. */}
+            {loading ? '…' : `${counts.all} plan${counts.all === 1 ? '' : 's'}`}
             {counts.due > 0 && <> · <strong style={{ color: C.warn }}>{counts.due} due soon</strong></>}
           </p>
         </div>

@@ -686,7 +686,7 @@ export default function MarketingScreen({ user }) {
   const renderAutomations = () => (
     <>
       <div style={{ background: '#fef9c3', border: '1px solid #fde68a', borderRadius: 10, padding: '14px 18px', marginBottom: 20, fontSize: 16, color: '#854d0e', lineHeight: 1.6 }}>
-        ⏳ <strong>Coming soon.</strong> Trigger-based automations (e.g. "invoice paid → wait 2 days → send review request") need a scheduled background job. We'll add this once Vercel Cron is wired. For now, use <strong>Request Reviews</strong> or <strong>New Campaign</strong> for manual sends.
+        ⏳ <strong>Coming soon.</strong> Trigger-based automations (e.g. "invoice paid → wait 2 days → send review request") run on a scheduled background job. The schedule itself is already live — what's left is the trigger rules and send logic for each automation below. For now, use <strong>Request Reviews</strong> or <strong>New Campaign</strong> for manual sends.
       </div>
       <div style={s.card}>
         {AUTOMATIONS_PREVIEW.map(auto => (
