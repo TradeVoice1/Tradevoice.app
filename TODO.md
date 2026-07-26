@@ -84,6 +84,45 @@ across all users (acknowledged tech debt in a code comment). Works
 correctly today; scales poorly past ~10k accounts. Build the proper
 short-TTL state table when needed.
 
+### 🟢 Smoke-test walkthrough findings — minor (added 2026-07-26)
+
+Collected while driving the live app end to end (dashboard → client → quote →
+schedule → invoice → jobs → plans → clients → marketing → settings). None
+block launch. The four workflow bugs found in the same pass ($0 labor default,
+blank rows persisting, wrapped markup number, missing address/phone on
+dispatched jobs) were fixed in 77ddf94; the markup-disclosure setting in
+50be558. These are what's left:
+
+1. **Job saved to today instead of the clicked calendar date.** Scheduled a
+   job from a quote, clicked the 30th, the job saved to the 26th (today =
+   prefill default). AddJobModal's date handling reads correctly on
+   inspection, so this is most likely a missed click during automation —
+   NOT changed. Needs one manual confirmation: schedule a job, pick a date a
+   few days out, verify it lands there.
+
+2. **Dashboard Quick Action "New Quote" didn't navigate** on first click (page
+   scrolled to top, stayed on Dashboard). Same caveat — possible missed click.
+   Verify manually.
+
+3. **Plans screen shows "0 plans" while still rendering "Loading plans…"** —
+   the count renders before the fetch resolves, so an owner with plans sees a
+   momentary, wrong "0". Hold the count until loaded.
+
+4. **Automations "coming soon" banner may be stale.** It reads "We'll add this
+   once Vercel Cron is wired" — but cron IS wired
+   (`api/cron/refresh-sales-tax.js`, CRON_SECRET configured and verified).
+   The four automations (review request, quote follow-up, annual reminder,
+   thank-you + referral) may be much closer to shippable than the copy
+   implies. Worth re-scoping rather than leaving the banner up.
+
+### PH-3 / PH-4 NOT TESTED — Stripe Connect + a real client payment
+
+The smoke test could not cover the two most important phases: connecting a
+contractor's Stripe account, and a client actually paying an invoice. Connect
+isn't set up on the test account, and the session was explicitly scoped to
+spend no money. **These remain the real launch blockers** — everything
+upstream (signup, subscription, quote, job, invoice) is now verified working.
+
 ### 🟡 Webhook writes reach profiles but subscription_events stays empty (added 2026-07-26)
 
 Verified live during the smoke test: webhooks WORK. Stripe delivered
