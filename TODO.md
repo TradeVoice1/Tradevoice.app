@@ -84,6 +84,33 @@ across all users (acknowledged tech debt in a code comment). Works
 correctly today; scales poorly past ~10k accounts. Build the proper
 short-TTL state table when needed.
 
+### 🟢 Time off — tech request/approval workflow (added 2026-06-11)
+
+Today's Time Off is **owner-managed availability**, not an HR system, and
+that's a deliberate scope line — worth knowing before someone promises a
+customer otherwise.
+
+What ships today (Settings → Time Off, owner only): the owner enters
+tech + start date + end date + free-text reason, and the schedule
+genuinely respects it — `isTechOffOn` disables that tech in AddJobModal's
+dropdown, warns on drag-reschedule onto an off-day, and
+`timeOffInRange` renders "Off Mar 12–15" tags in the week sidebar. All
+four integrations are live in `ScheduleScreen.jsx`.
+
+What it deliberately is NOT: no request/approval flow, no PTO balances
+or accrual, no vacation-vs-sick categories, no timeclock, nothing
+flowing to payroll.
+
+To make it a real request system: tech-side "Request time off" UI, a
+`status` column (pending/approved/denied) on `time_off`, an approval
+queue for the owner, and a notification on both sides. The RLS
+foundation already exists — migration 0006 has a `time_off: tech read
+own` policy reserved for exactly this, so techs can already read their
+own rows; they just can't create them.
+
+Worth building when crews get big enough that texting the boss stops
+scaling. Not a launch blocker.
+
 ### 🟢 Subscription events historical backfill
 
 `subscription_events` table only logs events from migration 0034
