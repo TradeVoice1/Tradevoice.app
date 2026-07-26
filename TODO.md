@@ -84,6 +84,30 @@ across all users (acknowledged tech debt in a code comment). Works
 correctly today; scales poorly past ~10k accounts. Build the proper
 short-TTL state table when needed.
 
+### 🟡 Webhook writes reach profiles but subscription_events stays empty (added 2026-07-26)
+
+Verified live during the smoke test: webhooks WORK. Stripe delivered
+`customer.subscription.created` + `invoice.payment_succeeded`, both **200 OK**
+(`{"received":true}`), ~1s response. `update_subscription_status` ran —
+`cancel_at_period_end` came back `false` (not null), which only the RPC
+writes. So the pipeline is healthy.
+
+But `subscription_events` has **0 rows**, so the founder dashboard's
+per-customer timeline is empty. Both RPCs exist with matching signatures
+(`log_subscription_event`, `update_subscription_status`) and the profile IS
+resolvable by `stripe_customer_id`, so `logEventForCustomer`'s "profile not
+found, skip silently" guard shouldn't be firing. Its catch only
+`console.warn`s, so the failure is invisible — check Vercel runtime logs for
+`logEventForCustomer failed` on the next webhook, or add a temporary
+non-swallowing log.
+
+Second, smaller bug in the same handler: `sub.current_period_end` reads
+`null` on this account. Stripe API version **2026-03-25.dahlia** (what the
+destination is pinned to) moved `current_period_end` off the subscription
+object onto subscription **items**. So `p_current_period_end` is always null
+now — read `sub.items.data[0].current_period_end` with a fallback to the old
+location.
+
 ### 🟡 Client type selector — Company is the wrong field for homeowners (added 2026-07-26)
 
 New Client (and Edit Client) has a free-text **Company** box. For a
