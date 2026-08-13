@@ -6,6 +6,7 @@ const ForgotPasswordScreen = lazy(() => import("./ForgotPassword").then(m => ({ 
 const ScheduleScreen       = lazy(() => import("./ScheduleScreen"));
 const JobsScreen           = lazy(() => import("./JobsScreen"));
 const PlansScreen          = lazy(() => import("./PlansScreen"));
+const RatesScreen          = lazy(() => import("./RatesScreen"));
 const InvoicePaymentPage   = lazy(() => import("./InvoicePaymentPage").then(m => ({ default: m.InvoicePaymentPage })));
 const QuoteCustomerPage    = lazy(() => import("./QuoteCustomerPage").then(m => ({ default: m.QuoteCustomerPage })));
 // Lazy — only mounted when the user opens the "Update Card" modal. Keeps
@@ -10385,6 +10386,7 @@ const NAV = [
   { id: 'dashboard', label: 'Dashboard' },
   { id: 'invoice',   label: 'Invoice'   },
   { id: 'quotes',    label: 'Quotes'    },
+  { id: 'rates',     label: 'Rates',    ownerOnly: true },
   { id: 'schedule',  label: 'Schedule'  },
   { id: 'jobs',      label: 'Jobs'      },
   { id: 'plans',     label: 'Plans'     },
@@ -10668,11 +10670,13 @@ function TradevoiceApp() {
   // the array reference is stable across renders. Declared up here
   // with the other hooks so it's called on every render in the same
   // order, before any conditional early returns further down.
-  const navItems = useMemo(() => (
-    user?.isSuperOwner
-      ? [{ id: 'founder', label: 'Founder' }, ...NAV]
-      : NAV
-  ), [user?.isSuperOwner]);
+  const navItems = useMemo(() => {
+    // Techs never see owner-only sections (Rates holds wages + profit).
+    const base = user?.role === 'tech' ? NAV.filter(item => !item.ownerOnly) : NAV;
+    return user?.isSuperOwner
+      ? [{ id: 'founder', label: 'Founder' }, ...base]
+      : base;
+  }, [user?.isSuperOwner, user?.role]);
 
   // Default the super-owner to the Founder section on first hydration.
   // Effect (not initial state) because user is set asynchronously
@@ -11287,6 +11291,7 @@ function TradevoiceApp() {
     invoice:   <VoiceInvoice user={user} logo={logo} payments={payments} taxRates={taxRates} teamMembers={teamMembers} sharedInvoices={sharedInvoices} setSharedInvoices={setSharedInvoices} persistInvoice={persistInvoice} removeInvoice={removeInvoice} handleUnInvoice={handleUnInvoice} pendingInvoiceId={pendingInvoiceId} clearPendingInvoice={() => setPendingInvoiceId(null)} pendingMonthFilter={pendingMonthFilter} clearPendingMonthFilter={() => setPendingMonthFilter(null)} />,
     billing:   <Billing      user={user} setUser={setUser} payments={payments} />,
     quotes:    <Quotes       user={user} setUser={setUser} logo={logo} taxRates={taxRates} onConvertToInvoice={handleConvertToInvoice} onScheduleJob={handleScheduleFromQuote} />,
+    rates:     <RatesScreen  user={user} />,
     schedule:  <ScheduleScreen user={user} team={teamMembers} onCreateInvoice={handleJobToInvoice} plans={plans} setPlans={setPlans} pendingJobDraft={pendingJobDraft} clearPendingJobDraft={() => setPendingJobDraft(null)} timeOff={timeOff} />,
     jobs:      <JobsScreen   user={user} team={teamMembers} onCreateInvoice={handleJobToInvoice} />,
     plans:     <PlansScreen  user={user} team={teamMembers} plans={plans} persistPlan={persistPlan} removePlan={removePlan} onScheduleFromPlan={handleScheduleFromPlan} />,
