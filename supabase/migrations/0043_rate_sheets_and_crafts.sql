@@ -2,7 +2,7 @@
 -- equipment.
 -- =============================================================================
 -- Modeled function-for-function on a real industrial contractor's estimating
--- workbook (Burkes Mechanical "Bid Form_2026", reviewed 2026-08-09) and
+-- workbook (reviewed 2026-08-09) and
 -- verified against it to the penny. The facts of that workbook drive this
 -- schema:
 --
@@ -30,8 +30,8 @@
 --      Crew quantities/hours per craft produce the manpower composite;
 --      both groups blend into the project composite.
 --
---   5. Per diem is billed ($137.50/day) and paid ($125/day) at different
---      numbers, with a weekly rate ($825) that kicks in past 7 days.
+--   5. Per diem is billed and paid at different numbers (the spread is the
+--      contractor's), with a weekly rate that kicks in past 7 days.
 --
 -- Design decisions vs the earlier draft of this migration:
 --   - Crafts live per-group (name + wage + crew plan in one row), exactly like
@@ -61,7 +61,8 @@ create table if not exists public.rate_sheets (
   status        text not null default 'draft'
                 check (status in ('draft','active','superseded')),
 
-  -- Per diem (workbook: billed 137.50 / paid 125 / weekly 825 / 10-hr days)
+  -- Per diem: billed and paid are different numbers (the spread is the
+  -- contractor's), with a weekly rate that kicks in past 7 days.
   per_diem_daily        numeric(10,2),
   per_diem_paid         numeric(10,2),
   per_diem_weekly       numeric(10,2),

@@ -122,71 +122,61 @@ const equipToDb = (e) => ({
 });
 
 // ── Starter templates ────────────────────────────────────────────────────────
-// Each inserts rows at creation and is never consulted again. The
-// 'industrial' numbers are the Burkes Bid Form_2026 values this feature was
-// verified against; they are a STARTING POINT for the owner to edit, not a
-// recommendation.
-
-const STD_TERMS = [
-  'Overtime is any hours after 10 on Monday through Thursday, and all hours Friday, Saturday and Sunday.',
-  'Holidays bill at double time — New Year’s, Easter, July 4, Labor Day, Thanksgiving, Christmas Eve and Christmas Day.',
-  'Rates include hand tools and safety equipment, generally anything under $1,000.00. Tools $1,000.00 or more bill at current AED rates.',
-  'Minimum charge of 10 hours per employee. Employees working 12 hours or more per day are paid for all hours including lunch.',
-  'Emergency call-in: after hours Mon–Thu at overtime with rollover pay; daytime Fri–Sun at overtime; nights Fri–Sun at double time. Billed from the time the employee leaves home until they return.',
-  'Company equipment bills per the current Equipment Rental Rate Schedule.',
-  'Invoice terms NET 30. Accounts over 30 days are charged 1.5%.',
-];
+// Each inserts rows at creation and is never consulted again. Every number
+// here is a deliberately ROUND, made-up demo value — statutory tax rates
+// (FICA 6.2, Medicare 1.45, FUTA 0.6) are public IRS figures; everything
+// else exists to demonstrate the mechanics, not to suggest a price. No real
+// contractor's rates ship in the product.
 
 const line = (name, pct, st = true, ot = true, dt = true) =>
   ({ name, pct, appliesSt: st, appliesOt: ot, appliesDt: dt });
 
-const industrialLines = (gl) => [
-  line('FICA', 6.20), line('Medicare', 1.45), line('SUI', 2.09), line('FUI', 0.60),
-  line("Workman's comp", 1.28, true, false, false),
-  line('General liability', gl),
-  line('Health / fringes', 16.00),
-  line('Safety & PPE', 5.25, true, false, false),
-  line('Small tools & consumables', 10.00, true, false, false),
-  line('State / city / local tax', 0),
+const demoLines = () => [
+  line('FICA (Social Security)', 6.20),
+  line('Medicare', 1.45),
+  line('State unemployment (SUTA)', 2.70),
+  line('Federal unemployment (FUTA)', 0.60),
+  line("Workers' comp", 10.00, true, false, false),
+  line('General liability', 5.00),
+  line('Health insurance', 12.00),
+  line('Safety & PPE', 3.00, true, false, false),
+  line('Small tools & consumables', 5.00, true, false, false),
 ];
 
 export const RATE_TEMPLATES = {
-  industrial: {
-    label: 'Industrial / mechanical',
-    description: 'Direct + indirect build-ups seeded from a real industrial T&M form. ~51% burden, 10% overhead, 15% profit.',
+  demo: {
+    label: 'Demo sheet — see how it works',
+    suggestedName: 'Demo Rate Sheet',
+    description: 'A worked example with round demo numbers and a staffed crew, so every screen has something to show. Change anything, rename it and make it yours — or delete it and start clean.',
     sheet: {
-      perDiemDaily: 137.50, perDiemPaid: 125, perDiemWeekly: 825, perDiemHoursPerDay: 10,
+      perDiemDaily: 100, perDiemPaid: 90, perDiemWeekly: 600, perDiemHoursPerDay: 10,
       markupMaterials: 10, markupSubs: 10, markupRentals: 10, markupSpecialty: 10,
-      terms: STD_TERMS,
+      terms: [
+        'Overtime is any hours over 8 per day or 40 per week, and all weekend hours. (Edit this to match your own overtime rule.)',
+        'Holidays bill at double time.',
+        'Minimum charge of 4 hours per employee per call.',
+        'Invoice terms NET 30.',
+      ],
     },
     groups: [
       {
         name: 'Direct labor', ohSt: 10, ohOt: 0, ohDt: 0, profitSt: 15, profitOt: 10, profitDt: 10,
-        lines: industrialLines(8.25),
+        lines: demoLines(),
+        // Staffed (qty > 0) so the Composite tab demonstrates itself on first open.
         crafts: [
-          { name: 'Foreman I',            wage: 44 },
-          { name: 'Mechanical Craftsman', wage: 38, definition: 'pipe fitter, pipe/structural welder, iron worker' },
-          { name: 'Specialty Craftsman',  wage: 40, definition: 'specialty pipe fitter/welder, millwright, tank erector, operators, instrumentation' },
-          { name: 'E&I Journeyman',       wage: 38 },
-          { name: 'E&I Apprentice',       wage: 34 },
-          { name: 'Civil Craftsman',      wage: 38, definition: 'carpenter, concrete finisher' },
-          { name: 'Helper',               wage: 32 },
-          { name: 'Labor / Firewatch',    wage: 26 },
+          { name: 'Foreman',    wage: 40, qty: 1 },
+          { name: 'Journeyman', wage: 32, qty: 1 },
+          { name: 'Apprentice', wage: 22, qty: 1 },
+          { name: 'Laborer',    wage: 18 },
         ],
       },
       {
         name: 'Indirect labor', ohSt: 10, ohOt: 0, ohDt: 0, profitSt: 15, profitOt: 10, profitDt: 10,
-        lines: industrialLines(8.33),
+        lines: demoLines(),
         crafts: [
-          { name: 'Project Manager',      wage: 85 },
-          { name: 'Superintendent',       wage: 54 },
-          { name: 'Scheduler / Field Engineer', wage: 54 },
-          { name: 'Safety',               wage: 52 },
-          { name: 'Foreman II',           wage: 48 },
-          { name: 'QA / QC',              wage: 55 },
-          { name: 'Clerical',             wage: 33 },
-          { name: 'Tool Room Attendant',  wage: 34 },
-          { name: 'Expeditor / Material Handler', wage: 36 },
+          { name: 'Project Manager', wage: 60 },
+          { name: 'Superintendent',  wage: 50 },
+          { name: 'Clerical',        wage: 25 },
         ],
       },
     ],

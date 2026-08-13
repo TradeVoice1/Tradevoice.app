@@ -3,8 +3,8 @@
 // three time portions (ST / OT / DT), per build-up group (Direct/Indirect),
 // blended into a manpower composite, published as a client rate sheet.
 //
-// Math lives in lib/rateMath.js (unit-tested against the Burkes Bid
-// Form_2026 workbook — scripts/test-rate-math.mjs). This file is UI +
+// Math lives in lib/rateMath.js (unit-tested against a real industrial
+// T&M bid workbook — scripts/test-rate-math.mjs). This file is UI +
 // row-level persistence only: every edit updates local state instantly
 // and debounces a save of just the touched row.
 
@@ -44,9 +44,15 @@ const card  = { background: C.surface, border: `1px solid ${C.border}`, borderRa
 const cardH = { padding: '15px 18px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' };
 const cardB = { padding: '16px 18px' };
 const lbl   = { fontSize: 12, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: C.muted, margin: '0 0 9px' };
-const thS   = { fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: C.dim, textAlign: 'left', padding: '9px 11px', background: C.raised, borderBottom: `1px solid ${C.border2}`, whiteSpace: 'nowrap', verticalAlign: 'bottom' };
-const tdS   = { padding: '6px 11px', borderBottom: `1px solid ${C.border}` };
+// Spreadsheet-style grid: every cell bordered on the right and bottom, tight
+// rows, tabular numerals — deliberately close to the Excel workbook this
+// feature was modeled on, because that's what estimators already know.
+const thS   = { fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: C.dim, textAlign: 'left', padding: '7px 9px', background: C.raised, borderBottom: `1px solid ${C.border2}`, borderRight: `1px solid ${C.border}`, whiteSpace: 'nowrap', verticalAlign: 'bottom' };
+const tdS   = { padding: '3px 9px', borderBottom: `1px solid ${C.border}`, borderRight: `1px solid ${C.border}`, fontSize: 13.5 };
 const tdR   = { ...tdS, textAlign: 'right', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' };
+// Frozen label column, like Excel's frozen pane. Needs an explicit background
+// per row tone so content scrolling under it doesn't show through.
+const tdFrozen = (bg = C.surface) => ({ ...tdS, position: 'sticky', left: 0, background: bg, zIndex: 1, borderRight: `1.5px solid ${C.border2}`, minWidth: 170 });
 
 const Btn = ({ children, onClick, variant = 'plain', style = {}, disabled }) => (
   <button onClick={onClick} disabled={disabled} style={{
@@ -62,11 +68,16 @@ const Btn = ({ children, onClick, variant = 'plain', style = {}, disabled }) => 
   }}>{children}</button>
 );
 
+// Excel-cell behavior: reads as a plain value until you hover or click into it.
 const NumIn = ({ value, onChange, w = 74, step = '0.5', ariaLabel }) => (
   <input type="number" value={value} step={step} min="0" aria-label={ariaLabel || 'value'}
     onChange={(e) => onChange(e.target.value)}
+    onFocus={(e) => { e.target.style.border = `1.5px solid ${C.green}`; e.target.style.background = C.surface; }}
+    onBlur={(e)  => { e.target.style.border = '1.5px solid transparent'; e.target.style.background = 'transparent'; }}
+    onMouseEnter={(e) => { if (document.activeElement !== e.target) e.target.style.border = `1.5px solid ${C.border2}`; }}
+    onMouseLeave={(e) => { if (document.activeElement !== e.target) e.target.style.border = '1.5px solid transparent'; }}
     style={{ fontFamily: 'inherit', fontSize: 13.5, fontVariantNumeric: 'tabular-nums', textAlign: 'right',
-      padding: '5px 7px', border: `1px solid ${C.border}`, borderRadius: 7, background: C.surface,
+      padding: '3px 5px', border: '1.5px solid transparent', borderRadius: 5, background: 'transparent',
       color: C.text, width: w, MozAppearance: 'textfield' }} />
 );
 
@@ -109,7 +120,7 @@ const Strip = ({ items }) => (
 function NewSheetModal({ onClose, onCreate }) {
   useEscapeClose(onClose);
   const [name, setName] = useState('');
-  const [tpl, setTpl] = useState('industrial');
+  const [tpl, setTpl] = useState('demo');
   const [busy, setBusy] = useState(false);
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.45)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
@@ -127,7 +138,7 @@ function NewSheetModal({ onClose, onCreate }) {
         <label style={lbl}>Start from</label>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20 }}>
           {Object.entries(RATE_TEMPLATES).map(([key, t]) => (
-            <button key={key} onClick={() => setTpl(key)} style={{
+            <button key={key} onClick={() => { setTpl(key); if (!name.trim() && t.suggestedName) setName(t.suggestedName); }} style={{
               textAlign: 'left', fontFamily: 'inherit', cursor: 'pointer', padding: '10px 13px', borderRadius: 9,
               border: `1.5px solid ${tpl === key ? C.green : C.border}`, background: tpl === key ? C.greenLo : C.surface }}>
               <div style={{ fontSize: 14.5, fontWeight: 700, color: C.text }}>{t.label}</div>
@@ -312,11 +323,15 @@ export default function RatesScreen({ user }) {
           <div style={{ fontSize: 42, marginBottom: 8 }}>🧮</div>
           <h2 style={{ margin: '0 0 6px', fontSize: 22, fontWeight: 800 }}>Build your first rate sheet</h2>
           <p style={{ margin: '0 auto 20px', maxWidth: 440, fontSize: 14.5, color: C.muted }}>
-            Wage → burden → overhead → profit → the rate you publish. Start from a
-            template, then make every line your own — your company's burden structure,
-            not ours.
+            Wage → burden → overhead → profit → the rate you publish. The demo sheet
+            is a worked example with round numbers — poke it, change anything, rename
+            it into your real sheet, or delete it and start clean. Your company's
+            burden structure, not ours.
           </p>
-          <Btn variant="primary" onClick={() => setShowNew(true)}>+ New rate sheet</Btn>
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <Btn variant="primary" onClick={() => handleCreate('Demo Rate Sheet', 'demo')}>Try the demo sheet</Btn>
+            <Btn onClick={() => setShowNew(true)}>+ New rate sheet</Btn>
+          </div>
           {err && <div style={{ marginTop: 14, color: C.errorBold, fontSize: 13.5 }}>{err}</div>}
         </div>
       </div>
@@ -399,7 +414,7 @@ export default function RatesScreen({ user }) {
               <table style={{ borderCollapse: 'collapse', width: '100%', fontSize: 14 }}>
                 <thead>
                   <tr>
-                    <th style={{ ...thS, minWidth: 190 }}>Component</th>
+                    <th style={{ ...thS, minWidth: 190, position: 'sticky', left: 0, zIndex: 2, borderRight: `1.5px solid ${C.border2}` }}>Component</th>
                     <th style={{ ...thS, textAlign: 'right' }}>Rate</th>
                     <th style={{ ...thS, textAlign: 'center' }}>S.T.</th>
                     <th style={{ ...thS, textAlign: 'center' }}>O.T.</th>
@@ -420,7 +435,7 @@ export default function RatesScreen({ user }) {
                   {/* Wages */}
                   <SecRow span={6 + g.crafts.length} text="Straight time — full base wage" />
                   <tr style={{ background: '#f8fbf9' }}>
-                    <td style={{ ...tdS, fontWeight: 750 }}>Base wage</td>
+                    <td style={{ ...tdFrozen('#f8fbf9'), fontWeight: 750 }}>Base wage</td>
                     <td style={tdR}>—</td><td style={tdS} /><td style={tdS} /><td style={tdS} />
                     {g.crafts.map((c) => (
                       <td key={c.id} style={tdR}>
@@ -432,7 +447,7 @@ export default function RatesScreen({ user }) {
                   {/* Burden lines */}
                   {g.lines.map((l) => (
                     <tr key={l.id} style={{ opacity: l.appliesSt || l.appliesOt || l.appliesDt ? 1 : 0.45 }}>
-                      <td style={tdS}>
+                      <td style={tdFrozen()}>
                         <TextIn value={l.name} placeholder="Name this line" onChange={(v) => patchLine(gi, l.id, { name: v })} />
                       </td>
                       <td style={tdR}>
@@ -696,12 +711,12 @@ export default function RatesScreen({ user }) {
 // ── Row helper components (build-up table) ───────────────────────────────────
 
 const SecRow = ({ span, text }) => (
-  <tr><td colSpan={span} style={{ background: C.raised, fontSize: 11, fontWeight: 750, letterSpacing: '0.08em', textTransform: 'uppercase', color: C.muted, padding: '7px 11px', borderBottom: `1px solid ${C.border}` }}>{text}</td></tr>
+  <tr><td colSpan={span} style={{ background: C.raised, fontSize: 11, fontWeight: 750, letterSpacing: '0.08em', textTransform: 'uppercase', color: C.muted, padding: '6px 9px', borderBottom: `1px solid ${C.border}` }}>{text}</td></tr>
 );
 
 const SubRow = ({ label, rate, crafts, val }) => (
   <tr style={{ background: '#f8fbf9' }}>
-    <td style={{ ...tdS, fontWeight: 750 }}>{label}</td>
+    <td style={{ ...tdFrozen('#f8fbf9'), fontWeight: 750 }}>{label}</td>
     <td style={tdR}>{rate}</td><td style={tdS} /><td style={tdS} /><td style={tdS} />
     {crafts.map((c) => <td key={c.id} style={{ ...tdR, fontWeight: 700 }}>{val(c)}</td>)}
     <td style={tdS} />
@@ -710,7 +725,7 @@ const SubRow = ({ label, rate, crafts, val }) => (
 
 const PctRow = ({ label, value, onChange, crafts, val }) => (
   <tr>
-    <td style={tdS}>{label}</td>
+    <td style={tdFrozen()}>{label}</td>
     <td style={tdR}><NumIn value={value} w={70} ariaLabel={label} onChange={onChange} /> %</td>
     <td style={tdS} /><td style={tdS} /><td style={tdS} />
     {crafts.map((c) => <td key={c.id} style={{ ...tdR, color: C.muted }}>{val(c)}</td>)}
@@ -720,10 +735,10 @@ const PctRow = ({ label, value, onChange, crafts, val }) => (
 
 const RateRow = ({ label, bg, rate, crafts, val }) => (
   <tr style={{ background: bg }}>
-    <td style={{ ...tdS, fontWeight: 800, fontSize: 15 }}>{label}</td>
-    <td style={{ ...tdR, fontWeight: 700, fontSize: 13 }}>{rate}</td>
+    <td style={{ ...tdFrozen(bg), fontWeight: 800, fontSize: 14.5 }}>{label}</td>
+    <td style={{ ...tdR, fontWeight: 700, fontSize: 12.5 }}>{rate}</td>
     <td style={tdS} /><td style={tdS} /><td style={tdS} />
-    {crafts.map((c) => <td key={c.id} style={{ ...tdR, fontWeight: 800, fontSize: 15 }}>{val(c)}</td>)}
+    {crafts.map((c) => <td key={c.id} style={{ ...tdR, fontWeight: 800, fontSize: 14.5 }}>{val(c)}</td>)}
     <td style={tdS} />
   </tr>
 );

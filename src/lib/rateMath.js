@@ -1,5 +1,5 @@
 // Rate-system math engine. Pure functions, no imports — unit-tested in
-// scripts/test-rate-math.mjs against the Burkes Bid Form_2026 workbook,
+// scripts/test-rate-math.mjs against a real industrial T&M bid workbook,
 // which this reproduces to the penny.
 //
 // The one rule that matters: percentages are taken ON THE BASE WAGE and

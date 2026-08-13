@@ -1,4 +1,4 @@
-// Verifies src/lib/rateMath.js against the Burkes "Bid Form_2026" workbook.
+// Verifies src/lib/rateMath.js against a real industrial T&M bid workbook.
 // Every expected value below was read directly out of the spreadsheet
 // (Direct Labor / Indirect Labor / Project Rate Sheet tabs) — this test is
 // the contract that the app's math matches the paper it was modeled on.
