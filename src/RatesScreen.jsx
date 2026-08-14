@@ -81,8 +81,8 @@ const NumIn = ({ value, onChange, w = 88, step = '0.5', ariaLabel }) => (
       color: C.text, width: w, MozAppearance: 'textfield' }} />
 );
 
-const TextIn = ({ value, onChange, placeholder, center, minW = 220, bold = true }) => (
-  <input type="text" value={value} placeholder={placeholder}
+const TextIn = ({ value, onChange, placeholder, center, minW = 220, bold = true, autoFocus }) => (
+  <input type="text" value={value} placeholder={placeholder} autoFocus={autoFocus}
     onChange={(e) => onChange(e.target.value)}
     style={{ fontFamily: 'inherit', fontSize: center ? 12.5 : 14, fontWeight: bold ? 650 : 500,
       padding: '5px 8px', border: '1px solid transparent', borderRadius: 7, background: 'transparent',
@@ -259,38 +259,51 @@ export default function RatesScreen({ user }) {
     });
   };
 
-  const handleAddLine = async (gIdx) => {
-    const g = sheet.groups[gIdx];
+  // Every add awaits a network insert; a double-fired click (or an impatient
+  // double-tap) lands a second insert before the first resolves and produces
+  // duplicate empty rows — seen live in the 2026-08-13 smoke test. One
+  // in-flight add at a time, and the new row's name field takes focus.
+  const addBusy = useRef(false);
+  const [focusRowId, setFocusRowId] = useState(null);
+  const guardedAdd = async (fn) => {
+    if (addBusy.current) return;
+    addBusy.current = true;
     try {
-      const row = await addBurdenLine(user.id, g.id, g.lines.length);
-      setSheet((s) => ({ ...s, groups: s.groups.map((gg, i) => i === gIdx ? { ...gg, lines: [...gg.lines, row] } : gg) }));
+      const row = await fn();
+      if (row) setFocusRowId(row.id);
     } catch (e) { setErr(e.message); }
+    finally { addBusy.current = false; }
   };
+
+  const handleAddLine = (gIdx) => guardedAdd(async () => {
+    const g = sheet.groups[gIdx];
+    const row = await addBurdenLine(user.id, g.id, g.lines.length);
+    setSheet((s) => ({ ...s, groups: s.groups.map((gg, i) => i === gIdx ? { ...gg, lines: [...gg.lines, row] } : gg) }));
+    return row;
+  });
   const handleDeleteLine = async (gIdx, lineId) => {
     const l = sheet.groups[gIdx].lines.find((x) => x.id === lineId);
     if (!window.confirm(`Delete burden line "${l?.name || 'unnamed'}"? Rates recalculate without it.`)) return;
     setSheet((s) => ({ ...s, groups: s.groups.map((g, i) => i === gIdx ? { ...g, lines: g.lines.filter((l) => l.id !== lineId) } : g) }));
     try { await deleteBurdenLine(lineId); } catch (e) { setErr(e.message); }
   };
-  const handleAddCraft = async (gIdx) => {
+  const handleAddCraft = (gIdx) => guardedAdd(async () => {
     const g = sheet.groups[gIdx];
-    try {
-      const row = await addRateCraft(user.id, g.id, g.crafts.length);
-      setSheet((s) => ({ ...s, groups: s.groups.map((gg, i) => i === gIdx ? { ...gg, crafts: [...gg.crafts, row] } : gg) }));
-    } catch (e) { setErr(e.message); }
-  };
+    const row = await addRateCraft(user.id, g.id, g.crafts.length);
+    setSheet((s) => ({ ...s, groups: s.groups.map((gg, i) => i === gIdx ? { ...gg, crafts: [...gg.crafts, row] } : gg) }));
+    return row;
+  });
   const handleDeleteCraft = async (gIdx, craftId) => {
     const c = sheet.groups[gIdx].crafts.find((x) => x.id === craftId);
     if (!window.confirm(`Delete craft "${c?.name || 'unnamed'}"? Its wage and crew plan go with it.`)) return;
     setSheet((s) => ({ ...s, groups: s.groups.map((g, i) => i === gIdx ? { ...g, crafts: g.crafts.filter((c) => c.id !== craftId) } : g) }));
     try { await deleteRateCraft(craftId); } catch (e) { setErr(e.message); }
   };
-  const handleAddEquip = async () => {
-    try {
-      const row = await addRateEquipment(user.id, sheetId, sheet.equipment.length);
-      setSheet((s) => ({ ...s, equipment: [...s.equipment, row] }));
-    } catch (e) { setErr(e.message); }
-  };
+  const handleAddEquip = () => guardedAdd(async () => {
+    const row = await addRateEquipment(user.id, sheetId, sheet.equipment.length);
+    setSheet((s) => ({ ...s, equipment: [...s.equipment, row] }));
+    return row;
+  });
   const handleDeleteEquip = async (id) => {
     const e = sheet.equipment.find((x) => x.id === id);
     if (!window.confirm(`Delete equipment item "${e?.name || 'unnamed'}"?`)) return;
@@ -434,7 +447,7 @@ export default function RatesScreen({ user }) {
                     <th style={{ ...thS, textAlign: 'center' }}>D.T.</th>
                     {g.crafts.map((c) => (
                       <th key={c.id} style={{ ...thS, textAlign: 'right', minWidth: 132 }}>
-                        <TextIn center value={c.name} placeholder="Craft"
+                        <TextIn center value={c.name} placeholder="Craft" autoFocus={c.id === focusRowId}
                           onChange={(v) => patchCraft(gi, c.id, { name: v })} />
                         <div style={{ textAlign: 'center', marginTop: 2 }}>
                           <DelBtn title={`Delete ${c.name || 'craft'}`} onClick={() => handleDeleteCraft(gi, c.id)} />
@@ -461,7 +474,7 @@ export default function RatesScreen({ user }) {
                   {g.lines.map((l) => (
                     <tr key={l.id} style={{ opacity: l.appliesSt || l.appliesOt || l.appliesDt ? 1 : 0.45 }}>
                       <td style={tdFrozen()}>
-                        <TextIn value={l.name} placeholder="Name this line" onChange={(v) => patchLine(gi, l.id, { name: v })} />
+                        <TextIn value={l.name} placeholder="Name this line" autoFocus={l.id === focusRowId} onChange={(v) => patchLine(gi, l.id, { name: v })} />
                       </td>
                       <td style={tdR}>
                         <NumIn value={l.pct} step="0.01" w={70} ariaLabel={`${l.name} percent`} onChange={(v) => patchLine(gi, l.id, { pct: v })} /> %
@@ -698,7 +711,7 @@ export default function RatesScreen({ user }) {
                   {sheet.equipment.map((e) => (
                     <tr key={e.id}>
                       <td style={tdS}>
-                        <TextIn value={e.name} placeholder="Item name" onChange={(v) => patchEquip(e.id, { name: v })} />
+                        <TextIn value={e.name} placeholder="Item name" autoFocus={e.id === focusRowId} onChange={(v) => patchEquip(e.id, { name: v })} />
                         <TextIn value={e.note || ''} bold={false} placeholder="note — e.g. operated · 8 hr minimum" onChange={(v) => patchEquip(e.id, { note: v })} />
                       </td>
                       {['hourly', 'daily', 'weekly', 'monthly'].map((k) => (

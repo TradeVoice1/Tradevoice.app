@@ -4802,8 +4802,8 @@ function InvoiceDocument({ invoice, user, logo, payments, onEdit, onDuplicate, o
         </div>
       </div>
 
-      {/* White document */}
-      <div style={{ background:'#fff', borderRadius:4, boxShadow:'0 6px 50px #00000033', overflow:'hidden', fontFamily:"'Inter', sans-serif" }}>
+      {/* White document — .tv-print-area isolates it for Download PDF (index.css) */}
+      <div className="tv-print-area" style={{ background:'#fff', borderRadius:4, boxShadow:'0 6px 50px #00000033', overflow:'hidden', fontFamily:"'Inter', sans-serif" }}>
         <div style={{ height:6, background:accentStripe }} />
 
         {/* Header */}
@@ -5831,6 +5831,9 @@ function QuoteDocument({ quote, client, user, logo, onRevise, onDuplicate, onBac
           {onDuplicate && (
             <Btn variant="flat" size="sm" style={{ flex: isTablet ? 1 : undefined }} onClick={onDuplicate}>Duplicate</Btn>
           )}
+          {/* Download PDF — browser print dialog covers both paper and
+              save-as-PDF; .tv-print-area CSS isolates the document. */}
+          <Btn variant="flat" size="sm" style={{ flex: isTablet ? 1 : undefined }} onClick={() => window.print()}>Download PDF</Btn>
           {/* Schedule-Job from quote — quick path to put the work on the
               calendar without retyping client + trade. Shown on quotes
               that are out (sent / accepted / draft is fine too) but not
@@ -5875,8 +5878,8 @@ function QuoteDocument({ quote, client, user, logo, onRevise, onDuplicate, onBac
         </div>
       )}
 
-      {/* White document */}
-      <div style={{ background: '#fff', borderRadius: 4, boxShadow: '0 6px 50px #00000066', overflow: 'hidden', fontFamily: "'Inter', sans-serif" }}>
+      {/* White document — .tv-print-area isolates it for Download PDF (index.css) */}
+      <div className="tv-print-area" style={{ background: '#fff', borderRadius: 4, boxShadow: '0 6px 50px #00000066', overflow: 'hidden', fontFamily: "'Inter', sans-serif" }}>
 
         {/* Accent-colored top stripe */}
         <div style={{ height: 6, background: accentStripe }} />

@@ -113,3 +113,21 @@ body {
 button, a, [role="button"], input, select, textarea {
   touch-action: manipulation;
 }
+
+/* ── Print: only the document ──────────────────────────────────────────────
+   InvoiceDocument and QuoteDocument mark their white paper wrapper with
+   .tv-print-area. When the user hits Download PDF (window.print), hide
+   everything, then reveal just the document and let it own the page —
+   otherwise the nav, sidebar and action buttons print with the invoice.
+   visibility (not display) keeps the layout tree intact so the document
+   doesn't reflow. */
+@media print {
+  body * { visibility: hidden; }
+  .tv-print-area, .tv-print-area * { visibility: visible; }
+  .tv-print-area {
+    position: absolute; left: 0; top: 0; width: 100%;
+    box-shadow: none !important; border-radius: 0 !important;
+  }
+  /* No interactive chrome on paper, even inside the document. */
+  .tv-print-area button { display: none !important; }
+}
