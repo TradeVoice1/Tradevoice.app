@@ -91,10 +91,16 @@ const TextIn = ({ value, onChange, placeholder, center, minW = 130, bold = true 
     onBlur={(e) => { e.target.style.border = '1px solid transparent'; e.target.style.background = 'transparent'; }} />
 );
 
-const XBtn = ({ onClick, title }) => (
-  <button onClick={onClick} title={title || 'Remove'} aria-label={title || 'Remove'} style={{
-    fontFamily: 'inherit', fontSize: 16, lineHeight: 1, width: 26, height: 26, borderRadius: 7,
-    border: '1px solid transparent', background: 'transparent', color: C.dim, cursor: 'pointer' }}>×</button>
+// Real Delete button (not a bare ×) — every caller confirms before acting,
+// so a stray tap can never silently remove a row.
+const DelBtn = ({ onClick, title }) => (
+  <button onClick={onClick} title={title || 'Delete'} aria-label={title || 'Delete'} style={{
+    fontFamily: 'inherit', fontSize: 12, fontWeight: 700, lineHeight: 1, padding: '5px 9px',
+    borderRadius: 6, border: `1px solid ${C.border}`, background: 'transparent', color: C.errorBold,
+    cursor: 'pointer', whiteSpace: 'nowrap' }}
+    onMouseEnter={(e) => { e.currentTarget.style.background = C.errorLo; e.currentTarget.style.borderColor = C.errorBold; }}
+    onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = C.border; }}
+  >Delete</button>
 );
 
 const Check = ({ checked, onChange, ariaLabel }) => (
@@ -261,6 +267,8 @@ export default function RatesScreen({ user }) {
     } catch (e) { setErr(e.message); }
   };
   const handleDeleteLine = async (gIdx, lineId) => {
+    const l = sheet.groups[gIdx].lines.find((x) => x.id === lineId);
+    if (!window.confirm(`Delete burden line "${l?.name || 'unnamed'}"? Rates recalculate without it.`)) return;
     setSheet((s) => ({ ...s, groups: s.groups.map((g, i) => i === gIdx ? { ...g, lines: g.lines.filter((l) => l.id !== lineId) } : g) }));
     try { await deleteBurdenLine(lineId); } catch (e) { setErr(e.message); }
   };
@@ -272,6 +280,8 @@ export default function RatesScreen({ user }) {
     } catch (e) { setErr(e.message); }
   };
   const handleDeleteCraft = async (gIdx, craftId) => {
+    const c = sheet.groups[gIdx].crafts.find((x) => x.id === craftId);
+    if (!window.confirm(`Delete craft "${c?.name || 'unnamed'}"? Its wage and crew plan go with it.`)) return;
     setSheet((s) => ({ ...s, groups: s.groups.map((g, i) => i === gIdx ? { ...g, crafts: g.crafts.filter((c) => c.id !== craftId) } : g) }));
     try { await deleteRateCraft(craftId); } catch (e) { setErr(e.message); }
   };
@@ -282,6 +292,8 @@ export default function RatesScreen({ user }) {
     } catch (e) { setErr(e.message); }
   };
   const handleDeleteEquip = async (id) => {
+    const e = sheet.equipment.find((x) => x.id === id);
+    if (!window.confirm(`Delete equipment item "${e?.name || 'unnamed'}"?`)) return;
     setSheet((s) => ({ ...s, equipment: s.equipment.filter((e) => e.id !== id) }));
     try { await deleteRateEquipment(id); } catch (e) { setErr(e.message); }
   };
@@ -353,8 +365,9 @@ export default function RatesScreen({ user }) {
       fontSize: 14.5, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>{label}</button>
   );
 
+  // Full-bleed: rate grids are wide, so claim every pixel the shell gives us.
   return (
-    <div style={{ maxWidth: 1160, margin: '0 auto' }}>
+    <div style={{ width: '100%' }}>
       {showNew && <NewSheetModal onClose={() => setShowNew(false)} onCreate={handleCreate} />}
 
       {/* Header */}
@@ -424,7 +437,7 @@ export default function RatesScreen({ user }) {
                         <TextIn center value={c.name} placeholder="Craft"
                           onChange={(v) => patchCraft(gi, c.id, { name: v })} />
                         <div style={{ textAlign: 'center', marginTop: 2 }}>
-                          <XBtn title={`Remove ${c.name || 'craft'}`} onClick={() => handleDeleteCraft(gi, c.id)} />
+                          <DelBtn title={`Delete ${c.name || 'craft'}`} onClick={() => handleDeleteCraft(gi, c.id)} />
                         </div>
                       </th>
                     ))}
@@ -461,7 +474,7 @@ export default function RatesScreen({ user }) {
                           {l.appliesSt ? money(c.wage * l.pct / 100) : '—'}
                         </td>
                       ))}
-                      <td style={{ ...tdS, textAlign: 'right' }}><XBtn title={`Remove ${l.name || 'line'}`} onClick={() => handleDeleteLine(gi, l.id)} /></td>
+                      <td style={{ ...tdS, textAlign: 'right' }}><DelBtn title={`Delete ${l.name || 'line'}`} onClick={() => handleDeleteLine(gi, l.id)} /></td>
                     </tr>
                   ))}
                   {/* ST totals */}
@@ -695,7 +708,7 @@ export default function RatesScreen({ user }) {
                             style={{ fontFamily: 'inherit', fontSize: 13.5, fontVariantNumeric: 'tabular-nums', textAlign: 'right', padding: '5px 7px', border: `1px solid ${C.border}`, borderRadius: 7, background: C.surface, color: C.text, width: 84 }} />
                         </td>
                       ))}
-                      <td style={{ ...tdS, textAlign: 'right' }}><XBtn title={`Remove ${e.name || 'item'}`} onClick={() => handleDeleteEquip(e.id)} /></td>
+                      <td style={{ ...tdS, textAlign: 'right' }}><DelBtn title={`Delete ${e.name || 'item'}`} onClick={() => handleDeleteEquip(e.id)} /></td>
                     </tr>
                   ))}
                 </tbody>
