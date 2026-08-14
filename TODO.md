@@ -84,6 +84,34 @@ across all users (acknowledged tech debt in a code comment). Works
 correctly today; scales poorly past ~10k accounts. Build the proper
 short-TTL state table when needed.
 
+### 🟢 Rate-system smoke test findings — minor (added 2026-08-13)
+
+Found driving the live Rates section end to end (build 54d92e2). Everything
+core passed: demo-sheet creation, build-up math penny-exact vs the engine,
+wage edit cascade + debounced persistence across reload, composite, publish,
+delete-with-confirm, and a Quotes/Jobs/Schedule/Invoice regression pass.
+
+1. **Equipment "+ Add item" created two rows from one click.** Reproduced
+   live — one click, two empty rows appeared and both persisted. Likely a
+   double-fire on the click handler (mousedown+click or a re-render race in
+   handleAddEquip). rate_crafts/burden add buttons focus their new row;
+   equipment doesn't, which may be related. Investigate + dedupe.
+
+2. **Equipment add doesn't focus the new row's name field** — typed text
+   after clicking Add goes nowhere. addBurdenLine/addRateCraft both focus
+   their new input; handleAddEquip should too.
+
+3. **No print path for quotes, and invoice printing has no print CSS.**
+   Invoices have "Download PDF" (window.print — browser dialog covers both
+   print and save-as-PDF), but there is no @media print stylesheet, so the
+   nav/action chrome prints with the document. Quotes have no print button
+   at all. Add: print stylesheet that isolates the document, plus the same
+   Download PDF button on the quote preview. (Asked-for by Matt 2026-08-13.)
+
+4. **Founder-account demo sheet left in place deliberately** — "Demo Rate
+   Sheet", published, Foreman wage edited to $50 (Matt: leave it). One empty
+   equipment row remains from the double-add repro.
+
 ### 🟢 Smoke-test walkthrough findings — minor (added 2026-07-26)
 
 Collected while driving the live app end to end (dashboard → client → quote →
