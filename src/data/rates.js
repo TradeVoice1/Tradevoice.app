@@ -38,7 +38,9 @@ const sheetToDb = (s) => ({
   name:                   (s.name || '').trim() || 'Untitled sheet',
   client_id:              s.clientId || null,
   project_ref:            s.projectRef || null,
-  effective_on:           s.effectiveOn || null,
+  // effective_on is NOT NULL with a current_date default — an explicit null
+  // overrides the default and violates the constraint, so omit when empty.
+  ...(s.effectiveOn ? { effective_on: s.effectiveOn } : {}),
   revision:               s.revision || null,
   parent_id:              s.parentId || null,
   is_default:             s.isDefault === true,
