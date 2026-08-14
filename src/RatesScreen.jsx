@@ -47,12 +47,12 @@ const lbl   = { fontSize: 12, fontWeight: 700, letterSpacing: '0.08em', textTran
 // Spreadsheet-style grid: every cell bordered on the right and bottom, tight
 // rows, tabular numerals — deliberately close to the Excel workbook this
 // feature was modeled on, because that's what estimators already know.
-const thS   = { fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: C.dim, textAlign: 'left', padding: '7px 9px', background: C.raised, borderBottom: `1px solid ${C.border2}`, borderRight: `1px solid ${C.border}`, whiteSpace: 'nowrap', verticalAlign: 'bottom' };
-const tdS   = { padding: '3px 9px', borderBottom: `1px solid ${C.border}`, borderRight: `1px solid ${C.border}`, fontSize: 13.5 };
+const thS   = { fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: C.dim, textAlign: 'left', padding: '8px 11px', background: C.raised, borderBottom: `1px solid ${C.border2}`, borderRight: `1px solid ${C.border}`, whiteSpace: 'nowrap', verticalAlign: 'bottom' };
+const tdS   = { padding: '5px 11px', borderBottom: `1px solid ${C.border}`, borderRight: `1px solid ${C.border}`, fontSize: 14 };
 const tdR   = { ...tdS, textAlign: 'right', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' };
 // Frozen label column, like Excel's frozen pane. Needs an explicit background
 // per row tone so content scrolling under it doesn't show through.
-const tdFrozen = (bg = C.surface) => ({ ...tdS, position: 'sticky', left: 0, background: bg, zIndex: 1, borderRight: `1.5px solid ${C.border2}`, minWidth: 170 });
+const tdFrozen = (bg = C.surface) => ({ ...tdS, position: 'sticky', left: 0, background: bg, zIndex: 1, borderRight: `1.5px solid ${C.border2}`, minWidth: 250 });
 
 const Btn = ({ children, onClick, variant = 'plain', style = {}, disabled }) => (
   <button onClick={onClick} disabled={disabled} style={{
@@ -69,7 +69,7 @@ const Btn = ({ children, onClick, variant = 'plain', style = {}, disabled }) => 
 );
 
 // Excel-cell behavior: reads as a plain value until you hover or click into it.
-const NumIn = ({ value, onChange, w = 74, step = '0.5', ariaLabel }) => (
+const NumIn = ({ value, onChange, w = 88, step = '0.5', ariaLabel }) => (
   <input type="number" value={value} step={step} min="0" aria-label={ariaLabel || 'value'}
     onChange={(e) => onChange(e.target.value)}
     onFocus={(e) => { e.target.style.border = `1.5px solid ${C.green}`; e.target.style.background = C.surface; }}
@@ -81,7 +81,7 @@ const NumIn = ({ value, onChange, w = 74, step = '0.5', ariaLabel }) => (
       color: C.text, width: w, MozAppearance: 'textfield' }} />
 );
 
-const TextIn = ({ value, onChange, placeholder, center, minW = 130, bold = true }) => (
+const TextIn = ({ value, onChange, placeholder, center, minW = 220, bold = true }) => (
   <input type="text" value={value} placeholder={placeholder}
     onChange={(e) => onChange(e.target.value)}
     style={{ fontFamily: 'inherit', fontSize: center ? 12.5 : 14, fontWeight: bold ? 650 : 500,
@@ -427,13 +427,13 @@ export default function RatesScreen({ user }) {
               <table style={{ borderCollapse: 'collapse', width: '100%', fontSize: 14 }}>
                 <thead>
                   <tr>
-                    <th style={{ ...thS, minWidth: 190, position: 'sticky', left: 0, zIndex: 2, borderRight: `1.5px solid ${C.border2}` }}>Component</th>
+                    <th style={{ ...thS, minWidth: 250, position: 'sticky', left: 0, zIndex: 2, borderRight: `1.5px solid ${C.border2}` }}>Component</th>
                     <th style={{ ...thS, textAlign: 'right' }}>Rate</th>
                     <th style={{ ...thS, textAlign: 'center' }}>S.T.</th>
                     <th style={{ ...thS, textAlign: 'center' }}>O.T.</th>
                     <th style={{ ...thS, textAlign: 'center' }}>D.T.</th>
                     {g.crafts.map((c) => (
-                      <th key={c.id} style={{ ...thS, textAlign: 'right', minWidth: 110 }}>
+                      <th key={c.id} style={{ ...thS, textAlign: 'right', minWidth: 132 }}>
                         <TextIn center value={c.name} placeholder="Craft"
                           onChange={(v) => patchCraft(gi, c.id, { name: v })} />
                         <div style={{ textAlign: 'center', marginTop: 2 }}>
@@ -724,7 +724,7 @@ export default function RatesScreen({ user }) {
 // ── Row helper components (build-up table) ───────────────────────────────────
 
 const SecRow = ({ span, text }) => (
-  <tr><td colSpan={span} style={{ background: C.raised, fontSize: 11, fontWeight: 750, letterSpacing: '0.08em', textTransform: 'uppercase', color: C.muted, padding: '6px 9px', borderBottom: `1px solid ${C.border}` }}>{text}</td></tr>
+  <tr><td colSpan={span} style={{ background: C.raised, fontSize: 11, fontWeight: 750, letterSpacing: '0.08em', textTransform: 'uppercase', color: C.muted, padding: '7px 11px', borderBottom: `1px solid ${C.border}` }}>{text}</td></tr>
 );
 
 const SubRow = ({ label, rate, crafts, val }) => (
