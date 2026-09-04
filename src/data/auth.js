@@ -174,6 +174,7 @@ export async function getProfile(userId, authEmail) {
   // can write rows under the owner's owner_id (RLS enforces this via
   // migration 0016). Owners get effectiveOwnerId = their own id.
   let effectiveOwnerId = userId;
+  let techPerms = null;
   if (data.role === 'tech') {
     const { data: tm } = await supabase
       .from('team_members')
@@ -182,11 +183,16 @@ export async function getProfile(userId, authEmail) {
       .eq('status', 'active')
       .maybeSingle();
     if (tm?.owner_id) effectiveOwnerId = tm.owner_id;
+    // The owner-granted permission set (createQuotes, viewRateSheets, ...).
+    // Carried on the profile so the UI can gate nav/sections without a
+    // second lookup; RLS enforces the same grants server-side regardless.
+    techPerms = tm?.perms ?? {};
   }
   return {
     ...dbToProfile(data),
     email: authEmail ?? '',
     effectiveOwnerId,
+    techPerms,
   };
 }
 

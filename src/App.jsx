@@ -8939,6 +8939,10 @@ function TeamMemberRow({ member, onUpdate, onRemove }) {
     { key: 'recordPayments',  label: 'Record Payments' },
     { key: 'viewClients',     label: 'View Client List' },
     { key: 'viewDashboard',   label: 'View Dashboard' },
+    // Rate sheets are admin-only by default; this grant shows the tech the
+    // PUBLISHED rates + equipment schedule. Wages, burden and profit stay
+    // owner-only at the database level (migration 0044) no matter what.
+    { key: 'viewRateSheets',  label: 'View Rate Sheets (published rates only)' },
   ];
 
   const togglePerm = (key) => {
@@ -9007,6 +9011,7 @@ function BuyTechSeatModal({ user, onClose, onCreate }) {
     recordPayments:  false,
     viewClients:     true,
     viewDashboard:   false,
+    viewRateSheets:  false,
   });
   const [saving,  setSaving]  = useState(false);
   const [err,     setErr]     = useState('');
@@ -9092,6 +9097,7 @@ function BuyTechSeatModal({ user, onClose, onCreate }) {
               { key: 'viewClients',     label: 'View client list' },
               { key: 'viewAllJobs',     label: 'View ALL company jobs (vs only theirs)' },
               { key: 'viewDashboard',   label: 'View dashboard / financials' },
+              { key: 'viewRateSheets',  label: 'View rate sheets (published rates only — never wages)' },
             ].map(({ key, label }) => (
               <label key={key} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', cursor: 'pointer', fontSize: 16, color: C.text, fontWeight: 500 }}>
                 <input type="checkbox" checked={!!perms[key]} onChange={() => togglePerm(key)} style={{ width: 20, height: 20, accentColor: C.orange, cursor: 'pointer' }} />
@@ -10674,12 +10680,16 @@ function TradevoiceApp() {
   // with the other hooks so it's called on every render in the same
   // order, before any conditional early returns further down.
   const navItems = useMemo(() => {
-    // Techs never see owner-only sections (Rates holds wages + profit).
-    const base = user?.role === 'tech' ? NAV.filter(item => !item.ownerOnly) : NAV;
+    // Owner-only sections hide from techs unless the owner granted access —
+    // for Rates that's the viewRateSheets permission, which opens a published
+    // read-only view (RLS keeps wages/burden owner-only regardless).
+    const base = user?.role === 'tech'
+      ? NAV.filter(item => !item.ownerOnly || (item.id === 'rates' && user?.techPerms?.viewRateSheets))
+      : NAV;
     return user?.isSuperOwner
       ? [{ id: 'founder', label: 'Founder' }, ...base]
       : base;
-  }, [user?.isSuperOwner, user?.role]);
+  }, [user?.isSuperOwner, user?.role, user?.techPerms?.viewRateSheets]);
 
   // Default the super-owner to the Founder section on first hydration.
   // Effect (not initial state) because user is set asynchronously

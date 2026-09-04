@@ -11,6 +11,7 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import {
   RATE_TEMPLATES, listRateSheets, loadRateSheet, createRateSheet,
+  listPublishedRates, setDefaultRateSheet,
   updateRateSheet, deleteRateSheet, updateRateGroup,
   addBurdenLine, updateBurdenLine, deleteBurdenLine,
   addRateCraft, updateRateCraft, deleteRateCraft,
@@ -120,6 +121,161 @@ const Strip = ({ items }) => (
     ))}
   </div>
 );
+
+// ── Granted-tech view: published rates only ──────────────────────────────────
+// What an owner's viewRateSheets grant shows: the sheet picker, the finished
+// craft rates (computed by the server — the RPC never returns wages, burden
+// or profit), per diem / markups / terms, and the equipment schedule.
+function TechRatesView() {
+  const [sheets, setSheets] = useState([]);
+  const [sheet, setSheet] = useState(null);      // full row: metadata + equipment
+  const [rates, setRates] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState('');
+
+  const open = useCallback(async (id) => {
+    setLoading(true); setErr('');
+    try {
+      const [full, published] = await Promise.all([loadRateSheet(id), listPublishedRates(id)]);
+      setSheet(full); setRates(published);
+    } catch (e) { setErr(e.message || 'Could not load rate sheet'); }
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const list = await listRateSheets();
+        setSheets(list);
+        if (list.length) await open(list[0].id); else setLoading(false);
+      } catch (e) { setErr(e.message || 'Could not load rate sheets'); setLoading(false); }
+    })();
+  }, [open]);
+
+  if (loading) return <div style={{ padding: 24, color: C.dim, fontSize: 15 }}>Loading rates…</div>;
+  if (!sheets.length) {
+    return <div style={{ padding: 24, color: C.dim, fontSize: 15 }}>No rate sheets have been shared with you yet.</div>;
+  }
+
+  const groups = [];
+  rates.forEach((r) => {
+    let g = groups.find((x) => x.name === r.groupName);
+    if (!g) { g = { name: r.groupName, rows: [] }; groups.push(g); }
+    g.rows.push(r);
+  });
+
+  return (
+    <div style={{ width: '100%' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 16 }}>
+        <div>
+          <h2 style={{ margin: '0 0 3px', fontSize: 26, fontWeight: 800, letterSpacing: '-0.02em' }}>Rates</h2>
+          <p style={{ margin: 0, color: C.dim, fontSize: 14.5 }}>Published rates, shared by your company admin. Read-only.</p>
+        </div>
+        <select value={sheet?.id || ''} onChange={(e) => open(e.target.value)} aria-label="Rate sheet"
+          style={{ fontFamily: 'inherit', fontSize: 14, fontWeight: 600, padding: '8px 10px', border: `1px solid ${C.border}`, borderRadius: 8, background: C.surface, color: C.text, maxWidth: 280 }}>
+          {sheets.map((s) => <option key={s.id} value={s.id}>{s.name}{s.status === 'active' ? ' ✓' : ''}</option>)}
+        </select>
+      </div>
+
+      {err && <div style={{ background: C.errorLo, borderLeft: `3px solid ${C.errorBold}`, borderRadius: '0 8px 8px 0', padding: '10px 14px', fontSize: 13.5, marginBottom: 14 }}>{err}</div>}
+
+      <div style={card}>
+        <div style={cardH}><div>
+          <h3 style={{ margin: 0, fontSize: 16.5, fontWeight: 750 }}>{sheet?.name}</h3>
+          <div style={{ color: C.dim, fontSize: 13.5, marginTop: 2 }}>
+            {sheet?.effectiveOn ? `Effective ${sheet.effectiveOn}` : ''}{sheet?.status === 'active' ? ' · published' : ' · draft'}
+          </div>
+        </div></div>
+        <div style={cardB}>
+          <div style={{ overflowX: 'auto', border: `1px solid ${C.border}`, borderRadius: 10 }}>
+            <table style={{ borderCollapse: 'collapse', width: '100%', fontSize: 14 }}>
+              <thead><tr>
+                <th style={thS}>Craft</th>
+                <th style={{ ...thS, textAlign: 'right' }}>Straight time</th>
+                <th style={{ ...thS, textAlign: 'right' }}>Overtime</th>
+                <th style={{ ...thS, textAlign: 'right' }}>Double time</th>
+              </tr></thead>
+              <tbody>
+                {groups.map((g) => (
+                  <React.Fragment key={g.name}>
+                    {groups.length > 1 && (
+                      <tr><td colSpan={4} style={{ background: C.raised, fontSize: 11, fontWeight: 750, letterSpacing: '0.08em', textTransform: 'uppercase', color: C.muted, padding: '6px 11px', borderBottom: `1px solid ${C.border}` }}>{g.name}</td></tr>
+                    )}
+                    {g.rows.map((r, i) => (
+                      <tr key={g.name + i}>
+                        <td style={tdS}>
+                          <div style={{ fontWeight: 650 }}>{r.craft || '—'}</div>
+                          {r.definition && <div style={{ color: C.dim, fontSize: 12.5 }}>{r.definition}</div>}
+                        </td>
+                        <td style={{ ...tdR, fontWeight: 700 }}>{money(r.st)}</td>
+                        <td style={{ ...tdR, color: C.accent, fontWeight: 600 }}>{money(r.ot)}</td>
+                        <td style={{ ...tdR, color: C.errorBold, fontWeight: 600 }}>{money(r.dt)}</td>
+                      </tr>
+                    ))}
+                  </React.Fragment>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginTop: 16 }}>
+            <div style={{ background: C.raised, border: `1px solid ${C.border}`, borderRadius: 10, padding: '14px 16px' }}>
+              <p style={lbl}>Per diem &amp; markups</p>
+              {sheet?.perDiemDaily != null && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: 14 }}>
+                  <span>Per diem / day</span><strong>{money(sheet.perDiemDaily)}</strong></div>
+              )}
+              {sheet?.perDiemWeekly != null && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: 14 }}>
+                  <span>Weekly — jobs over 7 days</span><strong>{money(sheet.perDiemWeekly)}</strong></div>
+              )}
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: 14 }}>
+                <span>Materials</span><strong>cost + {pctS(sheet?.markupMaterials)}</strong></div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: 14 }}>
+                <span>Subs / rentals</span><strong>cost + {pctS(sheet?.markupSubs)} / {pctS(sheet?.markupRentals)}</strong></div>
+            </div>
+            <div style={{ background: C.raised, border: `1px solid ${C.border}`, borderRadius: 10, padding: '14px 16px' }}>
+              <p style={lbl}>Terms</p>
+              <ol style={{ margin: 0, paddingLeft: 18, fontSize: 13, color: C.muted, lineHeight: 1.6 }}>
+                {(sheet?.terms || []).map((t, i) => <li key={i} style={{ marginBottom: 4 }}>{t}</li>)}
+              </ol>
+            </div>
+          </div>
+
+          {(sheet?.equipment || []).length > 0 && (
+            <div style={{ marginTop: 16 }}>
+              <p style={lbl}>Equipment rental rate schedule</p>
+              <div style={{ overflowX: 'auto', border: `1px solid ${C.border}`, borderRadius: 10 }}>
+                <table style={{ borderCollapse: 'collapse', width: '100%', fontSize: 14 }}>
+                  <thead><tr>
+                    <th style={thS}>Item</th>
+                    <th style={{ ...thS, textAlign: 'right' }}>Hour</th>
+                    <th style={{ ...thS, textAlign: 'right' }}>Day</th>
+                    <th style={{ ...thS, textAlign: 'right' }}>Week</th>
+                    <th style={{ ...thS, textAlign: 'right' }}>Month</th>
+                  </tr></thead>
+                  <tbody>
+                    {sheet.equipment.map((e) => (
+                      <tr key={e.id}>
+                        <td style={tdS}>
+                          <div style={{ fontWeight: 650 }}>{e.name || '—'}</div>
+                          {e.note && <div style={{ color: C.dim, fontSize: 12.5 }}>{e.note}</div>}
+                        </td>
+                        {['hourly', 'daily', 'weekly', 'monthly'].map((k) => (
+                          <td key={k} style={tdR}>{e[k] != null ? money(e[k]) : '—'}</td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // ── New-sheet modal ──────────────────────────────────────────────────────────
 
@@ -332,8 +488,12 @@ export default function RatesScreen({ user }) {
 
   const handlePublish = () => patchSheet({ status: sheet.status === 'active' ? 'draft' : 'active' });
 
-  // Techs never see this screen (nav hides it too — defense in depth).
+  // Techs: the owner's viewRateSheets grant opens a read-only published view
+  // (finished rates + equipment, computed server-side — RLS keeps wages,
+  // burden and profit owner-only regardless of what this UI does). Without
+  // the grant, nothing.
   if (user?.role === 'tech') {
+    if (user?.techPerms?.viewRateSheets) return <TechRatesView />;
     return <div style={{ padding: 24, color: C.dim, fontSize: 15 }}>Rates are managed by the account owner.</div>;
   }
 
@@ -395,6 +555,12 @@ export default function RatesScreen({ user }) {
             style={{ fontFamily: 'inherit', fontSize: 14, fontWeight: 600, padding: '8px 10px', border: `1px solid ${C.border}`, borderRadius: 8, background: C.surface, color: C.text, maxWidth: 260 }}>
             {sheets.map((s) => <option key={s.id} value={s.id}>{s.name}{s.status === 'active' ? ' ✓' : ''}</option>)}
           </select>
+          {sheet && (sheet.isDefault
+            ? <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', padding: '5px 10px', borderRadius: 99, background: C.greenLo, color: C.green, whiteSpace: 'nowrap' }}>Default ✓</span>
+            : <Btn variant="ghost" onClick={async () => {
+                try { await setDefaultRateSheet(sheetId); setSheet((s) => ({ ...s, isDefault: true })); refreshList(); }
+                catch (e) { setErr(e.message); }
+              }} style={{ fontSize: 13, padding: '7px 12px', minHeight: 34 }}>Make default</Btn>)}
           <Btn onClick={() => setShowNew(true)}>+ New sheet</Btn>
           <Btn variant="primary" onClick={handlePublish}>
             {sheet.status === 'active' ? 'Published ✓' : 'Publish'}

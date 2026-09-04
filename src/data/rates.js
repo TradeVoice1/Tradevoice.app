@@ -293,6 +293,35 @@ export async function createRateSheet(ownerId, name, templateKey) {
   return sheetRow.id;
 }
 
+/** Published craft rates, computed server-side (migration 0044). This is the
+ *  ONLY rate read a granted tech has — finished ST/OT/DT numbers, never the
+ *  wage/burden/profit ingredients. Owners can call it too (same math as
+ *  lib/rateMath, so it's also a cross-check). */
+export async function listPublishedRates(sheetId) {
+  const { data, error } = await supabase.rpc('rate_sheet_published_rates', { p_sheet_id: sheetId });
+  if (error) throw error;
+  return (data || []).map((r) => ({
+    groupName:  r.g_name ?? '',
+    groupSort:  r.g_sort ?? 0,
+    craft:      r.craft_name ?? '',
+    definition: r.craft_def ?? '',
+    st: r.st_rate != null ? Number(r.st_rate) : 0,
+    ot: r.ot_rate != null ? Number(r.ot_rate) : 0,
+    dt: r.dt_rate != null ? Number(r.dt_rate) : 0,
+  }));
+}
+
+/** Make one sheet the owner's default (what quotes will preselect). The
+ *  partial unique index allows one default per owner, so clear-then-set. */
+export async function setDefaultRateSheet(sheetId) {
+  const { error: clearErr } = await supabase
+    .from('rate_sheets').update({ is_default: false }).eq('is_default', true);
+  if (clearErr) throw clearErr;
+  const { error } = await supabase
+    .from('rate_sheets').update({ is_default: true }).eq('id', sheetId);
+  if (error) throw error;
+}
+
 export async function updateRateSheet(sheetId, patch) {
   const { error } = await supabase.from('rate_sheets').update(sheetToDb(patch)).eq('id', sheetId);
   if (error) throw error;
