@@ -84,6 +84,30 @@ function envHintForPlan(plan) {
   return `STRIPE_PRICE_${slug.toUpperCase()}`;
 }
 
+// ─── Founder guard ─────────────────────────────────────────────────────────
+// The founder account is permanently free — the only always-free account.
+// Every action that could create or revive billing is refused here, server-
+// side, regardless of what the UI shows. 'cancel' is deliberately NOT
+// guarded: if a subscription ever existed by accident, turning it off must
+// always work. A profiles trigger (migration 0045) backstops this at the
+// database: a super-owner row can never hold a Stripe customer/subscription.
+async function founderBlocked(userId, res) {
+  const supabase = getServiceClient();
+  const { data } = await supabase
+    .from('profiles')
+    .select('is_super_owner')
+    .eq('id', userId)
+    .maybeSingle();
+  if (data?.is_super_owner) {
+    res.status(403).json({
+      error: 'founder_account_free',
+      detail: 'The founder account is permanently free and cannot be subscribed.',
+    });
+    return true;
+  }
+  return false;
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
@@ -180,6 +204,7 @@ async function handleCancel(req, res) {
 async function handleResume(req, res) {
   const auth = await requireAuth(req, { requireUserMatch: req.body?.userId });
   if (!auth.ok) return res.status(auth.status).json({ error: auth.error });
+  if (await founderBlocked(auth.userId, res)) return;
   const userId = auth.userId;
 
   const supabase = getServiceClient();
@@ -234,6 +259,7 @@ async function handleResume(req, res) {
 async function handleCreate(req, res) {
   const auth = await requireAuth(req, { requireUserMatch: req.body?.userId });
   if (!auth.ok) return res.status(auth.status).json({ error: auth.error });
+  if (await founderBlocked(auth.userId, res)) return;
   const { plan, paymentMethodId } = req.body || {};
   const userId = auth.userId;
   if (!paymentMethodId) return res.status(400).json({ error: 'missing_payment_method' });
@@ -323,6 +349,7 @@ async function handleCreate(req, res) {
 async function handleSyncSeats(req, res) {
   const auth = await requireAuth(req, { requireUserMatch: req.body?.userId });
   if (!auth.ok) return res.status(auth.status).json({ error: auth.error });
+  if (await founderBlocked(auth.userId, res)) return;
   const userId = auth.userId;
 
   const seatPriceId = process.env.STRIPE_PRICE_TECH_SEAT;
