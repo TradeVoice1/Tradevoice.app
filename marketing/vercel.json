@@ -4,6 +4,12 @@
   "installCommand": "echo no-install",
   "outputDirectory": ".",
   "cleanUrls": true,
+  "redirects": [
+    { "source": "/terms",        "destination": "https://app.thetradevoice.com/legal/terms",   "permanent": true },
+    { "source": "/terms.html",   "destination": "https://app.thetradevoice.com/legal/terms",   "permanent": true },
+    { "source": "/privacy",      "destination": "https://app.thetradevoice.com/legal/privacy", "permanent": true },
+    { "source": "/privacy.html", "destination": "https://app.thetradevoice.com/legal/privacy", "permanent": true }
+  ],
   "headers": [
     {
       "source": "/(.*)",
